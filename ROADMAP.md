@@ -110,6 +110,16 @@ o resto entra como módulos internos:
 4. ✅ Chat da IA no merge de conflitos (mockup 10, `␣ a`): Claude lê o código e o histórico,
    propõe a resolução como prévia no resultado e o usuário aplica ou recusa
 
+## Fase 8 — Painel de containers
+
+_A detalhar._
+
+## Fase 9 — Painel de arquitetura
+
+_A detalhar._
+
+- Observação: incluir um painel de caminho da função
+
 ## Depois
 
 - Layout editável (arrastar painéis, salvar disposições) — a base já existe em
