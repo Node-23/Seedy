@@ -48,6 +48,16 @@ const NOMES_MODO: Record<string, string> = {
           {{ merge.restantes() }} {{ merge.restantes() === 1 ? 'conflito restante' : 'conflitos restantes' }}
         </span>
         <span class="segmento com-divisa-esq suave">{{ merge.arquivoAtual() + 1 }} de {{ merge.totalDeArquivos() }} {{ merge.totalDeArquivos() === 1 ? 'arquivo' : 'arquivos' }}</span>
+      } @else if (layout.tela() === 'debug') {
+        <span class="segmento dicas-merge">
+          <span><span class="tecla">F9</span> continuar</span> <span><span class="tecla">F8</span> passar</span>
+          <span><span class="tecla">F7</span> entrar</span> <span><span class="tecla">ctrl+F8</span> breakpoint</span>
+          <span><span class="tecla">alt F8</span> avaliar</span> <span><span class="tecla">esc</span> editor</span>
+        </span>
+        <span class="espaco"></span>
+        @if (depurador.sessao()?.semDebug === false) { <span class="segmento com-divisa-esq git-mais">↻ hot reload</span> }
+        @if (depurador.sessao(); as s) { <span class="segmento com-divisa-esq suave">{{ s.nome }}@if (s.porta) { · :{{ s.porta }}}</span> }
+        @if (depurador.localAtual(); as l) { <span class="segmento com-divisa-esq posicao">{{ l.linha }}</span> }
       } @else if (naTelaGit()) {
         <span class="espaco"></span>
         @if (git.ocupado(); as o) { <span class="segmento com-divisa-esq git-ocupado">{{ o }}…</span> }
@@ -130,10 +140,10 @@ export class BarraStatusComponent {
   }
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
-    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.buscando() ? 'busca' : this.editor.modo(),
+    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.buscando() ? 'busca' : this.editor.modo(),
   );
   protected readonly rotuloDoModo = computed(() =>
-    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.buscando() ? 'BUSCA' : this.nomeModo(),
+    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.buscando() ? 'BUSCA' : this.nomeModo(),
   );
   protected readonly buscando = computed(() => this.busca.aberta() || this.buscaProjeto.aberta());
 

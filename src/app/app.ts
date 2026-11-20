@@ -39,6 +39,10 @@ import { IaComponent } from './ia/ia.component';
 import { RevisaoComponent } from './ia/revisao.component';
 import { RevisaoService } from './ia/revisao.service';
 import { McpService } from './ia/mcp.service';
+import { TelaDebugComponent } from './depuracao/tela-debug.component';
+import { NovoProjetoComponent } from './novo-projeto/novo-projeto.component';
+import { NovoProjetoService } from './novo-projeto/novo-projeto.service';
+import { ExecucaoService } from './execucao/execucao.service';
 
 @Component({
   selector: 'sd-raiz',
@@ -46,17 +50,17 @@ import { McpService } from './ia/mcp.service';
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta()">
+      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta() || novoProjeto.aberta()">
       <div class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
-        @if (layout.disposicao().visiveis.arquivos || layout.disposicao().visiveis.conexoes) {
+        @if (layout.disposicao().visiveis.arquivos) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
-            @if (layout.disposicao().visiveis.conexoes) { <sd-conexoes /> } @else { <sd-arvore /> }
+            <sd-arvore />
           </div>
           <div class="divisor vertical" role="separator" aria-orientation="vertical" (pointerdown)="arrastar($event, 'esquerda')"></div>
         }
@@ -80,7 +84,10 @@ import { McpService } from './ia/mcp.service';
           </div>
         </div>
 
-        @if (layout.disposicao().visiveis.ia) {
+        @if (layout.disposicao().visiveis.conexoes) {
+          <div class="divisor vertical fixo" aria-hidden="true"></div>
+          <div class="regiao-direita estreita"><sd-conexoes /></div>
+        } @else if (layout.disposicao().visiveis.ia) {
           <div class="divisor vertical fixo" aria-hidden="true"></div>
           <div class="regiao-direita"><sd-ia /></div>
         }
@@ -89,6 +96,7 @@ import { McpService } from './ia/mcp.service';
 
       @if (layout.tela() === 'git') { <sd-git class="tela-cheia" /> }
       @if (layout.tela() === 'merge') { <sd-merge class="tela-cheia" /> }
+      @if (layout.tela() === 'debug') { <sd-tela-debug class="tela-cheia" /> }
       <sd-diff />
       <sd-busca />
       <sd-busca-projeto />
@@ -97,6 +105,7 @@ import { McpService } from './ia/mcp.service';
       <sd-perfil-banco />
       <sd-perfil-servidor />
       <sd-revisao />
+      <sd-novo-projeto />
       <sd-escolha />
       </div>
 
@@ -123,6 +132,7 @@ export class App {
   protected readonly banco = inject(BancoService);
   protected readonly servidor = inject(ServidorService);
   protected readonly revisao = inject(RevisaoService);
+  protected readonly novoProjeto = inject(NovoProjetoService);
 
   protected inferiorVisivel(): boolean {
     const v = this.layout.disposicao().visiveis;
@@ -136,6 +146,7 @@ export class App {
     inject(MargemGitService); // marcas de alteração na margem do editor
     inject(DepuradorService); // breakpoints e o depurador anexa quando o servidor sobe em debug
     inject(McpService); // o Claude Code (MCP) usa as ferramentas do Seedy
+    inject(ExecucaoService); // RUN/DEBUG: acha as classes main quando o jdtls fica pronto
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
     void inject(ProjetoService).iniciar();

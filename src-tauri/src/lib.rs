@@ -12,6 +12,7 @@ mod git;
 mod ia;
 mod java;
 mod mcp;
+mod novo_projeto;
 mod observador;
 mod servidor;
 mod terminal;
@@ -86,6 +87,8 @@ pub fn run() {
             mcp::mcp_info,
             mcp::mcp_definir_ferramentas,
             mcp::mcp_responder,
+            novo_projeto::projeto_criar,
+            novo_projeto::spring_metadados,
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,

@@ -4,6 +4,7 @@ import { DepuradorService } from './depurador.service';
 import { LayoutService } from '../layout/layout.service';
 import { EditorService } from '../editor/editor.service';
 import { deFramework, LinhaDeLog } from './log';
+import { ExecucaoDeMain, ExecucaoService } from '../execucao/execucao.service';
 
 type Filtro = 'todos' | 'avisos' | 'erros';
 type Item = { tipo: 'linha'; l: LinhaDeLog; projeto: boolean } | { tipo: 'oculto'; chave: number; total: number };
@@ -20,6 +21,23 @@ const NOME_DO_NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DE
   template: `
     <section class="painel servidor" aria-label="Servidor">
       <div class="servidor-faixa">
+        @if (mainEscolhida(); as cfg) {
+          <!-- A configuração de execução é uma classe main: o painel mostra a saída dela. -->
+          <span class="rotulo">EXECUÇÃO</span>
+          <button class="servidor-nome" title="trocar o que roda (␣ r)" (click)="exec.escolherConfig()">{{ cfg.nome }}</button>
+          <span class="servidor-estado" [attr.data-fase]="exec.main()?.config?.id === cfg.id ? exec.main()!.fase : 'parado'"><span class="ponto"></span>{{ textoDoEstado() }}</span>
+          <span class="espaco"></span>
+          @if (fonte(); as e) {
+            <button class="chip-log erro" [class.ligado]="filtro() === 'erros'" (click)="alternarFiltro('erros')">ERROR {{ e.erros }}</button>
+            <button class="chip-log" [class.ligado]="filtro() === 'avisos'" (click)="alternarFiltro('avisos')">WARN {{ e.avisos }}</button>
+          }
+          @if (rodando()) {
+            <button class="botao perigo" (click)="exec.parar()" title="ctrl+F2">■ parar</button>
+          } @else {
+            <button class="botao" (click)="exec.rodar(true)" title="shift+F9">debug</button>
+            <button class="botao destaque" (click)="exec.rodar(false)" title="shift+F10">▶ rodar</button>
+          }
+        } @else {
         <span class="rotulo">SERVIDOR</span>
         @if (s.perfilAtual(); as p) {
           <button class="servidor-nome" title="trocar de servidor (s)" (click)="s.escolher()">{{ p.nome }}</button>
@@ -47,11 +65,20 @@ const NOME_DO_NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DE
         } @else {
           <span class="espaco"></span>
         }
+        }
       </div>
 
       <div class="servidor-corpo">
         <div #lista class="servidor-log" tabindex="0" role="log" aria-label="Saída do servidor" (keydown)="teclar($event)" (scroll)="aoRolar()">
-          @if (!s.perfilAtual()) {
+          @if (mainEscolhida(); as cfg) {
+            @if (!fonte()) {
+              <div class="servidor-vazio">
+                <p>{{ cfg.mainClass }}</p>
+                <p class="suave">shift+F10 roda, shift+F9 depura; a saída do programa aparece aqui. ␣ r troca o que roda.</p>
+                <button class="botao destaque" (click)="exec.rodar(false)">▶ rodar <kbd>⇧F10</kbd></button>
+              </div>
+            }
+          } @else if (!s.perfilAtual()) {
             <div class="servidor-vazio">
               <p>Nenhum servidor configurado para este projeto.</p>
               <p class="suave">WildFly/JBoss ou Tomcat: o Seedy monta a aplicação explodida a partir do projeto, sobe, faz hot swap de JSP e estáticos e anexa o depurador.</p>
@@ -81,7 +108,7 @@ const NOME_DO_NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DE
           }
         </div>
 
-        @if (dep.ativo()) {
+        @if (dep.depurando()) {
           <aside class="depurador" aria-label="Depurador">
             <div class="depurador-faixa">
               <span class="rotulo destaque-texto">DEBUG</span>
@@ -132,6 +159,7 @@ const NOME_DO_NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DE
 })
 export class ServidorComponent {
   protected readonly s = inject(ServidorService);
+  protected readonly exec = inject(ExecucaoService);
   protected readonly dep = inject(DepuradorService);
   private readonly layout = inject(LayoutService);
   private readonly editor = inject(EditorService);
@@ -144,12 +172,32 @@ export class ServidorComponent {
   /** Acompanha o fim da saída (desliga quando o usuário rola para cima). */
   private seguir = true;
 
+  /** Configuração escolhida quando é uma classe main (senão, o painel é do servidor). */
+  protected readonly mainEscolhida = computed(() => {
+    const c = this.exec.atual();
+    return c?.tipo === 'main' ? c : null;
+  });
+  /** De onde vem a saída mostrada: o processo main ou o servidor. */
+  protected readonly fonte = computed(() => {
+    const cfg = this.mainEscolhida();
+    if (!cfg) return this.s.execucaoAtual();
+    const m = this.exec.main();
+    return m && m.config.id === cfg.id ? m : null;
+  });
+
   protected readonly rodando = computed(() => {
+    if (this.mainEscolhida()) return this.exec.rodando();
     const f = this.s.execucaoAtual()?.fase;
     return f === 'subindo' || f === 'rodando' || f === 'parando';
   });
 
   protected readonly textoDoEstado = computed(() => {
+    if (this.mainEscolhida()) {
+      const m = this.fonte() as ExecucaoDeMain | null;
+      if (!m) return 'parado';
+      if (m.fase === 'parado') return m.codigo !== null ? `terminou · código ${m.codigo}` : 'parado';
+      return m.debug ? 'rodando (debug)' : 'rodando';
+    }
     const e = this.s.execucaoAtual();
     if (!e) return 'parado';
     if (e.fase === 'subindo') return e.debug ? 'subindo (debug)…' : 'subindo…';
@@ -161,7 +209,7 @@ export class ServidorComponent {
 
   /** Linhas visíveis: filtradas por nível e com os frames de framework recolhidos. */
   protected readonly itens = computed<Item[]>(() => {
-    const linhas = this.s.execucaoAtual()?.linhas ?? [];
+    const linhas = this.fonte()?.linhas ?? [];
     const filtro = this.filtro();
     const expandidos = this.expandidos();
     const saida: Item[] = [];
@@ -292,13 +340,13 @@ export class ServidorComponent {
         break;
       }
       case 'i':
-        void this.s.iniciar(false);
+        void (this.mainEscolhida() ? this.exec.rodar(false) : this.s.iniciar(false));
         break;
       case 'd':
-        void this.s.iniciar(true);
+        void (this.mainEscolhida() ? this.exec.rodar(true) : this.s.iniciar(true));
         break;
       case 'x':
-        void this.s.parar();
+        void (this.mainEscolhida() ? this.exec.parar() : this.s.parar());
         break;
       case 'r':
         void this.s.redeploy();
@@ -316,7 +364,8 @@ export class ServidorComponent {
         this.filtro.set('todos');
         break;
       case 'c':
-        this.s.limpar();
+        if (this.mainEscolhida()) this.exec.limparSaida();
+        else this.s.limpar();
         break;
       case 's':
         void this.s.escolher();

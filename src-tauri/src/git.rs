@@ -33,7 +33,7 @@ pub struct SaidaGit {
     pub erro: String,
 }
 
-fn comando_git(pasta: Option<&str>) -> Command {
+pub(crate) fn comando_git(pasta: Option<&str>) -> Command {
     let mut c = Command::new("git");
     if let Some(p) = pasta {
         c.current_dir(p);
@@ -57,7 +57,7 @@ fn comando_git(pasta: Option<&str>) -> Command {
     c
 }
 
-fn rodar(mut c: Command, entrada: Option<&str>) -> Result<SaidaGit, String> {
+pub(crate) fn rodar(mut c: Command, entrada: Option<&str>) -> Result<SaidaGit, String> {
     let mut filho = c.spawn().map_err(|e| format!("não consegui rodar o git (ele está instalado?): {e}"))?;
     if let Some(texto) = entrada {
         if let Some(mut stdin) = filho.stdin.take() {

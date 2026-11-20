@@ -3,7 +3,7 @@
  * Serve para trabalhar no visual com dados parecidos com os dos mockups.
  * Nada aqui roda dentro do app.
  */
-import type { ColunaDeTabela, Entrada, Indice, InfoConexao, Ocorrencia, PerfilBanco, ResultadoSql, SchemaBanco, Simbolo } from './ponte';
+import type { ColunaDeTabela, Entrada, Indice, InfoConexao, MetadadosSpring, Ocorrencia, PedidoDeProjeto, PerfilBanco, ProjetoCriado, ResultadoSql, SchemaBanco, Simbolo } from './ponte';
 import { expressaoDeBusca, OpcoesTexto, passaNaMascara, trechosEncontrados } from '../busca/texto';
 
 export const RAIZ_EXEMPLO = '/exemplo/feirinha-verde';
@@ -193,6 +193,30 @@ const PERFIS_EXEMPLO: PerfilBanco[] = [
 const relativos = () => Object.keys(ARQUIVOS).sort();
 
 export const exemplo = {
+  springMetadados(): MetadadosSpring {
+    const deps = (nomes: [string, string][]) => nomes.map(([id, name]) => ({ id, name }));
+    return {
+      bootVersion: { default: '4.2.0', values: [{ id: '4.2.0', name: '4.2.0' }, { id: '4.1.3', name: '4.1.3' }, { id: '4.0.10', name: '4.0.10' }] },
+      javaVersion: { default: '21', values: [{ id: '25', name: '25' }, { id: '21', name: '21' }, { id: '17', name: '17' }] },
+      dependencies: {
+        values: [
+          { name: 'Developer Tools', values: deps([['devtools', 'Spring Boot DevTools'], ['lombok', 'Lombok'], ['configuration-processor', 'Configuration Processor']]) },
+          { name: 'Web', values: deps([['web', 'Spring Web'], ['webflux', 'Spring Reactive Web'], ['validation', 'Validation']]) },
+          { name: 'Security', values: deps([['security', 'Spring Security'], ['oauth2-resource-server', 'OAuth2 Resource Server']]) },
+          { name: 'SQL', values: deps([['data-jpa', 'Spring Data JPA'], ['postgresql', 'PostgreSQL Driver'], ['mysql', 'MySQL Driver'], ['oracle', 'Oracle Driver'], ['flyway', 'Flyway Migration']]) },
+          { name: 'Ops', values: deps([['actuator', 'Spring Boot Actuator']]) },
+          { name: 'Testing', values: deps([['testcontainers', 'Testcontainers']]) },
+        ],
+      },
+    };
+  },
+  async criarProjeto(p: PedidoDeProjeto, aoProgresso: (t: string) => void): Promise<ProjetoCriado> {
+    for (const t of ['gerando o projeto…', 'git init + primeiro commit…', 'pronto']) {
+      aoProgresso(t);
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    return { pasta: p.pasta, principal: null, aviso: null };
+  },
   lerPasta(caminho: string): Entrada[] {
     const prefixo = caminho === RAIZ_EXEMPLO ? '' : caminho.slice(RAIZ_EXEMPLO.length + 1) + '/';
     const vistos = new Map<string, boolean>();

@@ -9,7 +9,7 @@ import { Injectable, signal } from '@angular/core';
  */
 export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor' | 'ia';
 /** Tela que ocupa a área principal: o editor (com árvore e terminal), o Git ou o merge. */
-export type Tela = 'editor' | 'git' | 'merge';
+export type Tela = 'editor' | 'git' | 'merge' | 'debug';
 export type Regiao = 'esquerda' | 'inferior' | 'direita';
 
 export interface Painel {
@@ -21,7 +21,7 @@ export interface Painel {
 
 export const PAINEIS: Painel[] = [
   { id: 'arquivos', titulo: 'Arquivos', regiao: 'esquerda', atalho: '␣ e' },
-  { id: 'conexoes', titulo: 'Conexões', regiao: 'esquerda', atalho: '␣ d' },
+  { id: 'conexoes', titulo: 'Conexões', regiao: 'direita', atalho: '␣ d' },
   { id: 'terminal', titulo: 'Terminal', regiao: 'inferior', atalho: 'alt f12' },
   { id: 'servidor', titulo: 'Servidor', regiao: 'inferior', atalho: '␣ j' },
   { id: 'ia', titulo: 'IA', regiao: 'direita', atalho: '␣ a' },

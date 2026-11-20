@@ -3,12 +3,12 @@ import { EditorService } from '../editor/editor.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
-import { MensagensService } from '../nucleo/mensagens.service';
 import { ponte } from '../nucleo/ponte';
 import { BuscaService } from '../busca/busca.service';
 import { GitService } from '../git/git.service';
 import { MergeService } from '../git/merge.service';
 import { CommitService } from '../git/commit.service';
+import { ExecucaoService } from '../execucao/execucao.service';
 
 /** Barra de cima: menu, projeto, buffers abertos, ferramentas e controles da janela. */
 @Component({
@@ -40,6 +40,7 @@ import { CommitService } from '../git/commit.service';
 
       @if (layout.tela() === 'git') {
         <div class="ferramentas git-acoes">
+          <button class="botao" title="Voltar ao editor (esc)" (click)="voltarAoEditor()">← editor <kbd>esc</kbd></button>
           <button class="botao" title="Atualizar (ctrl+t)" [disabled]="!!git.ocupado()" (click)="git.pull()">↓ pull</button>
           <button class="botao" [class.destaque]="(git.estado()?.aFrente ?? 0) > 0" title="Enviar (ctrl+shift+k)"
                   [disabled]="!!git.ocupado()" (click)="git.push()">↑ push@if (git.estado()?.aFrente) { {{ git.estado()!.aFrente }}}</button>
@@ -53,20 +54,43 @@ import { CommitService } from '../git/commit.service';
         <button class="botao-quadrado" [class.ligado]="layout.tela() === 'git'" aria-label="Git" title="Git (␣ g)" (click)="layout.tela.set('git')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="5" r="2.5"></circle><circle cx="6" cy="19" r="2.5"></circle><circle cx="18" cy="8" r="2.5"></circle><path d="M6 7.5v9M18 10.5v1a4 4 0 0 1-4 4H8.5"></path></svg>
         </button>
-        <button class="botao-quadrado" aria-label="Banco de dados (em breve)" title="Banco — em breve" (click)="emBreve('banco')">
+        <button class="botao-quadrado" [class.ligado]="layout.disposicao().visiveis.conexoes" aria-label="Banco de dados" title="Banco de dados (␣ d)" (click)="layout.alternar('conexoes')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"></ellipse><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"></path></svg>
         </button>
-        <button class="botao-quadrado" aria-label="Servidor (em breve)" title="Servidor (JBoss/Tomcat) — em breve" (click)="emBreve('servidor')">
+        <button class="botao-quadrado" [class.ligado]="layout.disposicao().visiveis.servidor" aria-label="Servidor" title="Servidor (␣ j)" (click)="layout.alternar('servidor')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"></rect><rect x="4" y="13" width="16" height="7" rx="2"></rect><path d="M8 7.5h.01M8 16.5h.01"></path></svg>
         </button>
         <button class="botao-quadrado" [class.ligado]="layout.disposicao().visiveis.terminal" aria-label="Terminal" title="Terminal (alt f12)" (click)="layout.alternar('terminal')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7l5 5-5 5M12 18h7"></path></svg>
         </button>
-        <button class="botao-quadrado destaque-texto" aria-label="IA (em breve)" title="IA — em breve" (click)="emBreve('IA')">
+        <button class="botao-quadrado destaque-texto" [class.ligado]="layout.disposicao().visiveis.ia" aria-label="IA" title="IA (␣ a)" (click)="layout.alternar('ia')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"></path></svg>
         </button>
       </div>
 
+      }
+      @if (layout.tela() === 'editor' || layout.tela() === 'debug') {
+        <!-- Configuração de execução + RUN / DEBUG / parar (mockup 11). -->
+        <div class="ferramentas execucao">
+          <button class="botao execucao-config" title="o que o RUN/DEBUG roda (␣ r)" (click)="exec.escolherConfig()">
+            @if (exec.atual()?.tipo === 'main') {
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"></path></svg>
+            } @else {
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"></rect><rect x="4" y="13" width="16" height="7" rx="2"></rect><path d="M8 7.5h.01M8 16.5h.01"></path></svg>
+            }
+            <span>{{ exec.atual()?.nome ?? (exec.procurando() ? 'procurando…' : 'nada para rodar') }}</span>
+            <span class="suave">▾</span>
+          </button>
+          <button class="botao-quadrado rodar" [class.ligado]="exec.rodando() && !exec.depurando()" aria-label="Rodar" title="Rodar (shift+F10)" (click)="exec.rodar(false)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"></path></svg>
+          </button>
+          <button class="botao-quadrado depurar" [class.ativo]="exec.depurando() || layout.tela() === 'debug'" aria-label="Depurar" title="Depurar (shift+F9) · tela de debug: ␣ x" (click)="depurar()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="7" width="10" height="13" rx="5"></rect><path d="M12 7V4M9 4.5l1.5 2.5M15 4.5l-1.5 2.5M7 12H3.5M20.5 12H17M7 16.5l-3 2M17 16.5l3 2M12 11v9"></path></svg>
+          </button>
+          <button class="botao-quadrado parar" [disabled]="!exec.rodando()" aria-label="Parar" title="Parar (ctrl+F2)" (click)="exec.parar()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
+          </button>
+        </div>
       }
       <div class="janela">
         <button aria-label="Minimizar" (click)="janela.minimizar()">–</button>
@@ -85,10 +109,17 @@ export class BarraTopoComponent {
   protected readonly git = inject(GitService);
   protected readonly merge = inject(MergeService);
   protected readonly commit = inject(CommitService);
-  private readonly mensagens = inject(MensagensService);
   protected readonly janela = ponte.janela;
+  protected readonly exec = inject(ExecucaoService);
 
-  protected emBreve(o: string): void {
-    this.mensagens.mostrar(`${o}: em breve`);
+  /** DEBUG: já depurando, só mostra a tela de debug; senão, sobe em debug. */
+  protected depurar(): void {
+    if (this.exec.depurando()) this.layout.tela.set('debug');
+    else void this.exec.rodar(true);
+  }
+
+  protected voltarAoEditor(): void {
+    this.layout.tela.set('editor');
+    queueMicrotask(() => this.editor.focar());
   }
 }

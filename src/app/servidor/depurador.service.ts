@@ -5,6 +5,8 @@ import { EditorService } from '../editor/editor.service';
 import { JdtlsService } from '../java/jdtls.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { ServidorService } from './servidor.service';
+import { LayoutService } from '../layout/layout.service';
+import { ProjetoService } from '../nucleo/projeto.service';
 
 export interface FrameDap {
   id: number;
@@ -20,6 +22,11 @@ export interface VariavelDap {
   variablesReference: number;
 }
 
+export interface ThreadDap {
+  id: number;
+  name: string;
+}
+
 /** Um nó da árvore de variáveis (os filhos carregam ao abrir). */
 export interface NoDeVariavel {
   chave: string;
@@ -27,6 +34,25 @@ export interface NoDeVariavel {
   v: VariavelDap;
   aberto: boolean;
 }
+
+/** Sessão de debug: anexada a um servidor (JDWP) ou um processo `main` lançado pelo java-debug. */
+export interface SessaoDebug {
+  tipo: 'servidor' | 'main';
+  nome: string;
+  perfilId: string | null;
+  porta: number | null;
+  /** RUN sem debug: o java-debug só roda o processo (sem breakpoints). */
+  semDebug: boolean;
+}
+
+/** O que o RUN/DEBUG de uma classe `main` precisa. */
+export interface AlvoMain {
+  nome: string;
+  mainClass: string;
+  projectName: string;
+}
+
+export type ParadaEmExcecoes = 'nenhuma' | 'naoTratadas' | 'todas';
 
 interface Mensagem {
   type: 'request' | 'response' | 'event';
@@ -40,11 +66,15 @@ interface Mensagem {
 }
 
 const CHAVE_DOS_BREAKPOINTS = 'seedy.breakpoints';
+const CHAVE_DAS_CONDICOES = 'seedy.breakpoints.condicoes';
+const CHAVE_DAS_VIGIAS = 'seedy.vigias';
+const CHAVE_DAS_EXCECOES = 'seedy.breakpoints.excecoes';
 
 /**
- * Debug de Java pelo java-debug (DAP) anexado ao servidor (JDWP). Breakpoints na
- * margem do editor (ctrl+F8), F8 passa, F7 entra, shift+F8 sai, F9 continua,
- * alt+F8 avalia. Classes alteradas entram no servidor sozinhas (hot code replace).
+ * Debug de Java pelo java-debug (DAP): anexado ao servidor (JDWP) ou lançando a classe
+ * `main` (o java-debug sobe a JVM; com RUN, sem debug). Breakpoints na margem (ctrl+F8),
+ * com condição; F8 passa, F7 entra, shift+F8 sai, F9 continua, alt+F9 roda até o cursor,
+ * alt+F8 avalia. Classes alteradas entram no processo sozinhas (hot code replace).
  */
 @Injectable({ providedIn: 'root' })
 export class DepuradorService {
@@ -52,24 +82,45 @@ export class DepuradorService {
   private readonly jdtls = inject(JdtlsService);
   private readonly mensagens = inject(MensagensService);
   private readonly servidor = inject(ServidorService);
+  private readonly layout = inject(LayoutService);
+  private readonly projeto = inject(ProjetoService);
 
   /** Arquivo → linhas com breakpoint. */
-  readonly breakpoints = signal(new Map<string, number[]>(this.lerBreakpoints()));
-  readonly sessao = signal<{ perfilId: string; porta: number } | null>(null);
-  readonly pausado = signal<{ threadId: number; motivo: string } | null>(null);
+  readonly breakpoints = signal(new Map<string, number[]>(ler<[string, number[]][]>(CHAVE_DOS_BREAKPOINTS, [])));
+  /** `arquivo#linha` → condição do breakpoint. */
+  readonly condicoes = signal(new Map<string, string>(ler<[string, string][]>(CHAVE_DAS_CONDICOES, [])));
+  readonly silenciado = signal(false);
+  readonly paradaEmExcecoes = signal<ParadaEmExcecoes>(ler<ParadaEmExcecoes>(CHAVE_DAS_EXCECOES, 'nenhuma'));
+  readonly sessao = signal<SessaoDebug | null>(null);
+  readonly pausado = signal<{ threadId: number; motivo: string; texto: string | null } | null>(null);
+  readonly threads = signal<ThreadDap[]>([]);
   readonly frames = signal<FrameDap[]>([]);
   readonly frameAtual = signal<number | null>(null);
   readonly variaveis = signal<NoDeVariavel[]>([]);
   readonly avaliacoes = signal<{ expressao: string; resultado: string; erro: boolean }[]>([]);
+  /** Expressões vigiadas: reavaliadas a cada parada. */
+  readonly vigias = signal<string[]>(ler<string[]>(CHAVE_DAS_VIGIAS, []));
+  readonly valoresDasVigias = signal(new Map<string, { valor: string; erro: boolean }>());
 
   readonly ativo = computed(() => !!this.sessao());
+  /** Sessão em que dá para depurar (não é um RUN sem debug). */
+  readonly depurando = computed(() => !!this.sessao() && !this.sessao()!.semDebug);
   readonly localAtual = computed(() => {
     const f = this.frames().find((x) => x.id === this.frameAtual());
     return f?.source?.path ? { caminho: f.source.path, linha: f.line, nome: f.name } : null;
   });
+  readonly totalDeBreakpoints = computed(() => [...this.breakpoints().values()].reduce((n, l) => n + l.length, 0));
+
+  /** A saída do processo `main` (stdout/stderr) e o fim dele vão para quem roda (ExecucaoService). */
+  aoSaida: ((texto: string, categoria: string) => void) | null = null;
+  aoTerminar: ((codigo: number | null) => void) | null = null;
+  /** A tela de debug (quando aberta) diz onde está o cursor dela e foca o campo de avaliar. */
+  telaDebug: { cursor(): { caminho: string; linha: number } | null; focarAvaliar(): void } | null = null;
 
   private conexao: number | null = null;
   private seq = 0;
+  private codigoDeSaida: number | null = null;
+  private ateOCursor: { caminho: string; linha: number } | null = null;
   private readonly pendentes = new Map<number, { ok: (b: any) => void; erro: (e: Error) => void }>();
   private readonly filhos = new Map<string, VariavelDap[]>();
   private readonly decoracoes = new Map<monaco.editor.ITextModel, string[]>();
@@ -95,20 +146,11 @@ export class DepuradorService {
   /** ctrl+F8 / clique na margem: liga ou desliga o breakpoint da linha. */
   alternar(caminho: string, linha: number): void {
     const atual = new Set(this.breakpoints().get(caminho) ?? []);
-    if (atual.has(linha)) atual.delete(linha);
-    else atual.add(linha);
-    this.breakpoints.update((m) => {
-      const n = new Map(m);
-      if (atual.size) n.set(caminho, [...atual].sort((a, b) => a - b));
-      else n.delete(caminho);
-      return n;
-    });
-    try {
-      localStorage.setItem(CHAVE_DOS_BREAKPOINTS, JSON.stringify([...this.breakpoints()]));
-    } catch {
-      /* sem armazenamento: vale nesta sessão */
-    }
-    if (this.conexao !== null) void this.enviarBreakpoints(caminho);
+    if (atual.has(linha)) {
+      atual.delete(linha);
+      this.mudarCondicao(caminho, linha, '');
+    } else atual.add(linha);
+    this.mudarLinhas(caminho, [...atual]);
   }
 
   alternarNoCursor(): void {
@@ -122,32 +164,68 @@ export class DepuradorService {
     this.alternar(b.caminho, pos.lineNumber);
   }
 
-  private lerBreakpoints(): [string, number[]][] {
-    try {
-      return JSON.parse(localStorage.getItem(CHAVE_DOS_BREAKPOINTS) ?? '[]');
-    } catch {
-      return [];
-    }
+  remover(caminho: string, linha: number): void {
+    this.mudarLinhas(caminho, (this.breakpoints().get(caminho) ?? []).filter((l) => l !== linha));
+    this.mudarCondicao(caminho, linha, '');
   }
 
-  /** Bolinhas na margem e a linha onde a execução parou. */
+  condicao(caminho: string, linha: number): string {
+    return this.condicoes().get(`${caminho}#${linha}`) ?? '';
+  }
+
+  /** Breakpoint condicional: só para quando a expressão Java dá true (vazio = sempre). */
+  definirCondicao(caminho: string, linha: number, expressao: string): void {
+    this.mudarCondicao(caminho, linha, expressao.trim());
+    if (this.conexao !== null) void this.enviarBreakpoints(caminho);
+    this.breakpoints.update((m) => new Map(m)); // redesenha (o ícone muda)
+  }
+
+  /** Deixa os breakpoints guardados mas não para neles. */
+  alternarSilencio(): void {
+    this.silenciado.update((s) => !s);
+    this.mensagens.mostrar(this.silenciado() ? 'breakpoints silenciados' : 'breakpoints de volta');
+    if (this.conexao !== null) void this.enviarTodos();
+  }
+
+  /** Nenhuma → só as não tratadas → todas as exceções. */
+  alternarExcecoes(): void {
+    const proxima: Record<ParadaEmExcecoes, ParadaEmExcecoes> = { nenhuma: 'naoTratadas', naoTratadas: 'todas', todas: 'nenhuma' };
+    this.paradaEmExcecoes.set(proxima[this.paradaEmExcecoes()]);
+    gravar(CHAVE_DAS_EXCECOES, this.paradaEmExcecoes());
+    if (this.conexao !== null) void this.enviarExcecoes();
+  }
+
+  private mudarLinhas(caminho: string, linhas: number[]): void {
+    this.breakpoints.update((m) => {
+      const n = new Map(m);
+      if (linhas.length) n.set(caminho, [...new Set(linhas)].sort((a, b) => a - b));
+      else n.delete(caminho);
+      return n;
+    });
+    gravar(CHAVE_DOS_BREAKPOINTS, [...this.breakpoints()]);
+    if (this.conexao !== null) void this.enviarBreakpoints(caminho);
+  }
+
+  private mudarCondicao(caminho: string, linha: number, expressao: string): void {
+    const chave = `${caminho}#${linha}`;
+    if ((this.condicoes().get(chave) ?? '') === expressao) return;
+    this.condicoes.update((m) => {
+      const n = new Map(m);
+      if (expressao) n.set(chave, expressao);
+      else n.delete(chave);
+      return n;
+    });
+    gravar(CHAVE_DAS_CONDICOES, [...this.condicoes()]);
+  }
+
+  /** Bolinhas na margem e a linha onde a execução parou (no editor principal). */
   private desenhar(): void {
     const ed = this.editor.instancia;
     const m = ed?.getModel();
     if (!ed || !m) return;
     const caminho = this.editor.bufferAtivo()?.caminho;
-    const linhas = (caminho && this.breakpoints().get(caminho)) || [];
     const antigas = this.decoracoes.get(m) ?? [];
-    this.decoracoes.set(
-      m,
-      m.deltaDecorations(
-        antigas,
-        linhas.filter((l) => l <= m.getLineCount()).map((l) => ({
-          range: new monaco.Range(l, 1, l, 1),
-          options: { glyphMarginClassName: 'breakpoint', glyphMarginHoverMessage: { value: 'breakpoint (ctrl+F8)' }, stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges },
-        })),
-      ),
-    );
+    this.decoracoes.set(m, m.deltaDecorations(antigas, caminho ? this.decoracoesDeBreakpoint(caminho, m) : []));
     this.decoracaoAtual?.clear();
     const aqui = this.localAtual();
     if (aqui && caminho && mesmo(aqui.caminho, caminho) && aqui.linha <= m.getLineCount()) {
@@ -157,11 +235,70 @@ export class DepuradorService {
     }
   }
 
+  /** As bolinhas de um arquivo (a tela de debug usa as mesmas no editor dela). */
+  decoracoesDeBreakpoint(caminho: string, m: monaco.editor.ITextModel): monaco.editor.IModelDeltaDecoration[] {
+    const linhas = this.breakpoints().get(caminho) ?? [];
+    return linhas
+      .filter((l) => l <= m.getLineCount())
+      .map((l) => {
+        const cond = this.condicao(caminho, l);
+        return {
+          range: new monaco.Range(l, 1, l, 1),
+          options: {
+            glyphMarginClassName: `breakpoint${cond ? ' condicional' : ''}${this.silenciado() ? ' silenciado' : ''}`,
+            glyphMarginHoverMessage: { value: cond ? `breakpoint se \`${cond}\`` : 'breakpoint (ctrl+F8)' },
+            stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+          },
+        };
+      });
+  }
+
   // ---------- sessão ----------
 
   /** Anexa o depurador ao servidor (JDWP em `porta`), pelo java-debug do jdtls. */
   async anexar(perfilId: string, porta: number): Promise<void> {
-    if (this.sessao()) await this.desanexar();
+    const nome = this.servidor.perfil(perfilId)?.nome ?? 'servidor';
+    await this.abrirSessao({ tipo: 'servidor', nome, perfilId, porta, semDebug: false }, () =>
+      this.pedir('attach', { type: 'java', name: 'Seedy', request: 'attach', hostName: 'localhost', port: porta, timeout: 30000 }),
+    );
+  }
+
+  /** RUN/DEBUG de uma classe `main`: o java-debug monta o classpath e sobe a JVM. */
+  async lancar(alvo: AlvoMain, debug: boolean): Promise<boolean> {
+    let caminhos: [string[], string[]];
+    let java: string | undefined;
+    try {
+      caminhos = await this.jdtls.executar<[string[], string[]]>('vscode.java.resolveClasspath', alvo.mainClass, alvo.projectName);
+      java = await this.jdtls.executar<string>('vscode.java.resolveJavaExecutable', alvo.mainClass, alvo.projectName).catch(() => undefined);
+    } catch (e) {
+      this.mensagens.erro(`não consegui montar o classpath de ${alvo.nome}: ${(e as Error).message}`);
+      return false;
+    }
+    this.codigoDeSaida = null;
+    return this.abrirSessao({ tipo: 'main', nome: alvo.nome, perfilId: null, porta: null, semDebug: !debug }, () =>
+      this.pedir('launch', {
+        type: 'java',
+        name: alvo.nome,
+        request: 'launch',
+        mainClass: alvo.mainClass,
+        projectName: alvo.projectName,
+        cwd: this.projeto.raiz() ?? undefined,
+        modulePaths: caminhos?.[0] ?? [],
+        classPaths: caminhos?.[1] ?? [],
+        javaExec: java,
+        args: '',
+        // A saída chega em UTF-8 (sem isso, acentos quebram no console do Windows).
+        vmArgs: '-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dfile.encoding=UTF-8',
+        encoding: 'UTF-8',
+        console: 'internalConsole',
+        noDebug: !debug,
+        stopOnEntry: false,
+      }),
+    );
+  }
+
+  private async abrirSessao(s: SessaoDebug, iniciar: () => Promise<unknown>): Promise<boolean> {
+    if (this.sessao()) await this.desanexar(this.sessao()!.tipo === 'main');
     try {
       const portaDap = await this.jdtls.executar<number>('vscode.java.startDebugSession');
       await this.jdtls
@@ -172,7 +309,7 @@ export class DepuradorService {
         (m) => this.receber(m),
         () => this.aoFechar(),
       );
-      this.sessao.set({ perfilId, porta });
+      this.sessao.set(s);
       await this.pedir('initialize', {
         clientID: 'seedy',
         clientName: 'Seedy',
@@ -181,32 +318,40 @@ export class DepuradorService {
         linesStartAt1: true,
         columnsStartAt1: true,
         supportsVariableType: true,
+        supportsRunInTerminalRequest: false,
         locale: 'pt-BR',
       });
-      // A resposta do attach só chega depois do configurationDone (feito no evento "initialized").
-      void this.pedir('attach', { type: 'java', name: 'Seedy', request: 'attach', hostName: 'localhost', port: porta, timeout: 30000 }).catch((e) =>
-        this.mensagens.erro(`debug: ${e.message}`),
-      );
+      // A resposta do attach/launch só chega depois do configurationDone (feito no evento "initialized").
+      void iniciar().catch((e) => {
+        this.mensagens.erro(`${s.semDebug ? 'rodar' : 'debug'}: ${e.message}`);
+        if (s.tipo === 'main') void this.desanexar(true);
+      });
+      return true;
     } catch (e) {
       this.mensagens.erro(`debug: ${(e as Error).message ?? e}`);
       await this.desanexar();
+      return false;
     }
   }
 
-  async desanexar(): Promise<void> {
+  /** Solta o depurador; com `encerrar`, mata o processo depurado (o `main`). */
+  async desanexar(encerrar = false): Promise<void> {
     if (this.conexao !== null) {
-      await this.pedir('disconnect', { restart: false, terminateDebuggee: false }).catch(() => undefined);
+      await this.pedir('disconnect', { restart: false, terminateDebuggee: encerrar }).catch(() => undefined);
       await ponte.dap.fechar(this.conexao).catch(() => undefined);
     }
     this.aoFechar();
   }
 
   private aoFechar(): void {
+    const s = this.sessao();
     this.conexao = null;
     for (const p of this.pendentes.values()) p.erro(new Error('sessão de debug encerrada'));
     this.pendentes.clear();
     this.sessao.set(null);
+    this.threads.set([]);
     this.limparPausa();
+    if (s?.tipo === 'main') this.aoTerminar?.(this.codigoDeSaida);
   }
 
   // ---------- controle ----------
@@ -228,6 +373,15 @@ export class DepuradorService {
     this.passo('stepOut');
   }
 
+  /** alt+F9: segue até a linha (um breakpoint temporário que some na próxima parada). */
+  async ateALinha(caminho: string, linha: number): Promise<void> {
+    const p = this.pausado();
+    if (!p) return void this.mensagens.mostrar('a execução não está pausada');
+    this.ateOCursor = { caminho, linha };
+    await this.enviarBreakpoints(caminho);
+    this.continuar();
+  }
+
   private passo(comando: 'next' | 'stepIn' | 'stepOut'): void {
     const p = this.pausado();
     if (!p) return void this.mensagens.mostrar('a execução não está pausada');
@@ -246,13 +400,40 @@ export class DepuradorService {
     }
   }
 
-  async escolherFrame(id: number): Promise<void> {
+  vigiar(expressao: string): void {
+    const texto = expressao.trim();
+    if (!texto || this.vigias().includes(texto)) return;
+    this.vigias.update((l) => [...l, texto]);
+    gravar(CHAVE_DAS_VIGIAS, this.vigias());
+    void this.atualizarVigias();
+  }
+
+  deixarDeVigiar(expressao: string): void {
+    this.vigias.update((l) => l.filter((v) => v !== expressao));
+    gravar(CHAVE_DAS_VIGIAS, this.vigias());
+  }
+
+  private async atualizarVigias(): Promise<void> {
+    const frameId = this.frameAtual();
+    const valores = new Map<string, { valor: string; erro: boolean }>();
+    for (const v of this.vigias()) {
+      if (frameId === null) continue;
+      try {
+        const r = await this.pedir('evaluate', { expression: v, frameId, context: 'watch' });
+        valores.set(v, { valor: r?.result ?? '', erro: false });
+      } catch (e) {
+        valores.set(v, { valor: (e as Error).message, erro: true });
+      }
+    }
+    this.valoresDasVigias.set(valores);
+  }
+
+  async escolherFrame(id: number, abrirNoEditor = this.layout.tela() !== 'debug'): Promise<void> {
     this.frameAtual.set(id);
     const f = this.frames().find((x) => x.id === id);
-    if (f?.source?.path) {
-      await this.editor.abrir(f.source.path, f.line);
-    }
+    if (f?.source?.path && abrirNoEditor) await this.editor.abrir(f.source.path, f.line);
     await this.carregarVariaveis(id);
+    await this.atualizarVigias();
   }
 
   /** Abre/fecha um nó da árvore de variáveis (carrega os filhos na primeira vez). */
@@ -309,51 +490,74 @@ export class DepuradorService {
 
   private async aoEvento(evento: string, corpo: any): Promise<void> {
     switch (evento) {
-      case 'initialized':
-        for (const caminho of this.breakpoints().keys()) await this.enviarBreakpoints(caminho);
-        await this.pedir('setExceptionBreakpoints', { filters: [] }).catch(() => undefined);
+      case 'initialized': {
+        if (!this.sessao()?.semDebug) {
+          await this.enviarTodos();
+          await this.enviarExcecoes();
+        }
         await this.pedir('configurationDone', {}).catch(() => undefined);
-        this.mensagens.mostrar(`depurador anexado na porta ${this.sessao()?.porta}`);
+        const s = this.sessao();
+        if (s?.tipo === 'servidor') this.mensagens.mostrar(`depurador anexado na porta ${s.porta}`);
         break;
+      }
       case 'stopped':
-        await this.aoParar(corpo.threadId, corpo.reason);
+        await this.aoParar(corpo.threadId, corpo.reason, corpo.text ?? corpo.description ?? null);
         break;
       case 'continued':
         this.limparPausa();
         break;
-      case 'terminated':
+      case 'thread':
+        void this.atualizarThreads();
+        break;
       case 'exited':
-        this.aoFechar();
+        this.codigoDeSaida = typeof corpo.exitCode === 'number' ? corpo.exitCode : null;
+        break;
+      case 'terminated':
+        // O "exited" (com o código de saída) às vezes chega logo depois.
+        await new Promise((r) => setTimeout(r, 150));
+        await this.desanexar();
         break;
       case 'hotcodereplace':
-        // Build do jdtls terminou com classes alteradas: manda o servidor trocá-las.
+        // Build do jdtls terminou com classes alteradas: manda o processo trocá-las.
         if (corpo.changeType === 'BUILD_COMPLETE') {
           try {
             const r = await this.pedir('redefineClasses', {});
             const n = r?.changedClasses?.length ?? 0;
-            if (n) this.mensagens.mostrar(`hot code replace: ${n} ${n === 1 ? 'classe trocada' : 'classes trocadas'} no servidor`);
+            if (n) this.mensagens.mostrar(`hot code replace: ${n} ${n === 1 ? 'classe trocada' : 'classes trocadas'}`);
           } catch (e) {
             this.mensagens.erro(`hot code replace: ${(e as Error).message}`);
           }
         } else if (corpo.changeType === 'ERROR' || corpo.changeType === 'WARNING') {
-          this.mensagens.erro(`hot code replace não aplicou: ${corpo.message} (ctrl+F10 faz redeploy)`);
+          this.mensagens.erro(`hot code replace não aplicou: ${corpo.message}`);
         }
         break;
       case 'output':
-        if (corpo.category === 'stderr' && corpo.output?.trim()) this.mensagens.erro(`debug: ${corpo.output.trim()}`);
+        if (this.sessao()?.tipo === 'main' && corpo.category !== 'telemetry') this.aoSaida?.(corpo.output ?? '', corpo.category ?? 'console');
+        else if (corpo.category === 'stderr' && corpo.output?.trim()) this.mensagens.erro(`debug: ${corpo.output.trim()}`);
         break;
     }
   }
 
-  private async aoParar(threadId: number, motivo: string): Promise<void> {
-    this.pausado.set({ threadId, motivo });
-    const r = await this.pedir('stackTrace', { threadId, startFrame: 0, levels: 60 }).catch(() => null);
+  private async aoParar(threadId: number, motivo: string, texto: string | null): Promise<void> {
+    if (this.ateOCursor) {
+      const { caminho } = this.ateOCursor;
+      this.ateOCursor = null;
+      void this.enviarBreakpoints(caminho);
+    }
+    this.pausado.set({ threadId, motivo, texto });
+    void this.atualizarThreads();
+    const r = await this.pedir('stackTrace', { threadId, startFrame: 0, levels: 80 }).catch(() => null);
     const frames = (r?.stackFrames ?? []) as FrameDap[];
     this.frames.set(frames);
+    // Parou: a tela de debug aparece (como a janela de debug do IntelliJ).
+    if (this.layout.tela() === 'editor') this.layout.tela.set('debug');
     const primeiro = frames.find((f) => f.source?.path) ?? frames[0];
     if (primeiro) await this.escolherFrame(primeiro.id);
-    const onde = primeiro?.source?.name ? `${primeiro.source.name}:${primeiro.line}` : '';
-    this.mensagens.mostrar(`pausado${onde ? ` em ${onde}` : ''} (${motivoLegivel(motivo)}) · F8 passa · F7 entra · F9 continua`);
+  }
+
+  private async atualizarThreads(): Promise<void> {
+    const r = await this.pedir('threads', {}).catch(() => null);
+    this.threads.set(((r?.threads ?? []) as ThreadDap[]).slice().sort((a, b) => a.name.localeCompare(b.name)));
   }
 
   private async carregarVariaveis(frameId: number): Promise<void> {
@@ -367,12 +571,28 @@ export class DepuradorService {
     this.variaveis.set(nos);
   }
 
+  private async enviarTodos(): Promise<void> {
+    const arquivos = new Set(this.breakpoints().keys());
+    if (this.ateOCursor) arquivos.add(this.ateOCursor.caminho);
+    for (const caminho of arquivos) await this.enviarBreakpoints(caminho);
+  }
+
+  private async enviarExcecoes(): Promise<void> {
+    const filtros = { nenhuma: [], naoTratadas: ['uncaught'], todas: ['caught', 'uncaught'] }[this.paradaEmExcecoes()];
+    await this.pedir('setExceptionBreakpoints', { filters: filtros }).catch(() => undefined);
+  }
+
   private async enviarBreakpoints(caminho: string): Promise<void> {
-    const linhas = this.breakpoints().get(caminho) ?? [];
+    if (this.sessao()?.semDebug) return;
+    const linhas = this.silenciado() ? [] : [...(this.breakpoints().get(caminho) ?? [])];
+    if (this.ateOCursor && mesmo(this.ateOCursor.caminho, caminho) && !linhas.includes(this.ateOCursor.linha)) linhas.push(this.ateOCursor.linha);
     const nome = caminho.split(/[\\/]/).pop();
     const r = await this.pedir('setBreakpoints', {
       source: { path: caminho, name: nome },
-      breakpoints: linhas.map((line) => ({ line })),
+      breakpoints: linhas.map((line) => {
+        const condition = this.condicao(caminho, line);
+        return condition ? { line, condition } : { line };
+      }),
       lines: linhas,
       sourceModified: false,
     }).catch((e) => {
@@ -380,7 +600,7 @@ export class DepuradorService {
       return null;
     });
     const naoVerificados = ((r?.breakpoints ?? []) as { verified: boolean }[]).filter((b) => !b.verified).length;
-    if (naoVerificados && this.sessao()) this.mensagens.mostrar(`${naoVerificados} breakpoint(s) em ${nome} ainda não carregado(s) no servidor`);
+    if (naoVerificados && this.sessao()?.tipo === 'servidor') this.mensagens.mostrar(`${naoVerificados} breakpoint(s) em ${nome} ainda não carregado(s) no servidor`);
   }
 
   private limparPausa(): void {
@@ -388,14 +608,32 @@ export class DepuradorService {
     this.frames.set([]);
     this.frameAtual.set(null);
     this.variaveis.set([]);
+    this.valoresDasVigias.set(new Map());
   }
 }
 
-function motivoLegivel(m: string): string {
-  return m === 'breakpoint' ? 'breakpoint' : m === 'step' ? 'passo' : m === 'exception' ? 'exceção' : m === 'pause' ? 'pausa' : m;
+export function motivoLegivel(m: string): string {
+  return m === 'breakpoint' ? 'breakpoint' : m === 'step' ? 'passo' : m === 'exception' ? 'exceção' : m === 'pause' ? 'pausa' : m === 'entry' ? 'início' : m;
 }
 
 function mesmo(a: string, b: string): boolean {
   const n = (c: string) => c.replace(/\\/g, '/').toLowerCase();
   return n(a) === n(b);
+}
+
+function ler<T>(chave: string, padrao: T): T {
+  try {
+    const v = localStorage.getItem(chave);
+    return v === null ? padrao : (JSON.parse(v) as T);
+  } catch {
+    return padrao;
+  }
+}
+
+function gravar(chave: string, valor: unknown): void {
+  try {
+    localStorage.setItem(chave, JSON.stringify(valor));
+  } catch {
+    /* sem armazenamento: vale nesta sessão */
+  }
 }

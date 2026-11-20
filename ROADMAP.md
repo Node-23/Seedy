@@ -139,6 +139,8 @@ _A detalhar._
   editor (git checkout, build); buffers sem edição recarregam sozinhos
 - ✅ Voltar/avançar nos arquivos vistos (alt+← / alt+→), com cursor e rolagem guardados por arquivo
 - Configurações em arquivo (`seedy.json`): atalhos, shell do terminal, etc.
-- Botões RUN e DEBUG na barra de cima: rodar/depurar o projeto (classe `main` Java ou o servidor
-  de aplicação configurado), com atalho
-- Criar novo projeto (ex.: Java/Maven, web com servidor) a partir de modelos, pelo teclado
+- ✅ Botões RUN e DEBUG na barra de cima (mockup 11): rodam/depuram a classe `main` (pelo java-debug)
+  ou o servidor de aplicação escolhido (`␣ r`), com a tela de debug em tela cheia (`␣ x`)
+- ✅ Criar novo projeto (mockup 12, `␣ N`): Spring Boot (start.spring.io), Maven, WAR, Java simples e
+  Angular (`ng new`); falta testar o Angular com um Node atual
+- Argumentos do programa, variáveis de ambiente e opções da JVM por configuração de execução

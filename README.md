@@ -71,9 +71,17 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   JSP, estáticos e classes alterados vão para o servidor sozinhos (hot swap). Saída com contadores
   de ERROR/WARN, filtro por nível, stack trace clicável (frames de framework recolhidos) e a linha
   da última exceção marcada no editor (`◆ NullPointerException`).
-- **Debug** (java-debug, DAP): breakpoints na margem (`ctrl+F8`), `F8`/`F7`/`shift+F8`/`F9`, pilha,
-  variáveis, avaliar expressão (`alt+F8`) e hot code replace (classe alterada entra no servidor sem
-  redeploy).
+- **RUN e DEBUG** (mockup 11), como no IntelliJ: a barra de cima mostra a configuração de execução
+  (`␣ r` troca) — uma classe com `main` (o jdtls acha todas) ou um servidor do projeto — e os botões
+  ▶ (`shift+F10`), 🐞 (`shift+F9`) e ■ (`ctrl+F2`). A saída da `main` aparece no painel de baixo.
+- **Debug em tela cheia** (mockup 11, `␣ x`; abre sozinho quando a execução para): pilha com as
+  threads, breakpoints (com condição, silenciar e parar em exceções), o código na linha pausada com
+  os valores das variáveis ao lado, variáveis, expressões vigiadas, avaliar (`alt+F8`), até o cursor
+  (`alt+F9`) e o console do processo. Hot code replace: a classe alterada entra no processo sem
+  reiniciar.
+- **Novo projeto** (mockup 12, `␣ N`): Spring Boot (com os iniciadores do start.spring.io), Java com
+  Maven, Java web (WAR, pronto para o servidor do Seedy), Java simples e Angular (`ng new`). Escolhe
+  o JDK entre os instalados, faz `git init` + primeiro commit, abre o projeto e deixa o RUN na `main`.
 - **IA que opera a IDE** (Fase 7): as mesmas ferramentas servem ao painel de IA do Seedy
   (mockup 06, `␣ a`, pela API) e ao **Claude Code no terminal** pelo servidor MCP do Seedy
   (`␣ i` copia o comando `claude mcp add …` para registrar uma vez). A IA abre e lê código, busca
@@ -159,6 +167,7 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `␣ e` | mostrar/esconder arquivos |
 | `␣ t` ou `Alt+F12` | mostrar/esconder terminal |
 | `␣ o` | abrir projeto |
+| `␣ N` | novo projeto: `j`/`k` modelo, `tab` campos, `espaço` marca, `/` filtra iniciadores, `ctrl+o` pasta, `ctrl+⏎` cria |
 | `␣ w` ou `Ctrl+S` | salvar |
 | `␣ q` | fechar buffer |
 | `␣ c` | editar o tema |
@@ -187,8 +196,9 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `␣ y` | revisar as alterações da IA: `⏎` aceita/mantém, `d` recusa/desfaz, `D` diff completo |
 | `␣ i` | copiar o comando que liga o Claude Code ao Seedy (MCP) |
 | `␣ j` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
-| `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | iniciar / iniciar em debug / parar / redeploy (como no IntelliJ) |
-| `ctrl+F8` · `F8` · `F7` · `shift+F8` · `F9` · `alt+F8` | breakpoint · passar · entrar · sair · continuar · avaliar |
+| `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | rodar / depurar a configuração escolhida / parar / redeploy do servidor (como no IntelliJ) |
+| `␣ r` · `␣ x` | escolher o que o RUN/DEBUG roda · tela de debug (`p`/`b`/`v`/`c` focam pilha, breakpoints, variáveis e console; na lista de breakpoints `e` edita a condição e `d` apaga; `esc` volta) |
+| `ctrl+F8` · `F8` · `F7` · `shift+F8` · `F9` · `alt+F9` · `alt+F8` | breakpoint · passar · entrar · sair · continuar · até o cursor · avaliar |
 | `␣ d` | conexões (banco): `j`/`k`, `l`/`⏎` abre/conecta, `⏎` numa tabela consulta, `c` console, `n` nova, `e` editar, `x` desconectar, `r` recarregar, `del` apagar |
 | `Ctrl+Enter` / `Ctrl+Shift+Enter` (num .sql) | executa a instrução sob o cursor (ou a seleção) / explain |
 | grade do resultado | `j`/`k`/`h`/`l` andam, `y` copia a célula, `Y` copia a linha, `esc` volta ao editor |

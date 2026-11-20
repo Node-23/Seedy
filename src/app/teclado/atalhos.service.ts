@@ -17,6 +17,8 @@ import { IaMergeService } from '../ia/ia-merge.service';
 import { BancoService } from '../banco/banco.service';
 import { RevisaoService } from '../ia/revisao.service';
 import { McpService } from '../ia/mcp.service';
+import { ExecucaoService } from '../execucao/execucao.service';
+import { NovoProjetoService } from '../novo-projeto/novo-projeto.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { DepuradorService } from '../servidor/depurador.service';
 import { BlameService } from '../git/blame.service';
@@ -63,6 +65,8 @@ export class AtalhosService {
   private readonly banco = inject(BancoService);
   private readonly revisao = inject(RevisaoService);
   private readonly mcp = inject(McpService);
+  private readonly execucao = inject(ExecucaoService);
+  private readonly novoProjeto = inject(NovoProjetoService);
   private readonly servidor = inject(ServidorService);
   private readonly depurador = inject(DepuradorService);
 
@@ -77,12 +81,14 @@ export class AtalhosService {
     { tecla: 'e', rotulo: 'árvore de arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
     { tecla: 't', rotulo: 'terminal', disponivel: true, executar: () => this.layout.alternar('terminal') },
     { tecla: 'o', rotulo: 'abrir projeto', disponivel: true, executar: () => void this.projeto.escolher() },
+    { tecla: 'N', rotulo: 'novo projeto', disponivel: true, executar: () => void this.novoProjeto.abrir() },
     { tecla: 'w', rotulo: 'salvar', disponivel: true, executar: () => void this.editor.salvar() },
     { tecla: 'q', rotulo: 'fechar buffer', disponivel: true, executar: () => this.editor.fechar() },
     { tecla: 'c', rotulo: 'editar tema', disponivel: true, executar: () => this.abrirTema() },
     { tecla: 'l', rotulo: 'reiniciar jdtls', disponivel: true, executar: () => void this.jdtls.reiniciar() },
     { tecla: 'v', rotulo: 'JDK do jdtls', disponivel: true, executar: () => void this.jdtls.escolherJdk() },
-    { tecla: 'r', rotulo: 'rodar / debug', disponivel: false },
+    { tecla: 'r', rotulo: 'o que o RUN/DEBUG roda', disponivel: true, executar: () => void this.execucao.escolherConfig() },
+    { tecla: 'x', rotulo: 'tela de debug', disponivel: true, executar: () => this.alternarDebug() },
     { tecla: 'g', rotulo: 'git', disponivel: true, executar: () => this.alternarGit() },
     { tecla: 'k', rotulo: 'commit', disponivel: true, executar: () => void this.commit.abrir() },
     { tecla: 'b', rotulo: 'trocar de branch', disponivel: true, executar: () => void this.trocarDeBranch() },
@@ -151,7 +157,7 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta();
+    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {
@@ -211,6 +217,19 @@ export class AtalhosService {
   }
 
   private esperandoJanela = false;
+
+  private alternarDebug(): void {
+    this.layout.tela.set(this.layout.tela() === 'debug' ? 'editor' : 'debug');
+    if (this.layout.tela() === 'editor') queueMicrotask(() => this.editor.focar());
+  }
+
+  /** Linha do cursor para breakpoint / "até o cursor": a da tela de debug, se aberta. */
+  private cursor(): { caminho: string; linha: number } | null {
+    if (this.layout.tela() === 'debug') return this.depurador.telaDebug?.cursor() ?? null;
+    const b = this.editor.bufferAtivo();
+    const pos = this.editor.instancia?.getPosition();
+    return b && !b.somenteLeitura && pos ? { caminho: b.caminho, linha: pos.lineNumber } : null;
+  }
 
   private alternarGit(): void {
     this.layout.tela.set(this.layout.tela() === 'git' ? 'editor' : 'git');
@@ -326,30 +345,45 @@ export class AtalhosService {
   }
 
   /**
-   * Servidor (como no IntelliJ): shift+F10 inicia, shift+F9 inicia em debug, ctrl+F2 para,
-   * ctrl+F10 redeploy. Debug: ctrl+F8 breakpoint, F8 passa, F7 entra, shift+F8 sai,
-   * F9 continua, alt+F8 avalia. true = a tecla foi usada.
+   * Rodar e depurar (como no IntelliJ): shift+F10 roda e shift+F9 depura a configuração
+   * escolhida (␣ r), ctrl+F2 para, ctrl+F10 redeploy do servidor. Debug: ctrl+F8 breakpoint,
+   * F8 passa, F7 entra, shift+F8 sai, F9 continua, alt+F9 até o cursor, alt+F8 avalia.
+   * true = a tecla foi usada.
    */
   private teclaDoServidor(e: KeyboardEvent, ctrl: boolean): boolean {
     const so = (c: boolean, s: boolean, a: boolean) => ctrl === c && e.shiftKey === s && e.altKey === a;
     const pausado = !!this.depurador.pausado();
     switch (e.key) {
       case 'F10':
-        if (so(false, true, false)) { void this.servidor.iniciar(false); return true; }
+        if (so(false, true, false)) { void this.execucao.rodar(false); return true; }
         if (so(true, false, false)) { void this.servidor.redeploy(); return true; }
         return false;
       case 'F9':
-        if (so(false, true, false)) { void this.servidor.iniciar(true); return true; }
+        if (so(false, true, false)) { void this.execucao.rodar(true); return true; }
         if (so(false, false, false) && pausado) { this.depurador.continuar(); return true; }
+        if (so(false, false, true) && pausado) {
+          const c = this.cursor();
+          if (c) void this.depurador.ateALinha(c.caminho, c.linha);
+          return true;
+        }
         return false;
       case 'F2':
-        if (so(true, false, false)) { void this.servidor.parar(); return true; }
+        if (so(true, false, false)) { void this.execucao.parar(); return true; }
         return false;
       case 'F8':
-        if (so(true, false, false)) { this.depurador.alternarNoCursor(); return true; }
+        if (so(true, false, false)) {
+          const c = this.cursor();
+          if (c && /\.java$/i.test(c.caminho)) this.depurador.alternar(c.caminho, c.linha);
+          else if (c) this.mensagens.mostrar('breakpoints só em arquivos .java');
+          return true;
+        }
         if (so(false, false, false) && pausado) { this.depurador.passar(); return true; }
         if (so(false, true, false) && pausado) { this.depurador.sair(); return true; }
-        if (so(false, false, true) && this.depurador.ativo()) {
+        if (so(false, false, true) && this.layout.tela() === 'debug') {
+          this.depurador.telaDebug?.focarAvaliar();
+          return true;
+        }
+        if (so(false, false, true) && this.depurador.depurando()) {
           this.layout.mostrar('servidor');
           queueMicrotask(() => (document.querySelector('.depurador-avaliar') as HTMLInputElement | null)?.focus());
           return true;

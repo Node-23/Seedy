@@ -189,6 +189,34 @@ export interface Jdk {
   maior: number;
 }
 
+/** Pedido da janela de novo projeto (␣ N). */
+export interface PedidoDeProjeto {
+  modelo: 'spring' | 'maven' | 'war' | 'simples' | 'angular';
+  nome: string;
+  pasta: string;
+  grupo: string;
+  pacote: string;
+  java: number;
+  build: 'maven' | 'gradle';
+  empacotamento: 'jar' | 'war';
+  springBoot: string | null;
+  dependencias: string[];
+  git: boolean;
+}
+
+export interface ProjetoCriado {
+  pasta: string;
+  principal: string | null;
+  aviso: string | null;
+}
+
+/** O pedaço do start.spring.io que a janela usa. */
+export interface MetadadosSpring {
+  bootVersion: { default: string; values: { id: string; name: string }[] };
+  javaVersion: { default: string; values: { id: string; name: string }[] };
+  dependencies: { values: { name: string; values: { id: string; name: string; description?: string }[] }[] };
+}
+
 export interface EstadoJava {
   jdk: Jdk | null;
   jdtlsInstalado: boolean;
@@ -293,10 +321,10 @@ export const ponte = {
     return listen<ArquivoTema>('tema-alterado', (e) => fn(e.payload));
   },
 
-  async escolherPasta(): Promise<string | null> {
+  async escolherPasta(titulo = 'Abrir projeto'): Promise<string | null> {
     if (!noApp()) return RAIZ_EXEMPLO;
     const { open } = await import('@tauri-apps/plugin-dialog');
-    const escolha = await open({ directory: true, multiple: false, title: 'Abrir projeto' });
+    const escolha = await open({ directory: true, multiple: false, title: titulo });
     return typeof escolha === 'string' ? escolha : null;
   },
 
@@ -388,6 +416,18 @@ export const ponte = {
       if (!noApp()) return () => {};
       return listen<{ id: number; nome: string; argumentos: Record<string, unknown> }>('mcp-chamada', (e) => fn(e.payload));
     },
+  },
+
+  /** Novo projeto (␣ N): modelos Java, Spring Boot (start.spring.io) e Angular (ng new). */
+  novoProjeto: {
+    async criar(pedido: PedidoDeProjeto, aoProgresso: (texto: string) => void): Promise<ProjetoCriado> {
+      if (!noApp()) return exemplo.criarProjeto(pedido, aoProgresso);
+      const progresso = new Channel<string>();
+      progresso.onmessage = aoProgresso;
+      return invoke<ProjetoCriado>('projeto_criar', { pedido, progresso });
+    },
+    springMetadados: async (): Promise<MetadadosSpring> =>
+      noApp() ? (JSON.parse(await invoke<string>('spring_metadados')) as MetadadosSpring) : exemplo.springMetadados(),
   },
 
   /** Debug (DAP) do java-debug: só o transporte; o protocolo fica em depurador.service.ts. */

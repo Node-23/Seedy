@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Depurador — IDE Java</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Inky Mono','Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:36px;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px}
+.quad{width:36px;height:36px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;display:flex;align-items:center;justify-content:center;padding:0}
+.suave{color:#A29D93}.dest{color:#92A9E1}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.cod{flex:1;padding:8px 0;overflow:hidden;font-size:11.5px;line-height:22px}
+.l{display:block;white-space:pre;position:relative}
+.l .n{display:inline-block;width:44px;text-align:right;padding-right:14px;color:#A29D93}
+.l.bp .n::before{content:'';position:absolute;left:8px;top:6px;width:10px;height:10px;border-radius:50%;background:#EE8C84}
+.l.aqui{background:#333337;box-shadow:inset 3px 0 0 #E8C979}
+.l.aqui .n{color:#E8C979}
+.inl{margin-left:18px;color:#A29D93;font-style:italic}
+.item{display:flex;align-items:center;gap:8px;padding:0 12px;height:24px;font-size:11.5px}
+.sel{background:#333337;box-shadow:inset 3px 0 0 #92A9E1}
+.sec{display:flex;align-items:center;gap:8px;padding:8px 12px 4px;font-size:10.5px;letter-spacing:.14em;color:#A29D93}
+.var{display:flex;gap:6px;padding:0 12px;height:23px;align-items:center;font-size:11.5px;white-space:nowrap}
+.seta{width:10px;color:#A29D93}
+.log{padding:6px 0;font-size:11px;line-height:19px;overflow:hidden}
+.log div{white-space:pre;padding:0 12px}
+</style>
+</head>
+<body>
+<div class="tela">
+
+  <header style="display:flex;align-items:center;gap:10px;height:40px;flex-shrink:0">
+    <button style="width:40px;height:40px;border-radius:10px;border:2px solid #0B0B0C;background:#92A9E1;color:#16171C;box-shadow:3px 3px 0 #0B0B0C;font-family:inherit;font-weight:700;font-size:13px">{ }</button>
+    <div style="display:flex;align-items:center;gap:10px;height:40px;box-sizing:border-box;padding:0 14px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C">
+      <span style="font-weight:700">feirinha-verde</span><span class="suave">develop</span>
+    </div>
+    <div style="flex:1"></div>
+    <!-- configuração de execução + RUN / DEBUG / parar (ficam na barra em todas as telas) -->
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="btn" title="configuração de execução (␣ r)" style="gap:10px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92A9E1" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/><path d="M8 7.5h.01M8 16.5h.01"/></svg>
+        WildFly local <span class="suave">▾</span>
+      </button>
+      <button class="quad" aria-label="Rodar" title="Rodar (shift+F10)" style="color:#B7D39C">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>
+      </button>
+      <button class="quad" aria-label="Depurar" title="Depurar (shift+F9)" style="background:#E8C979;color:#16171C;box-shadow:3px 3px 0 #0B0B0C">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="7" width="10" height="13" rx="5"/><path d="M12 7V4M9 4.5l1.5 2.5M15 4.5l-1.5 2.5M7 12H3.5M20.5 12H17M7 16.5l-3 2M17 16.5l3 2M12 11v9"/></svg>
+      </button>
+      <button class="quad" aria-label="Parar" title="Parar (ctrl+F2)" style="color:#EE8C84">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;gap:4px;margin-left:8px">
+      <button style="width:28px;height:28px;border:0;background:transparent;color:#A29D93;font-family:inherit">–</button>
+      <button style="width:28px;height:28px;border:0;background:transparent;color:#A29D93;font-family:inherit">□</button>
+      <button style="width:28px;height:28px;border:0;background:transparent;color:#A29D93;font-family:inherit">×</button>
+    </div>
+  </header>
+
+  <!-- faixa de controle: onde parou e os passos -->
+  <div style="display:flex;align-items:center;gap:12px;height:54px;flex-shrink:0;box-sizing:border-box;padding:0 10px 0 16px;border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;white-space:nowrap">
+    <span class="aviso" style="font-weight:700">● pausado</span>
+    <span>ReservaServlet.java<span class="suave">:42</span></span>
+    <span class="suave" style="font-size:12px">· breakpoint · thread http-exec-3</span>
+    <span style="flex:1"></span>
+    <button class="btn">▶ continuar <kbd>F9</kbd></button>
+    <button class="btn">⤼ passar <kbd>F8</kbd></button>
+    <button class="btn">↓ entrar <kbd>F7</kbd></button>
+    <button class="btn">↑ sair <kbd>⇧F8</kbd></button>
+    <button class="btn">⇥ até o cursor <kbd>alt F9</kbd></button>
+    <button class="quad suave" title="silenciar breakpoints">⊘</button>
+  </div>
+
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 360px;grid-template-rows:minmax(0,1fr) 196px;gap:12px">
+
+    <!-- esquerda: threads/pilha e breakpoints -->
+    <div style="grid-row:1 / 3;display:flex;flex-direction:column;gap:12px;min-height:0">
+      <section class="janela" style="flex:1.4">
+        <div class="faixa"><span class="rotulo">PILHA</span><span style="flex:1"></span><kbd>␣ x p</kbd></div>
+        <div style="padding:6px 0">
+          <div class="item"><span class="aviso">▾ ●</span><span>http-exec-3</span><span class="suave" style="margin-left:auto">pausada</span></div>
+          <div class="item sel" style="padding-left:30px"><span class="dest">reservar</span><span class="suave">ReservaServlet:42</span></div>
+          <div class="item" style="padding-left:30px"><span>doPost</span><span class="suave">ReservaServlet:27</span></div>
+          <div class="item" style="padding-left:30px"><span>validar</span><span class="suave">Feira:88</span></div>
+          <div class="item suave" style="padding-left:30px">service <span>HttpServlet:590</span></div>
+          <div class="item suave" style="padding-left:30px">… 38 frames do servidor</div>
+          <div class="item"><span class="suave">▸ ○</span><span>http-exec-1</span><span class="suave" style="margin-left:auto">rodando</span></div>
+          <div class="item"><span class="suave">▸ ○</span><span>http-exec-2</span><span class="suave" style="margin-left:auto">rodando</span></div>
+          <div class="item"><span class="suave">▸ ○</span><span>Timer-0</span><span class="suave" style="margin-left:auto">esperando</span></div>
+        </div>
+      </section>
+      <section class="janela" style="flex:1">
+        <div class="faixa"><span class="rotulo">BREAKPOINTS</span><span class="suave">3</span><span style="flex:1"></span><kbd>␣ x b</kbd></div>
+        <div style="padding:6px 0">
+          <div class="item"><span class="erro">●</span><span>ReservaServlet.java</span><span class="suave">:42</span></div>
+          <div class="item"><span class="erro">●</span><span>FeiraService.java</span><span class="suave">:61</span></div>
+          <div class="item" style="height:auto;padding-top:2px;padding-bottom:2px;flex-wrap:wrap"><span class="erro">◆</span><span>Banca.java</span><span class="suave">:19</span><span class="suave" style="width:100%;padding-left:18px;font-size:10.5px">se numero == null</span></div>
+          <div class="item"><span class="erro">⚡</span><span>NullPointerException</span><span class="suave">ao lançar</span></div>
+          <div class="item suave" style="margin-top:6px">ctrl+F8 marca · ⏎ vai · d apaga · e condição</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- centro: código na linha pausada, com valores ao lado -->
+    <section class="janela">
+      <div class="faixa"><span>ReservaServlet.java</span><span class="suave">br.com.feira.web</span><span style="flex:1"></span><span class="aviso">● linha 42</span></div>
+      <div class="cod">
+        <div class="l"><span class="n">30</span>    <span class="suave">// reserva uma banca na feira escolhida</span></div>
+        <div class="l"><span class="n">31</span>    <span class="dest">private void</span> <span class="dest">reservar</span>(HttpServletRequest req, HttpServletResponse resp)</div>
+        <div class="l"><span class="n">32</span>            <span class="dest">throws</span> IOException {</div>
+        <div class="l"><span class="n">33</span>        String banca = req.getParameter(<span class="ok">"banca"</span>);<span class="inl">banca: "B12"</span></div>
+        <div class="l"><span class="n">34</span>        <span class="dest">long</span> idFeira = Long.parseLong(req.getParameter(<span class="ok">"feira"</span>));<span class="inl">idFeira: 3</span></div>
+        <div class="l"><span class="n">35</span> </div>
+        <div class="l"><span class="n">36</span>        Feira feira = feiras.buscar(idFeira)</div>
+        <div class="l"><span class="n">37</span>                .orElseThrow(() -&gt; <span class="dest">new</span> NaoEncontrada(idFeira));<span class="inl">feira: Feira#3 "Praça XV"</span></div>
+        <div class="l"><span class="n">38</span> </div>
+        <div class="l"><span class="n">39</span>        <span class="dest">if</span> (feira.lotada()) {<span class="inl">false</span></div>
+        <div class="l"><span class="n">40</span>            resp.sendError(<span class="rosa">409</span>, <span class="ok">"feira lotada"</span>);</div>
+        <div class="l"><span class="n">41</span>            <span class="dest">return</span>;</div>
+        <div class="l bp aqui"><span class="n">42</span>        Reserva r = reservas.criar(feira, banca.trim(), usuario(req));</div>
+        <div class="l"><span class="n">43</span>        log(<span class="ok">"reserva "</span> + r.id() + <span class="ok">" criada"</span>);</div>
+        <div class="l"><span class="n">44</span>        resp.sendRedirect(<span class="ok">"reservas/"</span> + r.id());</div>
+        <div class="l"><span class="n">45</span>    }</div>
+        <div class="l"><span class="n">46</span> </div>
+        <div class="l"><span class="n">47</span>    <span class="dest">private</span> Usuario <span class="dest">usuario</span>(HttpServletRequest req) {</div>
+        <div class="l"><span class="n">48</span>        <span class="dest">return</span> (Usuario) req.getSession().getAttribute(<span class="ok">"usuario"</span>);</div>
+        <div class="l"><span class="n">49</span>    }</div>
+      </div>
+    </section>
+
+    <!-- direita: variáveis e expressões vigiadas -->
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">VARIÁVEIS</span><span class="suave">reservar()</span><span style="flex:1"></span><kbd>␣ x v</kbd></div>
+      <div style="padding:6px 0;flex:1">
+        <div class="var"><span class="seta">▸</span><span class="dest">this</span> = <span class="suave">ReservaServlet@1f3a</span></div>
+        <div class="var"><span class="seta">▸</span><span class="dest">req</span> = <span class="suave">RequestFacade@77c1</span></div>
+        <div class="var"><span class="seta"></span><span class="dest">banca</span> = <span class="ok">"B12"</span></div>
+        <div class="var"><span class="seta"></span><span class="dest">idFeira</span> = <span class="rosa">3</span></div>
+        <div class="var sel"><span class="seta">▾</span><span class="dest">feira</span> = <span class="suave">Feira#3</span></div>
+        <div class="var" style="padding-left:30px"><span class="seta"></span><span class="dest">id</span> = <span class="rosa">3</span></div>
+        <div class="var" style="padding-left:30px"><span class="seta"></span><span class="dest">nome</span> = <span class="ok">"Praça XV"</span></div>
+        <div class="var" style="padding-left:30px"><span class="seta"></span><span class="dest">limiteDeBancas</span> = <span class="rosa">40</span></div>
+        <div class="var" style="padding-left:30px"><span class="seta">▸</span><span class="dest">bancas</span> = <span class="suave">ArrayList size=37</span></div>
+        <div class="var" style="padding-left:30px"><span class="seta"></span><span class="dest">data</span> = <span class="suave">LocalDate 2026-11-21</span></div>
+      </div>
+      <div class="sec" style="border-top:2px solid #0B0B0C">VIGIAR <span style="flex:1"></span><kbd>alt F8</kbd></div>
+      <div style="padding:2px 0 8px">
+        <div class="var"><span class="dest">feira.bancas.size()</span> = <span class="rosa">37</span></div>
+        <div class="var"><span class="dest">usuario(req).nome()</span> = <span class="ok">"Ana"</span></div>
+        <div class="var"><span class="dest">banca.isBlank()</span> = <span class="rosa">false</span></div>
+      </div>
+      <div style="padding:0 12px 12px">
+        <label style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:2px solid #0B0B0C;border-radius:9px;background:#19191B;font-size:12px"><span class="dest">›</span><span class="suave">expressão (⏎ avalia · ^⏎ vigia)</span></label>
+      </div>
+    </section>
+
+    <!-- embaixo: console do processo depurado -->
+    <section class="janela" style="grid-column:2 / 4">
+      <div class="faixa"><span class="rotulo">CONSOLE</span><span class="suave">WildFly local · debug :8787</span><span style="flex:1"></span>
+        <span style="padding:0 7px;border-radius:6px;background:#3A2A2B;color:#EE8C84;font-size:11px">ERROR 0</span>
+        <span style="padding:0 7px;border-radius:6px;border:1px solid #0B0B0C;color:#A29D93;font-size:11px">WARN 2</span>
+        <kbd>␣ x c</kbd></div>
+      <div class="log">
+        <div><span class="suave">16:42:08 </span><span class="dest">INFO  </span>WFLYUT0021: Registered web context: '/feira'</div>
+        <div><span class="suave">16:42:08 </span><span class="dest">INFO  </span>WFLYSRV0025: WildFly 42 started in 3.2s</div>
+        <div><span class="suave">16:42:09 </span><span class="dest">seedy </span><span class="suave">depurador anexado em localhost:8787 · 3 breakpoints</span></div>
+        <div><span class="suave">16:42:31 </span><span class="aviso">WARN  </span>sessão sem usuário em /feira/reservar, usando visitante</div>
+        <div><span class="suave">16:42:31 </span><span class="dest">INFO  </span>POST /feira/reservar banca=B12 feira=3</div>
+        <div><span class="suave">16:42:31 </span><span class="dest">seedy </span><span class="aviso">pausado em ReservaServlet.java:42 (breakpoint)</span></div>
+      </div>
+    </section>
+  </div>
+
+  <footer style="display:flex;align-items:stretch;height:30px;flex-shrink:0;box-sizing:border-box;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C;overflow:hidden;font-size:12px">
+    <span style="display:flex;align-items:center;padding:0 14px;background:#E8C979;color:#16171C;font-weight:700;letter-spacing:.08em">DEBUG</span>
+    <span style="display:flex;align-items:center;gap:14px;padding:0 14px;color:#A29D93">
+      <span><span class="dest">F9</span> continuar</span>
+      <span><span class="dest">F8</span> passar</span>
+      <span><span class="dest">F7</span> entrar</span>
+      <span><span class="dest">ctrl+F8</span> breakpoint</span>
+      <span><span class="dest">alt F8</span> avaliar</span>
+      <span><span class="dest">esc</span> editor</span>
+    </span>
+    <span style="flex:1"></span>
+    <span style="display:flex;align-items:center;padding:0 12px;border-left:2px solid #0B0B0C;color:#B7D39C">↻ hot reload</span>
+    <span style="display:flex;align-items:center;padding:0 12px;border-left:2px solid #0B0B0C;color:#A29D93">WildFly local · :8787</span>
+    <span style="display:flex;align-items:center;padding:0 14px;border-left:2px solid #0B0B0C;background:#333337">42:9</span>
+  </footer>
+  <div style="height:20px;flex-shrink:0"></div>
+</div>
+</body>
+</html>
