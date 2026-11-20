@@ -8,6 +8,7 @@ mod arquivos;
 mod busca;
 mod git;
 mod java;
+mod observador;
 mod terminal;
 mod tema;
 
@@ -16,6 +17,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(terminal::Terminais::default())
         .manage(java::Servidores::default())
+        .manage(observador::Observador::default())
         .setup(|app| {
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
@@ -29,7 +31,9 @@ pub fn run() {
             busca::busca_indexar,
             busca::busca_texto,
             git::branch_atual,
+            observador::projeto_observar,
             java::java_estado,
+            java::java_jdks,
             java::jdtls_instalar,
             java::lsp_iniciar,
             java::lsp_enviar,

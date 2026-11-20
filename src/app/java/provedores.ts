@@ -8,6 +8,8 @@ import { monaco } from '../editor/monaco';
 import { EditorService } from '../editor/editor.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { JdtlsService } from './jdtls.service';
+import { executarGerador } from './gerar';
+import { EscolhaService } from '../escolha/escolha.service';
 import {
   caminhoDaUri,
   documentacao,
@@ -57,7 +59,12 @@ const TIPOS_DE_DEFINICAO = new Set([
   'class', 'interface', 'enum', 'enumMember', 'record', 'recordComponent', 'method', 'property', 'annotation', 'annotationMember',
 ]);
 
-export function registrarProvedores(jdtls: JdtlsService, editor: EditorService, mensagens: MensagensService): void {
+export function registrarProvedores(
+  jdtls: JdtlsService,
+  editor: EditorService,
+  mensagens: MensagensService,
+  escolha: EscolhaService,
+): void {
   const doc = (m: monaco.editor.ITextModel) => ({ uri: jdtls.uriLsp(m.uri) });
   const pos = (m: monaco.editor.ITextModel, p: monaco.IPosition) => ({ textDocument: doc(m), position: paraPosicaoLsp(p) });
 
@@ -289,6 +296,13 @@ export function registrarProvedores(jdtls: JdtlsService, editor: EditorService, 
     if (!c) return;
     if (comando.command === 'java.apply.workspaceEdit' && comando.arguments?.[0]) {
       await jdtls.aplicarEdicao(comando.arguments[0] as EdicaoDeWorkspaceLsp);
+      return;
+    }
+    // "Gerar..." (getters, construtor, toString...): pergunta os campos e gera.
+    if (await executarGerador(comando.command, comando.arguments ?? [], jdtls, escolha, mensagens).catch((e) => {
+      mensagens.erro(`jdtls: ${e.message ?? e}`);
+      return true;
+    })) {
       return;
     }
     await c.pedir('workspace/executeCommand', { command: comando.command, arguments: comando.arguments }).catch((e) => mensagens.erro(`jdtls: ${e.message ?? e}`));

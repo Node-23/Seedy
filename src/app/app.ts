@@ -9,6 +9,8 @@ import { BuscaComponent } from './busca/busca.component';
 import { BuscaService } from './busca/busca.service';
 import { BuscaProjetoComponent } from './busca/busca-projeto.component';
 import { BuscaProjetoService } from './busca/busca-projeto.service';
+import { EscolhaComponent } from './escolha/escolha.component';
+import { EscolhaService } from './escolha/escolha.service';
 import { LayoutService, Regiao } from './layout/layout.service';
 import { MensagensService } from './nucleo/mensagens.service';
 import { ProjetoService } from './nucleo/projeto.service';
@@ -20,13 +22,13 @@ import { JdtlsService } from './java/jdtls.service';
   selector: 'sd-raiz',
   imports: [
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
-    BuscaComponent, BuscaProjetoComponent,
+    BuscaComponent, BuscaProjetoComponent, EscolhaComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="area-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta()">
+      <div class="area-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido()">
         @if (layout.disposicao().visiveis.arquivos) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
             <sd-arvore />
@@ -46,6 +48,7 @@ import { JdtlsService } from './java/jdtls.service';
 
         <sd-busca />
         <sd-busca-projeto />
+        <sd-escolha />
       </div>
 
       <sd-barra-status />
@@ -65,6 +68,7 @@ export class App {
   protected readonly mensagens = inject(MensagensService);
   protected readonly busca = inject(BuscaService);
   protected readonly buscaProjeto = inject(BuscaProjetoService);
+  protected readonly escolha = inject(EscolhaService);
 
   constructor() {
     inject(AtalhosService).iniciar();

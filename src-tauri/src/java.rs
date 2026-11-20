@@ -135,15 +135,49 @@ fn candidatos_jdk() -> Vec<PathBuf> {
     homes
 }
 
-/// O JDK mais novo encontrado com a versão mínima do jdtls ou maior.
-pub fn achar_jdk() -> Option<Jdk> {
-    candidatos_jdk()
+/// Todos os JDKs encontrados (qualquer versão), sem repetir, do mais novo ao mais velho.
+pub fn todos_os_jdks() -> Vec<Jdk> {
+    let mut vistos = std::collections::HashSet::new();
+    let mut jdks: Vec<Jdk> = candidatos_jdk()
         .into_iter()
         .filter_map(|home| {
             let (versao, maior) = versao_do_jdk(&home)?;
-            (maior >= JAVA_MINIMO).then(|| Jdk { home: home.to_string_lossy().into_owned(), versao, maior })
+            // Só JDK (com javac); um JRE sozinho não compila o projeto.
+            let javac = home.join("bin").join(if cfg!(windows) { "javac.exe" } else { "javac" });
+            if !javac.is_file() {
+                return None;
+            }
+            let real = fs::canonicalize(&home).unwrap_or_else(|_| home.clone());
+            vistos.insert(real).then(|| Jdk { home: home.to_string_lossy().into_owned(), versao, maior })
         })
-        .max_by_key(|j| j.maior)
+        .collect();
+    jdks.sort_by(|a, b| numeros(&b.versao).cmp(&numeros(&a.versao)));
+    jdks
+}
+
+/// O JDK do jdtls: o escolhido pelo usuário (se ainda existir e servir) ou o mais novo encontrado.
+pub fn achar_jdk(escolhido: Option<&str>) -> Option<Jdk> {
+    if let Some(home) = escolhido.filter(|h| !h.is_empty()) {
+        if let Some((versao, maior)) = versao_do_jdk(Path::new(home)) {
+            if maior >= JAVA_MINIMO {
+                return Some(Jdk { home: home.to_string(), versao, maior });
+            }
+        }
+    }
+    todos_os_jdks().into_iter().find(|j| j.maior >= JAVA_MINIMO)
+}
+
+/// "21.0.13" → [21, 0, 13]; "1.8.0_211" → [8, 0, 211]: para ordenar como número, não texto.
+fn numeros(versao: &str) -> Vec<u32> {
+    let v = versao.strip_prefix("1.").unwrap_or(versao);
+    v.split(|c: char| !c.is_ascii_digit()).filter_map(|p| p.parse().ok()).collect()
+}
+
+/// JDKs instalados: para escolher o do jdtls e para os "runtimes" dos projetos
+/// (um projeto Java 8 compila contra o JDK 8, um Java 21 contra o 21...).
+#[tauri::command]
+pub fn java_jdks() -> Vec<Jdk> {
+    todos_os_jdks()
 }
 
 // ---------- jdtls: instalação ----------
@@ -160,9 +194,9 @@ fn lancador(pasta: &Path) -> Option<PathBuf> {
 }
 
 #[tauri::command]
-pub fn java_estado() -> EstadoJava {
+pub fn java_estado(jdk: Option<String>) -> EstadoJava {
     EstadoJava {
-        jdk: achar_jdk(),
+        jdk: achar_jdk(jdk.as_deref()),
         jdtls_instalado: lancador(&pasta_jdtls()).is_some(),
         versao_jdtls: JDTLS_VERSAO,
         java_minimo: JAVA_MINIMO,
@@ -273,6 +307,7 @@ pub fn lsp_iniciar(
     raiz: String,
     mensagens: Channel<String>,
     fim: Channel<()>,
+    jdk: Option<String>,
 ) -> Result<Iniciado, String> {
     // Um jdtls por projeto: se a interface recarregou, o anterior fica órfão — encerra.
     let orfaos: Vec<u32> = estado.lista.lock().unwrap().iter().filter(|(_, s)| s.raiz == raiz).map(|(id, _)| *id).collect();
@@ -282,7 +317,7 @@ pub fn lsp_iniciar(
         }
     }
 
-    let jdk = achar_jdk().ok_or(format!("nenhum JDK {JAVA_MINIMO}+ encontrado (defina SEEDY_JAVA_HOME)"))?;
+    let jdk = achar_jdk(jdk.as_deref()).ok_or(format!("nenhum JDK {JAVA_MINIMO}+ encontrado (defina SEEDY_JAVA_HOME)"))?;
     let pasta = pasta_jdtls();
     let jar = lancador(&pasta).ok_or("o jdtls ainda não foi baixado")?;
     let configuracao = pasta.join(if cfg!(windows) {
@@ -407,6 +442,13 @@ mod testes {
         assert_eq!(versao_do_release("JAVA_VERSION=\"1.8.0_211\""), Some(("1.8.0_211".into(), 8)));
         assert_eq!(versao_do_release("JAVA_VERSION=\"25\""), Some(("25".into(), 25)));
         assert_eq!(versao_do_release("OS_NAME=Linux"), None);
+    }
+
+    #[test]
+    fn versoes_ordenam_como_numero() {
+        assert!(numeros("21.0.13") > numeros("21.0.7"));
+        assert!(numeros("25") > numeros("21.0.13"));
+        assert_eq!(numeros("1.8.0_211"), vec![8, 0, 211]);
     }
 
     #[test]

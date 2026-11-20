@@ -1,9 +1,10 @@
-import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { monaco } from './monaco';
 import { definirTemaMonaco } from './tema-monaco';
 import { nomeBase, ponte } from '../nucleo/ponte';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { TemaService } from '../tema/tema';
+import { ProjetoService } from '../nucleo/projeto.service';
 
 export interface Buffer {
   caminho: string;
@@ -29,6 +30,7 @@ export type ModoVim = 'normal' | 'insert' | 'visual' | 'replace';
 export class EditorService {
   private readonly mensagens = inject(MensagensService);
   private readonly temaService = inject(TemaService);
+  private readonly projeto = inject(ProjetoService);
 
   readonly buffers = signal<Buffer[]>([]);
   readonly ativo = signal<string | null>(null);
@@ -44,6 +46,19 @@ export class EditorService {
 
   constructor() {
     effect(() => definirTemaMonaco(this.temaService.tema()));
+
+    // Arquivo alterado fora do editor (git, build, outro programa): recarrega se o buffer não tem edição.
+    effect(() => {
+      const m = this.projeto.mudancas();
+      // "Criado" também conta: muitos programas gravam num temporário e renomeiam por cima.
+      if (m) untracked(() => void this.recarregarDoDisco([...m.alterados, ...m.criados]));
+    });
+
+    // Cada arquivo que vira o ativo entra no histórico (alt+← / alt+→).
+    effect(() => {
+      const ativo = this.ativo();
+      untracked(() => this.registrarVisita(ativo));
+    });
 
     // Quando o Monaco quer abrir outro arquivo (ir para definição, lista de usos),
     // quem abre é o Seedy, como um buffer.
@@ -146,6 +161,26 @@ export class EditorService {
     return monaco.editor.getModel(uri) ?? monaco.editor.createModel(conteudo, this.linguagemDe(caminho), uri);
   }
 
+  private async recarregarDoDisco(caminhos: string[]): Promise<void> {
+    for (const caminho of caminhos) {
+      const b = this.bufferDe(caminho);
+      if (!b || b.somenteLeitura || this.sujo(b)) continue;
+      let conteudo: string;
+      try {
+        conteudo = await ponte.lerArquivo(b.caminho);
+      } catch {
+        continue;
+      }
+      // O próprio salvar do Seedy também gera aviso: aí o conteúdo é igual e nada muda.
+      const semCr = (t: string) => t.replace(/\r\n/g, '\n');
+      if (semCr(conteudo) === semCr(b.modelo.getValue())) continue;
+      b.modelo.pushEditOperations([], [{ range: b.modelo.getFullModelRange(), text: conteudo }], () => null);
+      b.versaoSalva = b.modelo.getAlternativeVersionId();
+      this.edicoes.update((n) => n + 1);
+      this.mensagens.mostrar(`"${b.nome}" mudou no disco e foi recarregado`);
+    }
+  }
+
   /** Avisos de arquivo salvo (o jdtls usa para recompilar e reimportar o pom.xml). */
   aoSalvar(fn: (b: Buffer) => void): void {
     this.ouvintesDeSalvar.push(fn);
@@ -156,7 +191,7 @@ export class EditorService {
   private irPara(b: Buffer, linha: number, coluna?: number): void {
     const instancia = this.instancia;
     if (!instancia) return;
-    if (instancia.getModel() !== b.modelo) instancia.setModel(b.modelo);
+    this.mostrarModelo(b.modelo, false);
     const n = Math.min(linha, b.modelo.getLineCount());
     const c = coluna ?? (b.modelo.getLineFirstNonWhitespaceColumn(n) || 1);
     instancia.setPosition({ lineNumber: n, column: c });
@@ -164,16 +199,58 @@ export class EditorService {
     instancia.focus();
   }
 
-  private irParaLinha(caminho: string, linha: number): void {
-    const b = this.buffers().find((x) => x.caminho === caminho);
+  /**
+   * Troca o modelo na tela guardando cursor/rolagem do que sai e devolvendo os do
+   * que entra (o Monaco descarta isso no setModel). `restaurar` = false quando
+   * quem chama já vai posicionar o cursor (ex.: abrir numa linha).
+   */
+  mostrarModelo(modelo: monaco.editor.ITextModel | null, restaurar = true): void {
     const instancia = this.instancia;
-    if (!b || !instancia) return;
-    if (instancia.getModel() !== b.modelo) instancia.setModel(b.modelo);
-    const n = Math.min(linha, b.modelo.getLineCount());
-    const coluna = b.modelo.getLineFirstNonWhitespaceColumn(n) || 1;
-    instancia.setPosition({ lineNumber: n, column: coluna });
-    instancia.revealLineInCenter(n);
-    instancia.focus();
+    if (!instancia) return;
+    const atual = instancia.getModel();
+    if (atual === modelo) return;
+    if (atual && !atual.isDisposed()) {
+      const estado = instancia.saveViewState();
+      if (estado) this.estadosDeVista.set(atual.uri.toString(), estado);
+    }
+    instancia.setModel(modelo);
+    const estado = modelo && restaurar ? this.estadosDeVista.get(modelo.uri.toString()) : undefined;
+    if (estado) instancia.restoreViewState(estado);
+  }
+
+  private readonly estadosDeVista = new Map<string, monaco.editor.ICodeEditorViewState>();
+
+  // ---------- histórico de arquivos vistos (alt+← / alt+→) ----------
+
+  private historico: string[] = [];
+  private posicaoNoHistorico = -1;
+
+  /** Volta (-1) ou avança (1) nos arquivos vistos; reabre o que tinha sido fechado. */
+  async navegar(passo: 1 | -1): Promise<void> {
+    let i = this.posicaoNoHistorico + passo;
+    while (i >= 0 && i < this.historico.length) {
+      const alvo = this.historico[i];
+      const aberto = this.buffers().find((b) => b.caminho === alvo);
+      // Código de biblioteca fechado não tem como reabrir daqui: sai do histórico.
+      if (!aberto && alvo.includes('://')) {
+        this.historico.splice(i, 1);
+        if (passo < 0) i--;
+        else if (i <= this.posicaoNoHistorico) this.posicaoNoHistorico--;
+        continue;
+      }
+      // Antes de ativar: assim a visita não entra de novo no histórico.
+      this.posicaoNoHistorico = i;
+      if (aberto) this.ativo.set(alvo);
+      else if (!(await this.abrir(alvo))) return;
+      return;
+    }
+    this.mensagens.mostrar(passo < 0 ? 'início do histórico (alt+→ avança)' : 'fim do histórico (alt+← volta)');
+  }
+
+  private registrarVisita(caminho: string | null): void {
+    if (!caminho || this.historico[this.posicaoNoHistorico] === caminho) return;
+    this.historico = [...this.historico.slice(0, this.posicaoNoHistorico + 1), caminho].slice(-100);
+    this.posicaoNoHistorico = this.historico.length - 1;
   }
 
   async salvar(caminho = this.ativo(), avisar = true): Promise<boolean> {

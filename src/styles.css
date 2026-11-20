@@ -56,7 +56,7 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 }
 
 .area-principal { position: relative; flex: 1; min-height: 0; display: flex; }
-.area-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto) { opacity: 0.35; pointer-events: none; }
+.area-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto):not(sd-escolha) { opacity: 0.35; pointer-events: none; }
 .regiao-esquerda { flex-shrink: 0; display: flex; min-width: 0; }
 .regiao-esquerda > * { flex: 1; min-width: 0; display: flex; }
 .coluna-central { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -642,3 +642,23 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 
 /* Dica no fim da linha para código não usado (mockup 01: "◆ import não usado"). */
 .dica-inline { color: var(--texto-suave); font-style: italic; }
+
+/* ---------- janela de escolha (JDK do jdtls, campos para gerar código...) ---------- */
+
+.busca.escolha { top: 40%; width: 640px; height: auto; max-height: 80%; }
+.escolha .painel-faixa .contagem { font-size: 12px; }
+.escolha .escolha-opcoes { width: auto; max-width: none; flex: 1; border-right: 0; max-height: 420px; }
+.marca-escolha {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  border: var(--espessura-borda) solid var(--selecao);
+  color: var(--texto-sobre-destaque);
+  font-size: 11px;
+  font-weight: 700;
+}
+.marca-escolha.marcada { background: var(--destaque); border-color: var(--borda); }

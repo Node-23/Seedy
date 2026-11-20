@@ -31,6 +31,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   renomear no nome novo), organizar imports, formatar, Maven e Gradle. Código de bibliotecas e
   do JDK abre somente leitura (fonte anexado ou decompilado), e o `Ctrl+P` também acha essas
   classes. Código não usado ganha uma dica no fim da linha (`◆ import não usado`).
+  `Alt+Insert` gera getters/setters, construtor, toString e equals/hashCode escolhendo os campos.
+  Cada projeto compila contra o JDK da versão dele: o Seedy passa todos os JDKs instalados ao jdtls.
+- **Árvore, busca e jdtls acompanham o disco**: arquivos criados, apagados ou alterados fora do
+  editor (git, build, outro programa) aparecem sozinhos; buffer sem edição recarrega.
   Só as definições ganham cor (Alabaster), via tokens semânticos. O Seedy baixa o jdtls sozinho
   na primeira vez que abre um projeto Java; o status aparece na statusline (`jdtls ✓`).
 - Painéis redimensionáveis (arraste os divisores) e modo foco.
@@ -78,6 +82,7 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | `␣ q` | fechar buffer |
 | `␣ c` | editar o tema |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | próximo / anterior buffer |
+| `Alt+←` / `Alt+→` | voltar / avançar nos arquivos vistos (reabre o que foi fechado) |
 | `Ctrl+Shift+S` ou `:wa` | salvar todos |
 | `Ctrl+Space` | completar |
 | `Ctrl+B`, `F12` ou `gd` | ir para definição |
@@ -88,7 +93,9 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | `Alt+Enter` | ações rápidas |
 | `Ctrl+Alt+O` / `Ctrl+Alt+L` | organizar imports / formatar |
 | `Ctrl+F12` | estrutura do arquivo |
+| `Alt+Insert` | gerar: getters/setters, construtor, toString, equals/hashCode, sobrescrever métodos |
 | `␣ l` | reiniciar o jdtls |
+| `␣ v` | escolher o JDK que roda o jdtls |
 
 Os atalhos ficam em `src/app/teclado/atalhos.service.ts`.
 
@@ -144,7 +151,8 @@ src/                         interface (Angular)
   app/barra/                 barra de cima, statusline, menu do líder
   app/busca/                 buscas: arquivo (Ctrl+P), projeto (Ctrl+Shift+F), prévia
   app/layout/                registro de painéis e disposição
-  app/java/                  cliente LSP do jdtls: ciclo de vida, sincronia, provedores do Monaco
+  app/java/                  cliente LSP do jdtls: ciclo de vida, sincronia, provedores do Monaco, gerar código
+  app/escolha/               janela de escolha (uma ou várias opções), usada por quem precisa perguntar
   app/teclado/               atalhos
   styles.css                 todo o visual (só usa as variáveis do tema)
 src-tauri/                   núcleo (Rust)
@@ -153,7 +161,8 @@ src-tauri/                   núcleo (Rust)
   src/tema.rs                tema.json, fontes e recarga ao vivo
   src/git.rs                 branch atual
   src/busca.rs               índice de arquivos/símbolos Java e busca de texto
-  src/java.rs                acha o JDK, baixa e verifica o jdtls, processo e canal LSP
+  src/java.rs                acha os JDKs, baixa e verifica o jdtls, processo e canal LSP
+  src/observador.rs          observa a pasta do projeto (mudanças feitas fora do editor)
 ```
 
 Sem plugins: cada funcionalidade é um módulo interno. Para mudar algo, muda o código.

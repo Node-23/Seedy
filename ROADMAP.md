@@ -27,11 +27,10 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - ✅ Extrair variável/campo/método já abrindo o renomear no nome gerado
 - ✅ Dica inline de código não usado ("◆ import não usado"), avisos configuráveis em `jdtls.prefs`
 
-Ficou para depois:
-
-- Gerar getters/construtor/toString com escolha de campos (prompts do jdtls)
-- Selecionar o JDK do jdtls em configuração (hoje: `SEEDY_JAVA_HOME` ou o mais novo instalado)
-- Árvore de arquivos atualizando sozinha (hoje: ↻ na faixa) — ver "Depois"
+- ✅ Gerar (alt+insert) getters/setters, construtor, toString, equals/hashCode e sobrescrever
+  métodos, escolhendo os campos numa janela de escolha
+- ✅ Escolher o JDK que roda o jdtls (␣ v) e usar todos os JDKs instalados como *runtimes*
+  (cada projeto compila contra a versão dele: 8, 17, 21...)
 
 ## Fase 2 — Busca (em andamento)
 
@@ -101,5 +100,7 @@ o resto entra como módulos internos:
 
 - Layout editável (arrastar painéis, salvar disposições) — a base já existe em
   `src/app/layout/layout.service.ts`
-- Watcher de arquivos para a árvore atualizar sozinha
+- ✅ Watcher de arquivos: árvore, busca e jdtls se atualizam com mudanças feitas fora do
+  editor (git checkout, build); buffers sem edição recarregam sozinhos
+- ✅ Voltar/avançar nos arquivos vistos (alt+← / alt+→), com cursor e rolagem guardados por arquivo
 - Configurações em arquivo (`seedy.json`): atalhos, shell do terminal, etc.

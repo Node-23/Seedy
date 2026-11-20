@@ -47,6 +47,14 @@ export interface Ocorrencia {
   texto: string;
 }
 
+export interface Mudancas {
+  criados: string[];
+  removidos: string[];
+  alterados: string[];
+  /** .git/HEAD mudou (trocou de branch). */
+  git: boolean;
+}
+
 export interface Jdk {
   home: string;
   versao: string;
@@ -120,6 +128,17 @@ export const ponte = {
     return invoke<ArrayBuffer>('fonte_bytes', { caminho });
   },
 
+  /** Passa a observar a pasta do projeto (para de observar o anterior). */
+  async observarProjeto(raiz: string): Promise<void> {
+    if (noApp()) await invoke('projeto_observar', { raiz });
+  },
+
+  /** Arquivos criados/removidos/alterados fora do editor, em lote. */
+  async aoAlterarArquivos(fn: (m: Mudancas) => void): Promise<UnlistenFn> {
+    if (!noApp()) return () => {};
+    return listen<Mudancas>('arquivos-alterados', (e) => fn(e.payload));
+  },
+
   async aoAlterarTema(fn: (tema: ArquivoTema) => void): Promise<UnlistenFn> {
     if (!noApp()) return () => {};
     return listen<ArquivoTema>('tema-alterado', (e) => fn(e.payload));
@@ -134,20 +153,23 @@ export const ponte = {
 
   /** Java: JDK, instalação do jdtls e o canal LSP (só dentro do app). */
   java: {
-    async estado(): Promise<EstadoJava | null> {
-      return noApp() ? invoke<EstadoJava>('java_estado') : null;
+    async estado(jdk: string | null): Promise<EstadoJava | null> {
+      return noApp() ? invoke<EstadoJava>('java_estado', { jdk }) : null;
+    },
+    async jdks(): Promise<Jdk[]> {
+      return noApp() ? invoke<Jdk[]>('java_jdks') : [];
     },
     async instalar(aoProgresso: (p: ProgressoJdtls) => void): Promise<void> {
       const canal = new Channel<ProgressoJdtls>();
       canal.onmessage = aoProgresso;
       await invoke('jdtls_instalar', { progresso: canal });
     },
-    async iniciar(raiz: string, aoReceber: (mensagem: string) => void, aoEncerrar: () => void) {
+    async iniciar(raiz: string, jdk: string | null, aoReceber: (mensagem: string) => void, aoEncerrar: () => void) {
       const mensagens = new Channel<string>();
       mensagens.onmessage = aoReceber;
       const fim = new Channel<null>();
       fim.onmessage = aoEncerrar;
-      return invoke<{ id: number; pid: number; preferencias: string }>('lsp_iniciar', { raiz, mensagens, fim });
+      return invoke<{ id: number; pid: number; preferencias: string }>('lsp_iniciar', { raiz, mensagens, fim, jdk });
     },
     enviar: (id: number, mensagem: string) => invoke<void>('lsp_enviar', { id, mensagem }),
     parar: (id: number) => invoke<void>('lsp_parar', { id }),

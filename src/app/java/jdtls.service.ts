@@ -4,7 +4,8 @@ import { Buffer, EditorService } from '../editor/editor.service';
 import { BuscaService } from '../busca/busca.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { MensagensService } from '../nucleo/mensagens.service';
-import { noApp, ponte } from '../nucleo/ponte';
+import { Jdk, Mudancas, noApp, ponte } from '../nucleo/ponte';
+import { EscolhaService } from '../escolha/escolha.service';
 import { ClienteLsp } from './lsp';
 import { registrarProvedores } from './provedores';
 import {
@@ -55,6 +56,7 @@ export class JdtlsService {
   private readonly projeto = inject(ProjetoService);
   private readonly busca = inject(BuscaService);
   private readonly mensagens = inject(MensagensService);
+  private readonly escolha = inject(EscolhaService);
 
   readonly estado = signal<EstadoJdtls>({ fase: 'inativo' });
   readonly pronto = computed(() => this.estado().fase === 'pronto' || this.estado().fase === 'importando');
@@ -71,6 +73,8 @@ export class JdtlsService {
   private readonly dicas = new Map<string, string[]>();
   /** Arquivo .prefs do compilador (criado pelo núcleo na pasta de configuração). */
   private preferencias: string | null = null;
+  /** JDKs instalados, um por versão, para os projetos compilarem contra a versão certa. */
+  private runtimes: Runtime[] = [];
   private geracao = 0;
 
   /** Projeto de Java? Decide pelo índice da busca (pom.xml, build.gradle ou .java). */
@@ -96,7 +100,13 @@ export class JdtlsService {
     });
 
     this.editor.aoSalvar((b) => this.aoSalvar(b));
-    registrarProvedores(this, this.editor, this.mensagens);
+
+    // Arquivos criados/alterados/removidos fora do editor: o jdtls recompila e reimporta.
+    effect(() => {
+      const m = this.projeto.mudancas();
+      if (m) untracked(() => this.avisarMudancas(m));
+    });
+    registrarProvedores(this, this.editor, this.mensagens, this.escolha);
     // Só em desenvolvimento: inspecionar o jdtls pelo DevTools.
     if (isDevMode()) (window as unknown as { seedyJdtls: JdtlsService }).seedyJdtls = this;
 
@@ -159,6 +169,42 @@ export class JdtlsService {
     return { applied: true, arquivos: porArquivo.size };
   }
 
+  /** Escolhe o JDK que roda o jdtls (precisa ser da versão mínima ou mais novo) e reinicia. */
+  async escolherJdk(): Promise<void> {
+    const todos = await ponte.java.jdks();
+    const minimo = (await ponte.java.estado(null))?.javaMinimo ?? 25;
+    const servem = todos.filter((j) => j.maior >= minimo);
+    if (!servem.length) {
+      this.mensagens.erro(`nenhum JDK ${minimo}+ instalado para rodar o jdtls`);
+      return;
+    }
+    const atual = (await ponte.java.estado(this.jdkEscolhido()))?.jdk?.home;
+    const escolhido = await this.escolha.escolherUm(
+      'JDK DO JDTLS',
+      servem.map((j) => ({ rotulo: `Java ${j.versao}${j.home === atual ? '  (atual)' : ''}`, detalhe: j.home, valor: j.home })),
+      `só ${minimo}+ roda o jdtls; o projeto usa o JDK da versão dele`,
+    );
+    if (!escolhido) return;
+    try {
+      localStorage.setItem(CHAVE_JDK, escolhido);
+    } catch {
+      /* sem armazenamento: vale só nesta sessão */
+    }
+    this.jdkDaSessao = escolhido;
+    this.mensagens.mostrar('reiniciando o jdtls com o JDK escolhido…');
+    await this.reiniciar();
+  }
+
+  private jdkDaSessao: string | null = null;
+
+  private jdkEscolhido(): string | null {
+    try {
+      return this.jdkDaSessao ?? localStorage.getItem(CHAVE_JDK);
+    } catch {
+      return this.jdkDaSessao;
+    }
+  }
+
   /** Reinicia o servidor (ex.: depois de mudar o JDK). */
   async reiniciar(): Promise<void> {
     const raiz = this.projeto.raiz();
@@ -175,7 +221,7 @@ export class JdtlsService {
       this.estado.set({ fase: 'navegador', detalhe: 'só no app' });
       return;
     }
-    const java = await ponte.java.estado();
+    const java = await ponte.java.estado(this.jdkEscolhido());
     if (!atual() || !java) return;
     if (!java.jdk) {
       this.estado.set({ fase: 'sem-java', detalhe: `precisa do JDK ${java.javaMinimo}+` });
@@ -200,8 +246,10 @@ export class JdtlsService {
 
       this.estado.set({ fase: 'iniciando', detalhe: 'iniciando' });
       let cliente!: ClienteLsp;
+      this.runtimes = runtimesDe(await ponte.java.jdks());
       const { id, pid, preferencias } = await ponte.java.iniciar(
         raiz,
+        this.jdkEscolhido(),
         (m) => cliente.receber(m),
         () => this.aoEncerrar(geracao),
       );
@@ -211,13 +259,13 @@ export class JdtlsService {
       this.ouvir(cliente, geracao);
 
       this.preferencias = preferencias;
-      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias));
+      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias, this.runtimes));
       if (!atual()) return;
       const capacidades = resultado?.capabilities ?? {};
       this.legenda = capacidades.semanticTokensProvider?.legend ?? null;
       this.gatilhos = capacidades.completionProvider?.triggerCharacters ?? this.gatilhos;
       cliente.notificar('initialized', {});
-      cliente.notificar('workspace/didChangeConfiguration', { settings: configuracao(preferencias) });
+      cliente.notificar('workspace/didChangeConfiguration', { settings: configuracao(preferencias, this.runtimes) });
       this.estado.set({ fase: 'importando', detalhe: 'importando' });
       this.sincronizar(this.editor.buffers());
     } catch (e) {
@@ -297,7 +345,7 @@ export class JdtlsService {
       return { applied: r.applied };
     });
     cliente.aoPedir('workspace/configuration', (p: { items: { section?: string }[] }) =>
-      p.items.map((i) => (i.section === 'java' || !i.section ? configuracao(this.preferencias).java : null)),
+      p.items.map((i) => (i.section === 'java' || !i.section ? configuracao(this.preferencias, this.runtimes).java : null)),
     );
     cliente.aoPedir('client/registerCapability', () => null);
     cliente.aoPedir('client/unregisterCapability', () => null);
@@ -336,6 +384,20 @@ export class JdtlsService {
       );
       this.abertos.set(uri, { modelo, inscricao });
     }
+  }
+
+  private avisarMudancas(m: Mudancas): void {
+    const cliente = this.servidor?.cliente;
+    if (!cliente) return;
+    const interessa = (p: string) => p.endsWith('.java') || ARQUIVOS_DE_BUILD.test(p);
+    const uri = (p: string) => monaco.Uri.file(p).toString();
+    const changes = [
+      ...m.criados.filter(interessa).map((p) => ({ uri: uri(p), type: 1 })),
+      // Abertos no editor o jdtls já acompanha pelo didChange.
+      ...m.alterados.filter((p) => interessa(p) && !this.abertos.has(uri(p))).map((p) => ({ uri: uri(p), type: 2 })),
+      ...m.removidos.filter(interessa).map((p) => ({ uri: uri(p), type: 3 })),
+    ];
+    if (changes.length) cliente.notificar('workspace/didChangeWatchedFiles', { changes });
   }
 
   private aoSalvar(b: Buffer): void {
@@ -398,12 +460,31 @@ function dicaCurta(mensagem: string): string {
   return regras.find(([re]) => re.test(mensagem))?.[1] ?? mensagem.slice(0, 60);
 }
 
+const CHAVE_JDK = 'seedy.jdtlsJdk';
+
+interface Runtime {
+  name: string;
+  path: string;
+}
+
+/** Um JDK por versão, com o nome que o jdtls espera ("JavaSE-1.8", "JavaSE-21"...). */
+function runtimesDe(jdks: Jdk[]): Runtime[] {
+  const porVersao = new Map<number, Runtime>();
+  for (const j of jdks) {
+    if (porVersao.has(j.maior)) continue; // a lista vem do mais novo ao mais velho
+    porVersao.set(j.maior, { name: j.maior <= 8 ? `JavaSE-1.${j.maior}` : `JavaSE-${j.maior}`, path: j.home });
+  }
+  return [...porVersao.values()];
+}
+
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(0)} MB`;
 
 /** Configurações do jdtls (as mesmas chaves `java.*` da extensão do VS Code). */
-function configuracao(preferencias: string | null) {
+function configuracao(preferencias: string | null, runtimes: Runtime[]) {
   return {
     java: {
+      // Cada projeto compila contra o JDK da versão dele (release do pom.xml/build.gradle).
+      configuration: { updateBuildConfiguration: 'automatic', runtimes },
       // Preferências do compilador (ex.: avisar import não usado), editáveis pelo usuário.
       settings: preferencias ? { url: preferencias } : undefined,
       format: { enabled: true },
@@ -418,13 +499,12 @@ function configuracao(preferencias: string | null) {
       // Os arquivos do Eclipse (.project, .classpath, .settings) ficam no cache do
       // jdtls, não dentro do projeto do usuário.
       import: { maven: { enabled: true }, gradle: { enabled: true }, generatesMetadataFilesAtProjectRoot: false },
-      configuration: { updateBuildConfiguration: 'automatic' },
       autobuild: { enabled: true },
     },
   };
 }
 
-function parametrosDeInicio(raiz: string, pid: number, preferencias: string) {
+function parametrosDeInicio(raiz: string, pid: number, preferencias: string, runtimes: Runtime[]) {
   const uri = monaco.Uri.file(raiz).toString();
   const formatos = ['markdown', 'plaintext'];
   return {
@@ -495,16 +575,16 @@ function parametrosDeInicio(raiz: string, pid: number, preferencias: string) {
     initializationOptions: {
       bundles: [],
       workspaceFolders: [uri],
-      settings: configuracao(preferencias),
+      settings: configuracao(preferencias, runtimes),
       extendedClientCapabilities: {
         progressReportProvider: true,
         classFileContentsSupport: true,
-        overrideMethodsPromptSupport: false,
-        hashCodeEqualsPromptSupport: false,
+        overrideMethodsPromptSupport: true,
+        hashCodeEqualsPromptSupport: true,
         advancedOrganizeImportsSupport: false,
-        generateToStringPromptSupport: false,
-        advancedGenerateAccessorsSupport: false,
-        generateConstructorsPromptSupport: false,
+        generateToStringPromptSupport: true,
+        advancedGenerateAccessorsSupport: true,
+        generateConstructorsPromptSupport: true,
         generateDelegateMethodsPromptSupport: false,
         advancedExtractRefactoringSupport: false,
         moveRefactoringSupport: false,

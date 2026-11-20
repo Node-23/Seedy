@@ -162,7 +162,7 @@ export class EditorComponent {
       if (!instancia) return;
       instancia.updateOptions({ readOnly: !!b?.somenteLeitura });
       if (instancia.getModel() !== (b?.modelo ?? null)) {
-        instancia.setModel(b?.modelo ?? null);
+        this.editor.mostrarModelo(b?.modelo ?? null);
         if (b) queueMicrotask(() => instancia.focus());
       }
     });
@@ -253,5 +253,7 @@ export class EditorComponent {
     ligar(M.CtrlCmd | M.Alt | K.KeyL, 'editor.action.formatDocument');
     ligar(M.CtrlCmd | M.Alt | K.KeyO, 'editor.action.organizeImports');
     ligar(M.CtrlCmd | K.F12, 'editor.action.quickOutline');
+    // Gerar... (getters/setters, construtor, toString, equals/hashCode, sobrescrever).
+    ligar(M.Alt | K.Insert, 'editor.action.sourceAction');
   }
 }

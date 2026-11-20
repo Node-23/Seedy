@@ -7,6 +7,7 @@ import { MensagensService } from '../nucleo/mensagens.service';
 import { BuscaService } from '../busca/busca.service';
 import { BuscaProjetoService } from '../busca/busca-projeto.service';
 import { JdtlsService } from '../java/jdtls.service';
+import { EscolhaService } from '../escolha/escolha.service';
 
 export interface AcaoLider {
   tecla: string;
@@ -25,6 +26,7 @@ export interface AcaoLider {
  *   menu de atalhos, estilo which-key.
  * - Buscas: Ctrl+F no arquivo aberto, Ctrl+P arquivo (␣ f; ␣␣ abre a mesma
  *   janela em "Tudo"), Ctrl+Shift+F no projeto (␣ /).
+ * - Alt+← / Alt+→ voltam e avançam nos arquivos vistos.
  * - Atalhos globais: Ctrl+S salva, Ctrl+Shift+S salva todos, Alt+F12 abre/fecha o terminal,
  *   Ctrl+Tab troca de buffer.
  */
@@ -38,6 +40,7 @@ export class AtalhosService {
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
   private readonly jdtls = inject(JdtlsService);
+  private readonly escolha = inject(EscolhaService);
 
   readonly liderAberto = signal(false);
 
@@ -53,6 +56,7 @@ export class AtalhosService {
     { tecla: 'q', rotulo: 'fechar buffer', disponivel: true, executar: () => this.editor.fechar() },
     { tecla: 'c', rotulo: 'editar tema', disponivel: true, executar: () => this.abrirTema() },
     { tecla: 'l', rotulo: 'reiniciar jdtls', disponivel: true, executar: () => void this.jdtls.reiniciar() },
+    { tecla: 'v', rotulo: 'JDK do jdtls', disponivel: true, executar: () => void this.jdtls.escolherJdk() },
     { tecla: 'r', rotulo: 'rodar / debug', disponivel: false },
     { tecla: 'g', rotulo: 'git', disponivel: false },
     { tecla: 'd', rotulo: 'banco', disponivel: false },
@@ -98,12 +102,16 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const livre = !this.busca.aberta() && !this.buscaProjeto.aberta() && !this.noTerminal(e.target);
+    const livre = !this.busca.aberta() && !this.buscaProjeto.aberta() && !this.escolha.pedido() && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && e.code === 'KeyF') {
       this.engolir(e);
       if (this.busca.aberta()) this.busca.fechar(false);
       this.buscaProjeto.abrir();
+    } else if (e.altKey && !ctrl && !e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && livre) {
+      // Voltar/avançar nos arquivos vistos.
+      this.engolir(e);
+      void this.editor.navegar(e.key === 'ArrowLeft' ? -1 : 1);
     } else if (soCtrl && e.code === 'KeyP' && livre) {
       this.engolir(e);
       this.busca.abrir('arquivos');
