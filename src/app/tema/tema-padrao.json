@@ -1,0 +1,46 @@
+{
+  "nome": "Seedy Grafite",
+  "fontes": {
+    "interface": { "familia": "Inky Mono", "arquivo": null, "tamanho": 13 },
+    "codigo": { "familia": "Inky Mono", "arquivo": null, "tamanho": 13, "alturaLinha": 20, "ligaduras": false },
+    "reserva": "Martian Mono, ui-monospace, monospace"
+  },
+  "cores": {
+    "fundo": "#19191B",
+    "painel": "#2A2A2D",
+    "painelElevado": "#222225",
+    "selecao": "#333337",
+    "borda": "#0B0B0C",
+    "sombra": "#0B0B0C",
+    "texto": "#E9E2D3",
+    "textoSuave": "#A29D93",
+    "destaque": "#92A9E1",
+    "textoSobreDestaque": "#16171C",
+    "sucesso": "#B7D39C",
+    "sucessoFundo": "#2E3A2B",
+    "aviso": "#E8C979",
+    "erro": "#EE8C84",
+    "erroFundo": "#3A2A2B",
+    "rosa": "#E3A9CC"
+  },
+  "sintaxe": {
+    "padrao": "#E9E2D3",
+    "definicao": "#92A9E1",
+    "string": "#B7D39C",
+    "constante": "#E3A9CC",
+    "comentario": "#E8C979"
+  },
+  "forma": {
+    "raio": 14,
+    "raioPequeno": 9,
+    "espessuraBorda": 2,
+    "deslocamentoSombra": 4,
+    "espaco": 12
+  },
+  "terminal": {
+    "ansi": [
+      "#19191B", "#EE8C84", "#B7D39C", "#E8C979", "#92A9E1", "#E3A9CC", "#9CCFC9", "#E9E2D3",
+      "#5C5A57", "#F2A49D", "#C9E0B3", "#F0D89A", "#B9C8EE", "#EDC1DA", "#B6DED9", "#FFFFFF"
+    ]
+  }
+}

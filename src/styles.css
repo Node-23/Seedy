@@ -1,0 +1,358 @@
+/*
+ * Estilos do Seedy.
+ *
+ * As cores, fontes e medidas vêm do tema (tema.json) como variáveis CSS:
+ *   --fundo, --painel, --painel-elevado, --selecao, --borda, --sombra,
+ *   --texto, --texto-suave, --destaque, --texto-sobre-destaque,
+ *   --sucesso, --sucesso-fundo, --aviso, --erro, --erro-fundo, --rosa,
+ *   --raio, --raio-pequeno, --espessura-borda, --deslocamento-sombra, --espaco,
+ *   --fonte-interface, --fonte-codigo, --tamanho-interface.
+ * Para mudar o visual sem mexer no código, edite o tema (␣ c dentro do Seedy).
+ */
+
+/* ---------- base ---------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte-interface);
+  font-size: var(--tamanho-interface);
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; font-size: inherit; color: inherit; }
+kbd {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--fundo);
+  color: var(--texto-suave);
+  border: 1px solid var(--borda);
+  white-space: nowrap;
+}
+.suave { color: var(--texto-suave); }
+.forte { font-weight: 700; }
+.oculto { display: none !important; }
+.espaco { flex: 1; align-self: stretch; }
+body.arrastando { cursor: grabbing; user-select: none; }
+body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
+
+:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+
+/* ---------- estrutura ---------- */
+
+.seedy {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco);
+  padding: 14px;
+}
+
+.area-principal { flex: 1; min-height: 0; display: flex; }
+.regiao-esquerda { flex-shrink: 0; display: flex; min-width: 0; }
+.regiao-esquerda > * { flex: 1; min-width: 0; display: flex; }
+.coluna-central { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.regiao-editor { flex: 1; min-height: 0; display: flex; }
+.regiao-inferior { flex-shrink: 0; display: flex; }
+.regiao-inferior > * { flex: 1; min-width: 0; display: flex; }
+
+.divisor { flex-shrink: 0; }
+.divisor.vertical { width: var(--espaco); cursor: col-resize; }
+.divisor.horizontal { height: var(--espaco); cursor: row-resize; }
+
+/* ---------- painel (a "janela" com borda grossa e sombra dura) ---------- */
+
+.painel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: var(--espessura-borda) solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--painel);
+  box-shadow: var(--deslocamento-sombra) var(--deslocamento-sombra) 0 var(--sombra);
+}
+
+.painel-faixa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  border-bottom: var(--espessura-borda) solid var(--borda);
+  font-size: 12px;
+}
+.rotulo { font-size: 11px; letter-spacing: 0.14em; color: var(--texto-suave); }
+.rotulo.destaque { color: var(--destaque); }
+.faixa-acoes { display: flex; align-items: center; gap: 8px; }
+
+/* ---------- botões ---------- */
+
+.botao-quadrado {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--raio-pequeno);
+  border: var(--espessura-borda) solid var(--borda);
+  background: var(--painel);
+  color: var(--texto);
+  box-shadow: 3px 3px 0 var(--sombra);
+  cursor: pointer;
+}
+.botao-quadrado:hover { background: var(--selecao); }
+.botao-quadrado:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sombra); }
+.botao-quadrado.grande { width: 40px; height: 40px; font-weight: 700; white-space: nowrap; font-size: 12px; letter-spacing: -0.04em; }
+.botao-quadrado.destaque { background: var(--destaque); color: var(--texto-sobre-destaque); }
+.botao-quadrado.destaque-texto { color: var(--destaque); }
+.botao-quadrado.ligado { background: var(--selecao); color: var(--destaque); }
+
+.botao {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--raio-pequeno);
+  border: var(--espessura-borda) solid var(--borda);
+  background: var(--painel);
+  color: var(--texto);
+  box-shadow: 3px 3px 0 var(--sombra);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.botao.destaque { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
+.botao.destaque kbd { background: transparent; color: inherit; border-color: currentColor; }
+
+.botao-icone {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+.botao-icone:hover { background: var(--selecao); color: var(--texto); }
+
+/* ---------- barra de cima ---------- */
+
+.barra-topo { display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0; }
+
+.chip-projeto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 14px;
+  border: var(--espessura-borda) solid var(--borda);
+  border-radius: 10px;
+  background: var(--painel);
+  box-shadow: 3px 3px 0 var(--sombra);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.buffers { display: flex; align-items: center; gap: 6px; margin-left: 6px; min-width: 0; overflow: hidden; }
+.buffer {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border-radius: 8px;
+  border: 2px solid var(--selecao);
+  color: var(--texto-suave);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.buffer.ativo { background: var(--destaque); border-color: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
+.buffer-nome { height: 100%; padding: 0 4px 0 12px; border: 0; background: transparent; cursor: pointer; }
+.buffer-fechar { height: 100%; padding: 0 10px 0 6px; border: 0; background: transparent; cursor: pointer; opacity: 0.5; }
+.buffer-fechar:hover { opacity: 1; }
+.buffer .sujo { color: var(--aviso); }
+.buffer.ativo .sujo { color: inherit; }
+
+.ferramentas { display: flex; gap: 8px; }
+.janela { display: flex; gap: 4px; margin-left: 8px; }
+.janela button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+.janela button:hover { background: var(--selecao); color: var(--texto); }
+.janela button:last-child:hover { background: var(--erro-fundo); color: var(--erro); }
+
+/* ---------- árvore de arquivos ---------- */
+
+.arvore-lista { flex: 1; min-height: 0; overflow: auto; padding: 8px 0; font-size: 12px; outline: none; }
+.arvore-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  margin: 0 8px;
+  padding-right: 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.arvore-item:hover { background: var(--selecao); }
+.arvore-item .seta { color: var(--texto-suave); width: 10px; }
+.arvore-item .nome { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.arvore-item .marca-sujo { color: var(--aviso); }
+.arvore-item.ativo { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
+.arvore-item.ativo .seta, .arvore-item.ativo .marca-sujo { color: inherit; }
+.arvore-lista:focus .arvore-item.selecionado:not(.ativo) { background: var(--selecao); outline: 1px solid var(--destaque); }
+.arvore-vazia { padding: 12px; line-height: 2; }
+
+/* ---------- editor ---------- */
+
+.editor { overflow: visible; }
+.migalhas { justify-content: flex-start; gap: 8px; padding-right: 70px; color: var(--texto-suave); }
+.migalhas .atual { color: var(--texto); }
+.editor-corpo { position: relative; flex: 1; min-height: 0; border-radius: 0 0 var(--raio) var(--raio); overflow: hidden; }
+.editor-monaco { position: absolute; inset: 0; }
+.editor-vazio {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+.editor-vazio .logo { font-size: 44px; font-weight: 700; color: var(--destaque); letter-spacing: 0.04em; margin-bottom: 10px; }
+.editor-vazio p { margin: 0 0 6px; }
+
+/* O recorte no canto do editor, com o botão de modo foco. */
+.entalhe {
+  position: absolute;
+  top: calc(var(--espessura-borda) * -1);
+  right: -6px;
+  width: 56px;
+  height: 52px;
+  z-index: 5;
+  background: var(--fundo);
+  border-left: var(--espessura-borda) solid var(--borda);
+  border-bottom: var(--espessura-borda) solid var(--borda);
+  border-bottom-left-radius: 16px;
+}
+.entalhe .botao-quadrado { position: absolute; top: 2px; right: 6px; width: 36px; height: 36px; }
+
+.monaco-editor .cursors-layer .cursor { border-radius: 1px; }
+
+/* ---------- terminal ---------- */
+
+.abas { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; margin-left: 8px; }
+.aba { display: flex; align-items: center; height: 24px; border-radius: 7px; border: 1px solid var(--selecao); color: var(--texto-suave); }
+.aba.ativa { background: var(--selecao); color: var(--texto); border-color: var(--selecao); }
+.aba-nome, .aba-fechar { height: 100%; border: 0; background: transparent; cursor: pointer; font-size: 12px; }
+.aba-nome { padding: 0 4px 0 10px; white-space: nowrap; }
+.aba-fechar { padding: 0 8px 0 4px; opacity: 0.6; }
+.terminal-corpo { position: relative; flex: 1; min-height: 0; padding: 8px 4px 4px 12px; }
+.terminal-hospedeiro { position: absolute; inset: 8px 4px 4px 12px; }
+.terminal .xterm-viewport { background: transparent !important; }
+
+/* ---------- statusline e linha de comando ---------- */
+
+.barra-status {
+  display: flex;
+  align-items: stretch;
+  height: 30px;
+  flex-shrink: 0;
+  border: var(--espessura-borda) solid var(--borda);
+  border-radius: 10px;
+  background: var(--painel);
+  box-shadow: 3px 3px 0 var(--sombra);
+  overflow: hidden;
+  font-size: 12px;
+}
+.barra-status .segmento { display: flex; align-items: center; gap: 6px; padding: 0 12px; white-space: nowrap; }
+.barra-status .com-divisa { border-right: var(--espessura-borda) solid var(--borda); }
+.barra-status .com-divisa-esq { border-left: var(--espessura-borda) solid var(--borda); }
+.barra-status .modo { padding: 0 14px; background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; letter-spacing: 0.08em; }
+.barra-status .modo[data-modo='insert'] { background: var(--sucesso); }
+.barra-status .modo[data-modo='visual'] { background: var(--rosa); }
+.barra-status .modo[data-modo='replace'] { background: var(--erro); }
+.barra-status .posicao { padding: 0 14px; background: var(--selecao); }
+.barra-status .sujo { color: var(--aviso); margin-left: 6px; }
+
+.linha-de-comando {
+  height: 20px;
+  margin-top: calc(var(--espaco) * -0.5);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+.vim-linha { display: flex; align-items: center; min-width: 0; }
+.vim-linha input {
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 12px;
+  width: 60vw;
+}
+.mensagem { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mensagem.erro { color: var(--erro); }
+
+/* ---------- menu do líder ---------- */
+
+.menu-lider {
+  position: fixed;
+  right: 32px;
+  bottom: 84px;
+  width: 480px;
+  padding: 14px 16px 16px;
+  z-index: 50;
+  border: var(--espessura-borda) solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--painel-elevado);
+  box-shadow: var(--deslocamento-sombra) var(--deslocamento-sombra) 0 var(--sombra);
+  font-size: 12px;
+}
+.menu-lider-topo { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.menu-lider-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.menu-lider-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 26px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-lider-item:hover { background: var(--selecao); }
+.menu-lider-item .tecla { width: 12px; color: var(--destaque); font-weight: 700; }
+.menu-lider-item.indisponivel { color: var(--texto-suave); }
+.menu-lider-item.indisponivel .tecla { color: var(--texto-suave); }
+.menu-lider-item > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-lider-item .em-breve { margin-left: auto; font-size: 10px; opacity: 0.8; white-space: nowrap; }
+
+/* O modo já aparece na statusline; na linha de comando fica só o que o vim digita. */
+.vim-linha > span:first-child { display: none; }
+.vim-notification { color: var(--aviso); }
