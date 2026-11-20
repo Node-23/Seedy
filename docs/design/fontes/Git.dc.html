@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Git — IDE Java</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+a{color:#92A9E1}a:hover{color:#B9C8EE}
+</style>
+</helmet>
+<div style="width: 100%; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Inky Mono', 'Martian Mono', ui-monospace, monospace; font-size: 13px">
+
+  <header style="display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0">
+    <button aria-label="Menu" style="width: 40px; height: 40px; border-radius: 10px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer">{ }</button>
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; box-sizing: border-box; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C">
+      <span style="font-weight: 700">feirinha-verde</span>
+      <span style="color: #A29D93">develop</span>
+    </div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 8px">
+      <button style="height: 38px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; cursor: pointer">↓ pull</button>
+      <button style="height: 38px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer">↑ push 1</button>
+      <button style="height: 38px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; cursor: pointer">commit  ^k</button>
+    </div>
+    <div style="display: flex; gap: 4px; margin-left: 8px">
+      <button aria-label="Minimizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">–</button>
+      <button aria-label="Maximizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">□</button>
+      <button aria-label="Fechar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">×</button>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 12px">
+
+    <section aria-label="Branches" style="width: 250px; flex-shrink: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0">
+        <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">BRANCHES</span>
+        <kbd style="font-family: inherit; font-size: 11px; padding: 2px 7px; border-radius: 6px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C">␣ g b</kbd>
+      </div>
+      <div style="flex: 1; padding: 10px 8px; font-size: 12px; line-height: 27px; overflow: hidden">
+        <div style="padding: 0 8px; font-size: 10.5px; letter-spacing: 0.14em; color: #A29D93">LOCAIS</div>
+        <div style="display: flex; justify-content: space-between; padding: 0 10px; border-radius: 7px; background: #92A9E1; color: #16171C; font-weight: 700"><span>● develop</span><span>↑1</span></div>
+        <div style="padding: 0 10px 0 24px">feature/pagamento-pix</div>
+        <div style="padding: 0 10px 0 24px">main</div>
+        <div style="padding: 0 8px; margin-top: 10px; font-size: 10.5px; letter-spacing: 0.14em; color: #A29D93">REMOTAS</div>
+        <div style="padding: 0 10px"><span style="color: #A29D93">▾ </span>origin</div>
+        <div style="padding: 0 10px 0 30px">develop</div>
+        <div style="padding: 0 10px 0 30px">feature/pagamento-pix</div>
+        <div style="padding: 0 10px 0 30px">main</div>
+        <div style="padding: 0 8px; margin-top: 10px; font-size: 10.5px; letter-spacing: 0.14em; color: #A29D93">TAGS</div>
+        <div style="padding: 0 10px 0 24px">v1.4.0</div>
+        <div style="padding: 0 10px 0 24px">v1.3.2</div>
+        <div style="padding: 0 8px; margin-top: 10px; font-size: 10.5px; letter-spacing: 0.14em; color: #A29D93">STASH</div>
+        <div style="padding: 0 10px 0 24px">wip: tela de relatório</div>
+      </div>
+      <button style="margin: 0 10px 12px; height: 36px; border-radius: 10px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; cursor: pointer">+ nova branch</button>
+    </section>
+
+    <section aria-label="Histórico de commits" style="flex: 1; min-width: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0">
+        <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">LOG</span>
+        <label style="display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 10px; border-radius: 7px; background: #19191B; color: #A29D93; font-size: 12px; flex: 1; max-width: 360px"><span style="color: #92A9E1">/</span>filtrar por autor, mensagem ou arquivo</label>
+        <span style="flex: 1"></span>
+        <span style="font-size: 12px; color: #A29D93">todas as branches ✓</span>
+      </div>
+      <div style="position: relative; flex: 1; min-height: 0; overflow: hidden; padding-top: 6px">
+        <svg width="84" height="530" viewBox="0 0 84 530" fill="none" style="position: absolute; left: 8px; top: 6px" aria-hidden="true">
+          <path d="M18 20V460" stroke="#92A9E1" stroke-width="2.5"></path>
+          <path d="M18 100C18 120 42 120 42 140V220C42 240 18 240 18 260" stroke="#E3A9CC" stroke-width="2.5"></path>
+          <path d="M66 300C66 320 18 320 18 340" stroke="#B7D39C" stroke-width="2.5"></path>
+          <path d="M66 300V530" stroke="#B7D39C" stroke-width="2.5"></path>
+          <path d="M18 460C18 480 66 480 66 500" stroke="#92A9E1" stroke-width="2.5"></path>
+          <circle cx="18" cy="20" r="7" fill="#333337" stroke="#92A9E1" stroke-width="3"></circle>
+          <circle cx="18" cy="60" r="6" fill="#92A9E1" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="18" cy="100" r="6" fill="#2A2A2D" stroke="#92A9E1" stroke-width="3"></circle>
+          <circle cx="42" cy="140" r="6" fill="#E3A9CC" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="18" cy="180" r="6" fill="#92A9E1" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="42" cy="220" r="6" fill="#E3A9CC" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="18" cy="260" r="6" fill="#92A9E1" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="66" cy="300" r="6" fill="#2A2A2D" stroke="#B7D39C" stroke-width="3"></circle>
+          <circle cx="18" cy="340" r="6" fill="#92A9E1" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="18" cy="380" r="6" fill="#92A9E1" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="66" cy="420" r="6" fill="#B7D39C" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="18" cy="460" r="6" fill="#92A9E1" stroke="#2A2A2D" stroke-width="3"></circle>
+          <circle cx="66" cy="500" r="6" fill="#B7D39C" stroke="#2A2A2D" stroke-width="3"></circle>
+        </svg>
+        <div style="display: flex; flex-direction: column; font-size: 12.5px">
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px; background: #333337">
+            <span style="padding: 2px 8px; border-radius: 6px; background: #92A9E1; color: #16171C; font-size: 11px; font-weight: 700">HEAD → develop</span>
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">feat: limite de bancas por feira</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 20 min</span><span style="color: #92A9E1; width: 64px">a3f9c21</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="padding: 1px 7px; border-radius: 6px; border: 1px solid #92A9E1; color: #92A9E1; font-size: 11px">origin/develop</span>
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">fix: data da reserva no fuso America/Fortaleza</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 3 h</span><span style="color: #A29D93; width: 64px">7e1b0d4</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #A29D93">Merge branch 'feature/pagamento-pix' into develop</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">ontem</span><span style="color: #A29D93; width: 64px">c0d2e88</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="padding: 1px 7px; border-radius: 6px; border: 1px solid #E3A9CC; color: #E3A9CC; font-size: 11px">feature/pagamento-pix</span>
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">feat: webhook de confirmação do PIX</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">ontem</span><span style="color: #A29D93; width: 64px">5b7a1f0</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">refactor: extrai RegraNegocioException</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 2 dias</span><span style="color: #A29D93; width: 64px">91ce4a3</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">feat: tela de pagamento</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 3 dias</span><span style="color: #A29D93; width: 64px">e44b902</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">test: cobre reserva com feira lotada</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 4 dias</span><span style="color: #A29D93; width: 64px">2fa77c5</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="padding: 2px 8px; border-radius: 6px; background: #B7D39C; color: #16171C; font-size: 11px; font-weight: 700">main</span>
+            <span style="padding: 1px 7px; border-radius: 6px; border: 1px solid #E8C979; color: #E8C979; font-size: 11px">v1.4.0</span>
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">release: v1.4.0</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 5 dias</span><span style="color: #A29D93; width: 64px">88d1c37</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">feat: exportação CSV de reservas</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 6 dias</span><span style="color: #A29D93; width: 64px">f03e6b1</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">fix: relatório de feirantes vazio</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 1 sem</span><span style="color: #A29D93; width: 64px">6a9d250</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">hotfix: sessão expirando cedo demais</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 1 sem</span><span style="color: #A29D93; width: 64px">b17f0e9</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">chore: atualiza dependências</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 2 sem</span><span style="color: #A29D93; width: 64px">3c5e811</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 100px">
+            <span style="padding: 1px 7px; border-radius: 6px; border: 1px solid #E8C979; color: #E8C979; font-size: 11px">v1.3.2</span>
+            <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">release: v1.3.2</span>
+            <span style="color: #A29D93; width: 90px">Matheus</span><span style="color: #A29D93; width: 92px">há 2 sem</span><span style="color: #A29D93; width: 64px">0e2a9d4</span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 22px; height: 34px; padding: 0 14px; border-top: 2px solid #0B0B0C; font-size: 12px; color: #A29D93; flex-shrink: 0">
+        <span><span style="color: #92A9E1">j k</span> navegar</span>
+        <span><span style="color: #92A9E1">⏎</span> diff</span>
+        <span><span style="color: #92A9E1">c</span> checkout</span>
+        <span><span style="color: #92A9E1">p</span> cherry-pick</span>
+        <span><span style="color: #92A9E1">b</span> nova branch aqui</span>
+      </div>
+    </section>
+
+    <section aria-label="Detalhes do commit" style="width: 430px; flex-shrink: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0">
+        <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">COMMIT</span>
+        <span style="font-size: 12px; color: #92A9E1">a3f9c21</span>
+      </div>
+      <div style="padding: 16px 16px 12px; font-size: 12.5px; line-height: 20px; border-bottom: 2px solid #0B0B0C">
+        <div style="font-weight: 700; font-size: 14px; margin-bottom: 8px">feat: limite de bancas por feira</div>
+        <div style="color: #E9E2D3; margin-bottom: 10px">Impede a reserva quando a feira atinge o limite de bancas e lança RegraNegocioException com uma mensagem clara.</div>
+        <div style="color: #A29D93">Matheus · hoje 16:12 · pai 7e1b0d4</div>
+      </div>
+      <div style="padding: 10px 8px; font-size: 12px; line-height: 28px; border-bottom: 2px solid #0B0B0C">
+        <div style="padding: 0 8px; color: #A29D93">3 arquivos <span style="color: #B7D39C">+31</span> <span style="color: #EE8C84">−2</span></div>
+        <div style="display: flex; gap: 10px; padding: 0 8px; border-radius: 7px; background: #333337"><span style="color: #E8C979">M</span><span style="flex: 1">FeiraService.java</span><span style="color: #B7D39C">+6</span><span style="color: #EE8C84">−1</span></div>
+        <div style="display: flex; gap: 10px; padding: 0 8px"><span style="color: #E8C979">M</span><span style="flex: 1">FeiraServiceTest.java</span><span style="color: #B7D39C">+24</span></div>
+        <div style="display: flex; gap: 10px; padding: 0 8px"><span style="color: #E8C979">M</span><span style="flex: 1">application.yml</span><span style="color: #B7D39C">+1</span><span style="color: #EE8C84">−1</span></div>
+      </div>
+      <div style="flex: 1; padding: 10px 0; font-size: 11.5px; line-height: 20px; overflow: hidden">
+        <div style="padding: 0 14px; color: #A29D93">@@ -30,6 +30,10 @@ reservarBanca</div>
+        <div style="display: flex; white-space: pre"><span style="width: 28px; text-align: center; color: #A29D93"> </span>        Feira feira = feiraRepository.findById(feiraId)</div>
+        <div style="display: flex; white-space: pre"><span style="width: 28px; text-align: center; color: #A29D93"> </span>            .orElseThrow(...);</div>
+        <div style="display: flex; white-space: pre; background: #3A2A2B"><span style="width: 28px; text-align: center; color: #EE8C84">−</span>        return bancaRepository.save(...);</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 28px; text-align: center; color: #B7D39C">+</span>        if (feira.getBancas().size() &gt;= LIMITE_BANCAS) {</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 28px; text-align: center; color: #B7D39C">+</span>            throw new RegraNegocioException(<span style="color: #B7D39C">"Feira lotada"</span>);</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 28px; text-align: center; color: #B7D39C">+</span>        }</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 28px; text-align: center; color: #B7D39C">+</span>        return bancaRepository.save(...);</div>
+        <div style="display: flex; white-space: pre"><span style="width: 28px; text-align: center; color: #A29D93"> </span>    }</div>
+      </div>
+      <div style="display: flex; gap: 8px; padding: 12px; border-top: 2px solid #0B0B0C">
+        <button style="flex: 1; height: 34px; border-radius: 9px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer">diff completo ⏎</button>
+        <button style="height: 34px; padding: 0 12px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; font-family: inherit; font-size: 12px; cursor: pointer">reverter</button>
+      </div>
+    </section>
+  </div>
+
+  <footer style="display: flex; align-items: stretch; height: 30px; flex-shrink: 0; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden; font-size: 12px">
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #92A9E1; color: #16171C; font-weight: 700; letter-spacing: 0.08em">GIT</span>
+    <span style="display: flex; align-items: center; gap: 6px; padding: 0 12px; border-right: 2px solid #0B0B0C">develop <span style="color: #A29D93">↑1 ↓0</span></span>
+    <span style="flex: 1"></span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C">origin · gitlab</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C; color: #A29D93">13 commits</span>
+  </footer>
+  <div style="height: 20px; flex-shrink: 0"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

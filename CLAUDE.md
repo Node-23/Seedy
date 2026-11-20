@@ -3,6 +3,14 @@
 IDE Java pessoal, minimalista e guiada pelo teclado. Tauri 2 (Rust) + Angular + Monaco.
 Precisa rodar em **Windows e Linux**. Leia `README.md` e `ROADMAP.md` antes de mudar algo grande.
 
+## Design
+
+Os mockups de todas as telas estão em `docs/design/` (PNG + HTML-fonte). **Antes de criar
+ou mudar qualquer tela, abra a imagem correspondente e reproduza o visual fielmente** —
+layout, bordas, sombras, espaçamentos, rótulos e dicas de atalho. Traduza cada cor fixa do
+mockup para a variável do tema (tabela em `docs/design/README.md`). Depois de implementar,
+rode `npm start`, tire um print da tela e compare com o mockup antes de entregar.
+
 ## Regras
 
 - **Idioma:** código, nomes, comentários, mensagens de commit e textos da interface em

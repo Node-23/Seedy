@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Busca — IDE Java</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+a{color:#92A9E1}a:hover{color:#B9C8EE}
+</style>
+</helmet>
+<div style="width: 100%; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Inky Mono', 'Martian Mono', ui-monospace, monospace; font-size: 13px">
+
+  <header style="display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0">
+    <button aria-label="Menu" style="width: 40px; height: 40px; border-radius: 10px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer">{ }</button>
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; box-sizing: border-box; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C">
+      <span style="font-weight: 700">feirinha-verde</span>
+      <span style="color: #A29D93">develop</span>
+    </div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 4px">
+      <button aria-label="Minimizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">–</button>
+      <button aria-label="Maximizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">□</button>
+      <button aria-label="Fechar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">×</button>
+    </div>
+  </header>
+
+  <div style="position: relative; flex: 1; min-height: 0; display: flex; gap: 12px">
+    <div aria-hidden="true" style="width: 280px; flex-shrink: 0; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; opacity: 0.35"></div>
+    <div aria-hidden="true" style="flex: 1; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; opacity: 0.35"></div>
+
+    <div role="dialog" aria-label="Buscar em tudo" style="position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); width: 1120px; max-width: 94%; height: 610px; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 16px; background: #2A2A2D; box-shadow: 6px 6px 0 #0B0B0C; overflow: hidden">
+
+      <label style="display: flex; align-items: center; gap: 12px; height: 58px; padding: 0 18px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0">
+        <span style="color: #92A9E1; font-size: 18px; font-weight: 700">›</span>
+        <span style="font-size: 16px">reserv<span style="display: inline-block; width: 9px; height: 18px; margin-left: 1px; vertical-align: -3px; background: #92A9E1"></span></span>
+        <span style="flex: 1"></span>
+        <span style="color: #A29D93; font-size: 12px">7 / 1.284</span>
+      </label>
+
+      <div style="display: flex; align-items: center; gap: 6px; height: 46px; padding: 0 14px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0; font-size: 12px">
+        <button style="height: 28px; padding: 0 12px; border-radius: 7px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer">Tudo</button>
+        <button style="height: 28px; padding: 0 12px; border-radius: 7px; border: 2px solid #333337; background: transparent; color: #A29D93; font-family: inherit; font-size: 12px; cursor: pointer">Classes</button>
+        <button style="height: 28px; padding: 0 12px; border-radius: 7px; border: 2px solid #333337; background: transparent; color: #A29D93; font-family: inherit; font-size: 12px; cursor: pointer">Arquivos</button>
+        <button style="height: 28px; padding: 0 12px; border-radius: 7px; border: 2px solid #333337; background: transparent; color: #A29D93; font-family: inherit; font-size: 12px; cursor: pointer">Símbolos</button>
+        <button style="height: 28px; padding: 0 12px; border-radius: 7px; border: 2px solid #333337; background: transparent; color: #A29D93; font-family: inherit; font-size: 12px; cursor: pointer">Texto</button>
+        <button style="height: 28px; padding: 0 12px; border-radius: 7px; border: 2px solid #333337; background: transparent; color: #A29D93; font-family: inherit; font-size: 12px; cursor: pointer">Ações</button>
+        <span style="flex: 1"></span>
+        <span style="color: #A29D93">tab troca o filtro</span>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex">
+        <ul aria-label="Resultados" style="list-style: none; margin: 0; padding: 8px; width: 540px; flex-shrink: 0; box-sizing: border-box; border-right: 2px solid #0B0B0C; display: flex; flex-direction: column; gap: 2px">
+          <li style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 9px; background: #333337">
+            <span style="width: 22px; height: 22px; border-radius: 6px; background: #E3A9CC; color: #16171C; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">m</span>
+            <span><span style="color: #92A9E1; text-decoration: underline">reserv</span>arBanca(Long, Long)</span>
+            <span style="flex: 1"></span>
+            <span style="color: #A29D93; font-size: 12px">FeiraService</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 9px">
+            <span style="width: 22px; height: 22px; border-radius: 6px; background: #92A9E1; color: #16171C; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">c</span>
+            <span><span style="color: #92A9E1; text-decoration: underline">Reserv</span>aBancaRequest</span>
+            <span style="flex: 1"></span>
+            <span style="color: #A29D93; font-size: 12px">feira.dto</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 9px">
+            <span style="width: 22px; height: 22px; border-radius: 6px; background: #92A9E1; color: #16171C; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">c</span>
+            <span><span style="color: #92A9E1; text-decoration: underline">Reserv</span>aController</span>
+            <span style="flex: 1"></span>
+            <span style="color: #A29D93; font-size: 12px">reserva</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 9px">
+            <span style="width: 22px; height: 22px; border-radius: 6px; background: #E3A9CC; color: #16171C; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">m</span>
+            <span><span style="color: #92A9E1; text-decoration: underline">reserv</span>arComPix(Long, Pix)</span>
+            <span style="flex: 1"></span>
+            <span style="color: #A29D93; font-size: 12px">PagamentoService</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 9px">
+            <span style="width: 22px; height: 22px; border-radius: 6px; background: #B7D39C; color: #16171C; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">f</span>
+            <span>V12__<span style="color: #92A9E1; text-decoration: underline">reserv</span>a_banca.sql</span>
+            <span style="flex: 1"></span>
+            <span style="color: #A29D93; font-size: 12px">db/migration</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 9px">
+            <span style="width: 22px; height: 22px; border-radius: 6px; background: #92A9E1; color: #16171C; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">c</span>
+            <span><span style="color: #92A9E1; text-decoration: underline">Reserv</span>aBancaTest</span>
+            <span style="flex: 1"></span>
+            <span style="color: #A29D93; font-size: 12px">src/test</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 9px">
+            <span style="width: 22px; height: 22px; border-radius: 6px; background: #E8C979; color: #16171C; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">t</span>
+            <span>"<span style="color: #92A9E1; text-decoration: underline">reserv</span>as.prazo-horas"</span>
+            <span style="flex: 1"></span>
+            <span style="color: #A29D93; font-size: 12px">application.yml:42</span>
+          </li>
+        </ul>
+
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+          <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 16px; border-bottom: 2px solid #0B0B0C; font-size: 12px; color: #A29D93; flex-shrink: 0">
+            <span>FeiraService.java</span><span>linha 29</span>
+          </div>
+          <div style="flex: 1; padding: 12px 0; line-height: 21px; font-size: 12.5px; overflow: hidden">
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">26</span><span style="white-space: pre">    }</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">27</span><span style="white-space: pre"> </span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">28</span><span style="white-space: pre">    @Transactional</span></div>
+            <div style="display: flex; background: #333337"><span style="width: 44px; text-align: right; padding-right: 16px; color: #92A9E1; font-weight: 700">29</span><span style="white-space: pre">    public Banca <span style="color: #92A9E1; text-decoration: underline">reserv</span><span style="color: #92A9E1">arBanca</span>(Long feiraId, Long feiranteId) {</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">30</span><span style="white-space: pre">        Feira feira = feiraRepository.findById(feiraId)</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">31</span><span style="white-space: pre">            .orElseThrow(() -&gt; new RegraNegocioException(<span style="color: #B7D39C">"Feira não encontrada"</span>));</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">32</span><span style="white-space: pre"> </span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">33</span><span style="white-space: pre">        if (feira.getBancas().size() &gt;= LIMITE_BANCAS) {</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">34</span><span style="white-space: pre">            throw new RegraNegocioException(<span style="color: #B7D39C">"Feira lotada"</span>);</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">35</span><span style="white-space: pre">        }</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">36</span><span style="white-space: pre">        return bancaRepository.save(new Banca(feira, feiranteId));</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">37</span><span style="white-space: pre">    }</span></div>
+            <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 16px; color: #A29D93">38</span><span style="white-space: pre">}</span></div>
+          </div>
+          <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 2px solid #0B0B0C; font-size: 12px; color: #A29D93; flex-shrink: 0">
+            <span style="color: #E9E2D3">3 usos</span>
+            <span>· ReservaController:41 · ReservaBancaTest:18 · ReservaBancaTest:52</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 22px; height: 40px; padding: 0 18px; border-top: 2px solid #0B0B0C; background: #222225; font-size: 12px; color: #A29D93; flex-shrink: 0">
+        <span><span style="color: #92A9E1">↑↓</span> navegar</span>
+        <span><span style="color: #92A9E1">⏎</span> abrir</span>
+        <span><span style="color: #92A9E1">^v</span> dividir</span>
+        <span><span style="color: #92A9E1">^u</span> usos</span>
+        <span><span style="color: #92A9E1">esc</span> fechar</span>
+        <span style="flex: 1"></span>
+        <span>␣␣ abre de qualquer lugar</span>
+      </div>
+    </div>
+  </div>
+
+  <footer style="display: flex; align-items: stretch; height: 30px; flex-shrink: 0; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden; font-size: 12px">
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #92A9E1; color: #16171C; font-weight: 700; letter-spacing: 0.08em">BUSCA</span>
+    <span style="display: flex; align-items: center; gap: 6px; padding: 0 12px; border-right: 2px solid #0B0B0C">develop <span style="color: #A29D93">↑1</span></span>
+    <span style="flex: 1"></span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C">índice: 1.284 itens ✓</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C">jdtls ✓</span>
+  </footer>
+  <div style="height: 20px; flex-shrink: 0"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

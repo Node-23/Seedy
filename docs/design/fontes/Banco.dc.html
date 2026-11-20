@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Banco de dados — IDE Java</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+a{color:#92A9E1}a:hover{color:#B9C8EE}
+</style>
+</helmet>
+<div style="width: 100%; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Inky Mono', 'Martian Mono', ui-monospace, monospace; font-size: 13px">
+
+  <header style="display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0">
+    <button aria-label="Menu" style="width: 40px; height: 40px; border-radius: 10px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer">{ }</button>
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; box-sizing: border-box; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C">
+      <span style="font-weight: 700">feirinha-verde</span>
+      <span style="color: #A29D93">develop</span>
+    </div>
+    <nav aria-label="Buffers abertos" style="display: flex; align-items: center; gap: 6px; margin-left: 6px">
+      <a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; border: 2px solid #333337; box-sizing: border-box; color: #A29D93; text-decoration: none; font-size: 12px">1 FeiraService.java</a>
+      <a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; background: #92A9E1; color: #16171C; text-decoration: none; font-weight: 700; font-size: 12px">2 reservas-mes.sql</a>
+    </nav>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 4px">
+      <button aria-label="Minimizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">–</button>
+      <button aria-label="Maximizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">□</button>
+      <button aria-label="Fechar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">×</button>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 12px">
+
+    <section aria-label="Conexões" style="width: 310px; flex-shrink: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0">
+        <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">CONEXÕES</span>
+        <kbd style="font-family: inherit; font-size: 11px; padding: 2px 7px; border-radius: 6px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C">␣ d</kbd>
+      </div>
+      <div style="flex: 1; padding: 8px; font-size: 12px; line-height: 28px; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px"><span style="color: #A29D93">▸</span><span style="width: 8px; height: 8px; border-radius: 50%; background: #B7D39C"></span><span>Local</span><span style="flex: 1"></span><span style="color: #A29D93">localhost</span></div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px"><span style="color: #A29D93">▸</span><span style="width: 8px; height: 8px; border-radius: 50%; background: #92A9E1"></span><span>Homolog</span><span style="flex: 1"></span><span style="color: #A29D93">10.0.0.12</span></div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px; margin-top: 2px; border-radius: 8px; background: #3A2A2B"><span style="color: #EE8C84">▾</span><span style="width: 8px; height: 8px; border-radius: 50%; background: #EE8C84"></span><span style="color: #EE8C84; font-weight: 700">Produção</span><span style="flex: 1"></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EE8C84" stroke-width="2" stroke-linecap="round" role="img" aria-label="Somente leitura"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg><span style="color: #EE8C84">ssh</span></div>
+        <div style="padding-left: 30px"><span style="color: #A29D93">▾ </span>feira_db</div>
+        <div style="padding-left: 46px"><span style="color: #A29D93">▾ </span>public</div>
+        <div style="padding-left: 62px"><span style="color: #A29D93">▾ </span>tabelas</div>
+        <div style="padding-left: 90px">banca</div>
+        <div style="margin-left: 80px; padding-left: 10px; border-radius: 7px; background: #92A9E1; color: #16171C; font-weight: 700">feira</div>
+        <div style="padding-left: 90px">feirante</div>
+        <div style="padding-left: 90px">pagamento</div>
+        <div style="padding-left: 90px">reserva</div>
+        <div style="padding-left: 62px"><span style="color: #A29D93">▸ </span>views</div>
+        <div style="padding-left: 62px"><span style="color: #A29D93">▸ </span>funções</div>
+        <div style="padding-left: 30px"><span style="color: #A29D93">▸ </span>objetos do servidor</div>
+      </div>
+      <div style="margin: 0 10px 10px; padding: 12px 14px; border: 2px solid #0B0B0C; border-radius: 12px; background: #222225; font-size: 12px; line-height: 20px">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px">
+          <span style="font-size: 11px; letter-spacing: 0.14em; color: #92A9E1">TÚNEL SSH</span>
+          <span style="display: flex; align-items: center; gap: 6px; color: #B7D39C"><span style="width: 7px; height: 7px; border-radius: 50%; background: #B7D39C"></span>ativo</span>
+        </div>
+        <div>vps <span style="color: #A29D93">→</span> localhost:5432</div>
+        <div style="color: #A29D93">porta local 54321 · chave ~/.ssh/id_ed25519</div>
+      </div>
+      <button style="margin: 0 10px 12px; height: 36px; border-radius: 10px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; cursor: pointer">+ nova conexão</button>
+    </section>
+
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+
+      <section aria-label="Editor SQL" style="position: relative; height: 330px; flex-shrink: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 14px; background: #3A2A2B; border-bottom: 2px solid #0B0B0C; font-size: 12px; flex-shrink: 0">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #EE8C84"></span>
+          <span style="color: #EE8C84; font-weight: 700; letter-spacing: 0.08em">PRODUÇÃO</span>
+          <span style="color: #E9E2D3">feira_db · public</span>
+          <span style="flex: 1"></span>
+          <span style="display: flex; align-items: center; gap: 6px; color: #EE8C84"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>somente leitura</span>
+          <span style="color: #E9E2D3">⇄ ssh vps</span>
+        </div>
+        <div style="flex: 1; padding: 12px 0; line-height: 21px; overflow: hidden">
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">1</span><span style="white-space: pre; color: #E8C979">-- Bancas reservadas por feira neste mês</span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">2</span><span style="white-space: pre">SELECT f.nome,</span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">3</span><span style="white-space: pre">       f.data,</span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">4</span><span style="white-space: pre">       COUNT(b.id) AS <span style="color: #92A9E1">bancas</span></span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">5</span><span style="white-space: pre">FROM feira f</span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">6</span><span style="white-space: pre">LEFT JOIN banca b ON b.feira_id = f.id</span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">7</span><span style="white-space: pre">WHERE f.data &gt;= date_trunc(<span style="color: #B7D39C">'month'</span>, current_date)</span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">8</span><span style="white-space: pre">GROUP BY f.id</span></div>
+          <div style="display: flex"><span style="width: 44px; text-align: right; padding-right: 18px; color: #A29D93">9</span><span style="white-space: pre">ORDER BY f.data</span></div>
+          <div style="display: flex; background: #333337"><span style="width: 44px; text-align: right; padding-right: 18px; color: #92A9E1; font-weight: 700">10</span><span style="white-space: pre">LIMIT <span style="color: #E3A9CC">50</span>;<span style="display: inline-block; width: 8px; height: 17px; vertical-align: -3px; background: #92A9E1"></span></span></div>
+        </div>
+        <div style="position: absolute; right: 14px; bottom: 14px; display: flex; gap: 8px">
+          <button style="height: 34px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; font-family: inherit; font-size: 12px; cursor: pointer">explain</button>
+          <button style="height: 34px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer">▶ executar  ^⏎</button>
+        </div>
+      </section>
+
+      <section aria-label="Resultado" style="flex: 1; min-height: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 14px; height: 38px; padding: 0 14px; border-bottom: 2px solid #0B0B0C; font-size: 12px; flex-shrink: 0">
+          <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">RESULTADO</span>
+          <span>4 linhas · 38 ms</span>
+          <span style="flex: 1"></span>
+          <button style="height: 26px; padding: 0 10px; border-radius: 7px; border: 2px solid #333337; background: transparent; color: #E9E2D3; font-family: inherit; font-size: 12px; cursor: pointer">exportar csv</button>
+          <button style="height: 26px; padding: 0 10px; border-radius: 7px; border: 2px solid #333337; background: transparent; color: #E9E2D3; font-family: inherit; font-size: 12px; cursor: pointer">histórico</button>
+        </div>
+        <div style="flex: 1; overflow: auto">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12.5px">
+            <thead>
+              <tr style="background: #222225">
+                <th style="width: 56px; height: 34px; padding: 0 14px; text-align: right; color: #A29D93; font-weight: 400; border-bottom: 2px solid #0B0B0C">#</th>
+                <th style="padding: 0 14px; text-align: left; color: #A29D93; font-weight: 400; border-bottom: 2px solid #0B0B0C; border-left: 1px solid #0B0B0C">nome <span style="color: #A29D93; font-size: 10.5px">varchar</span></th>
+                <th style="padding: 0 14px; text-align: left; color: #A29D93; font-weight: 400; border-bottom: 2px solid #0B0B0C; border-left: 1px solid #0B0B0C">data <span style="color: #A29D93; font-size: 10.5px">date</span></th>
+                <th style="padding: 0 14px; text-align: right; color: #A29D93; font-weight: 400; border-bottom: 2px solid #0B0B0C; border-left: 1px solid #0B0B0C">bancas <span style="color: #A29D93; font-size: 10.5px">int8</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="height: 34px; padding: 0 14px; text-align: right; color: #A29D93; border-bottom: 1px solid #333337">1</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #333337">Feira Central</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #333337">2026-11-07</td><td style="padding: 0 14px; text-align: right; color: #E3A9CC; border-bottom: 1px solid #333337; border-left: 1px solid #333337">42</td></tr>
+              <tr style="background: #333337"><td style="height: 34px; padding: 0 14px; text-align: right; color: #92A9E1; border-bottom: 1px solid #333337">2</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #2A2A2D">Feira do Jockey</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #2A2A2D">2026-11-14</td><td style="padding: 0 14px; text-align: right; color: #E3A9CC; border-bottom: 1px solid #333337; border-left: 1px solid #2A2A2D">37</td></tr>
+              <tr><td style="height: 34px; padding: 0 14px; text-align: right; color: #A29D93; border-bottom: 1px solid #333337">3</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #333337">Feira Central</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #333337">2026-11-21</td><td style="padding: 0 14px; text-align: right; color: #E3A9CC; border-bottom: 1px solid #333337; border-left: 1px solid #333337">18</td></tr>
+              <tr><td style="height: 34px; padding: 0 14px; text-align: right; color: #A29D93; border-bottom: 1px solid #333337">4</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #333337">Feira do Jockey</td><td style="padding: 0 14px; border-bottom: 1px solid #333337; border-left: 1px solid #333337">2026-11-28</td><td style="padding: 0 14px; text-align: right; color: #E3A9CC; border-bottom: 1px solid #333337; border-left: 1px solid #333337">6</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-top: 2px solid #0B0B0C; font-size: 12px; color: #A29D93; flex-shrink: 0">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+          <span>grade somente leitura — alterações só por SQL</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer style="display: flex; align-items: stretch; height: 30px; flex-shrink: 0; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden; font-size: 12px">
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #92A9E1; color: #16171C; font-weight: 700; letter-spacing: 0.08em">NORMAL</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-right: 2px solid #0B0B0C">reservas-mes.sql</span>
+    <span style="flex: 1"></span>
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #3A2A2B; color: #EE8C84; font-weight: 700; border-left: 2px solid #0B0B0C">PRODUÇÃO</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C">postgres</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C">ssh ✓</span>
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #333337; border-left: 2px solid #0B0B0C">10:10</span>
+  </footer>
+  <div style="height: 20px; flex-shrink: 0; display: flex; align-items: center; padding: 0 6px; font-size: 12px; color: #A29D93">consulta executada em Produção (somente leitura)</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
