@@ -47,6 +47,25 @@ export interface Ocorrencia {
   texto: string;
 }
 
+export interface Jdk {
+  home: string;
+  versao: string;
+  maior: number;
+}
+
+export interface EstadoJava {
+  jdk: Jdk | null;
+  jdtlsInstalado: boolean;
+  versaoJdtls: string;
+  javaMinimo: number;
+}
+
+export type ProgressoJdtls =
+  | { fase: 'baixando'; baixado: number; total: number | null }
+  | { fase: 'verificando' }
+  | { fase: 'extraindo' }
+  | { fase: 'pronto' };
+
 export interface ArquivoTema {
   caminho: string;
   conteudo: string;
@@ -111,6 +130,27 @@ export const ponte = {
     const { open } = await import('@tauri-apps/plugin-dialog');
     const escolha = await open({ directory: true, multiple: false, title: 'Abrir projeto' });
     return typeof escolha === 'string' ? escolha : null;
+  },
+
+  /** Java: JDK, instalação do jdtls e o canal LSP (só dentro do app). */
+  java: {
+    async estado(): Promise<EstadoJava | null> {
+      return noApp() ? invoke<EstadoJava>('java_estado') : null;
+    },
+    async instalar(aoProgresso: (p: ProgressoJdtls) => void): Promise<void> {
+      const canal = new Channel<ProgressoJdtls>();
+      canal.onmessage = aoProgresso;
+      await invoke('jdtls_instalar', { progresso: canal });
+    },
+    async iniciar(raiz: string, aoReceber: (mensagem: string) => void, aoEncerrar: () => void) {
+      const mensagens = new Channel<string>();
+      mensagens.onmessage = aoReceber;
+      const fim = new Channel<null>();
+      fim.onmessage = aoEncerrar;
+      return invoke<{ id: number; pid: number }>('lsp_iniciar', { raiz, mensagens, fim });
+    },
+    enviar: (id: number, mensagem: string) => invoke<void>('lsp_enviar', { id, mensagem }),
+    parar: (id: number) => invoke<void>('lsp_parar', { id }),
   },
 
   terminal: {

@@ -6,6 +6,7 @@ import { TemaService } from '../tema/tema';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { BuscaService } from '../busca/busca.service';
 import { BuscaProjetoService } from '../busca/busca-projeto.service';
+import { JdtlsService } from '../java/jdtls.service';
 
 export interface AcaoLider {
   tecla: string;
@@ -24,7 +25,7 @@ export interface AcaoLider {
  *   menu de atalhos, estilo which-key.
  * - Buscas: Ctrl+F no arquivo aberto, Ctrl+P arquivo (␣ f; ␣␣ abre a mesma
  *   janela em "Tudo"), Ctrl+Shift+F no projeto (␣ /).
- * - Atalhos globais: Ctrl+S salva, Alt+F12 abre/fecha o terminal,
+ * - Atalhos globais: Ctrl+S salva, Ctrl+Shift+S salva todos, Alt+F12 abre/fecha o terminal,
  *   Ctrl+Tab troca de buffer.
  */
 @Injectable({ providedIn: 'root' })
@@ -36,6 +37,7 @@ export class AtalhosService {
   private readonly mensagens = inject(MensagensService);
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
+  private readonly jdtls = inject(JdtlsService);
 
   readonly liderAberto = signal(false);
 
@@ -50,6 +52,7 @@ export class AtalhosService {
     { tecla: 'w', rotulo: 'salvar', disponivel: true, executar: () => void this.editor.salvar() },
     { tecla: 'q', rotulo: 'fechar buffer', disponivel: true, executar: () => this.editor.fechar() },
     { tecla: 'c', rotulo: 'editar tema', disponivel: true, executar: () => this.abrirTema() },
+    { tecla: 'l', rotulo: 'reiniciar jdtls', disponivel: true, executar: () => void this.jdtls.reiniciar() },
     { tecla: 'r', rotulo: 'rodar / debug', disponivel: false },
     { tecla: 'g', rotulo: 'git', disponivel: false },
     { tecla: 'd', rotulo: 'banco', disponivel: false },
@@ -108,6 +111,9 @@ export class AtalhosService {
       // Antes do vim (onde Ctrl+F rola a página) e do navegador (barra de busca dele).
       this.engolir(e);
       this.editor.buscarNoArquivo();
+    } else if (ctrl && e.shiftKey && !e.altKey && e.code === 'KeyS') {
+      this.engolir(e);
+      void this.editor.salvarTodos();
     } else if (ctrl && !e.shiftKey && e.key.toLowerCase() === 's') {
       e.preventDefault();
       void this.editor.salvar();

@@ -38,6 +38,20 @@ export class EditorService {
 
   constructor() {
     effect(() => definirTemaMonaco(this.temaService.tema()));
+
+    // Quando o Monaco quer abrir outro arquivo (ir para definição, lista de usos),
+    // quem abre é o Seedy, como um buffer.
+    monaco.editor.registerEditorOpener({
+      openCodeEditor: (_origem, recurso, selecao) => {
+        if (recurso.scheme !== 'file') return false;
+        const pos = selecao && 'startLineNumber' in selecao
+          ? { linha: selecao.startLineNumber, coluna: selecao.startColumn }
+          : selecao ? { linha: selecao.lineNumber, coluna: selecao.column } : null;
+        const caminho = recurso.fsPath.replace(/^([a-z]):/, (_, l: string) => `${l.toUpperCase()}:`);
+        void this.abrir(caminho, pos?.linha, pos?.coluna);
+        return true;
+      },
+    });
   }
 
   sujo(b: Buffer): boolean {
@@ -45,25 +59,70 @@ export class EditorService {
     return b.modelo.getAlternativeVersionId() !== b.versaoSalva;
   }
 
-  /** Abre o arquivo (ou só ativa, se já estiver aberto); com `linha`, leva o cursor até ela. */
-  async abrir(caminho: string, linha?: number): Promise<void> {
-    if (!this.buffers().some((b) => b.caminho === caminho)) {
-      let conteudo: string;
-      try {
-        conteudo = await ponte.lerArquivo(caminho);
-      } catch (e) {
-        this.mensagens.erro(String(e));
-        return;
+  /**
+   * Abre o arquivo (ou só ativa, se já estiver aberto); com `linha`, leva o cursor até ela.
+   * Com `ativar` = false, o arquivo vira um buffer sem trocar o que está na tela
+   * (ex.: arquivos alterados por um "renomear" em vários arquivos).
+   */
+  async abrir(caminho: string, linha?: number, coluna?: number, ativar = true): Promise<Buffer | null> {
+    let buffer = this.bufferDe(caminho);
+    if (!buffer) {
+      const modelo = await this.garantirModelo(caminho);
+      if (!modelo) return null;
+      buffer = this.bufferDe(caminho); // pode ter sido aberto enquanto lia o disco
+      if (!buffer) {
+        modelo.onDidChangeContent(() => this.edicoes.update((n) => n + 1));
+        buffer = { caminho, nome: nomeBase(caminho), modelo, versaoSalva: modelo.getAlternativeVersionId() };
+        this.buffers.update((lista) => [...lista, buffer!]);
       }
-      const uri = monaco.Uri.file(caminho);
-      const modelo =
-        monaco.editor.getModel(uri) ?? monaco.editor.createModel(conteudo, this.linguagemDe(caminho), uri);
-      modelo.onDidChangeContent(() => this.edicoes.update((n) => n + 1));
-      const buffer: Buffer = { caminho, nome: nomeBase(caminho), modelo, versaoSalva: modelo.getAlternativeVersionId() };
-      this.buffers.update((lista) => [...lista, buffer]);
     }
-    this.ativo.set(caminho);
-    if (linha) this.irParaLinha(caminho, linha);
+    if (ativar) {
+      this.ativo.set(buffer.caminho);
+      if (linha) this.irPara(buffer, linha, coluna);
+    }
+    return buffer;
+  }
+
+  /** Buffer aberto deste arquivo, comparando pela URI (no Windows, `c:\` e `C:\` são o mesmo). */
+  bufferDe(caminho: string): Buffer | undefined {
+    const uri = monaco.Uri.file(caminho).toString();
+    return this.buffers().find((b) => b.modelo.uri.toString() === uri);
+  }
+
+  /**
+   * Modelo do Monaco para o arquivo, sem abrir buffer. O Monaco precisa do modelo
+   * para mostrar prévia de definição e lista de usos de arquivos fechados.
+   */
+  async garantirModelo(caminho: string): Promise<monaco.editor.ITextModel | null> {
+    const uri = monaco.Uri.file(caminho);
+    const existente = monaco.editor.getModel(uri);
+    if (existente) return existente;
+    let conteudo: string;
+    try {
+      conteudo = await ponte.lerArquivo(caminho);
+    } catch (e) {
+      this.mensagens.erro(String(e));
+      return null;
+    }
+    return monaco.editor.getModel(uri) ?? monaco.editor.createModel(conteudo, this.linguagemDe(caminho), uri);
+  }
+
+  /** Avisos de arquivo salvo (o jdtls usa para recompilar e reimportar o pom.xml). */
+  aoSalvar(fn: (b: Buffer) => void): void {
+    this.ouvintesDeSalvar.push(fn);
+  }
+
+  private readonly ouvintesDeSalvar: ((b: Buffer) => void)[] = [];
+
+  private irPara(b: Buffer, linha: number, coluna?: number): void {
+    const instancia = this.instancia;
+    if (!instancia) return;
+    if (instancia.getModel() !== b.modelo) instancia.setModel(b.modelo);
+    const n = Math.min(linha, b.modelo.getLineCount());
+    const c = coluna ?? (b.modelo.getLineFirstNonWhitespaceColumn(n) || 1);
+    instancia.setPosition({ lineNumber: n, column: c });
+    instancia.revealLineInCenter(n);
+    instancia.focus();
   }
 
   private irParaLinha(caminho: string, linha: number): void {
@@ -78,17 +137,28 @@ export class EditorService {
     instancia.focus();
   }
 
-  async salvar(caminho = this.ativo()): Promise<void> {
+  async salvar(caminho = this.ativo(), avisar = true): Promise<boolean> {
     const b = this.buffers().find((x) => x.caminho === caminho);
-    if (!b) return;
+    if (!b) return false;
     try {
       await ponte.gravarArquivo(b.caminho, b.modelo.getValue());
       b.versaoSalva = b.modelo.getAlternativeVersionId();
       this.edicoes.update((n) => n + 1);
-      this.mensagens.mostrar(`"${b.nome}" ${b.modelo.getLineCount()}L gravado`);
+      if (avisar) this.mensagens.mostrar(`"${b.nome}" ${b.modelo.getLineCount()}L gravado`);
+      for (const fn of this.ouvintesDeSalvar) fn(b);
+      return true;
     } catch (e) {
       this.mensagens.erro(String(e));
+      return false;
     }
+  }
+
+  /** Salva todos os buffers alterados (:wa). */
+  async salvarTodos(): Promise<void> {
+    const sujos = this.buffers().filter((b) => this.sujo(b));
+    let gravados = 0;
+    for (const b of sujos) if (await this.salvar(b.caminho, false)) gravados++;
+    this.mensagens.mostrar(gravados ? `${gravados} ${gravados === 1 ? 'arquivo gravado' : 'arquivos gravados'}` : 'nada para gravar');
   }
 
   fechar(caminho = this.ativo(), forcar = false): void {

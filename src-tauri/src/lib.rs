@@ -7,6 +7,7 @@
 mod arquivos;
 mod busca;
 mod git;
+mod java;
 mod terminal;
 mod tema;
 
@@ -14,6 +15,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(terminal::Terminais::default())
+        .manage(java::Servidores::default())
         .setup(|app| {
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
@@ -27,6 +29,11 @@ pub fn run() {
             busca::busca_indexar,
             busca::busca_texto,
             git::branch_atual,
+            java::java_estado,
+            java::jdtls_instalar,
+            java::lsp_iniciar,
+            java::lsp_enviar,
+            java::lsp_parar,
             tema::tema_carregar,
             tema::tema_padrao,
             tema::fonte_bytes,

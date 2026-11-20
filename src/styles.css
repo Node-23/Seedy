@@ -293,6 +293,9 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 .barra-status .modo[data-modo='replace'] { background: var(--erro); }
 .barra-status .posicao { padding: 0 14px; background: var(--selecao); }
 .barra-status .sujo { color: var(--aviso); margin-left: 6px; }
+.barra-status .jdtls[data-fase='baixando'], .barra-status .jdtls[data-fase='iniciando'], .barra-status .jdtls[data-fase='importando'] { color: var(--aviso); }
+.barra-status .jdtls[data-fase='erro'], .barra-status .jdtls[data-fase='sem-java'] { color: var(--erro); }
+.barra-status .jdtls[data-fase='navegador'] { color: var(--texto-suave); }
 
 .linha-de-comando {
   height: 20px;
@@ -612,3 +615,27 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 }
 .monaco-editor .find-widget .monaco-inputbox { border-radius: 6px; }
 .monaco-editor .find-widget .matchesCount { color: var(--texto-suave); }
+
+/* ---------- widgets do Monaco usados pelo jdtls (usos, ações rápidas, sugestões) ---------- */
+
+.monaco-editor .peekview-widget,
+.monaco-editor .suggest-widget,
+.monaco-editor .monaco-hover,
+.monaco-editor .parameter-hints-widget,
+.action-widget,
+.quick-input-widget {
+  font-family: var(--fonte-interface) !important;
+}
+.monaco-editor .peekview-widget {
+  border-top: var(--espessura-borda) solid var(--borda) !important;
+  border-bottom: var(--espessura-borda) solid var(--borda) !important;
+}
+.monaco-editor .suggest-widget,
+.monaco-editor .monaco-hover,
+.monaco-editor .parameter-hints-widget,
+.action-widget,
+.quick-input-widget {
+  border: var(--espessura-borda) solid var(--borda) !important;
+  border-radius: var(--raio-pequeno) !important;
+  box-shadow: 3px 3px 0 var(--sombra) !important;
+}

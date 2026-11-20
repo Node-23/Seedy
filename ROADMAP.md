@@ -11,14 +11,20 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - Terminal integrado com abas (PTY real)
 - Tecla líder + menu de atalhos, statusline, painéis redimensionáveis
 
-## Fase 1 — Inteligência de Java (jdtls)
+## Fase 1 — Inteligência de Java (jdtls) (em andamento)
 
-- Baixar/gerenciar o Eclipse JDT Language Server (precisa de JDK 21)
-- Ponte LSP no núcleo (stdio ↔ interface) e cliente LSP no Monaco
-- Autocomplete, erros em tempo real, ir para definição/implementação,
-  find usages, renomear, extrair variável/método, organizar imports, formatar
-- Destaque de definições de verdade via semantic tokens (Alabaster completo)
-- Suporte a Maven e Gradle (projetos multi-módulo)
+- ✅ Baixar/gerenciar o jdtls (versão fixa 1.63.0, conferida por SHA-256; roda em JDK 25+)
+- ✅ Ponte LSP no núcleo (stdio ↔ interface) e cliente LSP no Monaco
+- ✅ Erros em tempo real, completar (com import automático e templates postfix no fim da lista),
+  hover, assinatura, ir para definição/implementação, usos, renomear em vários arquivos,
+  ações rápidas, organizar imports, formatar, estrutura do arquivo
+- ✅ Destaque de definições via semantic tokens (Alabaster completo)
+- ✅ Maven e Gradle (importação do jdtls; os arquivos do Eclipse ficam no cache, não no projeto)
+- Abrir código de bibliotecas/JDK (`jdt://`, com `java/classFileContents`)
+- "Símbolos" e "usos" do `Ctrl+P` vindos do jdtls (`workspace/symbol`, `textDocument/references`)
+- Extrair variável/método com prompt de nome; gerar getters/construtor com escolha de campos
+- Dica inline de "import não usado" como no mockup 01
+- Selecionar o JDK do jdtls em configuração (hoje: `SEEDY_JAVA_HOME`)
 
 ## Fase 2 — Busca (em andamento)
 

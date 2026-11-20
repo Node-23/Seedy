@@ -103,6 +103,10 @@ export class EditorComponent {
         bracketPairColorization: { enabled: false },
         matchBrackets: 'near',
         scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+        // Definições de verdade vêm do jdtls (tokens semânticos).
+        'semanticHighlighting.enabled': true,
+        lightbulb: { enabled: monaco.editor.ShowLightbulbIconMode.OnCode },
+        fixedOverflowWidgets: true,
         ...this.opcoesDeFonte(t),
       });
       this.editor.instancia = instancia;
@@ -137,6 +141,8 @@ export class EditorComponent {
         () => void instancia.getAction('editor.action.previousMatchFindAction')?.run(),
         naCaixaDeBusca,
       );
+
+      this.atalhosDeCodigo(instancia);
 
       instancia.onDidChangeCursorPosition((e) =>
         this.editor.cursor.set({ linha: e.position.lineNumber, coluna: e.position.column }),
@@ -206,8 +212,44 @@ export class EditorComponent {
     Vim.defineEx('bnext', 'bn', () => this.editor.proximo(1));
     Vim.defineEx('bprevious', 'bp', () => this.editor.proximo(-1));
     Vim.defineEx('terminal', 'term', () => this.layout.mostrar('terminal'));
+    Vim.defineEx('wall', 'wa', () => void this.editor.salvarTodos());
     // Espaço no modo normal abre o menu do líder.
     Vim.defineEx('seedylider', 'seedylider', () => this.atalhos.abrirLider());
     Vim.map('<Space>', ':seedylider<CR>', 'normal');
+
+    // Navegação de código no jeito do vim (gd, gr, gi, K), via jdtls.
+    // Roda depois que o foco volta da linha de comando do vim ao editor:
+    // senão o hover abre e fecha na mesma hora.
+    const acao = (id: string) => () =>
+      setTimeout(() => {
+        this.editor.instancia?.focus();
+        this.editor.instancia?.trigger('vim', id, null);
+      });
+    const mapear = (tecla: string, nome: string, id: string) => {
+      Vim.defineEx(nome, nome, acao(id));
+      Vim.map(tecla, `:${nome}<CR>`, 'normal');
+    };
+    mapear('gd', 'seedydefinicao', 'editor.action.revealDefinition');
+    mapear('gr', 'seedyusos', 'editor.action.referenceSearch.trigger');
+    mapear('gi', 'seedyimplementacao', 'editor.action.goToImplementation');
+    mapear('K', 'seedyhover', 'editor.action.showHover');
+  }
+
+  /**
+   * Atalhos de código no padrão do IntelliJ (os do Monaco continuam valendo:
+   * F12 definição, shift+F12 usos, F2 renomear, ctrl+. ação rápida).
+   */
+  private atalhosDeCodigo(instancia: monaco.editor.IStandaloneCodeEditor): void {
+    const { KeyMod: M, KeyCode: K } = monaco;
+    const ligar = (tecla: number, id: string) => instancia.addCommand(tecla, () => instancia.trigger('teclado', id, null));
+    ligar(M.CtrlCmd | K.KeyB, 'editor.action.revealDefinition');
+    ligar(M.CtrlCmd | M.Alt | K.KeyB, 'editor.action.goToImplementation');
+    ligar(M.Alt | K.F7, 'editor.action.referenceSearch.trigger');
+    ligar(M.Shift | K.F12, 'editor.action.referenceSearch.trigger');
+    ligar(M.Shift | K.F6, 'editor.action.rename');
+    ligar(M.Alt | K.Enter, 'editor.action.quickFix');
+    ligar(M.CtrlCmd | M.Alt | K.KeyL, 'editor.action.formatDocument');
+    ligar(M.CtrlCmd | M.Alt | K.KeyO, 'editor.action.organizeImports');
+    ligar(M.CtrlCmd | K.F12, 'editor.action.quickOutline');
   }
 }

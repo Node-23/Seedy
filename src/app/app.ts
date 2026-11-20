@@ -14,6 +14,7 @@ import { MensagensService } from './nucleo/mensagens.service';
 import { ProjetoService } from './nucleo/projeto.service';
 import { TemaService } from './tema/tema';
 import { AtalhosService } from './teclado/atalhos.service';
+import { JdtlsService } from './java/jdtls.service';
 
 @Component({
   selector: 'sd-raiz',
@@ -67,6 +68,7 @@ export class App {
 
   constructor() {
     inject(AtalhosService).iniciar();
+    inject(JdtlsService); // liga o jdtls quando o projeto é de Java
     void inject(TemaService).iniciar();
     void inject(ProjetoService).iniciar();
   }
