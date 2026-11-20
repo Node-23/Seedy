@@ -35,6 +35,10 @@ import { ServidorComponent } from './servidor/servidor.component';
 import { PerfilServidorComponent } from './servidor/perfil-servidor.component';
 import { ServidorService } from './servidor/servidor.service';
 import { DepuradorService } from './servidor/depurador.service';
+import { IaComponent } from './ia/ia.component';
+import { RevisaoComponent } from './ia/revisao.component';
+import { RevisaoService } from './ia/revisao.service';
+import { McpService } from './ia/mcp.service';
 
 @Component({
   selector: 'sd-raiz',
@@ -42,13 +46,13 @@ import { DepuradorService } from './servidor/depurador.service';
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando()">
+      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta()">
       <div class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
         @if (layout.disposicao().visiveis.arquivos || layout.disposicao().visiveis.conexoes) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
@@ -76,6 +80,11 @@ import { DepuradorService } from './servidor/depurador.service';
           </div>
         </div>
 
+        @if (layout.disposicao().visiveis.ia) {
+          <div class="divisor vertical fixo" aria-hidden="true"></div>
+          <div class="regiao-direita"><sd-ia /></div>
+        }
+
       </div>
 
       @if (layout.tela() === 'git') { <sd-git class="tela-cheia" /> }
@@ -87,6 +96,7 @@ import { DepuradorService } from './servidor/depurador.service';
       <sd-github-form />
       <sd-perfil-banco />
       <sd-perfil-servidor />
+      <sd-revisao />
       <sd-escolha />
       </div>
 
@@ -112,6 +122,7 @@ export class App {
   protected readonly commit = inject(CommitService);
   protected readonly banco = inject(BancoService);
   protected readonly servidor = inject(ServidorService);
+  protected readonly revisao = inject(RevisaoService);
 
   protected inferiorVisivel(): boolean {
     const v = this.layout.disposicao().visiveis;
@@ -124,6 +135,7 @@ export class App {
     inject(GitService); // acompanha o repositório do projeto
     inject(MargemGitService); // marcas de alteração na margem do editor
     inject(DepuradorService); // breakpoints e o depurador anexa quando o servidor sobe em debug
+    inject(McpService); // o Claude Code (MCP) usa as ferramentas do Seedy
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
     void inject(ProjetoService).iniciar();

@@ -154,6 +154,11 @@ export class JdtlsService {
     );
   }
 
+  /** Todos os diagnósticos do jdtls agora (erros e avisos), por URI do arquivo. */
+  todosOsDiagnosticos(): [string, DiagnosticoLsp[]][] {
+    return [...this.diagnosticos.entries()].filter(([, d]) => d.length);
+  }
+
   /** Pasta do projeto que o jdtls está atendendo. */
   raiz(): string | null {
     return this.servidor?.raiz ?? null;

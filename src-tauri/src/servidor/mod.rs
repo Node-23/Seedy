@@ -310,6 +310,58 @@ pub fn servidor_em_execucao(estado: State<'_, Execucoes>) -> Vec<EmExecucao> {
     travar(&estado.0).iter().map(|(id, e)| EmExecucao { id: id.clone(), url: e.url.clone(), porta_debug: e.porta_debug }).collect()
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RespostaHttp {
+    pub status: u16,
+    pub tipo: Option<String>,
+    pub corpo: String,
+    pub ms: u64,
+}
+
+/// Requisição HTTP à aplicação local (a IA testa a tela/endpoint depois de mudar o código).
+#[tauri::command]
+pub async fn servidor_http(metodo: String, url: String, corpo: Option<String>, tipo: Option<String>) -> Result<RespostaHttp, String> {
+    let local = ["http://localhost:", "http://127.0.0.1:"].iter().any(|p| url.starts_with(p));
+    if !local {
+        return Err("só faço requisições para a aplicação local (http://localhost:…)".into());
+    }
+    let metodo = metodo.to_uppercase();
+    if !matches!(metodo.as_str(), "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD") {
+        return Err(format!("método não suportado: {metodo}"));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let inicio = std::time::Instant::now();
+        let agente = ureq::AgentBuilder::new().timeout(std::time::Duration::from_secs(60)).redirects(0).build();
+        let mut pedido = agente.request(&metodo, &url);
+        if let Some(t) = &tipo {
+            pedido = pedido.set("Content-Type", t);
+        }
+        let resposta = match corpo {
+            Some(c) => pedido.send_string(&c),
+            None => pedido.call(),
+        };
+        let r = match resposta {
+            Ok(r) | Err(ureq::Error::Status(_, r)) => r,
+            Err(e) => return Err(format!("sem resposta de {url}: {e}")),
+        };
+        let status = r.status();
+        let tipo = r.header("Content-Type").map(str::to_string);
+        let mut texto = r.into_string().unwrap_or_default();
+        if texto.len() > 20_000 {
+            let mut corte = 20_000;
+            while !texto.is_char_boundary(corte) {
+                corte -= 1;
+            }
+            texto.truncate(corte);
+            texto.push_str("\n[... resposta cortada em 20 mil caracteres]");
+        }
+        Ok(RespostaHttp { status, tipo, corpo: texto, ms: inicio.elapsed().as_millis() as u64 })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Abre a aplicação no navegador (só endereços locais).
 #[tauri::command]
 pub fn servidor_abrir_url(url: String) -> Result<(), String> {

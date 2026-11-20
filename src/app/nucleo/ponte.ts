@@ -371,6 +371,23 @@ export const ponte = {
     emExecucao: async (): Promise<{ id: string; url: string; portaDebug: number | null }[]> =>
       noApp() ? invoke<{ id: string; url: string; portaDebug: number | null }[]>('servidor_em_execucao') : [],
     abrirUrl: (url: string) => invoke<void>('servidor_abrir_url', { url }),
+    /** Requisição à aplicação local (só http://localhost). */
+    http: (metodo: string, url: string, corpo: string | null, tipo: string | null) =>
+      invoke<{ status: number; tipo: string | null; corpo: string; ms: number }>('servidor_http', { metodo, url, corpo, tipo }),
+  },
+
+  /** Servidor MCP do Seedy (o Claude Code opera a IDE): as ferramentas rodam na interface. */
+  mcp: {
+    info: async (): Promise<{ url: string | null; comando: string | null }> =>
+      noApp() ? invoke('mcp_info') : { url: null, comando: null },
+    definirFerramentas: async (ferramentas: unknown[]) => {
+      if (noApp()) await invoke('mcp_definir_ferramentas', { ferramentas });
+    },
+    responder: (id: number, resultado: string | null, erro: string | null) => invoke<void>('mcp_responder', { id, resultado, erro }),
+    async aoChamar(fn: (c: { id: number; nome: string; argumentos: Record<string, unknown> }) => void): Promise<UnlistenFn> {
+      if (!noApp()) return () => {};
+      return listen<{ id: number; nome: string; argumentos: Record<string, unknown> }>('mcp-chamada', (e) => fn(e.payload));
+    },
   },
 
   /** Debug (DAP) do java-debug: só o transporte; o protocolo fica em depurador.service.ts. */

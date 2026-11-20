@@ -7,10 +7,10 @@ import { Injectable, signal } from '@angular/core';
  * passa por aqui: quando o layout for editável, basta mudar este registro e
  * salvar/carregar a disposição de um arquivo (ver ROADMAP.md).
  */
-export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor';
+export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor' | 'ia';
 /** Tela que ocupa a área principal: o editor (com árvore e terminal), o Git ou o merge. */
 export type Tela = 'editor' | 'git' | 'merge';
-export type Regiao = 'esquerda' | 'inferior';
+export type Regiao = 'esquerda' | 'inferior' | 'direita';
 
 export interface Painel {
   id: IdPainel;
@@ -24,6 +24,7 @@ export const PAINEIS: Painel[] = [
   { id: 'conexoes', titulo: 'Conexões', regiao: 'esquerda', atalho: '␣ d' },
   { id: 'terminal', titulo: 'Terminal', regiao: 'inferior', atalho: 'alt f12' },
   { id: 'servidor', titulo: 'Servidor', regiao: 'inferior', atalho: '␣ j' },
+  { id: 'ia', titulo: 'IA', regiao: 'direita', atalho: '␣ a' },
 ];
 
 interface Disposicao {
@@ -34,7 +35,7 @@ interface Disposicao {
 
 const CHAVE = 'seedy.layout';
 const PADRAO: Disposicao = {
-  visiveis: { arquivos: true, conexoes: false, terminal: false, servidor: false },
+  visiveis: { arquivos: true, conexoes: false, terminal: false, servidor: false, ia: false },
   larguraEsquerda: 280,
   alturaInferior: 280,
 };

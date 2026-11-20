@@ -11,6 +11,7 @@ mod depurador;
 mod git;
 mod ia;
 mod java;
+mod mcp;
 mod observador;
 mod servidor;
 mod terminal;
@@ -26,9 +27,14 @@ pub fn run() {
         .manage(banco::Bancos::default())
         .manage(servidor::Execucoes::default())
         .manage(depurador::SessoesDap::default())
+        .manage(mcp::Mcp::default())
         .setup(|app| {
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
+            {
+                use tauri::Manager;
+                mcp::iniciar(app.handle().clone(), app.state::<mcp::Mcp>().inner());
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -72,10 +78,14 @@ pub fn run() {
             servidor::servidor_redeploy,
             servidor::servidor_em_execucao,
             servidor::servidor_abrir_url,
+            servidor::servidor_http,
             depurador::java_debug_plugin,
             depurador::dap_conectar,
             depurador::dap_enviar,
             depurador::dap_fechar,
+            mcp::mcp_info,
+            mcp::mcp_definir_ferramentas,
+            mcp::mcp_responder,
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,

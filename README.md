@@ -74,6 +74,13 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Debug** (java-debug, DAP): breakpoints na margem (`ctrl+F8`), `F8`/`F7`/`shift+F8`/`F9`, pilha,
   variáveis, avaliar expressão (`alt+F8`) e hot code replace (classe alterada entra no servidor sem
   redeploy).
+- **IA que opera a IDE** (Fase 7): as mesmas ferramentas servem ao painel de IA do Seedy
+  (mockup 06, `␣ a`, pela API) e ao **Claude Code no terminal** pelo servidor MCP do Seedy
+  (`␣ i` copia o comando `claude mcp add …` para registrar uma vez). A IA abre e lê código, busca
+  no projeto, vê os erros do jdtls, sobe/derruba o servidor, lê o log, faz requisições à
+  aplicação local e consulta os bancos (só leitura). Toda edição vira diff na **revisão**
+  (`␣ y`): propostas esperam você aceitar ou recusar (a IA recebe a decisão); edições que o
+  Claude Code faz direto no disco num arquivo aberto aparecem já aplicadas, com desfazer.
 - **IA no merge** (mockup 10): `␣ a` abre um chat ao lado das três colunas para conversar
   sobre os conflitos. A IA (Claude) lê o código relacionado e o histórico do arquivo e propõe a
   resolução, que aparece como prévia no resultado: `⏎` aplica, `esc` recusa, `ctrl+r` pede outra.
@@ -176,6 +183,9 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `␣ b` | trocar de branch (ou criar uma) |
 | `␣ n` | blame no arquivo aberto |
 | `␣ m` | resolver conflitos (merge em 3 colunas) |
+| `␣ a` | painel de IA (no merge: o chat do conflito); no campo, `⏎` envia ou aplica a proposta, `esc` recusa, `ctrl+l` nova conversa |
+| `␣ y` | revisar as alterações da IA: `⏎` aceita/mantém, `d` recusa/desfaz, `D` diff completo |
+| `␣ i` | copiar o comando que liga o Claude Code ao Seedy (MCP) |
 | `␣ j` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
 | `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | iniciar / iniciar em debug / parar / redeploy (como no IntelliJ) |
 | `ctrl+F8` · `F8` · `F7` · `shift+F8` · `F9` · `alt+F8` | breakpoint · passar · entrar · sair · continuar · avaliar |
@@ -248,7 +258,7 @@ src/                         interface (Angular)
   app/git/                   tela do Git, grafo, commit, diff, blame, merge em 3 colunas, GitHub
   app/servidor/              servidores: perfis, painel e log (stack clicável), depurador (DAP), breakpoints
   app/banco/                 conexões, formulário, grade de resultado, SQL (divisão, autocompletar)
-  app/ia/                    chat da IA no merge: conversa, ferramentas (ler arquivo, git log), propostas
+  app/ia/                    IA: painel (mockup 06), ferramentas da IDE, MCP, revisão de alterações, chat do merge
   app/escolha/               janela de escolha (uma ou várias opções), usada por quem precisa perguntar
   app/teclado/               atalhos
   styles.css                 todo o visual (só usa as variáveis do tema)
@@ -258,6 +268,7 @@ src-tauri/                   núcleo (Rust)
   src/tema.rs                tema.json, fontes e recarga ao vivo
   src/git.rs                 roda o git, conta do GitHub (credential manager e API)
   src/ia.rs                  chave da API da Anthropic e pedido com streaming (SSE)
+  src/mcp.rs                 servidor MCP (HTTP local com token) que repassa as ferramentas à interface
   src/servidor/              servidores: adaptador WildFly/Tomcat, pasta de servidor por perfil, processo, deploy explodido e hot swap
   src/depurador.rs           plugin java-debug (baixado e conferido) e transporte DAP
   src/banco/                 perfis e cofre de senhas, drivers (postgres, mysql, oracle), túnel SSH, SQL

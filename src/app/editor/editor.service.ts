@@ -229,8 +229,10 @@ export class EditorService {
       // O próprio salvar do Seedy também gera aviso: aí o conteúdo é igual e nada muda.
       const semCr = (t: string) => t.replace(/\r\n/g, '\n');
       if (semCr(conteudo) === semCr(b.modelo.getValue())) continue;
+      const antes = b.modelo.getValue();
       b.modelo.pushEditOperations([], [{ range: b.modelo.getFullModelRange(), text: conteudo }], () => null);
       b.versaoSalva = b.modelo.getAlternativeVersionId();
+      for (const fn of this.ouvintesDeRecarregar) fn(b, antes, conteudo);
       this.edicoes.update((n) => n + 1);
       this.mensagens.mostrar(`"${b.nome}" mudou no disco e foi recarregado`);
     }
@@ -242,6 +244,13 @@ export class EditorService {
   }
 
   private readonly ouvintesDeSalvar: ((b: Buffer) => void)[] = [];
+
+  /** Avisos de buffer recarregado por mudança feita fora do editor (antes, depois). */
+  aoRecarregar(fn: (b: Buffer, antes: string, depois: string) => void): void {
+    this.ouvintesDeRecarregar.push(fn);
+  }
+
+  private readonly ouvintesDeRecarregar: ((b: Buffer, antes: string, depois: string) => void)[] = [];
 
   private irPara(b: Buffer, linha: number, coluna?: number): void {
     const instancia = this.instancia;

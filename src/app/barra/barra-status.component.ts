@@ -10,6 +10,9 @@ import { MergeService } from '../git/merge.service';
 import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { DepuradorService } from '../servidor/depurador.service';
+import { IaService } from '../ia/ia.service';
+import { RevisaoService } from '../ia/revisao.service';
+import { McpService } from '../ia/mcp.service';
 import { IaMergeService } from '../ia/ia-merge.service';
 
 const NOMES_MODO: Record<string, string> = {
@@ -72,6 +75,7 @@ const NOMES_MODO: Record<string, string> = {
           <span class="segmento com-divisa-esq" [class.destaque-texto]="depurador.ativo()">debug :{{ e.info?.portaDebug }}@if (depurador.pausado()) { <span class="aviso-texto"> · pausado</span> }</span>
         }
       }
+      @if (textoDaIa(); as t) { <span class="segmento com-divisa-esq destaque-texto">{{ t }}</span> }
       @if (banco.perfilAtivo(); as p) {
         <span class="segmento com-divisa-esq ambiente-banco" [attr.data-ambiente]="p.ambiente">{{ nomeDoAmbiente(p.ambiente).toUpperCase() }}</span>
         <span class="segmento com-divisa-esq">{{ p.tipo }}@if (!banco.sessaoAtiva()) { <span class="suave"> · desconectado</span> }</span>
@@ -108,6 +112,18 @@ export class BarraStatusComponent {
   protected readonly banco = inject(BancoService);
   protected readonly servidor = inject(ServidorService);
   protected readonly depurador = inject(DepuradorService);
+  protected readonly iaGeral = inject(IaService);
+  protected readonly revisao = inject(RevisaoService);
+  protected readonly mcp = inject(McpService);
+
+  /** O que a IA está fazendo, para o segmento da statusline (mockup 06). */
+  protected textoDaIa(): string | null {
+    if (this.iaGeral.pensando()) return '✦ IA trabalhando…';
+    if (this.revisao.pendentes()) return `✦ IA aguardando você (␣ y)`;
+    const m = this.mcp.ultima();
+    if (m && Date.now() - m.quando < 60_000) return `✦ Claude Code: ${m.rotulo}`;
+    return null;
+  }
 
   protected nomeDoAmbiente(a: string): string {
     return NOME_DO_AMBIENTE[a] ?? a;

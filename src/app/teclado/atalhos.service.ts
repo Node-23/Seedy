@@ -15,6 +15,8 @@ import { PrateleiraService } from '../git/prateleira.service';
 import { GithubFormService } from '../git/github-form.service';
 import { IaMergeService } from '../ia/ia-merge.service';
 import { BancoService } from '../banco/banco.service';
+import { RevisaoService } from '../ia/revisao.service';
+import { McpService } from '../ia/mcp.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { DepuradorService } from '../servidor/depurador.service';
 import { BlameService } from '../git/blame.service';
@@ -59,6 +61,8 @@ export class AtalhosService {
   private readonly githubForm = inject(GithubFormService);
   private readonly ia = inject(IaMergeService);
   private readonly banco = inject(BancoService);
+  private readonly revisao = inject(RevisaoService);
+  private readonly mcp = inject(McpService);
   private readonly servidor = inject(ServidorService);
   private readonly depurador = inject(DepuradorService);
 
@@ -90,7 +94,9 @@ export class AtalhosService {
     { tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
     { tecla: 'P', rotulo: 'criar pull request', disponivel: true, executar: () => void this.githubForm.abrir('pr') },
     { tecla: 'I', rotulo: 'criar issue', disponivel: true, executar: () => void this.githubForm.abrir('issue') },
-    { tecla: 'a', rotulo: 'IA (chat no merge)', disponivel: true, executar: () => this.alternarIA() },
+    { tecla: 'a', rotulo: 'IA (painel; no merge, o chat do conflito)', disponivel: true, executar: () => this.alternarIA() },
+    { tecla: 'y', rotulo: 'revisar alterações da IA', disponivel: true, executar: () => this.revisao.aberta.set(true) },
+    { tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },
   ];
 
   iniciar(): void {
@@ -145,7 +151,7 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando();
+    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {
@@ -213,11 +219,9 @@ export class AtalhosService {
 
   /** ␣ a: o chat da IA, por enquanto ao lado do merge de conflitos (mockup 10). */
   private alternarIA(): void {
-    if (this.layout.tela() !== 'merge') {
-      this.mensagens.mostrar('o chat da IA fica no merge de conflitos (␣ m)');
-      return;
-    }
-    this.ia.alternar();
+    // No merge, o chat do conflito; no resto, o painel de IA que opera a IDE.
+    if (this.layout.tela() === 'merge') this.ia.alternar();
+    else this.layout.alternar('ia');
   }
 
   /** ␣ m: abre o merge em 3 colunas quando há conflitos. */

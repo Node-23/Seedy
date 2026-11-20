@@ -110,12 +110,14 @@ o resto entra como módulos internos:
 - typescript-language-server e Angular Language Service via LSP
 - ESLint/Prettier, rodar scripts do `package.json`, debug no navegador (CDP)
 
-## Fase 7 — IA
+## ✅ Fase 7 — IA
 
 1. Claude Code no terminal integrado (já funciona hoje)
-2. Servidor MCP do Seedy: a IA opera a IDE — abrir arquivo, ler erros do jdtls,
-   rodar build, subir/derrubar servidor, ler log, consultar banco (só leitura)
-3. Painel de revisão: toda alteração vira diff para aceitar ou recusar
+2. ✅ Servidor MCP do Seedy (HTTP em 127.0.0.1, com token): o Claude Code abre arquivos, busca,
+   lê erros do jdtls, sobe/derruba o servidor, lê o log, faz requisições à aplicação e consulta
+   bancos (só leitura); as mesmas ferramentas servem ao painel de IA do mockup 06 (`␣ a`)
+3. ✅ Painel de revisão (`␣ y`): toda proposta vira diff para aceitar ou recusar (a IA recebe a
+   decisão); edições feitas direto no disco num arquivo aberto ficam registradas, com desfazer
 4. ✅ Chat da IA no merge de conflitos (mockup 10, `␣ a`): Claude lê o código e o histórico,
    propõe a resolução como prévia no resultado e o usuário aplica ou recusa
 
@@ -137,3 +139,6 @@ _A detalhar._
   editor (git checkout, build); buffers sem edição recarregam sozinhos
 - ✅ Voltar/avançar nos arquivos vistos (alt+← / alt+→), com cursor e rolagem guardados por arquivo
 - Configurações em arquivo (`seedy.json`): atalhos, shell do terminal, etc.
+- Botões RUN e DEBUG na barra de cima: rodar/depurar o projeto (classe `main` Java ou o servidor
+  de aplicação configurado), com atalho
+- Criar novo projeto (ex.: Java/Maven, web com servidor) a partir de modelos, pelo teclado

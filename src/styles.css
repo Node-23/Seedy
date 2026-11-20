@@ -57,7 +57,7 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 
 .area-principal { position: relative; flex: 1; min-height: 0; min-width: 0; display: flex; }
 .regiao-principal { position: relative; flex: 1; min-height: 0; display: flex; }
-.regiao-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto):not(sd-escolha):not(sd-commit):not(sd-github-form):not(sd-perfil-banco):not(sd-perfil-servidor) { opacity: 0.35; pointer-events: none; }
+.regiao-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto):not(sd-escolha):not(sd-commit):not(sd-github-form):not(sd-perfil-banco):not(sd-perfil-servidor):not(sd-revisao) { opacity: 0.35; pointer-events: none; }
 .tela-cheia { flex: 1; min-width: 0; display: flex; }
 .regiao-esquerda { flex-shrink: 0; display: flex; min-width: 0; }
 .regiao-esquerda > * { flex: 1; min-width: 0; display: flex; }
@@ -1317,3 +1317,27 @@ sd-servidor { flex: 1; min-width: 0; display: flex; }
   font-size: 12px;
 }
 .campo-variaveis:focus { outline: none; border-color: var(--destaque); }
+
+/* ---------- painel de IA e revisão (mockup 06, Fase 7) ---------- */
+
+.regiao-direita { width: 480px; flex-shrink: 0; min-height: 0; display: flex; }
+sd-ia { flex: 1; min-width: 0; display: flex; }
+.ia-painel { display: flex; flex-direction: column; min-height: 0; font-size: 12px; line-height: 19px; }
+.ia-painel .painel-faixa { gap: 8px; }
+.ia-painel .ia-passo-nome { width: 136px; }
+.ia-mcp { width: auto; padding: 0 6px; font-size: 10.5px; letter-spacing: 0.08em; }
+.ia-conversa { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.ia-conversa > * { flex-shrink: 0; }
+.ia-pe { padding: 12px; border-top: var(--espessura-borda) solid var(--borda); flex-shrink: 0; }
+.ia-campo-grande { height: 44px; padding: 0 6px 0 14px; }
+.ia-campo-grande .ia-enviar { width: 32px; height: 32px; }
+
+.busca.revisao-janela { width: 1080px; height: 640px; }
+.revisao-lista { width: 400px; max-width: 40%; outline: none; }
+.revisao-lista:focus .busca-item.selecionado { outline: 1px solid var(--destaque); }
+.revisao-estado { flex-shrink: 0; padding: 0 6px; border-radius: 5px; font-size: 10.5px; color: var(--texto-suave); border: 1px solid var(--selecao); }
+.revisao-estado[data-estado="pendente"] { color: var(--destaque); border-color: var(--destaque); }
+.revisao-estado[data-estado="aplicada"] { color: var(--aviso); border-color: var(--aviso); }
+.revisao-estado[data-estado="aceita"] { color: var(--sucesso); border-color: transparent; }
+.revisao-estado[data-estado="recusada"], .revisao-estado[data-estado="desfeita"] { color: var(--erro); border-color: transparent; }
+.revisao-motivo { padding: 12px; font-size: 12px; line-height: 1.6; border-bottom: var(--espessura-borda) solid var(--borda); }
