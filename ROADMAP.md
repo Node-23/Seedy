@@ -20,11 +20,15 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - Destaque de definições de verdade via semantic tokens (Alabaster completo)
 - Suporte a Maven e Gradle (projetos multi-módulo)
 
-## Fase 2 — Busca
+## Fase 2 — Busca (em andamento)
 
-- Search Everywhere (`␣␣`): classes, arquivos, símbolos, texto e ações num lugar só
-- Busca de texto no projeto com ripgrep (crate `grep`), prévia e usos
-- Busca híbrida: usos semânticos (jdtls) + textuais em XML/JSP (Struts, Tiles)
+- ✅ Search Everywhere (`␣␣`): classes, arquivos, símbolos, texto e ações num lugar só
+- ✅ Busca de texto no projeto (crates `ignore` + `regex`, respeita `.gitignore`), prévia e usos
+- Símbolos hoje saem de uma leitura das declarações Java linha a linha; trocar pelo jdtls
+  (`workspace/symbol`) na fase 1
+- Usos hoje são ocorrências do nome; trocar por usos semânticos (jdtls) + textuais em
+  XML/JSP (Struts, Tiles)
+- Dividir (`^v`): abrir o resultado ao lado, quando o editor tiver divisão
 
 ## Fase 3 — Banco de dados
 

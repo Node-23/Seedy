@@ -5,6 +5,7 @@ import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { ponte } from '../nucleo/ponte';
+import { BuscaService } from '../busca/busca.service';
 
 /** Barra de cima: menu, projeto, buffers abertos, ferramentas e controles da janela. */
 @Component({
@@ -31,7 +32,7 @@ import { ponte } from '../nucleo/ponte';
       <div class="espaco" data-tauri-drag-region></div>
 
       <div class="ferramentas">
-        <button class="botao-quadrado" aria-label="Buscar (em breve)" title="Buscar — em breve" (click)="emBreve('busca')">
+        <button class="botao-quadrado" [class.ligado]="busca.aberta()" aria-label="Buscar em tudo" title="Buscar em tudo (␣ ␣)" (click)="busca.abrir()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
         </button>
         <button class="botao-quadrado" aria-label="Git (em breve)" title="Git — em breve" (click)="emBreve('git')">
@@ -64,6 +65,7 @@ export class BarraTopoComponent {
   protected readonly projeto = inject(ProjetoService);
   protected readonly atalhos = inject(AtalhosService);
   protected readonly layout = inject(LayoutService);
+  protected readonly busca = inject(BuscaService);
   private readonly mensagens = inject(MensagensService);
   protected readonly janela = ponte.janela;
 

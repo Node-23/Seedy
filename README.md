@@ -15,6 +15,9 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Terminal integrado** com abas: shell de verdade (PowerShell no Windows, seu `$SHELL` no Linux).
 - **Tema editável** (cores, fontes e forma), aplicado na hora em que você salva o arquivo.
 - **Tecla líder** (`␣`) com menu de atalhos, como o which-key do nvim.
+- **Busca em tudo** (`␣ ␣`), estilo Telescope: classes, métodos, arquivos, texto e ações,
+  com prévia do código e contagem de usos. Na busca: `↑↓` / `^n` `^p` navegam, `tab` troca
+  o filtro, `⏎` abre na linha, `^u` procura os usos do símbolo, `esc` fecha.
 - Painéis redimensionáveis (arraste os divisores) e modo foco.
 
 ## Pré-requisitos
@@ -46,6 +49,8 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | Tecla | Ação |
 |---|---|
 | `␣` (modo normal / fora do editor) | menu do líder |
+| `␣ ␣` | buscar em tudo (classes, arquivos, símbolos, texto, ações) |
+| `␣ f` / `␣ /` / `␣ s` | buscar arquivos / texto / símbolos |
 | `␣ e` | mostrar/esconder arquivos |
 | `␣ t` ou `Alt+F12` | mostrar/esconder terminal |
 | `␣ o` | abrir projeto |
@@ -98,6 +103,7 @@ src/                         interface (Angular)
   app/arquivos/              árvore de arquivos
   app/terminal/              terminal (xterm.js)
   app/barra/                 barra de cima, statusline, menu do líder
+  app/busca/                 Search Everywhere (␣␣): fuzzy, prévia, usos
   app/layout/                registro de painéis e disposição
   app/teclado/               atalhos
   styles.css                 todo o visual (só usa as variáveis do tema)
@@ -106,6 +112,7 @@ src-tauri/                   núcleo (Rust)
   src/terminal.rs            PTY (ConPTY no Windows)
   src/tema.rs                tema.json, fontes e recarga ao vivo
   src/git.rs                 branch atual
+  src/busca.rs               índice de arquivos/símbolos Java e busca de texto
 ```
 
 Sem plugins: cada funcionalidade é um módulo interno. Para mudar algo, muda o código.

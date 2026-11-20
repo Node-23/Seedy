@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
 import { ProjetoService } from '../nucleo/projeto.service';
+import { BuscaService } from '../busca/busca.service';
 
 const NOMES_MODO: Record<string, string> = {
   normal: 'NORMAL',
@@ -14,10 +15,16 @@ const NOMES_MODO: Record<string, string> = {
   selector: 'sd-barra-status',
   template: `
     <footer class="barra-status">
-      <span class="segmento modo" [attr.data-modo]="editor.modo()">{{ nomeModo() }}</span>
+      <span class="segmento modo" [attr.data-modo]="busca.aberta() ? 'busca' : editor.modo()">{{ busca.aberta() ? 'BUSCA' : nomeModo() }}</span>
       @if (projeto.branch()) {
         <span class="segmento com-divisa">{{ projeto.branch() }}</span>
       }
+      @if (busca.aberta()) {
+        <span class="espaco"></span>
+        <span class="segmento com-divisa-esq">
+          @if (busca.indexando() && !busca.indice()) { indexando… } @else { índice: {{ busca.totalIndice().toLocaleString('pt-BR') }} itens ✓ }
+        </span>
+      } @else {
       @if (buffer(); as b) {
         <span class="segmento">{{ caminhoRelativo() }}@if (editor.sujo(b)) {<span class="sujo">[+]</span>}</span>
       }
@@ -28,12 +35,14 @@ const NOMES_MODO: Record<string, string> = {
       } @else {
         <span class="segmento com-divisa-esq suave">seedy</span>
       }
+      }
     </footer>
   `,
 })
 export class BarraStatusComponent {
   protected readonly editor = inject(EditorService);
   protected readonly projeto = inject(ProjetoService);
+  protected readonly busca = inject(BuscaService);
 
   protected readonly buffer = this.editor.bufferAtivo;
   protected readonly nomeModo = computed(() => NOMES_MODO[this.editor.modo()] ?? this.editor.modo().toUpperCase());

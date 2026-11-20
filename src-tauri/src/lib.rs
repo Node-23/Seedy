@@ -2,9 +2,10 @@
 //!
 //! Cada módulo cuida de uma parte do sistema e expõe comandos para a interface
 //! (Angular) via `invoke`. A regra é manter o núcleo pequeno: só o que precisa
-//! de acesso ao sistema (arquivos, processos, PTY, Git) mora aqui.
+//! de acesso ao sistema (arquivos, busca, processos, PTY, Git) mora aqui.
 
 mod arquivos;
+mod busca;
 mod git;
 mod terminal;
 mod tema;
@@ -23,6 +24,8 @@ pub fn run() {
             arquivos::ler_pasta,
             arquivos::ler_arquivo,
             arquivos::gravar_arquivo,
+            busca::busca_indexar,
+            busca::busca_texto,
             git::branch_atual,
             tema::tema_carregar,
             tema::tema_padrao,

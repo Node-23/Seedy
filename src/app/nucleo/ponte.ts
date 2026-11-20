@@ -7,6 +7,7 @@
  */
 import { Channel, invoke, isTauri } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { exemplo, RAIZ_EXEMPLO } from './exemplo';
 
 export const noApp = (): boolean => isTauri();
 
@@ -16,26 +17,39 @@ export interface Entrada {
   pasta: boolean;
 }
 
+export interface ArquivoIndice {
+  caminho: string;
+  /** Relativo à raiz do projeto, sempre com "/". */
+  relativo: string;
+}
+
+export interface Simbolo {
+  nome: string;
+  tipo: 'classe' | 'metodo';
+  /** Tipos dos parâmetros do método, ex.: "Long, Long". */
+  detalhe: string;
+  /** Classe do método, ou pacote da classe. */
+  conteiner: string;
+  caminho: string;
+  linha: number;
+}
+
+export interface Indice {
+  arquivos: ArquivoIndice[];
+  simbolos: Simbolo[];
+}
+
+export interface Ocorrencia {
+  caminho: string;
+  relativo: string;
+  linha: number;
+  texto: string;
+}
+
 export interface ArquivoTema {
   caminho: string;
   conteudo: string;
 }
-
-const RAIZ_EXEMPLO = '/exemplo/feirinha-verde';
-const ARQUIVOS_EXEMPLO: Record<string, Entrada[]> = {
-  [RAIZ_EXEMPLO]: [
-    { nome: 'src', caminho: `${RAIZ_EXEMPLO}/src`, pasta: true },
-    { nome: 'pom.xml', caminho: `${RAIZ_EXEMPLO}/pom.xml`, pasta: false },
-  ],
-  [`${RAIZ_EXEMPLO}/src`]: [
-    { nome: 'FeiraService.java', caminho: `${RAIZ_EXEMPLO}/src/FeiraService.java`, pasta: false },
-  ],
-};
-const CONTEUDO_EXEMPLO: Record<string, string> = {
-  [`${RAIZ_EXEMPLO}/pom.xml`]: '<project>\n  <!-- modo navegador: dados de exemplo -->\n</project>\n',
-  [`${RAIZ_EXEMPLO}/src/FeiraService.java`]:
-    '@Service\npublic class FeiraService {\n\n    private static final int LIMITE_BANCAS = 120;\n\n    // Modo navegador: abra no app para editar arquivos de verdade\n    public String saudacao() {\n        return "Olá, Seedy";\n    }\n}\n',
-};
 
 export const ponte = {
   async pastaInicial(): Promise<string | null> {
@@ -43,20 +57,32 @@ export const ponte = {
   },
 
   async lerPasta(caminho: string): Promise<Entrada[]> {
-    return noApp() ? invoke<Entrada[]>('ler_pasta', { caminho }) : (ARQUIVOS_EXEMPLO[caminho] ?? []);
+    return noApp() ? invoke<Entrada[]>('ler_pasta', { caminho }) : exemplo.lerPasta(caminho);
   },
 
   async lerArquivo(caminho: string): Promise<string> {
-    return noApp() ? invoke<string>('ler_arquivo', { caminho }) : (CONTEUDO_EXEMPLO[caminho] ?? '');
+    return noApp() ? invoke<string>('ler_arquivo', { caminho }) : exemplo.lerArquivo(caminho);
   },
 
   async gravarArquivo(caminho: string, conteudo: string): Promise<void> {
     if (noApp()) await invoke('gravar_arquivo', { caminho, conteudo });
-    else CONTEUDO_EXEMPLO[caminho] = conteudo;
+    else exemplo.gravarArquivo(caminho, conteudo);
   },
 
   async branchAtual(raiz: string): Promise<string | null> {
     return noApp() ? invoke<string | null>('branch_atual', { raiz }) : 'develop';
+  },
+
+  /** Lista os arquivos do projeto e as declarações Java (classes e métodos). */
+  async indexar(raiz: string): Promise<Indice> {
+    return noApp() ? invoke<Indice>('busca_indexar', { raiz }) : exemplo.indexar();
+  },
+
+  /** Busca literal no conteúdo dos arquivos (smart case). */
+  async buscarTexto(raiz: string, consulta: string, limite = 200): Promise<Ocorrencia[]> {
+    return noApp()
+      ? invoke<Ocorrencia[]>('busca_texto', { raiz, consulta, limite })
+      : exemplo.buscarTexto(consulta, limite);
   },
 
   async temaCarregar(): Promise<ArquivoTema | null> {

@@ -45,7 +45,8 @@ export class EditorService {
     return b.modelo.getAlternativeVersionId() !== b.versaoSalva;
   }
 
-  async abrir(caminho: string): Promise<void> {
+  /** Abre o arquivo (ou só ativa, se já estiver aberto); com `linha`, leva o cursor até ela. */
+  async abrir(caminho: string, linha?: number): Promise<void> {
     if (!this.buffers().some((b) => b.caminho === caminho)) {
       let conteudo: string;
       try {
@@ -62,6 +63,19 @@ export class EditorService {
       this.buffers.update((lista) => [...lista, buffer]);
     }
     this.ativo.set(caminho);
+    if (linha) this.irParaLinha(caminho, linha);
+  }
+
+  private irParaLinha(caminho: string, linha: number): void {
+    const b = this.buffers().find((x) => x.caminho === caminho);
+    const instancia = this.instancia;
+    if (!b || !instancia) return;
+    if (instancia.getModel() !== b.modelo) instancia.setModel(b.modelo);
+    const n = Math.min(linha, b.modelo.getLineCount());
+    const coluna = b.modelo.getLineFirstNonWhitespaceColumn(n) || 1;
+    instancia.setPosition({ lineNumber: n, column: coluna });
+    instancia.revealLineInCenter(n);
+    instancia.focus();
   }
 
   async salvar(caminho = this.ativo()): Promise<void> {
@@ -103,7 +117,7 @@ export class EditorService {
     this.instancia?.focus();
   }
 
-  private linguagemDe(caminho: string): string {
+  linguagemDe(caminho: string): string {
     const nome = nomeBase(caminho).toLowerCase();
     const ext = nome.includes('.') ? nome.slice(nome.lastIndexOf('.')) : '';
     const linguagem = monaco.languages

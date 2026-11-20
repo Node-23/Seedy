@@ -4,6 +4,7 @@ import { LayoutService } from '../layout/layout.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { TemaService } from '../tema/tema';
 import { MensagensService } from '../nucleo/mensagens.service';
+import { BuscaService } from '../busca/busca.service';
 
 export interface AcaoLider {
   tecla: string;
@@ -11,6 +12,8 @@ export interface AcaoLider {
   /** false = aparece no menu, mas ainda não existe (fases seguintes). */
   disponivel: boolean;
   executar?: () => void;
+  /** Abre a busca; não aparece de novo dentro da própria busca, no filtro "Ações". */
+  busca?: boolean;
 }
 
 /**
@@ -18,6 +21,7 @@ export interface AcaoLider {
  *
  * - Tecla líder (␣ no modo normal do vim, ou fora de campos de texto) abre o
  *   menu de atalhos, estilo which-key.
+ * - ␣␣ abre a busca em tudo (Search Everywhere); ␣ f, ␣ / e ␣ s já com filtro.
  * - Atalhos globais: Ctrl+S salva, Alt+F12 abre/fecha o terminal,
  *   Ctrl+Tab troca de buffer.
  */
@@ -28,21 +32,26 @@ export class AtalhosService {
   private readonly projeto = inject(ProjetoService);
   private readonly tema = inject(TemaService);
   private readonly mensagens = inject(MensagensService);
+  private readonly busca = inject(BuscaService);
 
   readonly liderAberto = signal(false);
 
   readonly acoes: AcaoLider[] = [
-    { tecla: 'e', rotulo: 'arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
+    { tecla: ' ', rotulo: 'buscar tudo', disponivel: true, busca: true, executar: () => this.busca.abrir('tudo') },
+    { tecla: 'f', rotulo: 'arquivos', disponivel: true, busca: true, executar: () => this.busca.abrir('arquivos') },
+    { tecla: '/', rotulo: 'buscar texto', disponivel: true, busca: true, executar: () => this.busca.abrir('texto') },
+    { tecla: 's', rotulo: 'símbolos', disponivel: true, busca: true, executar: () => this.busca.abrir('simbolos') },
+    { tecla: 'e', rotulo: 'árvore de arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
     { tecla: 't', rotulo: 'terminal', disponivel: true, executar: () => this.layout.alternar('terminal') },
     { tecla: 'o', rotulo: 'abrir projeto', disponivel: true, executar: () => void this.projeto.escolher() },
     { tecla: 'w', rotulo: 'salvar', disponivel: true, executar: () => void this.editor.salvar() },
     { tecla: 'q', rotulo: 'fechar buffer', disponivel: true, executar: () => this.editor.fechar() },
     { tecla: 'c', rotulo: 'editar tema', disponivel: true, executar: () => this.abrirTema() },
-    { tecla: 'f', rotulo: 'buscar arquivos', disponivel: false },
-    { tecla: '/', rotulo: 'buscar texto', disponivel: false },
+    { tecla: 'r', rotulo: 'rodar / debug', disponivel: false },
     { tecla: 'g', rotulo: 'git', disponivel: false },
     { tecla: 'd', rotulo: 'banco', disponivel: false },
-    { tecla: 's', rotulo: 'servidor', disponivel: false },
+    { tecla: 'j', rotulo: 'servidor', disponivel: false },
+    { tecla: 'm', rotulo: 'diff / merge', disponivel: false },
     { tecla: 'a', rotulo: 'IA', disponivel: false },
   ];
 
