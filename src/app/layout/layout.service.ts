@@ -8,6 +8,8 @@ import { Injectable, signal } from '@angular/core';
  * salvar/carregar a disposição de um arquivo (ver ROADMAP.md).
  */
 export type IdPainel = 'arquivos' | 'terminal';
+/** Tela que ocupa a área principal: o editor (com árvore e terminal), o Git ou o merge. */
+export type Tela = 'editor' | 'git' | 'merge';
 export type Regiao = 'esquerda' | 'inferior';
 
 export interface Painel {
@@ -38,6 +40,9 @@ const PADRAO: Disposicao = {
 @Injectable({ providedIn: 'root' })
 export class LayoutService {
   readonly disposicao = signal<Disposicao>(this.carregar());
+  /** Tela na área principal. O editor continua vivo (só escondido) nas outras. */
+  readonly tela = signal<Tela>('editor');
+
   /** Painel que deve receber o foco (o componente observa e se foca). */
   readonly pedidoDeFoco = signal<{ id: IdPainel; n: number } | null>(null);
 

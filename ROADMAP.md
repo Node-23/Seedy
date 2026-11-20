@@ -58,13 +58,24 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - Grade de resultados **somente leitura** (alterações só por SQL), exportar CSV
 - Oracle: driver Rust depende do Instant Client; se der problema, sidecar Java (JDBC)
 
-## Fase 4 — Git
+## ✅ Fase 4 — Git
 
-- Árvore de commits com as linhas das branches, detalhe do commit, diff
-- Commit, push, pull, branches, stash, blame
-- Diff entre arquivos quaisquer (editor de diff do Monaco)
-- Merge de conflitos em 3 colunas, com **resolver simples** (diff3: aplica o que só
-  um lado mudou, junta imports, ignora diferença só de espaço) e sugestão por IA
+- ✅ Tela do Git (mockup 04, `␣ g`): branches locais/remotas, tags e stash; log com o grafo das
+  branches, filtro e "todas as branches"; detalhe do commit com arquivos e diff
+- ✅ Commit (`Ctrl+K`): escolher arquivos, prévia do diff, emendar, commit e push, descartar
+- ✅ Push (`Ctrl+Shift+K`), pull (`Ctrl+T`), trocar/criar/apagar branch (`␣ b`), merge,
+  cherry-pick, reverter, stash (guardar/aplicar/apagar), blame (`␣ n`)
+- ✅ Marcas de mudança na margem do editor e letra do Git na árvore
+- ✅ Diff em tela cheia (editor de diff do Monaco, `]c`/`[c` entre mudanças)
+- ✅ Merge de conflitos em 3 colunas (mockup 05), com **resolver simples** (diff3: aplica o que
+  só um lado mudou, junta imports, ignora diferença só de espaço); `dp`/`do`, `:w` grava,
+  marca como resolvido e conclui o merge
+- ✅ Conta do GitHub como no IntelliJ: entrar pelo navegador (Git Credential Manager) ou com
+  token; clonar os seus repositórios. O token fica no núcleo e no cofre do sistema
+- ✅ Prateleira (shelf do IntelliJ): guardar mudanças com nome, devolver em partes, juntar em
+  três vias com conflitos no merge de 3 colunas
+- ✅ Criar pull request e issue direto da IDE (`␣ P` / `␣ I`), com push antes se faltar
+- Sugestão de resolução por IA (fica para a fase de IA)
 
 ## Fase 5 — Servidores de aplicação: JBoss/WildFly **e** Tomcat
 

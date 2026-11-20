@@ -21,16 +21,18 @@ import { EditorService } from '../editor/editor.service';
           <span class="busca-prompt" aria-hidden="true">›</span>
           <input
             #campo
-            type="text"
+            [type]="p.texto?.senha ? 'password' : 'text'"
             spellcheck="false"
             autocomplete="off"
-            aria-label="Filtrar"
+            [attr.aria-label]="p.texto ? p.titulo : 'Filtrar'"
+            [attr.placeholder]="p.texto?.placeholder ?? null"
             aria-controls="escolha-opcoes"
-            [attr.aria-activedescendant]="visiveis().length ? 'escolha-' + indice() : null"
+            [attr.aria-activedescendant]="!p.texto && visiveis().length ? 'escolha-' + indice() : null"
             [value]="filtro()"
             (input)="filtrar($any($event.target).value)"
           />
         </label>
+        @if (!p.texto) {
         <ul id="escolha-opcoes" class="busca-resultados escolha-opcoes" role="listbox" [attr.aria-multiselectable]="p.multipla">
           @for (o of visiveis(); track o.i; let n = $index) {
             <li class="busca-item" role="option" [id]="'escolha-' + n" [class.selecionado]="n === indice()"
@@ -47,13 +49,14 @@ import { EditorService } from '../editor/editor.service';
             <li class="busca-vazio suave">nada encontrado</li>
           }
         </ul>
+        }
         <div class="busca-dicas">
-          <span><span class="tecla">↑↓</span> navegar</span>
+          @if (!p.texto) { <span><span class="tecla">↑↓</span> navegar</span> }
           @if (p.multipla) {
             <span><span class="tecla">espaço</span> marcar</span>
             <span><span class="tecla">^a</span> todos</span>
           }
-          <span><span class="tecla">⏎</span> {{ p.multipla ? 'confirmar' : 'escolher' }}</span>
+          <span><span class="tecla">⏎</span> {{ p.multipla || p.texto ? 'confirmar' : 'escolher' }}</span>
           <span><span class="tecla">esc</span> cancelar</span>
           <span class="espaco"></span>
           @if (p.dica) { <span>{{ p.dica }}</span> }
@@ -86,10 +89,10 @@ export class EscolhaComponent {
     effect(() => {
       const p = this.servico.pedido();
       if (!p) return;
-      this.filtro.set('');
+      this.filtro.set(p.texto?.valor ?? '');
       this.indice.set(0);
       this.marcadas.set(new Set(p.opcoes.flatMap((o: OpcaoDeEscolha<unknown>, i) => (o.marcada ? [i] : []))));
-      queueMicrotask(() => this.campo()?.nativeElement.focus());
+      queueMicrotask(() => this.campo()?.nativeElement.select());
     });
   }
 
@@ -111,6 +114,8 @@ export class EscolhaComponent {
     const ctrl = e.ctrlKey || e.metaKey;
     if (e.key === 'Escape') {
       this.fechar(null);
+    } else if (p.texto && e.key !== 'Enter') {
+      return;
     } else if (e.key === 'ArrowDown' || (ctrl && e.key.toLowerCase() === 'n')) {
       if (total) this.indice.set((this.indice() + 1) % total);
     } else if (e.key === 'ArrowUp' || (ctrl && e.key.toLowerCase() === 'p')) {
@@ -142,7 +147,9 @@ export class EscolhaComponent {
   private confirmar(): void {
     const p = this.servico.pedido();
     if (!p) return;
-    if (p.multipla) {
+    if (p.texto) {
+      this.fechar([this.filtro()]);
+    } else if (p.multipla) {
       this.fechar([...this.marcadas()].sort((a, b) => a - b).map((i) => p.opcoes[i].valor));
     } else {
       const o = this.visiveis()[this.indice()];
@@ -151,7 +158,14 @@ export class EscolhaComponent {
   }
 
   private fechar(valores: unknown[] | null): void {
+    const anterior = this.servico.focoAnterior;
+    this.servico.focoAnterior = null;
     this.servico.responder(valores);
-    queueMicrotask(() => this.editor.focar());
+    // Volta o foco para onde estava (ex.: o painel da tela do Git); se sumiu, para o editor.
+    queueMicrotask(() => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      if (anterior?.isConnected && anterior.offsetParent !== null) anterior.focus();
+      else this.editor.focar();
+    });
   }
 }

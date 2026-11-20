@@ -14,6 +14,8 @@ export interface PedidoDeEscolha {
   multipla: boolean;
   /** Texto curto embaixo (ex.: o que acontece ao confirmar). */
   dica?: string;
+  /** Pergunta de texto livre (nome de branch, token...), em vez de lista. */
+  texto?: { valor: string; placeholder?: string; senha?: boolean };
   resolver: (valores: unknown[] | null) => void;
 }
 
@@ -24,9 +26,16 @@ export interface PedidoDeEscolha {
 @Injectable({ providedIn: 'root' })
 export class EscolhaService {
   readonly pedido = signal<PedidoDeEscolha | null>(null);
+  /** Quem tinha o foco quando a janela abriu (volta para ele ao fechar). */
+  focoAnterior: HTMLElement | null = null;
+
+  private lembrarFoco(): void {
+    if (!this.pedido()) this.focoAnterior = document.activeElement as HTMLElement | null;
+  }
 
   /** Resolve com os valores escolhidos, ou null se o usuário cancelar (esc). */
   escolher<T>(titulo: string, opcoes: OpcaoDeEscolha<T>[], config: { multipla?: boolean; dica?: string } = {}): Promise<T[] | null> {
+    this.lembrarFoco();
     this.pedido()?.resolver(null);
     return new Promise((resolver) => {
       this.pedido.set({
@@ -35,6 +44,22 @@ export class EscolhaService {
         multipla: !!config.multipla,
         dica: config.dica,
         resolver: (v) => resolver(v as T[] | null),
+      });
+    });
+  }
+
+  /** Pergunta um texto. Resolve com o texto (sem espaços nas pontas) ou null se cancelar. */
+  perguntar(titulo: string, config: { valor?: string; placeholder?: string; senha?: boolean; dica?: string } = {}): Promise<string | null> {
+    this.lembrarFoco();
+    this.pedido()?.resolver(null);
+    return new Promise((resolver) => {
+      this.pedido.set({
+        titulo,
+        opcoes: [],
+        multipla: false,
+        dica: config.dica,
+        texto: { valor: config.valor ?? '', placeholder: config.placeholder, senha: config.senha },
+        resolver: (v) => resolver(v ? String(v[0] ?? '').trim() || null : null),
       });
     });
   }

@@ -11,6 +11,15 @@ import { BuscaService } from './busca/busca.service';
 import { BuscaProjetoComponent } from './busca/busca-projeto.component';
 import { BuscaProjetoService } from './busca/busca-projeto.service';
 import { EscolhaComponent } from './escolha/escolha.component';
+import { GitComponent } from './git/git.component';
+import { DiffComponent } from './git/diff.component';
+import { CommitComponent } from './git/commit.component';
+import { GithubFormComponent } from './git/github-form.component';
+import { MergeComponent } from './git/merge.component';
+import { GitService } from './git/git.service';
+import { MargemGitService } from './git/margem.service';
+import { GithubService } from './git/github.service';
+import { CommitService } from './git/commit.service';
 import { EscolhaService } from './escolha/escolha.service';
 import { LayoutService, Regiao } from './layout/layout.service';
 import { MensagensService } from './nucleo/mensagens.service';
@@ -23,13 +32,15 @@ import { JdtlsService } from './java/jdtls.service';
   selector: 'sd-raiz',
   imports: [
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
-    BuscaComponent, BuscaProjetoComponent, EscolhaComponent,
+    BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
+    GithubFormComponent, MergeComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="area-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido()">
+      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta()">
+      <div class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
         @if (layout.disposicao().visiveis.arquivos) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
             <sd-arvore />
@@ -53,9 +64,16 @@ import { JdtlsService } from './java/jdtls.service';
           </div>
         </div>
 
-        <sd-busca />
-        <sd-busca-projeto />
-        <sd-escolha />
+      </div>
+
+      @if (layout.tela() === 'git') { <sd-git class="tela-cheia" /> }
+      @if (layout.tela() === 'merge') { <sd-merge class="tela-cheia" /> }
+      <sd-diff />
+      <sd-busca />
+      <sd-busca-projeto />
+      <sd-commit />
+      <sd-github-form />
+      <sd-escolha />
       </div>
 
       <sd-barra-status />
@@ -77,10 +95,14 @@ export class App {
   protected readonly busca = inject(BuscaService);
   protected readonly buscaProjeto = inject(BuscaProjetoService);
   protected readonly escolha = inject(EscolhaService);
+  protected readonly commit = inject(CommitService);
 
   constructor() {
     inject(AtalhosService).iniciar();
     inject(JdtlsService); // liga o jdtls quando o projeto é de Java
+    inject(GitService); // acompanha o repositório do projeto
+    inject(MargemGitService); // marcas de alteração na margem do editor
+    void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
     void inject(ProjetoService).iniciar();
   }

@@ -4,6 +4,7 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { EditorService } from '../editor/editor.service';
 import { LayoutService } from '../layout/layout.service';
 import { MensagensService } from '../nucleo/mensagens.service';
+import { GitService, LetraGit } from '../git/git.service';
 
 interface No {
   entrada: Entrada;
@@ -54,7 +55,11 @@ interface No {
               <span class="seta">{{ no.aberto ? '▾' : '▸' }}</span>
             }
             <span class="nome">{{ no.entrada.nome }}</span>
-            @if (sujo(no.entrada.caminho)) { <span class="marca-sujo">M</span> }
+            @if (letraGit(no.entrada.caminho); as l) {
+              <span class="marca-git" [attr.data-letra]="l" [title]="tituloDaLetra(l)">{{ l === '?' ? 'U' : l }}</span>
+            } @else if (sujo(no.entrada.caminho)) {
+              <span class="marca-sujo" title="alterado e não salvo">●</span>
+            }
           </div>
         }
       </div>
@@ -66,6 +71,7 @@ export class ArvoreComponent {
   protected readonly editor = inject(EditorService);
   private readonly layout = inject(LayoutService);
   private readonly mensagens = inject(MensagensService);
+  private readonly git = inject(GitService);
   private readonly lista = viewChild.required<ElementRef<HTMLDivElement>>('lista');
 
   private readonly raizes = signal<No[]>([]);
@@ -97,6 +103,15 @@ export class ArvoreComponent {
       const pedido = this.layout.pedidoDeFoco();
       if (pedido?.id === 'arquivos') queueMicrotask(() => this.lista().nativeElement.focus());
     });
+  }
+
+  /** Situação no Git (M alterado, A/U novo, D apagado, R renomeado, C conflito). */
+  protected letraGit(caminho: string): LetraGit | null {
+    return this.git.letraDe(caminho);
+  }
+
+  protected tituloDaLetra(l: LetraGit): string {
+    return { M: 'alterado', A: 'novo (no stage)', D: 'apagado', R: 'renomeado', C: 'em conflito', '?': 'novo (fora do git)' }[l];
   }
 
   protected sujo(caminho: string): boolean {

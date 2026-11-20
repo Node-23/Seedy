@@ -4,7 +4,7 @@ IDE Java minimalista, guiada pelo teclado, com o visual sob controle de quem usa
 Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 
 > Status: **v0.1 em andamento**. Editor com modo vim, árvore de arquivos, terminal,
-> tema, buscas e inteligência de Java (jdtls) já funcionam. Banco, Git, servidores
+> tema, buscas, inteligência de Java (jdtls) e Git já funcionam. Banco, servidores
 > (JBoss/Tomcat) e IA vêm nas próximas fases — ver [ROADMAP.md](ROADMAP.md).
 
 ## O que já tem
@@ -45,6 +45,19 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   editor (git, build, outro programa) aparecem sozinhos; buffer sem edição recarrega.
   Só as definições ganham cor (Alabaster), via tokens semânticos. O Seedy baixa o jdtls sozinho
   na primeira vez que abre um projeto Java; o status aparece na statusline (`jdtls ✓`).
+- **Git**: tela do Git (`␣ g`) com branches, stash, log com o grafo das branches e detalhe do
+  commit; commit (`Ctrl+K`) com prévia do diff, push, pull, merge, cherry-pick, reverter, blame
+  (`␣ n`), marcas de mudança na margem e na árvore. Conflitos abrem no merge em 3 colunas com
+  **resolver simples**, `dp`/`do` e `:w` para gravar e concluir.
+- **Prateleira** (o *shelf* do IntelliJ): guarde mudanças com um nome (`␣ S`, ou `alt+s` no
+  commit para escolher os arquivos) e devolva depois, inteiras ou arquivo a arquivo, em qualquer
+  branch. Se o arquivo mudou nesse meio-tempo, o Seedy junta em três vias; conflitos abrem no
+  merge em 3 colunas. Fica dentro da pasta `.git` (nunca vai num commit).
+- **Pull request e issue** sem sair da IDE (`␣ P` / `␣ I`): o PR vai da branch atual (o Seedy
+  faz o push antes, se faltar) para a base escolhida, com título e descrição sugeridos pelos commits.
+- **Conta do GitHub**: entre como no IntelliJ (pelo navegador, via Git Credential Manager, ou com
+  um token) com `␣ G` ou pelo botão da tela do Git; clone os seus repositórios de lá. O token fica no
+  núcleo e no cofre do sistema, nunca na interface.
 - Painéis redimensionáveis (arraste os divisores) e modo foco.
 
 ## Pré-requisitos
@@ -108,6 +121,18 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | `Alt+Insert` | gerar: getters/setters, construtor, toString, equals/hashCode, sobrescrever métodos |
 | `␣ l` | reiniciar o jdtls |
 | `␣ v` | escolher o JDK que roda o jdtls |
+| `␣ g` | tela do Git (de novo: volta ao editor) |
+| `Ctrl+K` ou `␣ k` | commit (`ctrl+⏎` commita, `ctrl+alt+⏎` commita e faz push) |
+| `Ctrl+Shift+K` / `Ctrl+T` | push / pull |
+| `␣ b` | trocar de branch (ou criar uma) |
+| `␣ n` | blame no arquivo aberto |
+| `␣ m` | resolver conflitos (merge em 3 colunas) |
+| `␣ G` | GitHub: conectar, clonar, criar PR ou issue, desconectar |
+| `␣ P` / `␣ I` | criar pull request / issue (`ctrl+⏎` cria, `alt+b` troca a base, `alt+r` rascunho) |
+| `␣ S` | guardar as mudanças na prateleira (no commit: `alt+s` com os arquivos marcados) |
+| tela do Git, prateleira: `⏎`, `r`, `d` | devolver (escolhendo os arquivos), renomear, apagar |
+| tela do Git: `h`/`l`, `j`/`k`, `⏎` | painéis, commits, diff; `c` checkout, `b` branch aqui, `p` cherry-pick, `r` reverter, `m` merge, `d` apagar, `/` filtrar |
+| merge: `]c` / `[c`, `dp` / `do`, `:w` | próximo/anterior conflito, pegar o seu/o deles, gravar e concluir |
 
 Os atalhos ficam em `src/app/teclado/atalhos.service.ts`.
 
@@ -164,6 +189,7 @@ src/                         interface (Angular)
   app/busca/                 buscas: arquivo (Ctrl+P), projeto (Ctrl+Shift+F), prévia
   app/layout/                registro de painéis e disposição
   app/java/                  cliente LSP do jdtls: ciclo de vida, sincronia, provedores do Monaco, gerar código
+  app/git/                   tela do Git, grafo, commit, diff, blame, merge em 3 colunas, GitHub
   app/escolha/               janela de escolha (uma ou várias opções), usada por quem precisa perguntar
   app/teclado/               atalhos
   styles.css                 todo o visual (só usa as variáveis do tema)
@@ -171,7 +197,7 @@ src-tauri/                   núcleo (Rust)
   src/arquivos.rs            listar pastas, ler/gravar arquivos
   src/terminal.rs            PTY (ConPTY no Windows)
   src/tema.rs                tema.json, fontes e recarga ao vivo
-  src/git.rs                 branch atual
+  src/git.rs                 roda o git, conta do GitHub (credential manager e API)
   src/busca.rs               índice de arquivos/símbolos Java e busca de texto
   src/java.rs                acha os JDKs, baixa e verifica o jdtls, processo e canal LSP
   src/observador.rs          observa a pasta do projeto (mudanças feitas fora do editor)

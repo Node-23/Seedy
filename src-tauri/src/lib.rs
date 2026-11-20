@@ -18,6 +18,7 @@ pub fn run() {
         .manage(terminal::Terminais::default())
         .manage(java::Servidores::default())
         .manage(observador::Observador::default())
+        .manage(git::ContaGithub::default())
         .setup(|app| {
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
@@ -31,6 +32,13 @@ pub fn run() {
             busca::busca_indexar,
             busca::busca_texto,
             git::branch_atual,
+            git::git,
+            git::github_conta,
+            git::github_token,
+            git::github_desconectar,
+            git::github_repositorios,
+            git::github_api,
+            git::abrir_no_navegador,
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,

@@ -100,6 +100,15 @@ export function definirTemaMonaco(tema: Tema): void {
       'editor.wordHighlightStrongBorder': c.destaque + '99',
       'editorLightBulb.foreground': c.aviso,
       'editorLightBulbAutoFix.foreground': c.destaque,
+      // Diff (Git): fundo tingido, como no mockup 04.
+      'diffEditor.insertedLineBackground': c.sucessoFundo,
+      'diffEditor.removedLineBackground': c.erroFundo,
+      'diffEditor.insertedTextBackground': c.sucesso + '33',
+      'diffEditor.removedTextBackground': c.erro + '33',
+      'diffEditorGutter.insertedLineBackground': c.sucessoFundo,
+      'diffEditorGutter.removedLineBackground': c.erroFundo,
+      'diffEditor.diagonalFill': c.selecao + '88',
+      'diffEditor.border': c.borda,
       // Painel de usos / prévia de definição (alt+F7, gr).
       'peekView.border': c.borda,
       'peekViewTitle.background': c.painelElevado,

@@ -4,6 +4,9 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { BuscaService } from '../busca/busca.service';
 import { BuscaProjetoService } from '../busca/busca-projeto.service';
 import { JdtlsService } from '../java/jdtls.service';
+import { GitService } from '../git/git.service';
+import { LayoutService } from '../layout/layout.service';
+import { MergeService } from '../git/merge.service';
 
 const NOMES_MODO: Record<string, string> = {
   normal: 'NORMAL',
@@ -17,11 +20,27 @@ const NOMES_MODO: Record<string, string> = {
   selector: 'sd-barra-status',
   template: `
     <footer class="barra-status">
-      <span class="segmento modo" [attr.data-modo]="buscando() ? 'busca' : editor.modo()">{{ buscando() ? 'BUSCA' : nomeModo() }}</span>
+      <span class="segmento modo" [attr.data-modo]="modoDaTela()">{{ rotuloDoModo() }}</span>
       @if (projeto.branch()) {
-        <span class="segmento com-divisa">{{ projeto.branch() }}</span>
+        <span class="segmento com-divisa">{{ projeto.branch() }}@if (git.estado(); as g) {@if (g.aFrente || naTelaGit()) { <span class="suave">↑{{ g.aFrente }}</span>}@if (g.atras || naTelaGit()) { <span class="suave">↓{{ g.atras }}</span>}}</span>
       }
-      @if (buscando()) {
+      @if (layout.tela() === 'merge') {
+        <span class="segmento dicas-merge">
+          <span><span class="tecla">]c</span> próximo</span> <span><span class="tecla">[c</span> anterior</span>
+          <span><span class="tecla">dp</span> pegar o seu</span> <span><span class="tecla">do</span> pegar o deles</span>
+          <span><span class="tecla">:w</span> concluir merge</span>
+        </span>
+        <span class="espaco"></span>
+        <span class="segmento com-divisa-esq" [class.conflitos-restantes]="merge.restantes() > 0">
+          {{ merge.restantes() }} {{ merge.restantes() === 1 ? 'conflito restante' : 'conflitos restantes' }}
+        </span>
+        <span class="segmento com-divisa-esq suave">{{ merge.arquivoAtual() + 1 }} de {{ merge.totalDeArquivos() }} {{ merge.totalDeArquivos() === 1 ? 'arquivo' : 'arquivos' }}</span>
+      } @else if (naTelaGit()) {
+        <span class="espaco"></span>
+        @if (git.ocupado(); as o) { <span class="segmento com-divisa-esq git-ocupado">{{ o }}…</span> }
+        @if (git.remoto(); as r) { <span class="segmento com-divisa-esq">{{ r.nome }} · {{ r.host }}</span> }
+        <span class="segmento com-divisa-esq suave">{{ git.totalDeCommits() }} commits</span>
+      } @else if (buscando()) {
         <span class="espaco"></span>
         <span class="segmento com-divisa-esq">
           @if (busca.indexando() && !busca.indice()) { indexando… } @else { índice: {{ busca.totalIndice().toLocaleString('pt-BR') }} itens ✓ }
@@ -61,6 +80,16 @@ export class BarraStatusComponent {
     const fase = this.jdtls.estado().fase;
     return fase === 'erro' ? 'O jdtls parou ou deu erro: ␣ l reinicia' : fase === 'navegador' ? 'O jdtls só roda dentro do app (npm run dev)' : 'Eclipse JDT Language Server';
   });
+  protected readonly git = inject(GitService);
+  protected readonly layout = inject(LayoutService);
+  protected readonly merge = inject(MergeService);
+  protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
+  protected readonly modoDaTela = computed(() =>
+    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.buscando() ? 'busca' : this.editor.modo(),
+  );
+  protected readonly rotuloDoModo = computed(() =>
+    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.buscando() ? 'BUSCA' : this.nomeModo(),
+  );
   protected readonly buscando = computed(() => this.busca.aberta() || this.buscaProjeto.aberta());
 
   protected readonly buffer = this.editor.bufferAtivo;

@@ -8,6 +8,12 @@ import { BuscaService } from '../busca/busca.service';
 import { BuscaProjetoService } from '../busca/busca-projeto.service';
 import { JdtlsService } from '../java/jdtls.service';
 import { EscolhaService } from '../escolha/escolha.service';
+import { CommitService } from '../git/commit.service';
+import { GitService } from '../git/git.service';
+import { GithubService } from '../git/github.service';
+import { PrateleiraService } from '../git/prateleira.service';
+import { GithubFormService } from '../git/github-form.service';
+import { BlameService } from '../git/blame.service';
 
 export interface AcaoLider {
   tecla: string;
@@ -41,6 +47,12 @@ export class AtalhosService {
   private readonly buscaProjeto = inject(BuscaProjetoService);
   private readonly jdtls = inject(JdtlsService);
   private readonly escolha = inject(EscolhaService);
+  private readonly commit = inject(CommitService);
+  private readonly git = inject(GitService);
+  private readonly blame = inject(BlameService);
+  private readonly github = inject(GithubService);
+  private readonly prateleira = inject(PrateleiraService);
+  private readonly githubForm = inject(GithubFormService);
 
   readonly liderAberto = signal(false);
 
@@ -59,10 +71,17 @@ export class AtalhosService {
     { tecla: 'l', rotulo: 'reiniciar jdtls', disponivel: true, executar: () => void this.jdtls.reiniciar() },
     { tecla: 'v', rotulo: 'JDK do jdtls', disponivel: true, executar: () => void this.jdtls.escolherJdk() },
     { tecla: 'r', rotulo: 'rodar / debug', disponivel: false },
-    { tecla: 'g', rotulo: 'git', disponivel: false },
+    { tecla: 'g', rotulo: 'git', disponivel: true, executar: () => this.alternarGit() },
+    { tecla: 'k', rotulo: 'commit', disponivel: true, executar: () => void this.commit.abrir() },
+    { tecla: 'b', rotulo: 'trocar de branch', disponivel: true, executar: () => void this.trocarDeBranch() },
+    { tecla: 'n', rotulo: 'anotar (blame)', disponivel: true, executar: () => void this.blame.alternar() },
     { tecla: 'd', rotulo: 'banco', disponivel: false },
     { tecla: 'j', rotulo: 'servidor', disponivel: false },
-    { tecla: 'm', rotulo: 'diff / merge', disponivel: false },
+    { tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
+    { tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
+    { tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
+    { tecla: 'P', rotulo: 'criar pull request', disponivel: true, executar: () => void this.githubForm.abrir('pr') },
+    { tecla: 'I', rotulo: 'criar issue', disponivel: true, executar: () => void this.githubForm.abrir('issue') },
     { tecla: 'a', rotulo: 'IA', disponivel: false },
   ];
 
@@ -118,7 +137,8 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const livre = !this.busca.aberta() && !this.buscaProjeto.aberta() && !this.escolha.pedido() && !this.noTerminal(e.target);
+    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta();
+    const livre = !janelaAberta && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {
       // Ctrl+Shift+R também é "recarregar" do navegador: aqui é substituir no projeto.
@@ -129,6 +149,15 @@ export class AtalhosService {
       // Voltar/avançar nos arquivos vistos.
       this.engolir(e);
       void this.editor.navegar(e.key === 'ArrowLeft' ? -1 : 1);
+    } else if (ctrl && !e.altKey && e.code === 'KeyK' && !janelaAberta) {
+      // Ctrl+K commit, Ctrl+Shift+K push (como no IntelliJ).
+      this.engolir(e);
+      if (e.shiftKey) void this.git.push();
+      else void this.commit.abrir();
+    } else if (soCtrl && e.code === 'KeyT' && livre) {
+      // Ctrl+T atualiza o projeto (pull), como no IntelliJ.
+      this.engolir(e);
+      void this.git.pull();
     } else if (soCtrl && e.code === 'Backslash' && livre) {
       // Dividir o editor (como no VS Code); no vim também :vs e ctrl+w v.
       this.engolir(e);
@@ -153,7 +182,7 @@ export class AtalhosService {
     } else if (ctrl && e.key === 'Tab') {
       e.preventDefault();
       this.editor.proximo(e.shiftKey ? -1 : 1);
-    } else if (e.key === ' ' && !ctrl && !e.altKey && this.foraDeCampoDeTexto(e.target)) {
+    } else if (e.key === ' ' && !ctrl && !e.altKey && !janelaAberta && this.foraDeCampoDeTexto(e.target)) {
       // No editor, quem cuida do espaço é o vim (só no modo normal).
       e.preventDefault();
       this.abrirLider();
@@ -161,6 +190,82 @@ export class AtalhosService {
   }
 
   private esperandoJanela = false;
+
+  private alternarGit(): void {
+    this.layout.tela.set(this.layout.tela() === 'git' ? 'editor' : 'git');
+    if (this.layout.tela() === 'editor') queueMicrotask(() => this.editor.focar());
+  }
+
+  /** ␣ m: abre o merge em 3 colunas quando há conflitos. */
+  private abrirMerge(): void {
+    if (!this.git.conflitos().length) {
+      this.mensagens.mostrar('nenhum conflito para resolver');
+      return;
+    }
+    this.layout.tela.set('merge');
+  }
+
+  /** ␣ G: conectar/desconectar a conta do GitHub e clonar um repositório dela. */
+  private async menuGithub(): Promise<void> {
+    const u = this.github.usuario();
+    const acao = await this.escolha.escolherUm<'conectar' | 'clonar' | 'desconectar' | 'pr' | 'issue'>('GITHUB', [
+      ...(u
+        ? [
+            { rotulo: 'Criar pull request', detalhe: '␣ P', valor: 'pr' as const },
+            { rotulo: 'Criar issue', detalhe: '␣ I', valor: 'issue' as const },
+            { rotulo: 'Clonar um repositório', detalhe: `de @${u.login}`, valor: 'clonar' as const },
+            { rotulo: 'Desconectar', detalhe: `@${u.login}`, valor: 'desconectar' as const },
+          ]
+        : [{ rotulo: 'Conectar a conta', detalhe: 'pelo navegador ou com um token', valor: 'conectar' as const }]),
+    ]);
+    if (acao === 'conectar') await this.github.conectar();
+    else if (acao === 'clonar') await this.github.clonar();
+    else if (acao === 'desconectar') await this.github.desconectar();
+    else if (acao === 'pr' || acao === 'issue') await this.githubForm.abrir(acao);
+  }
+
+  /** ␣ S: guarda todas as mudanças (menos conflitos) na prateleira, com um nome. */
+  private async guardarNaPrateleira(): Promise<void> {
+    await this.git.atualizar();
+    const arquivos = this.git.alterados().filter((a) => a.letra !== 'C');
+    if (!arquivos.length) {
+      this.mensagens.mostrar('nada para guardar: não há alterações');
+      return;
+    }
+    const nome = await this.escolha.perguntar('GUARDAR NA PRATELEIRA', {
+      valor: `mudanças em ${this.git.estado()?.branch ?? 'HEAD'}`,
+      dica: `${arquivos.length} ${arquivos.length === 1 ? 'arquivo' : 'arquivos'} · para escolher quais, use alt+s no commit (Ctrl+K)`,
+    });
+    if (nome) await this.prateleira.guardar(nome, arquivos.map((a) => a.relativo));
+  }
+
+  /** ␣ b: trocar de branch (locais e remotas), como o menu de branches do IntelliJ. */
+  private async trocarDeBranch(): Promise<void> {
+    if (!this.git.ehRepositorio()) {
+      this.mensagens.mostrar('este projeto não é um repositório git');
+      return;
+    }
+    const b = await this.git.branches();
+    const locais = new Set(b.locais.map((l) => l.nome));
+    const opcoes = [
+      { rotulo: '+ nova branch', detalhe: `a partir de ${this.git.estado()?.branch ?? 'HEAD'}`, valor: { nova: true, nome: '', remoto: '' } },
+      ...b.locais.map((l) => ({
+        rotulo: `${l.atual ? '● ' : ''}${l.nome}`,
+        detalhe: [l.aFrente ? `↑${l.aFrente}` : '', l.atras ? `↓${l.atras}` : '', l.upstream ?? 'local'].filter(Boolean).join(' '),
+        valor: { nova: false, nome: l.nome, remoto: '' },
+      })),
+      ...[...b.remotas].flatMap(([remoto, nomes]) =>
+        nomes.filter((n) => !locais.has(n)).map((n) => ({ rotulo: `${remoto}/${n}`, detalhe: 'remota', valor: { nova: false, nome: n, remoto } })),
+      ),
+    ];
+    const r = await this.escolha.escolherUm('BRANCHES', opcoes);
+    if (!r) return;
+    if (r.nova) {
+      const nome = await this.escolha.perguntar('NOVA BRANCH', { placeholder: 'feature/nome-da-branch' });
+      if (nome) await this.git.criarBranch(nome.replace(/\s+/g, '-'));
+    } else if (r.remoto) await this.git.checkoutRemota(r.remoto, r.nome);
+    else await this.git.checkout(r.nome);
+  }
 
   private comandoDeJanela(tecla: string): void {
     const outro = this.editor.painelFocado() === 0 ? 1 : 0;

@@ -47,6 +47,27 @@ export interface Ocorrencia {
   texto: string;
 }
 
+export interface SaidaGit {
+  codigo: number;
+  saida: string;
+  erro: string;
+}
+
+export interface UsuarioGithub {
+  login: string;
+  nome: string | null;
+  avatar: string | null;
+}
+
+export interface RepositorioGithub {
+  nome: string;
+  dono: string;
+  descricao: string | null;
+  privado: boolean;
+  url_clone: string;
+  atualizado: string;
+}
+
 export interface Mudancas {
   criados: string[];
   removidos: string[];
@@ -99,6 +120,27 @@ export const ponte = {
 
   async branchAtual(raiz: string): Promise<string | null> {
     return noApp() ? invoke<string | null>('branch_atual', { raiz }) : 'develop';
+  },
+
+  /** Roda `git <args>` na pasta (sem pasta: `clone`). No modo navegador não há git. */
+  async git(pasta: string | null, args: string[], entrada?: string): Promise<SaidaGit> {
+    if (!noApp()) return { codigo: 128, saida: '', erro: 'git só dentro do app' };
+    return invoke<SaidaGit>('git', { pasta, args, entrada: entrada ?? null });
+  },
+
+  /** Conta do GitHub (a credencial fica no núcleo; aqui só chega o usuário). */
+  github: {
+    async conta(interativo: boolean): Promise<UsuarioGithub | null> {
+      return noApp() ? invoke<UsuarioGithub | null>('github_conta', { interativo }) : null;
+    },
+    token: (token: string) => invoke<UsuarioGithub>('github_token', { token }),
+    desconectar: () => invoke<void>('github_desconectar'),
+    repositorios: () => invoke<RepositorioGithub[]>('github_repositorios'),
+    /** Pedido à API REST do GitHub como a conta conectada (só /repos/... e /user...). */
+    api: <T = unknown>(metodo: 'GET' | 'POST' | 'PATCH', caminho: string, corpo?: unknown) =>
+      invoke<T>('github_api', { metodo, caminho, corpo: corpo ?? null }),
+    /** Abre um endereço do github.com no navegador padrão. */
+    abrirNoNavegador: (url: string) => invoke<void>('abrir_no_navegador', { url }),
   },
 
   /** Lista os arquivos do projeto e as declarações Java (classes e métodos). */

@@ -17,6 +17,7 @@ import { TemaService } from '../tema/tema';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
+import { MergeService } from '../git/merge.service';
 
 /** API interna do vim (do CodeMirror), que o monaco-vim expõe sem tipos. */
 interface ApiVim {
@@ -75,6 +76,7 @@ export class EditorComponent {
   private readonly tema = inject(TemaService);
   private readonly atalhos = inject(AtalhosService);
   private readonly layout = inject(LayoutService);
+  private readonly merge = inject(MergeService);
   private readonly hospedeiro = viewChild.required<ElementRef<HTMLDivElement>>('hospedeiro');
 
   /** Qual painel este é (0 = esquerda; 1 = direita, quando o editor está dividido). */
@@ -238,7 +240,15 @@ export class EditorComponent {
     if (exDefinidos) return;
     exDefinidos = true;
     const Vim = (VimMode as unknown as { Vim: ApiVim }).Vim;
-    Vim.defineEx('write', 'w', () => void this.editor.salvar());
+    // No merge, :w grava o resultado; no editor, o buffer.
+    Vim.defineEx('write', 'w', () => (this.layout.tela() === 'merge' ? void this.merge.acoes?.gravar() : void this.editor.salvar()));
+    // Merge em três colunas: ]c / [c entre conflitos, dp/do ficam no componente do merge.
+    Vim.defineEx('seedymergeprox', 'seedymergeprox', () => this.merge.acoes?.proximo(1));
+    Vim.defineEx('seedymergeant', 'seedymergeant', () => this.merge.acoes?.proximo(-1));
+    Vim.defineEx('seedymergeseu', 'seedymergeseu', () => this.merge.acoes?.pegar('seu'));
+    Vim.defineEx('seedymergedeles', 'seedymergedeles', () => this.merge.acoes?.pegar('deles'));
+    Vim.map(']c', ':seedymergeprox<CR>', 'normal');
+    Vim.map('[c', ':seedymergeant<CR>', 'normal');
     // Como no vim: com o editor dividido, :q fecha o painel; senão, o buffer.
     Vim.defineEx('quit', 'q', (_cm, p) => (this.editor.divisao() ? this.editor.fecharPainel() : this.editor.fechar(undefined, !!p.bang)));
     Vim.defineEx('vsplit', 'vs', (_cm, p) => void this.editor.dividir(p.argString?.trim() || undefined));
