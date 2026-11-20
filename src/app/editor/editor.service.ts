@@ -41,8 +41,63 @@ export class EditorService {
   /** Incrementa a cada edição, para os indicadores de "sujo" atualizarem. */
   readonly edicoes = signal(0);
 
-  /** Instância do editor, registrada pelo EditorComponent. */
-  instancia: monaco.editor.IStandaloneCodeEditor | null = null;
+  // ---------- divisão do editor (dois painéis lado a lado) ----------
+
+  /**
+   * Editor dividido: qual painel tem o foco e qual arquivo está no outro.
+   * `ativo` é sempre o arquivo do painel focado; trocar o foco troca os dois.
+   * null = um painel só.
+   */
+  readonly divisao = signal<{ focado: 0 | 1; outro: string | null } | null>(null);
+  readonly painelFocado = computed<0 | 1>(() => this.divisao()?.focado ?? 0);
+
+  private readonly instancias: (monaco.editor.IStandaloneCodeEditor | null)[] = [null, null];
+
+  /** Instância do Monaco do painel focado (registrada pelo EditorComponent). */
+  get instancia(): monaco.editor.IStandaloneCodeEditor | null {
+    return this.instancias[this.painelFocado()];
+  }
+
+  registrarInstancia(painel: 0 | 1, instancia: monaco.editor.IStandaloneCodeEditor | null): void {
+    this.instancias[painel] = instancia;
+  }
+
+  /** Buffer mostrado num painel. */
+  bufferDoPainel(painel: 0 | 1): Buffer | null {
+    const d = this.divisao();
+    if (!d || painel === d.focado) return this.bufferAtivo();
+    return this.buffers().find((b) => b.caminho === d.outro) ?? null;
+  }
+
+  /**
+   * Divide o editor (o painel novo, à direita, fica com o foco). Com `caminho`, abre
+   * o arquivo nele; sem, os dois mostram o arquivo atual. Já dividido: abre no outro painel.
+   */
+  async dividir(caminho?: string, linha?: number): Promise<void> {
+    const d = this.divisao();
+    if (!d) this.divisao.set({ focado: 1, outro: this.ativo() });
+    else this.focarPainel(d.focado === 0 ? 1 : 0);
+    if (caminho) await this.abrir(caminho, linha);
+    queueMicrotask(() => this.instancia?.focus());
+  }
+
+  focarPainel(painel: 0 | 1): void {
+    const d = this.divisao();
+    if (!d || d.focado === painel) return;
+    const daqui = this.ativo();
+    this.ativo.set(d.outro);
+    this.divisao.set({ focado: painel, outro: daqui });
+    this.instancias[painel]?.focus();
+  }
+
+  /** Fecha um painel da divisão (o focado, por padrão); o outro fica sozinho. */
+  fecharPainel(painel = this.painelFocado()): void {
+    const d = this.divisao();
+    if (!d) return;
+    if (painel === d.focado) this.ativo.set(d.outro);
+    this.divisao.set(null);
+    queueMicrotask(() => this.instancia?.focus());
+  }
 
   constructor() {
     effect(() => definirTemaMonaco(this.temaService.tema()));
@@ -204,8 +259,7 @@ export class EditorService {
    * que entra (o Monaco descarta isso no setModel). `restaurar` = false quando
    * quem chama já vai posicionar o cursor (ex.: abrir numa linha).
    */
-  mostrarModelo(modelo: monaco.editor.ITextModel | null, restaurar = true): void {
-    const instancia = this.instancia;
+  mostrarModelo(modelo: monaco.editor.ITextModel | null, restaurar = true, instancia = this.instancia): void {
     if (!instancia) return;
     const atual = instancia.getModel();
     if (atual === modelo) return;
@@ -290,6 +344,8 @@ export class EditorService {
       this.mensagens.erro(`"${b.nome}" tem alterações não salvas (:w para salvar, :q! para descartar)`);
       return;
     }
+    // O outro painel mostra este buffer: a divisão fecha junto.
+    if (this.divisao()?.outro === b.caminho) this.divisao.set(null);
     const resto = lista.filter((x) => x !== b);
     this.buffers.set(resto);
     if (this.ativo() === b.caminho) this.ativo.set(resto[Math.min(i, resto.length - 1)]?.caminho ?? null);

@@ -32,21 +32,22 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - ✅ Escolher o JDK que roda o jdtls (␣ v) e usar todos os JDKs instalados como *runtimes*
   (cada projeto compila contra a versão dele: 8, 17, 21...)
 
-## Fase 2 — Busca (em andamento)
+## ✅ Fase 2 — Busca
 
 - ✅ Buscar no arquivo aberto (`Ctrl+F`): a caixa de busca do Monaco, no visual do tema
 - ✅ Buscar arquivo (`Ctrl+P`): a janela do mockup 02 (Search Everywhere), com classes,
   arquivos, símbolos, texto e ações
 - ✅ Buscar no projeto (`Ctrl+Shift+F`), como o "Find in Files" do IntelliJ: maiúsculas,
   palavra inteira, regex e máscara de arquivos (crates `ignore` + `regex`, respeita `.gitignore`)
-- Substituir no projeto (`Ctrl+Shift+R`), com prévia das alterações
-- Mockup das janelas de `Ctrl+Shift+F` em `docs/design/` (hoje seguem a linguagem visual
-  dos outros mockups, sem um próprio)
-- Símbolos hoje saem de uma leitura das declarações Java linha a linha; trocar pelo jdtls
-  (`workspace/symbol`) na fase 1
-- Usos hoje são ocorrências do nome; trocar por usos semânticos (jdtls) + textuais em
-  XML/JSP (Struts, Tiles)
-- Dividir (`^v`): abrir o resultado ao lado, quando o editor tiver divisão
+- ✅ Substituir no projeto (`Ctrl+Shift+R`): antes/depois de cada linha, tirar linhas
+  (`alt+x`), grupos de regex (`$1`); buffers abertos podem ser desfeitos (`u`)
+- ✅ Referência das telas de busca e do editor dividido em `docs/design/` (07 a 09)
+- ✅ Símbolos: os do projeto vêm do índice (instantâneo, com métodos); os de bibliotecas e
+  do JDK, do jdtls (`workspace/symbol`)
+- ✅ Usos híbridos: semânticos (jdtls) + textuais em XML/JSP/.properties (Struts, Tiles,
+  Spring XML pelo nome completo da classe; EL `${obj.prop}` para getters), no `Ctrl+P` e no `Alt+F7`
+- ✅ Dividir (`^v` / `shift+⏎`): abre o resultado ao lado — o editor ganhou divisão vertical
+  (`Ctrl+\`, `:vs`, `Ctrl+W h/l/w/q/o`, `:q` fecha o painel)
 
 ## Fase 3 — Banco de dados
 

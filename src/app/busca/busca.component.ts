@@ -8,6 +8,7 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { EditorService } from '../editor/editor.service';
 import { AtalhosService } from '../teclado/atalhos.service';
 import { JdtlsService } from '../java/jdtls.service';
+import { nomeCompleto, usosEmConfiguracao } from '../java/usos-texto';
 import { monaco } from '../editor/monaco';
 
 type TipoItem = 'classe' | 'metodo' | 'arquivo' | 'texto' | 'acao';
@@ -152,6 +153,7 @@ function pastaCurta(relativo: string): string {
         <div class="busca-dicas">
           <span><span class="tecla">↑↓</span> navegar</span>
           <span><span class="tecla">⏎</span> abrir</span>
+          <span><span class="tecla">^v</span> dividir</span>
           <span><span class="tecla">^u</span> usos</span>
           <span><span class="tecla">esc</span> fechar</span>
           <span class="espaco"></span>
@@ -459,6 +461,10 @@ export class BuscaComponent {
       this.mover(-10);
     } else if (e.key === 'Tab') {
       this.busca.proximoFiltro(e.shiftKey ? -1 : 1);
+    } else if ((ctrl && tecla === 'v' && !e.shiftKey) || (e.key === 'Enter' && e.shiftKey)) {
+      // ^v (como no Telescope) ou shift+⏎ (IntelliJ): abre ao lado. Colar: ctrl+shift+v.
+      const item = this.selecionado();
+      if (item) void this.abrir(item, true);
     } else if (e.key === 'Enter') {
       const item = this.selecionado();
       if (item) void this.abrir(item);
@@ -472,7 +478,8 @@ export class BuscaComponent {
     e.stopPropagation();
   }
 
-  protected async abrir(item: Item): Promise<void> {
+  /** Abre o item; com `aoLado`, no outro painel do editor (dividindo, se preciso). */
+  protected async abrir(item: Item, aoLado = false): Promise<void> {
     if (item.executar) {
       this.busca.fechar();
       item.executar();
@@ -482,12 +489,14 @@ export class BuscaComponent {
       const modelo = await this.jdtls.modeloDeClasse(item.uriJdt);
       if (!modelo) return;
       this.busca.fechar(false);
+      if (aoLado) await this.editor.dividir();
       this.editor.abrirModelo(modelo, undefined, linhaDaDeclaracao(modelo.getValue(), item.nome ?? ''));
       return;
     }
     if (!item.caminho) return;
     this.busca.fechar(false);
-    await this.editor.abrir(item.caminho, item.linha);
+    if (aoLado) await this.editor.dividir(item.caminho, item.linha);
+    else await this.editor.abrir(item.caminho, item.linha);
   }
 
   /** Usos de verdade (textDocument/references), na posição do nome na linha da declaração. */
@@ -506,8 +515,16 @@ export class BuscaComponent {
       })
       .catch(() => null);
     if (!r) return null;
-    const nomeDe = (uri: string) => decodeURIComponent(uri.split('/').pop() ?? '').replace(/\.[^.]+$/, '');
-    return { total: r.length, lugares: r.slice(0, 3).map((l) => `${nomeDe(l.uri)}:${l.range.start.line + 1}`) };
+    const nomeDe = (uri: string) => decodeURIComponent(uri.split('/').pop() ?? '').replace(/\.java$/, '');
+    const lugares = r.map((l) => `${nomeDe(l.uri)}:${l.range.start.line + 1}`);
+    // Busca híbrida: XML/JSP/.properties que citam a classe (nome completo) ou o método.
+    const raiz = this.projeto.raiz();
+    if (raiz) {
+      const alvo = item.tipo === 'classe' ? { classe: nomeCompleto(conteudo, item.nome) } : { metodo: item.nome };
+      const fora = await usosEmConfiguracao(raiz, alvo);
+      lugares.push(...fora.map((o) => `${nomeBase(o.relativo)}:${o.linha}`));
+    }
+    return { total: lugares.length, lugares: lugares.slice(0, 3) };
   }
 
   /** Conteúdo do arquivo do item (com cache), ou da classe de biblioteca pelo jdtls. */

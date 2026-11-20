@@ -10,10 +10,12 @@ interface Opcoes extends Required<OpcoesTexto> {
 
 const PADRAO: Opcoes = { diferenciar: false, palavra: false, regex: false, mascara: '' };
 
+export type ModoBuscaProjeto = 'buscar' | 'substituir';
+
 /**
- * Buscar no projeto (Ctrl+Shift+F), como o "Find in Files" do IntelliJ:
- * a consulta e as opções (maiúsculas, palavra inteira, regex, máscara)
- * ficam guardadas entre uma abertura e outra.
+ * Buscar no projeto (Ctrl+Shift+F) e substituir no projeto (Ctrl+Shift+R), como o
+ * "Find/Replace in Files" do IntelliJ: a consulta e as opções (maiúsculas,
+ * palavra inteira, regex, máscara) ficam guardadas entre uma abertura e outra.
  */
 @Injectable({ providedIn: 'root' })
 export class BuscaProjetoService {
@@ -21,6 +23,9 @@ export class BuscaProjetoService {
 
   readonly aberta = signal(false);
   readonly consulta = signal('');
+  readonly modo = signal<ModoBuscaProjeto>('buscar');
+  /** Texto que entra no lugar (com regex ligada, aceita $1, $2...). */
+  readonly substituicao = signal('');
   readonly opcoes = signal<Opcoes>(this.carregar());
   /** Muda a cada abertura, para o componente selecionar o texto do campo. */
   readonly aberturas = signal(0);
@@ -28,7 +33,8 @@ export class BuscaProjetoService {
   private focoAnterior: HTMLElement | null = null;
 
   /** Abre já com o texto selecionado no editor, se houver (uma linha só). */
-  abrir(): void {
+  abrir(modo: ModoBuscaProjeto = 'buscar'): void {
+    this.modo.set(modo);
     if (!this.aberta()) this.focoAnterior = document.activeElement as HTMLElement | null;
     const selecionado = this.selecaoDoEditor();
     if (selecionado) this.consulta.set(selecionado);

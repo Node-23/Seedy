@@ -61,6 +61,8 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 .regiao-esquerda > * { flex: 1; min-width: 0; display: flex; }
 .coluna-central { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .regiao-editor { flex: 1; min-height: 0; display: flex; }
+.regiao-editor > sd-editor { flex: 1; min-width: 0; display: flex; }
+.divisor.vertical.fixo { cursor: default; }
 .regiao-inferior { flex-shrink: 0; display: flex; }
 .regiao-inferior > * { flex: 1; min-width: 0; display: flex; }
 
@@ -226,6 +228,10 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 .editor { overflow: visible; }
 .migalhas { justify-content: flex-start; gap: 8px; padding-right: 70px; color: var(--texto-suave); }
 .migalhas .atual { color: var(--texto); }
+/* Painel estreito (editor dividido): some o começo do caminho, o nome do arquivo fica. */
+.migalhas { overflow: hidden; }
+.migalhas > span { white-space: nowrap; flex-shrink: 1; min-width: 1.6em; overflow: hidden; text-overflow: ellipsis; }
+.migalhas > span.atual, .migalhas > span.sep { flex-shrink: 0; min-width: auto; }
 .editor-corpo { position: relative; flex: 1; min-height: 0; border-radius: 0 0 var(--raio) var(--raio); overflow: hidden; }
 .editor-monaco { position: absolute; inset: 0; }
 .editor-vazio {
@@ -358,7 +364,12 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 .menu-lider-item .em-breve { margin-left: auto; font-size: 10px; opacity: 0.8; white-space: nowrap; }
 
 /* O modo já aparece na statusline; na linha de comando fica só o que o vim digita. */
-.vim-linha > span:first-child { display: none; }
+.vim-linha .vim-painel { display: flex; align-items: center; min-width: 0; }
+.vim-linha .vim-painel[hidden] { display: none; }
+.vim-linha .vim-painel > span:first-child { display: none; }
+/* Editor dividido: o painel sem foco fica apagado. */
+.painel.editor.desfocado .migalhas { opacity: 0.55; }
+.painel.editor.desfocado .editor-corpo { opacity: 0.85; }
 .vim-notification { color: var(--aviso); }
 
 /* ---------- busca (Search Everywhere, ␣␣) ---------- */
@@ -662,3 +673,22 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
   font-weight: 700;
 }
 .marca-escolha.marcada { background: var(--destaque); border-color: var(--borda); }
+
+/* ---------- substituir no projeto (Ctrl+Shift+R) ---------- */
+
+.busca-projeto .campo-substituir { height: 46px; }
+.busca-projeto .campo-substituir .busca-prompt { font-size: 15px; }
+.busca-projeto .campo-substituir input { font-size: 14px; }
+.busca-projeto .campo-substituir .contagem { font-size: 12px; white-space: nowrap; }
+.busca-projeto.substituindo .busca-projeto-item { gap: 10px; }
+.busca-projeto-item.excluido .busca-rotulo { opacity: 0.45; }
+.busca-projeto-item.excluido .trecho-entra { display: none; }
+.busca-projeto-item.excluido .trecho-sai { text-decoration: none; background: transparent; color: inherit; }
+.trecho-sai { color: var(--erro); background: var(--erro-fundo); text-decoration: line-through; }
+.trecho-entra { color: var(--sucesso); background: var(--sucesso-fundo); }
+.linha-previa.sai { background: var(--erro-fundo); }
+.linha-previa.entra { background: var(--sucesso-fundo); }
+.linha-previa.sai .numero { color: var(--erro); font-weight: 700; }
+.linha-previa.entra .numero { color: var(--sucesso); font-weight: 700; }
+/* A dica da direita ("abre de qualquer lugar") é a primeira a sair se não couber. */
+.busca-dicas > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

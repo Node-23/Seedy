@@ -25,7 +25,7 @@ export interface AcaoLider {
  * - Tecla líder (␣ no modo normal do vim, ou fora de campos de texto) abre o
  *   menu de atalhos, estilo which-key.
  * - Buscas: Ctrl+F no arquivo aberto, Ctrl+P arquivo (␣ f; ␣␣ abre a mesma
- *   janela em "Tudo"), Ctrl+Shift+F no projeto (␣ /).
+ *   janela em "Tudo"), Ctrl+Shift+F no projeto (␣ /), Ctrl+Shift+R substituir (␣ R).
  * - Alt+← / Alt+→ voltam e avançam nos arquivos vistos.
  * - Atalhos globais: Ctrl+S salva, Ctrl+Shift+S salva todos, Alt+F12 abre/fecha o terminal,
  *   Ctrl+Tab troca de buffer.
@@ -48,6 +48,7 @@ export class AtalhosService {
     { tecla: ' ', rotulo: 'buscar tudo', disponivel: true, busca: true, executar: () => this.busca.abrir('tudo') },
     { tecla: 'f', rotulo: 'buscar arquivo', disponivel: true, busca: true, executar: () => this.busca.abrir('arquivos') },
     { tecla: '/', rotulo: 'buscar no projeto', disponivel: true, busca: true, executar: () => this.buscaProjeto.abrir() },
+    { tecla: 'R', rotulo: 'substituir no projeto', disponivel: true, busca: true, executar: () => this.buscaProjeto.abrir('substituir') },
     { tecla: 's', rotulo: 'símbolos', disponivel: true, busca: true, executar: () => this.busca.abrir('simbolos') },
     { tecla: 'e', rotulo: 'árvore de arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
     { tecla: 't', rotulo: 'terminal', disponivel: true, executar: () => this.layout.alternar('terminal') },
@@ -99,19 +100,40 @@ export class AtalhosService {
       return;
     }
 
+    // Ctrl+W e depois h/l/w/v/q/o: painéis do editor, como no vim.
+    if (this.esperandoJanela) {
+      if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+      this.esperandoJanela = false;
+      this.engolir(e);
+      this.comandoDeJanela(e.key);
+      return;
+    }
+    const emInsercao = this.editor.modo() === 'insert' && !!(e.target as HTMLElement | null)?.closest?.('.monaco-editor');
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.code === 'KeyW' && !emInsercao && !this.noTerminal(e.target)) {
+      this.engolir(e);
+      this.esperandoJanela = true;
+      return;
+    }
+
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
     const livre = !this.busca.aberta() && !this.buscaProjeto.aberta() && !this.escolha.pedido() && !this.noTerminal(e.target);
 
-    if (ctrl && e.shiftKey && !e.altKey && e.code === 'KeyF') {
+    if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {
+      // Ctrl+Shift+R também é "recarregar" do navegador: aqui é substituir no projeto.
       this.engolir(e);
       if (this.busca.aberta()) this.busca.fechar(false);
-      this.buscaProjeto.abrir();
+      this.buscaProjeto.abrir(e.code === 'KeyR' ? 'substituir' : 'buscar');
     } else if (e.altKey && !ctrl && !e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && livre) {
       // Voltar/avançar nos arquivos vistos.
       this.engolir(e);
       void this.editor.navegar(e.key === 'ArrowLeft' ? -1 : 1);
+    } else if (soCtrl && e.code === 'Backslash' && livre) {
+      // Dividir o editor (como no VS Code); no vim também :vs e ctrl+w v.
+      this.engolir(e);
+      if (this.editor.divisao()) this.editor.fecharPainel();
+      else void this.editor.dividir();
     } else if (soCtrl && e.code === 'KeyP' && livre) {
       this.engolir(e);
       this.busca.abrir('arquivos');
@@ -135,6 +157,29 @@ export class AtalhosService {
       // No editor, quem cuida do espaço é o vim (só no modo normal).
       e.preventDefault();
       this.abrirLider();
+    }
+  }
+
+  private esperandoJanela = false;
+
+  private comandoDeJanela(tecla: string): void {
+    const outro = this.editor.painelFocado() === 0 ? 1 : 0;
+    switch (tecla) {
+      case 'h':
+      case 'ArrowLeft':
+        return this.editor.focarPainel(0);
+      case 'l':
+      case 'ArrowRight':
+        return this.editor.focarPainel(1);
+      case 'w':
+        return this.editor.focarPainel(outro);
+      case 'v':
+        return void this.editor.dividir();
+      case 'q':
+      case 'c':
+        return this.editor.fecharPainel();
+      case 'o':
+        return this.editor.fecharPainel(outro);
     }
   }
 

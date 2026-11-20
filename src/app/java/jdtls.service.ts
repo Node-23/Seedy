@@ -154,6 +154,11 @@ export class JdtlsService {
     );
   }
 
+  /** Pasta do projeto que o jdtls está atendendo. */
+  raiz(): string | null {
+    return this.servidor?.raiz ?? null;
+  }
+
   cliente(): ClienteLsp | null {
     return this.pronto() ? (this.servidor?.cliente ?? null) : null;
   }

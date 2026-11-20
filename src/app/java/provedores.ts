@@ -9,6 +9,7 @@ import { EditorService } from '../editor/editor.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { JdtlsService } from './jdtls.service';
 import { executarGerador } from './gerar';
+import { colunaDoUso, nomeCompleto, usosEmConfiguracao } from './usos-texto';
 import { EscolhaService } from '../escolha/escolha.service';
 import {
   caminhoDaUri,
@@ -216,9 +217,45 @@ export function registrarProvedores(
   monaco.languages.registerImplementationProvider(L, {
     provideImplementation: async (m, p, cancel) => locais(await jdtls.cliente()?.pedir('textDocument/implementation', pos(m, p), cancel)),
   });
+  /**
+   * Usos fora do Java (XML/JSP/.properties): descobre pela definição se o que está sob
+   * o cursor é classe (procura o nome completo) ou método (procura o nome e a
+   * propriedade da EL, se for getter/setter).
+   */
+  const usosForaDoJava = async (m: monaco.editor.ITextModel, p: monaco.IPosition, cancel: monaco.CancellationToken) => {
+    const c = jdtls.cliente();
+    const raiz = jdtls.raiz();
+    const nome = m.getWordAtPosition(p)?.word;
+    if (!c || !raiz || !nome) return [];
+    const def = await c.pedir<LocalLsp[] | null>('textDocument/definition', pos(m, p), cancel).catch(() => null);
+    const local = def?.find((l) => l.uri.startsWith('file:'));
+    if (!local) return [];
+    const modeloDef = await editor.garantirModelo(caminhoDaUri(uriMonaco(local.uri)));
+    if (!modeloDef) return [];
+    const linhaDef = modeloDef.getLineContent(local.range.start.line + 1);
+    const ehClasse = new RegExp(`\\b(class|interface|enum|record)\\s+${nome}\\b`).test(linhaDef);
+    const ehMetodo = !ehClasse && new RegExp(`\\b${nome}\\s*\\(`).test(linhaDef);
+    if (!ehClasse && !ehMetodo) return []; // campo ou variável: só os usos do jdtls
+    const alvo = ehClasse ? { classe: nomeCompleto(modeloDef.getValue(), nome) } : { metodo: nome };
+    const saida: monaco.languages.Location[] = [];
+    for (const o of await usosEmConfiguracao(raiz, alvo)) {
+      const modelo = await editor.garantirModelo(o.caminho);
+      if (!modelo || o.linha > modelo.getLineCount()) continue;
+      const col = colunaDoUso(modelo.getLineContent(o.linha), alvo);
+      if (!col) continue;
+      saida.push({ uri: modelo.uri, range: new monaco.Range(o.linha, col.inicio + 1, o.linha, col.fim + 1) });
+    }
+    return saida;
+  };
+
   monaco.languages.registerReferenceProvider(L, {
-    provideReferences: async (m, p, ctx, cancel) =>
-      locais(await jdtls.cliente()?.pedir('textDocument/references', { ...pos(m, p), context: ctx }, cancel)),
+    provideReferences: async (m, p, ctx, cancel) => {
+      const [doJava, deFora] = await Promise.all([
+        locais(await jdtls.cliente()?.pedir('textDocument/references', { ...pos(m, p), context: ctx }, cancel)),
+        usosForaDoJava(m, p, cancel).catch(() => []),
+      ]);
+      return [...doJava, ...deFora];
+    },
   });
   monaco.languages.registerDocumentHighlightProvider(L, {
     async provideDocumentHighlights(m, p, cancel) {

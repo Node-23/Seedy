@@ -24,7 +24,15 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   - `Ctrl+Shift+F` — **buscar no projeto**: opções `Aa` (maiúsculas), `W` (palavra inteira) e
     `.*` (regex) com `alt c` / `alt w` / `alt r`, máscara de arquivos (`*.java, !*Test.java`),
     resultados e prévia embaixo. Abre já com o texto selecionado no editor.
-  - Nas janelas: `↑↓` / `^n` `^p` navegam, `⏎` abre na linha, `esc` fecha.
+  - `Ctrl+Shift+R` — **substituir no projeto**: cada linha mostra o antes (riscado) e o depois,
+    `alt+x` tira uma linha, `ctrl+⏎` substitui; com regex, `$1`, `$2`... valem.
+  - Nas janelas: `↑↓` / `^n` `^p` navegam, `⏎` abre na linha, `^v` / `shift+⏎` abre ao lado,
+    `esc` fecha (no `Ctrl+P`, colar é `ctrl+shift+v`).
+- **Usos de verdade, também fora do Java**: `Alt+F7` e o rodapé do `Ctrl+P` juntam os usos do jdtls
+  com XML, JSP e .properties (Struts/Tiles/Spring pelo nome completo da classe, EL `${feira.nome}`
+  para `getNome()`).
+- **Editor dividido** (`Ctrl+\`, `:vs`, `^v` nas buscas): dois painéis lado a lado, cada um com o
+  seu vim; `Ctrl+W h/l` troca de painel, `Ctrl+W q` ou `:q` fecha o painel.
 - **Inteligência de Java (jdtls)**: erros e avisos enquanto digita, completar (com import
   automático), documentação no hover, assinatura dos métodos, ir para definição e implementação,
   usos, renomear em vários arquivos, ações rápidas, extrair variável/método/campo (já abre o
@@ -75,6 +83,10 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | `Ctrl+F` | buscar no arquivo aberto |
 | `Ctrl+P` ou `␣ f` | buscar arquivo (`␣ ␣` abre a mesma janela em "Tudo"; `␣ s` em "Símbolos") |
 | `Ctrl+Shift+F` ou `␣ /` | buscar no projeto |
+| `Ctrl+Shift+R` ou `␣ R` | substituir no projeto |
+| `Ctrl+\` ou `:vs` | dividir o editor (de novo: junta) |
+| `Ctrl+W` `h` / `l` / `w` | painel da esquerda / da direita / o outro |
+| `Ctrl+W` `q` ou `:q` | fechar o painel (`Ctrl+W o` ou `:only`: fica só este) |
 | `␣ e` | mostrar/esconder arquivos |
 | `␣ t` ou `Alt+F12` | mostrar/esconder terminal |
 | `␣ o` | abrir projeto |

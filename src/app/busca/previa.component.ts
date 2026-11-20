@@ -6,9 +6,9 @@ import { Previa } from './previa';
   selector: 'sd-previa',
   template: `
     <div #codigo class="busca-previa-codigo">
-      @for (l of previa().linhas; track l.numero) {
-        <div class="linha-previa" [class.alvo]="l.alvo">
-          <span class="numero">{{ l.numero }}</span>
+      @for (l of previa().linhas; track $index) {
+        <div class="linha-previa" [class.alvo]="l.alvo && !l.tipo" [class.sai]="l.tipo === 'sai'" [class.entra]="l.tipo === 'entra'">
+          <span class="numero">{{ l.tipo === 'sai' ? '−' : l.tipo === 'entra' ? '+' : l.numero }}</span>
           <span class="codigo">@for (s of l.pedacos; track $index) {<span [class]="s.classe">{{ s.texto }}</span>}</span>
         </div>
       }

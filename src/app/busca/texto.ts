@@ -33,6 +33,38 @@ export function trechosEncontrados(expressao: RegExp, linha: string): number[] {
   return saida;
 }
 
+export interface Troca {
+  /** A linha depois da substituição. */
+  nova: string;
+  /** Pedaços da linha "antes e depois" juntos: o que sai e o que entra, na ordem. */
+  partes: { texto: string; tipo: 'igual' | 'sai' | 'entra' }[];
+}
+
+/**
+ * Substitui na linha todos os trechos encontrados. Com regex, `$1`, `$2`... valem;
+ * sem regex, `$` é só um caractere.
+ */
+export function trocarNaLinha(linha: string, expressao: RegExp, substituicao: string, comRegex: boolean): Troca {
+  const subst = comRegex ? substituicao : substituicao.replace(/\$/g, '$$$$');
+  const umaVez = new RegExp(expressao.source, expressao.flags.replace('g', ''));
+  const partes: Troca['partes'] = [];
+  let nova = '';
+  let ultimo = 0;
+  expressao.lastIndex = 0;
+  for (const m of linha.matchAll(expressao)) {
+    if (!m[0].length) continue;
+    const i = m.index!;
+    const entra = m[0].replace(umaVez, subst);
+    if (i > ultimo) partes.push({ texto: linha.slice(ultimo, i), tipo: 'igual' });
+    partes.push({ texto: m[0], tipo: 'sai' });
+    if (entra) partes.push({ texto: entra, tipo: 'entra' });
+    nova += linha.slice(ultimo, i) + entra;
+    ultimo = i + m[0].length;
+  }
+  if (ultimo < linha.length) partes.push({ texto: linha.slice(ultimo), tipo: 'igual' });
+  return { nova: nova + linha.slice(ultimo), partes };
+}
+
 /** Versão simples da máscara (o núcleo usa os globs do crate `ignore`). */
 export function passaNaMascara(mascara: string | undefined, relativo: string): boolean {
   const globs = (mascara ?? '').split(',').map((g) => g.trim()).filter(Boolean);

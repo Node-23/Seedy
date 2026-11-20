@@ -4,6 +4,7 @@ import { BarraStatusComponent } from './barra/barra-status.component';
 import { MenuLiderComponent } from './barra/menu-lider.component';
 import { ArvoreComponent } from './arquivos/arvore.component';
 import { EditorComponent } from './editor/editor.component';
+import { EditorService } from './editor/editor.service';
 import { TerminalComponent } from './terminal/terminal.component';
 import { BuscaComponent } from './busca/busca.component';
 import { BuscaService } from './busca/busca.service';
@@ -37,7 +38,13 @@ import { JdtlsService } from './java/jdtls.service';
         }
 
         <div class="coluna-central">
-          <sd-editor class="regiao-editor" />
+          <div class="regiao-editor">
+            <sd-editor [painel]="0" />
+            @if (editor.divisao()) {
+              <div class="divisor vertical fixo" aria-hidden="true"></div>
+              <sd-editor [painel]="1" />
+            }
+          </div>
           <div class="divisor horizontal" role="separator" aria-orientation="horizontal"
                [class.oculto]="!layout.disposicao().visiveis.terminal" (pointerdown)="arrastar($event, 'inferior')"></div>
           <div class="regiao-inferior" [class.oculto]="!layout.disposicao().visiveis.terminal"
@@ -66,6 +73,7 @@ import { JdtlsService } from './java/jdtls.service';
 export class App {
   protected readonly layout = inject(LayoutService);
   protected readonly mensagens = inject(MensagensService);
+  protected readonly editor = inject(EditorService);
   protected readonly busca = inject(BuscaService);
   protected readonly buscaProjeto = inject(BuscaProjetoService);
   protected readonly escolha = inject(EscolhaService);

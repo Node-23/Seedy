@@ -2,10 +2,12 @@ import { Component, computed, effect, ElementRef, inject, signal, untracked, vie
 import { BuscaProjetoService } from './busca-projeto.service';
 import { emPedacos, montarPrevia, Pedaco, Previa } from './previa';
 import { PreviaComponent } from './previa.component';
-import { expressaoDeBusca, trechosEncontrados } from './texto';
+import { expressaoDeBusca, trechosEncontrados, Troca, trocarNaLinha } from './texto';
 import { nomeBase, Ocorrencia, ponte } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { EditorService } from '../editor/editor.service';
+import { MensagensService } from '../nucleo/mensagens.service';
+import { monaco } from '../editor/monaco';
 
 const LIMITE = 1000;
 
@@ -13,6 +15,16 @@ interface Resultado {
   ocorrencia: Ocorrencia;
   pedacos: Pedaco[];
   lugar: string;
+  /** Entra na substituição (todas entram, até o usuário tirar com alt+x). */
+  incluido: boolean;
+}
+
+const chave = (o: Ocorrencia) => `${o.caminho}:${o.linha}`;
+
+function pedacosDaTroca(t: Troca, so?: 'sai' | 'entra'): Pedaco[] {
+  return t.partes
+    .filter((p) => !so || p.tipo === 'igual' || p.tipo === so)
+    .map((p) => ({ texto: p.texto, classe: p.tipo === 'igual' ? '' : `trecho-${p.tipo}` }));
 }
 
 /**
@@ -25,9 +37,10 @@ interface Resultado {
   imports: [PreviaComponent],
   template: `
     @if (servico.aberta()) {
-      <div class="busca busca-projeto" role="dialog" aria-label="Buscar no projeto" (keydown)="teclar($event)">
+      <div class="busca busca-projeto" [class.substituindo]="substituindo()" role="dialog"
+           [attr.aria-label]="substituindo() ? 'Substituir no projeto' : 'Buscar no projeto'" (keydown)="teclar($event)">
         <div class="painel-faixa">
-          <span class="rotulo">BUSCAR NO PROJETO</span>
+          <span class="rotulo">{{ substituindo() ? 'SUBSTITUIR NO PROJETO' : 'BUSCAR NO PROJETO' }}</span>
           <span class="contagem" [class.suave]="!erro()" [class.erro-texto]="!!erro()">{{ erro() ?? contagem() }}</span>
         </div>
 
@@ -54,6 +67,22 @@ interface Resultado {
           </span>
         </label>
 
+        @if (substituindo()) {
+          <label class="busca-campo campo-substituir">
+            <span class="busca-prompt" aria-hidden="true">↳</span>
+            <input
+              type="text"
+              spellcheck="false"
+              autocomplete="off"
+              aria-label="Substituir por"
+              [placeholder]="servico.opcoes().regex ? 'substituir por  ($1, $2… são os grupos)' : 'substituir por'"
+              [value]="servico.substituicao()"
+              (input)="servico.substituicao.set($any($event.target).value)"
+            />
+            <span class="suave contagem">{{ incluidas() }} de {{ ocorrencias().length }} {{ ocorrencias().length === 1 ? 'linha' : 'linhas' }}</span>
+          </label>
+        }
+
         <div class="busca-filtros">
           <label class="campo-mascara">
             <span class="suave">arquivos</span>
@@ -68,14 +97,18 @@ interface Resultado {
             />
           </label>
           <span class="espaco"></span>
-          <span class="suave">tab vai para a máscara</span>
+          <span class="suave">{{ substituindo() ? 'tab passa pelos campos' : 'tab vai para a máscara' }}</span>
         </div>
 
         <ul #lista id="busca-projeto-resultados" class="busca-projeto-resultados" role="listbox" aria-label="Resultados">
           @for (r of resultados(); track r.ocorrencia.caminho + ':' + r.ocorrencia.linha; let i = $index) {
             <li class="busca-projeto-item" role="option" [id]="'busca-projeto-item-' + i" [class.selecionado]="i === indiceSelecionado()"
+                [class.excluido]="substituindo() && !r.incluido"
                 [attr.aria-selected]="i === indiceSelecionado()" (mousedown)="$event.preventDefault()"
                 (click)="indiceSelecionado.set(i)" (dblclick)="abrir(r.ocorrencia)">
+              @if (substituindo()) {
+                <span class="marca-escolha" [class.marcada]="r.incluido" aria-hidden="true" (click)="alternarInclusao(i); $event.stopPropagation()">{{ r.incluido ? '✓' : '' }}</span>
+              }
               <span class="busca-rotulo">@for (p of r.pedacos; track $index) {<span [class]="p.classe">{{ p.texto }}</span>}</span>
               <span class="espaco"></span>
               <span class="suave busca-detalhe">{{ r.lugar }}</span>
@@ -95,12 +128,15 @@ interface Resultado {
         <div class="busca-dicas">
           <span><span class="tecla">↑↓</span> navegar</span>
           <span><span class="tecla">⏎</span> abrir</span>
-          <span><span class="tecla">alt c</span> maiúsculas</span>
-          <span><span class="tecla">alt w</span> palavra</span>
-          <span><span class="tecla">alt r</span> regex</span>
+          <span><span class="tecla">⇧⏎</span> ao lado</span>
+          @if (substituindo()) {
+            <span><span class="tecla">alt x</span> incluir/tirar</span>
+            <span><span class="tecla">ctrl ⏎</span> substituir</span>
+          }
+          <span title="alt c: maiúsculas · alt w: palavra inteira · alt r: regex"><span class="tecla">alt c·w·r</span> opções</span>
           <span><span class="tecla">esc</span> fechar</span>
           <span class="espaco"></span>
-          <span>ctrl+shift+f abre de qualquer lugar</span>
+          <span>{{ substituindo() ? 'ctrl+shift+r' : 'ctrl+shift+f' }} abre de qualquer lugar</span>
         </div>
       </div>
     }
@@ -110,6 +146,7 @@ export class BuscaProjetoComponent {
   protected readonly servico = inject(BuscaProjetoService);
   private readonly projeto = inject(ProjetoService);
   private readonly editor = inject(EditorService);
+  private readonly mensagens = inject(MensagensService);
   private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
   private readonly lista = viewChild<ElementRef<HTMLUListElement>>('lista');
 
@@ -131,14 +168,32 @@ export class BuscaProjetoComponent {
     }
   });
 
+  protected readonly substituindo = computed(() => this.servico.modo() === 'substituir');
+  /** Linhas tiradas da substituição (alt+x), por "caminho:linha". */
+  private readonly excluidas = signal(new Set<string>());
+  /** Muda depois de substituir, para refazer a busca. */
+  private readonly rodada = signal(0);
+
   protected readonly resultados = computed<Resultado[]>(() => {
     const re = this.expressao();
+    const substituindo = this.substituindo();
+    const subst = this.servico.substituicao();
+    const comRegex = this.servico.opcoes().regex;
+    const excluidas = this.excluidas();
     return this.ocorrencias().map((o) => ({
       ocorrencia: o,
-      pedacos: re ? marcar(o.texto, trechosEncontrados(re, o.texto)) : [{ texto: o.texto, classe: '' }],
+      // Substituindo: a linha "antes e depois" (o que sai riscado, o que entra em verde).
+      pedacos: !re
+        ? [{ texto: o.texto, classe: '' }]
+        : substituindo
+          ? pedacosDaTroca(trocarNaLinha(o.texto, re, subst, comRegex))
+          : marcar(o.texto, trechosEncontrados(re, o.texto)),
       lugar: `${nomeBase(o.relativo)}:${o.linha}`,
+      incluido: !excluidas.has(chave(o)),
     }));
   });
+
+  protected readonly incluidas = computed(() => this.resultados().filter((r) => r.incluido).length);
 
   protected readonly contagem = computed(() => {
     if (this.buscando() && !this.ocorrencias().length) return 'buscando…';
@@ -172,9 +227,11 @@ export class BuscaProjetoComponent {
       const q = this.servico.consulta();
       const opcoes = this.servico.opcoes();
       const raiz = this.projeto.raiz();
+      this.rodada();
       if (!this.servico.aberta()) return;
       this.erro.set(null);
       this.indiceSelecionado.set(0);
+      this.excluidas.set(new Set());
       if (!q || !raiz) {
         this.ocorrencias.set([]);
         return;
@@ -204,6 +261,9 @@ export class BuscaProjetoComponent {
     effect((aoLimpar) => {
       const o = this.ocorrencias()[this.indiceSelecionado()];
       const re = this.expressao();
+      this.substituindo();
+      this.servico.substituicao();
+      this.excluidas();
       let valido = true;
       aoLimpar(() => (valido = false));
       if (!o) {
@@ -232,9 +292,17 @@ export class BuscaProjetoComponent {
       this.mover(10);
     } else if (e.key === 'PageUp') {
       this.mover(-10);
+    } else if (e.key === 'Enter' && ctrl && this.substituindo()) {
+      void this.substituir();
+    } else if (e.key === 'Enter' && e.shiftKey) {
+      const o = this.ocorrencias()[this.indiceSelecionado()];
+      if (o) void this.abrir(o, true);
     } else if (e.key === 'Enter') {
       const o = this.ocorrencias()[this.indiceSelecionado()];
       if (o) void this.abrir(o);
+    } else if (e.altKey && e.code === 'KeyX' && this.substituindo()) {
+      this.alternarInclusao(this.indiceSelecionado());
+      this.mover(1);
     } else if (e.altKey && (e.code === 'KeyC' || e.code === 'KeyW' || e.code === 'KeyR')) {
       this.servico.alternar(e.code === 'KeyC' ? 'diferenciar' : e.code === 'KeyW' ? 'palavra' : 'regex');
     } else {
@@ -244,9 +312,86 @@ export class BuscaProjetoComponent {
     e.stopPropagation();
   }
 
-  protected async abrir(o: Ocorrencia): Promise<void> {
+  protected async abrir(o: Ocorrencia, aoLado = false): Promise<void> {
     this.servico.fechar(false);
-    await this.editor.abrir(o.caminho, o.linha);
+    if (aoLado) await this.editor.dividir(o.caminho, o.linha);
+    else await this.editor.abrir(o.caminho, o.linha);
+  }
+
+  protected alternarInclusao(i: number): void {
+    const o = this.ocorrencias()[i];
+    if (!o) return;
+    const s = new Set(this.excluidas());
+    if (s.has(chave(o))) s.delete(chave(o));
+    else s.add(chave(o));
+    this.excluidas.set(s);
+  }
+
+  /**
+   * Aplica a substituição nas linhas incluídas. Buffer aberto: edita o modelo (dá
+   * para desfazer) e salva se não tinha outras edições. Arquivo fechado: grava direto.
+   */
+  private async substituir(): Promise<void> {
+    const re = this.expressao();
+    if (!re) return;
+    const subst = this.servico.substituicao();
+    const comRegex = this.servico.opcoes().regex;
+    const porArquivo = new Map<string, Set<number>>();
+    for (const r of this.resultados()) {
+      if (!r.incluido) continue;
+      const linhas = porArquivo.get(r.ocorrencia.caminho) ?? new Set<number>();
+      linhas.add(r.ocorrencia.linha);
+      porArquivo.set(r.ocorrencia.caminho, linhas);
+    }
+    if (!porArquivo.size) return;
+
+    let trocas = 0;
+    let arquivos = 0;
+    for (const [caminho, linhas] of porArquivo) {
+      try {
+        const b = this.editor.bufferDe(caminho);
+        if (b && !b.somenteLeitura) {
+          const tinhaEdicao = this.editor.sujo(b);
+          const edicoes: monaco.editor.IIdentifiedSingleEditOperation[] = [];
+          for (const n of linhas) {
+            if (n > b.modelo.getLineCount()) continue;
+            const atual = b.modelo.getLineContent(n);
+            const { nova } = trocarNaLinha(atual, re, subst, comRegex);
+            if (nova === atual) continue;
+            edicoes.push({ range: new monaco.Range(n, 1, n, atual.length + 1), text: nova });
+          }
+          if (!edicoes.length) continue;
+          b.modelo.pushEditOperations([], edicoes, () => null);
+          if (!tinhaEdicao) await this.editor.salvar(b.caminho, false);
+          trocas += edicoes.length;
+          arquivos++;
+        } else {
+          const conteudo = await ponte.lerArquivo(caminho);
+          const fimDeLinha = conteudo.includes('\r\n') ? '\r\n' : '\n';
+          const todas = conteudo.split(/\r?\n/);
+          let mudou = 0;
+          for (const n of linhas) {
+            const atual = todas[n - 1];
+            if (atual === undefined) continue;
+            const { nova } = trocarNaLinha(atual, re, subst, comRegex);
+            if (nova === atual) continue;
+            todas[n - 1] = nova;
+            mudou++;
+          }
+          if (!mudou) continue;
+          await ponte.gravarArquivo(caminho, todas.join(fimDeLinha));
+          trocas += mudou;
+          arquivos++;
+        }
+      } catch (e) {
+        this.mensagens.erro(`não consegui substituir em ${nomeBase(caminho)}: ${e}`);
+      }
+    }
+    this.cacheArquivos.clear();
+    this.mensagens.mostrar(
+      `${trocas} ${trocas === 1 ? 'linha trocada' : 'linhas trocadas'} em ${arquivos} ${arquivos === 1 ? 'arquivo' : 'arquivos'}`,
+    );
+    this.rodada.update((n) => n + 1);
   }
 
   private mover(passo: number): void {
@@ -270,13 +415,28 @@ export class BuscaProjetoComponent {
       }
       this.cacheArquivos.set(o.caminho, conteudo);
     }
-    return montarPrevia({
+    const previa = await montarPrevia({
       conteudo,
       linguagem: this.editor.linguagemDe(o.caminho),
       linha: o.linha,
       linhasAntes: 4,
       marcas: (texto) => ({ casado: re ? trechosEncontrados(re, texto) : [] }),
     });
+    // Linha tirada da substituição (alt+x): a prévia mostra que ela fica como está.
+    if (!this.substituindo() || !re || this.excluidas().has(chave(o))) return previa;
+    // Substituindo: a linha vira duas, a de antes (−) e a de depois (+).
+    const i = previa.linhas.findIndex((l) => l.alvo);
+    const original = conteudo.split(/\r?\n/)[o.linha - 1];
+    if (i < 0 || original === undefined) return previa;
+    const troca = trocarNaLinha(original, re, this.servico.substituicao(), this.servico.opcoes().regex);
+    const linhas = [...previa.linhas];
+    linhas.splice(
+      i,
+      1,
+      { numero: o.linha, alvo: true, tipo: 'sai', pedacos: pedacosDaTroca(troca, 'sai') },
+      { numero: o.linha, alvo: false, tipo: 'entra', pedacos: pedacosDaTroca(troca, 'entra') },
+    );
+    return { ...previa, linhas };
   }
 }
 

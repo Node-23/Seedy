@@ -53,6 +53,8 @@ export interface LinhaPrevia {
   numero: number;
   alvo: boolean;
   pedacos: Pedaco[];
+  /** Prévia de substituição: a linha de antes ("sai") e a de depois ("entra"). */
+  tipo?: 'sai' | 'entra';
 }
 
 export interface Previa {

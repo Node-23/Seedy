@@ -6,6 +6,8 @@ import {
   effect,
   ElementRef,
   inject,
+  input,
+  signal,
   viewChild,
 } from '@angular/core';
 import { monaco } from './monaco';
@@ -35,21 +37,23 @@ let exDefinidos = false;
 @Component({
   selector: 'sd-editor',
   template: `
-    <section class="painel editor" aria-label="Editor">
-      <div class="entalhe">
-        <button class="botao-quadrado destaque" aria-label="Modo foco" title="Modo foco" (click)="alternarFoco()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg>
-        </button>
-      </div>
+    <section class="painel editor" [class.desfocado]="desfocado()" [attr.aria-label]="dividido() ? 'Editor, painel ' + (painel() + 1) : 'Editor'">
+      @if (temEntalhe()) {
+        <div class="entalhe">
+          <button class="botao-quadrado destaque" aria-label="Modo foco" title="Modo foco" (click)="alternarFoco()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+          </button>
+        </div>
+      }
       <div class="painel-faixa migalhas">
         @for (parte of migalhas(); track $index; let ultimo = $last) {
           <span [class.atual]="ultimo">{{ parte }}</span>
-          @if (!ultimo) { <span>›</span> }
+          @if (!ultimo) { <span class="sep">›</span> }
         }
       </div>
       <div class="editor-corpo">
-        <div #hospedeiro class="editor-monaco" [class.oculto]="!editor.bufferAtivo()"></div>
-        @if (!editor.bufferAtivo()) {
+        <div #hospedeiro class="editor-monaco" [class.oculto]="!buffer()"></div>
+        @if (!buffer()) {
           <div class="editor-vazio">
             <div class="logo">seedy</div>
             @if (projeto.raiz()) {
@@ -73,8 +77,21 @@ export class EditorComponent {
   private readonly layout = inject(LayoutService);
   private readonly hospedeiro = viewChild.required<ElementRef<HTMLDivElement>>('hospedeiro');
 
+  /** Qual painel este é (0 = esquerda; 1 = direita, quando o editor está dividido). */
+  readonly painel = input<0 | 1>(0);
+  protected readonly buffer = computed(() => this.editor.bufferDoPainel(this.painel()));
+  protected readonly dividido = computed(() => !!this.editor.divisao());
+  protected readonly desfocado = computed(() => this.dividido() && this.editor.painelFocado() !== this.painel());
+  /** O recorte com o botão de foco fica só no painel da direita. */
+  protected readonly temEntalhe = computed(() => this.painel() === (this.dividido() ? 1 : 0));
+  private readonly focado = computed(() => this.editor.painelFocado() === this.painel());
+
+  /** Instância do Monaco deste painel (vira não-nula depois de criada). */
+  private readonly instancia = signal<monaco.editor.IStandaloneCodeEditor | null>(null);
+  private barraVim: HTMLElement | null = null;
+
   protected readonly migalhas = computed(() => {
-    const b = this.editor.bufferAtivo();
+    const b = this.buffer();
     if (!b) return [this.projeto.nome() ?? 'seedy'];
     if (b.somenteLeitura) return [...(b.descricao ?? b.nome).split('.'), 'somente leitura'];
     const raiz = this.projeto.raiz();
@@ -110,13 +127,25 @@ export class EditorComponent {
         fixedOverflowWidgets: true,
         ...this.opcoesDeFonte(t),
       });
-      this.editor.instancia = instancia;
-      instancia.setModel(this.editor.bufferAtivo()?.modelo ?? null);
+      const painel = this.painel();
+      this.editor.registrarInstancia(painel, instancia);
+      this.instancia.set(instancia);
+      instancia.setModel(this.buffer()?.modelo ?? null);
 
-      const barraVim = document.getElementById('vim-linha-de-comando');
+      // Cada painel tem o seu vim, com a sua linha de comando no rodapé
+      // (só a do painel focado aparece).
+      const barraVim = document.createElement('span');
+      barraVim.className = 'vim-painel';
+      document.getElementById('vim-linha-de-comando')?.appendChild(barraVim);
+      this.barraVim = barraVim;
       const vim = initVimMode(instancia, barraVim);
-      vim.on('vim-mode-change', (e: { mode: ModoVim }) => this.editor.modo.set(e.mode));
+      vim.on('vim-mode-change', (e: { mode: ModoVim }) => {
+        if (this.focado()) this.editor.modo.set(e.mode);
+      });
       this.definirComandosEx();
+
+      // Clicar (ou focar) num painel faz dele o painel ativo.
+      instancia.onDidFocusEditorText(() => this.editor.focarPainel(painel));
 
       // Ao fechar a busca do arquivo (Ctrl+F), o cursor fica no trecho encontrado, sem
       // seleção — senão o vim entende a seleção como modo VISUAL.
@@ -145,32 +174,40 @@ export class EditorComponent {
 
       this.atalhosDeCodigo(instancia);
 
-      instancia.onDidChangeCursorPosition((e) =>
-        this.editor.cursor.set({ linha: e.position.lineNumber, coluna: e.position.column }),
-      );
+      instancia.onDidChangeCursorPosition((e) => {
+        if (this.focado()) this.editor.cursor.set({ linha: e.position.lineNumber, coluna: e.position.column });
+      });
 
       destruir.onDestroy(() => {
+        this.editor.registrarInstancia(painel, null);
         vim.dispose?.();
         instancia.dispose();
+        barraVim.remove();
       });
     });
 
-    // Troca o modelo quando o buffer ativo muda.
+    // Troca o modelo quando o buffer deste painel muda.
     effect(() => {
-      const b = this.editor.bufferAtivo();
-      const instancia = this.editor.instancia;
+      const b = this.buffer();
+      const instancia = this.instancia();
       if (!instancia) return;
       instancia.updateOptions({ readOnly: !!b?.somenteLeitura });
       if (instancia.getModel() !== (b?.modelo ?? null)) {
-        this.editor.mostrarModelo(b?.modelo ?? null);
-        if (b) queueMicrotask(() => instancia.focus());
+        this.editor.mostrarModelo(b?.modelo ?? null, true, instancia);
+        if (b && this.focado()) queueMicrotask(() => instancia.focus());
       }
+    });
+
+    // Só a linha de comando do vim do painel focado aparece no rodapé.
+    effect(() => {
+      const focado = this.focado();
+      if (this.instancia() && this.barraVim) this.barraVim.hidden = !focado;
     });
 
     // Fonte do código vem do tema.
     effect(() => {
       const t = this.tema.tema();
-      this.editor.instancia?.updateOptions(this.opcoesDeFonte(t));
+      this.instancia()?.updateOptions(this.opcoesDeFonte(t));
       monaco.editor.remeasureFonts();
     });
   }
@@ -202,7 +239,15 @@ export class EditorComponent {
     exDefinidos = true;
     const Vim = (VimMode as unknown as { Vim: ApiVim }).Vim;
     Vim.defineEx('write', 'w', () => void this.editor.salvar());
-    Vim.defineEx('quit', 'q', (_cm, p) => this.editor.fechar(undefined, !!p.bang));
+    // Como no vim: com o editor dividido, :q fecha o painel; senão, o buffer.
+    Vim.defineEx('quit', 'q', (_cm, p) => (this.editor.divisao() ? this.editor.fecharPainel() : this.editor.fechar(undefined, !!p.bang)));
+    Vim.defineEx('vsplit', 'vs', (_cm, p) => void this.editor.dividir(p.argString?.trim() || undefined));
+    Vim.defineEx('only', 'on', () => this.editor.fecharPainel(this.editor.painelFocado() === 0 ? 1 : 0));
+    Vim.defineEx('close', 'clo', () => this.editor.fecharPainel());
+    Vim.defineEx('seedypainelesq', 'seedypainelesq', () => this.editor.focarPainel(0));
+    Vim.defineEx('seedypaineldir', 'seedypaineldir', () => this.editor.focarPainel(1));
+    Vim.defineEx('seedypaineloutro', 'seedypaineloutro', () => this.editor.focarPainel(this.editor.painelFocado() === 0 ? 1 : 0));
+    // Ctrl+W h/l/w/v/q/o fica no AtalhosService (o monaco-vim não mapeia acordes com Ctrl).
     Vim.defineEx('wq', 'wq', async () => {
       await this.editor.salvar();
       this.editor.fechar();
