@@ -49,6 +49,56 @@ export interface Pedaco {
   classe: string;
 }
 
+export interface LinhaPrevia {
+  numero: number;
+  alvo: boolean;
+  pedacos: Pedaco[];
+}
+
+export interface Previa {
+  /** Linha em destaque (1 = começo do arquivo). */
+  linha: number;
+  linhas: LinhaPrevia[];
+}
+
+export interface PedidoDePrevia {
+  conteudo: string;
+  linguagem: string;
+  /** Linha em destaque; sem ela, a prévia mostra o começo do arquivo. */
+  linha?: number;
+  /** O que sublinhar ('casado') e o que pintar como definição, em cada linha. */
+  marcas: (texto: string, alvo: boolean) => { casado?: Iterable<number>; definicao?: Iterable<number> };
+  linhasAntes?: number;
+  maximo?: number;
+}
+
+/** Trecho do arquivo em volta da linha, já colorido e com as marcas aplicadas. */
+export async function montarPrevia(p: PedidoDePrevia): Promise<Previa> {
+  const linhas = p.conteudo.split(/\r?\n/);
+  const alvo = Math.min(Math.max(p.linha ?? 1, 1), linhas.length);
+  const inicio = Math.max(0, alvo - 1 - (p.linha ? (p.linhasAntes ?? 3) : 0));
+  const fim = Math.min(linhas.length, inicio + (p.maximo ?? 40));
+  const sintaxe = await classesDeSintaxe(linhas, inicio, fim, p.linguagem);
+
+  const saida: LinhaPrevia[] = [];
+  for (let n = inicio; n < fim; n++) {
+    const texto = linhas[n];
+    const ehAlvo = !!p.linha && n + 1 === alvo;
+    const m = p.marcas(texto, ehAlvo);
+    const casado = new Set(m.casado ?? []);
+    const definicao = new Set(m.definicao ?? []);
+    const classes = sintaxe[n - inicio];
+    saida.push({
+      numero: n + 1,
+      alvo: ehAlvo,
+      pedacos: emPedacos(texto || ' ', (i) =>
+        [definicao.has(i) ? 'sx-definicao' : (classes[i] ?? ''), casado.has(i) ? 'casado' : ''].join(' ').trim(),
+      ),
+    });
+  }
+  return { linha: alvo, linhas: saida };
+}
+
 /** Junta caracteres vizinhos com a mesma classe num pedaço só. */
 export function emPedacos(texto: string, classeDe: (i: number) => string): Pedaco[] {
   const saida: Pedaco[] = [];

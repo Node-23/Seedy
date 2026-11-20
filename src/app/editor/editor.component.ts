@@ -22,6 +22,14 @@ interface ApiVim {
   map(lhs: string, rhs: string, contexto?: string): void;
 }
 
+/** O controlador da caixa de busca do Monaco (Ctrl+F), que a API pública não tipa. */
+interface ControladorDeBusca {
+  getState(): {
+    isRevealed: boolean;
+    onFindReplaceStateChange(fn: (e: { isRevealed: boolean }) => void): unknown;
+  };
+}
+
 let exDefinidos = false;
 
 @Component({
@@ -104,6 +112,31 @@ export class EditorComponent {
       const vim = initVimMode(instancia, barraVim);
       vim.on('vim-mode-change', (e: { mode: ModoVim }) => this.editor.modo.set(e.mode));
       this.definirComandosEx();
+
+      // Ao fechar a busca do arquivo (Ctrl+F), o cursor fica no trecho encontrado, sem
+      // seleção — senão o vim entende a seleção como modo VISUAL.
+      const buscaNoArquivo = instancia.getContribution<monaco.editor.IEditorContribution & ControladorDeBusca>(
+        'editor.contrib.findController',
+      );
+      buscaNoArquivo?.getState().onFindReplaceStateChange((e) => {
+        if (!e.isRevealed || buscaNoArquivo.getState().isRevealed) return;
+        const selecao = instancia.getSelection();
+        if (selecao && !selecao.isEmpty()) instancia.setPosition(selecao.getStartPosition());
+      });
+
+      // Na caixa de busca: ↓/↑ vão para o próximo/anterior, como no IntelliJ
+      // (⏎ / shift+⏎ e F3 / shift+F3 o Monaco já trata).
+      const naCaixaDeBusca = 'findWidgetVisible && findInputFocussed';
+      instancia.addCommand(
+        monaco.KeyCode.DownArrow,
+        () => void instancia.getAction('editor.action.nextMatchFindAction')?.run(),
+        naCaixaDeBusca,
+      );
+      instancia.addCommand(
+        monaco.KeyCode.UpArrow,
+        () => void instancia.getAction('editor.action.previousMatchFindAction')?.run(),
+        naCaixaDeBusca,
+      );
 
       instancia.onDidChangeCursorPosition((e) =>
         this.editor.cursor.set({ linha: e.position.lineNumber, coluna: e.position.column }),

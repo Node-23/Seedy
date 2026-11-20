@@ -15,9 +15,16 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Terminal integrado** com abas: shell de verdade (PowerShell no Windows, seu `$SHELL` no Linux).
 - **Tema editável** (cores, fontes e forma), aplicado na hora em que você salva o arquivo.
 - **Tecla líder** (`␣`) com menu de atalhos, como o which-key do nvim.
-- **Busca em tudo** (`␣ ␣`), estilo Telescope: classes, métodos, arquivos, texto e ações,
-  com prévia do código e contagem de usos. Na busca: `↑↓` / `^n` `^p` navegam, `tab` troca
-  o filtro, `⏎` abre na linha, `^u` procura os usos do símbolo, `esc` fecha.
+- **Três buscas**, como no IntelliJ:
+  - `Ctrl+F` — **no arquivo aberto** (a caixa de busca do editor): `↓` / `⏎` / `F3` vão para o
+    próximo, `↑` / `shift+⏎` / `shift+F3` para o anterior. Ao fechar (`esc`), o cursor fica no
+    trecho encontrado, em modo normal.
+  - `Ctrl+P` — **buscar arquivo**: janela com prévia do código e filtros Tudo, Classes, Arquivos,
+    Símbolos, Texto e Ações (`tab` troca), contagem de usos e `^u` para procurar os usos.
+  - `Ctrl+Shift+F` — **buscar no projeto**: opções `Aa` (maiúsculas), `W` (palavra inteira) e
+    `.*` (regex) com `alt c` / `alt w` / `alt r`, máscara de arquivos (`*.java, !*Test.java`),
+    resultados e prévia embaixo. Abre já com o texto selecionado no editor.
+  - Nas janelas: `↑↓` / `^n` `^p` navegam, `⏎` abre na linha, `esc` fecha.
 - Painéis redimensionáveis (arraste os divisores) e modo foco.
 
 ## Pré-requisitos
@@ -49,8 +56,9 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | Tecla | Ação |
 |---|---|
 | `␣` (modo normal / fora do editor) | menu do líder |
-| `␣ ␣` | buscar em tudo (classes, arquivos, símbolos, texto, ações) |
-| `␣ f` / `␣ /` / `␣ s` | buscar arquivos / texto / símbolos |
+| `Ctrl+F` | buscar no arquivo aberto |
+| `Ctrl+P` ou `␣ f` | buscar arquivo (`␣ ␣` abre a mesma janela em "Tudo"; `␣ s` em "Símbolos") |
+| `Ctrl+Shift+F` ou `␣ /` | buscar no projeto |
 | `␣ e` | mostrar/esconder arquivos |
 | `␣ t` ou `Alt+F12` | mostrar/esconder terminal |
 | `␣ o` | abrir projeto |
@@ -103,7 +111,7 @@ src/                         interface (Angular)
   app/arquivos/              árvore de arquivos
   app/terminal/              terminal (xterm.js)
   app/barra/                 barra de cima, statusline, menu do líder
-  app/busca/                 Search Everywhere (␣␣): fuzzy, prévia, usos
+  app/busca/                 buscas: arquivo (Ctrl+P), projeto (Ctrl+Shift+F), prévia
   app/layout/                registro de painéis e disposição
   app/teclado/               atalhos
   styles.css                 todo o visual (só usa as variáveis do tema)

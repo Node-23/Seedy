@@ -78,6 +78,16 @@ export function definirTemaMonaco(tema: Tema): void {
       'input.background': c.fundo,
       'input.foreground': c.texto,
       'input.border': c.borda,
+      'input.placeholderForeground': c.textoSuave,
+      'inputOption.activeBackground': c.destaque,
+      'inputOption.activeForeground': c.textoSobreDestaque,
+      'inputOption.activeBorder': c.borda,
+      'inputValidation.errorBackground': c.erroFundo,
+      'inputValidation.errorBorder': c.erro,
+      'widget.shadow': '#00000000',
+      'icon.foreground': c.textoSuave,
+      'toolbar.hoverBackground': c.selecao,
+      'editor.findRangeHighlightBackground': c.selecao,
     },
   });
   monaco.editor.setTheme('seedy');

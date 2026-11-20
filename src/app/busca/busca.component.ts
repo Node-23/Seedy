@@ -1,7 +1,8 @@
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { BuscaService, Filtro, FILTROS } from './busca.service';
 import { casar, ocorrencias } from './fuzzy';
-import { classesDeSintaxe, emPedacos, Pedaco } from './previa';
+import { emPedacos, montarPrevia, Pedaco, Previa as PreviaBase } from './previa';
+import { PreviaComponent } from './previa.component';
 import { nomeBase, Ocorrencia, ponte } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { EditorService } from '../editor/editor.service';
@@ -22,16 +23,8 @@ interface Item {
   executar?: () => void;
 }
 
-interface LinhaPrevia {
-  numero: number;
-  alvo: boolean;
-  pedacos: Pedaco[];
-}
-
-interface Previa {
+interface Previa extends PreviaBase {
   arquivo: string;
-  linha: number;
-  linhas: LinhaPrevia[];
 }
 
 interface Usos {
@@ -46,8 +39,6 @@ const LIMITE = 100;
 /** Código de teste vem depois do código principal. */
 const PENALIDADE_TESTE = 60;
 const ehTeste = (caminho: string) => /[\\/]src[\\/]test[\\/]/.test(caminho);
-const LINHAS_ANTES = 3;
-const LINHAS_DA_PREVIA = 40;
 
 /** Pedaços do rótulo, com as letras casadas marcadas para sublinhar. */
 function marcar(texto: string, posicoes: number[]): Pedaco[] {
@@ -62,8 +53,9 @@ function pastaCurta(relativo: string): string {
 }
 
 /**
- * Search Everywhere (␣␣), no estilo do Telescope: classes, arquivos,
- * símbolos, texto e ações num lugar só, com prévia do código à direita.
+ * Buscar arquivo (Ctrl+P, abre no filtro Arquivos) — é o Search Everywhere
+ * do mockup 02: classes, arquivos, símbolos, texto e ações num lugar só,
+ * com prévia do código à direita. ␣␣ abre a mesma janela no filtro Tudo.
  */
 @Component({
   selector: 'sd-busca',
@@ -114,14 +106,7 @@ function pastaCurta(relativo: string): string {
           <div class="busca-previa" aria-label="Prévia">
             @if (previa(); as p) {
               <div class="busca-previa-topo suave"><span>{{ p.arquivo }}</span><span>linha {{ p.linha }}</span></div>
-              <div class="busca-previa-codigo">
-                @for (l of p.linhas; track l.numero) {
-                  <div class="linha-previa" [class.alvo]="l.alvo">
-                    <span class="numero">{{ l.numero }}</span>
-                    <span class="codigo">@for (s of l.pedacos; track $index) {<span [class]="s.classe">{{ s.texto }}</span>}</span>
-                  </div>
-                }
-              </div>
+              <sd-previa [previa]="p" />
               @if (rodapePrevia(); as r) {
                 <div class="busca-previa-rodape suave">
                   @if (r.usos; as u) {
@@ -147,11 +132,12 @@ function pastaCurta(relativo: string): string {
           <span><span class="tecla">^u</span> usos</span>
           <span><span class="tecla">esc</span> fechar</span>
           <span class="espaco"></span>
-          <span>␣␣ abre de qualquer lugar</span>
+          <span>ctrl+p abre de qualquer lugar</span>
         </div>
       </div>
     }
   `,
+  imports: [PreviaComponent],
 })
 export class BuscaComponent {
   protected readonly busca = inject(BuscaService);
@@ -435,37 +421,20 @@ export class BuscaComponent {
       }
       this.cacheArquivos.set(item.caminho!, conteudo);
     }
-    const linhas = conteudo.split(/\r?\n/);
-    const alvo = Math.min(item.linha ?? 1, linhas.length);
-    const inicio = Math.max(0, alvo - 1 - (item.linha ? LINHAS_ANTES : 0));
-    const fim = Math.min(linhas.length, inicio + LINHAS_DA_PREVIA);
-    const sintaxe = await classesDeSintaxe(linhas, inicio, fim, this.editor.linguagemDe(item.caminho!));
-
-    const saida: LinhaPrevia[] = [];
-    for (let n = inicio; n < fim; n++) {
-      const texto = linhas[n];
-      const classes = sintaxe[n - inicio];
-      const ehAlvo = !!item.linha && n + 1 === alvo;
-      let marcadas = new Set<number>();
-      let definicao = new Set<number>();
-      if (ehAlvo) {
-        marcadas = new Set(ocorrencias(item.nome && item.tipo !== 'texto' ? casarNome(consulta, item.nome) : consulta, texto));
-        if (item.nome) {
-          const i = texto.search(new RegExp(`\\b${item.nome.replace(/[$]/g, '\\$')}\\b`));
-          if (i >= 0) definicao = new Set(Array.from({ length: item.nome.length }, (_, k) => i + k));
-        }
-      }
-      saida.push({
-        numero: n + 1,
-        alvo: ehAlvo,
-        pedacos: emPedacos(texto || ' ', (i) =>
-          [definicao.has(i) ? 'sx-definicao' : classes[i] ?? '', marcadas.has(i) ? 'casado' : ''].join(' ').trim(),
-        ),
-      });
-    }
-    const raiz = this.projeto.raiz();
-    const rel = raiz && item.caminho!.startsWith(raiz) ? item.caminho!.slice(raiz.length + 1) : item.caminho!;
-    return { arquivo: nomeBase(rel), linha: alvo, linhas: saida };
+    const previa = await montarPrevia({
+      conteudo,
+      linguagem: this.editor.linguagemDe(item.caminho!),
+      linha: item.linha,
+      marcas: (texto, alvo) => {
+        if (!alvo) return {};
+        const termo = item.nome && item.tipo !== 'texto' ? casarNome(consulta, item.nome) : consulta;
+        const casado = ocorrencias(termo, texto);
+        if (!item.nome) return { casado };
+        const i = texto.search(new RegExp(`\\b${item.nome.replace(/[$]/g, '\\$')}\\b`));
+        return { casado, definicao: i >= 0 ? Array.from({ length: item.nome.length }, (_, k) => i + k) : [] };
+      },
+    });
+    return { ...previa, arquivo: nomeBase(item.caminho!) };
   }
 }
 

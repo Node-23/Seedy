@@ -117,6 +117,17 @@ export class EditorService {
     this.instancia?.focus();
   }
 
+  /** Buscar no arquivo aberto (Ctrl+F): a caixa de busca do próprio Monaco. */
+  buscarNoArquivo(): void {
+    const instancia = this.instancia;
+    if (!instancia || !this.bufferAtivo()) {
+      this.mensagens.mostrar('abra um arquivo para buscar nele (ctrl+p)');
+      return;
+    }
+    instancia.focus();
+    void instancia.getAction('actions.find')?.run();
+  }
+
   linguagemDe(caminho: string): string {
     const nome = nomeBase(caminho).toLowerCase();
     const ext = nome.includes('.') ? nome.slice(nome.lastIndexOf('.')) : '';

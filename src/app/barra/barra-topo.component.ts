@@ -32,7 +32,7 @@ import { BuscaService } from '../busca/busca.service';
       <div class="espaco" data-tauri-drag-region></div>
 
       <div class="ferramentas">
-        <button class="botao-quadrado" [class.ligado]="busca.aberta()" aria-label="Buscar em tudo" title="Buscar em tudo (␣ ␣)" (click)="busca.abrir()">
+        <button class="botao-quadrado" [class.ligado]="busca.aberta()" aria-label="Buscar arquivo" title="Buscar arquivo (ctrl+p) · no projeto: ctrl+shift+f" (click)="busca.abrir('arquivos')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
         </button>
         <button class="botao-quadrado" aria-label="Git (em breve)" title="Git — em breve" (click)="emBreve('git')">

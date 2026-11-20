@@ -56,7 +56,7 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 }
 
 .area-principal { position: relative; flex: 1; min-height: 0; display: flex; }
-.area-principal.esmaecida > :not(sd-busca) { opacity: 0.35; pointer-events: none; }
+.area-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto) { opacity: 0.35; pointer-events: none; }
 .regiao-esquerda { flex-shrink: 0; display: flex; min-width: 0; }
 .regiao-esquerda > * { flex: 1; min-width: 0; display: flex; }
 .coluna-central { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -529,3 +529,86 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
   color: var(--texto-suave);
 }
 .busca-dicas .tecla { color: var(--destaque); }
+.busca-dicas > span { white-space: nowrap; }
+.busca-projeto .busca-dicas { gap: 18px; }
+
+.previa { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.erro-texto { color: var(--erro); }
+
+/* ---------- buscar no projeto (Ctrl+Shift+F, como o "Find in Files" do IntelliJ) ---------- */
+
+.busca.busca-projeto { top: 50%; width: 1040px; height: 720px; max-height: 98%; }
+.busca-projeto .painel-faixa .contagem { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.opcoes-busca { display: flex; gap: 6px; }
+.opcao {
+  min-width: 34px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: var(--espessura-borda) solid var(--selecao);
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.opcao:hover { color: var(--texto); }
+.opcao.ativo { background: var(--destaque); border-color: var(--borda); color: var(--texto-sobre-destaque); }
+
+.campo-mascara { display: flex; align-items: center; gap: 10px; flex: 1; max-width: 520px; }
+.campo-mascara input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: var(--espessura-borda) solid var(--selecao);
+  background: var(--fundo);
+  color: var(--texto);
+  caret-color: var(--destaque);
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+}
+.campo-mascara input:focus { border-color: var(--destaque); }
+.campo-mascara input::placeholder { color: var(--texto-suave); opacity: 0.7; }
+
+.busca-projeto-resultados {
+  list-style: none;
+  margin: 0;
+  padding: 6px 8px;
+  flex: 0 0 34%;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.busca-projeto-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: var(--fonte-codigo);
+  font-size: 12.5px;
+}
+.busca-projeto-item.selecionado { background: var(--selecao); }
+.busca-projeto-item .busca-detalhe { font-family: var(--fonte-interface); }
+.busca-projeto .busca-previa { border-top: var(--espessura-borda) solid var(--borda); min-height: 0; }
+.busca-projeto .busca-previa-topo { height: 34px; }
+
+/* ---------- buscar no arquivo (Ctrl+F: a caixa de busca do Monaco) ---------- */
+
+.monaco-editor .find-widget {
+  border: var(--espessura-borda) solid var(--borda);
+  border-top: 0;
+  border-radius: 0 0 var(--raio-pequeno) var(--raio-pequeno);
+  box-shadow: 3px 3px 0 var(--sombra) !important;
+  font-family: var(--fonte-interface);
+}
+.monaco-editor .find-widget .monaco-inputbox { border-radius: 6px; }
+.monaco-editor .find-widget .matchesCount { color: var(--texto-suave); }

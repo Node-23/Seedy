@@ -22,8 +22,14 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 
 ## Fase 2 — Busca (em andamento)
 
-- ✅ Search Everywhere (`␣␣`): classes, arquivos, símbolos, texto e ações num lugar só
-- ✅ Busca de texto no projeto (crates `ignore` + `regex`, respeita `.gitignore`), prévia e usos
+- ✅ Buscar no arquivo aberto (`Ctrl+F`): a caixa de busca do Monaco, no visual do tema
+- ✅ Buscar arquivo (`Ctrl+P`): a janela do mockup 02 (Search Everywhere), com classes,
+  arquivos, símbolos, texto e ações
+- ✅ Buscar no projeto (`Ctrl+Shift+F`), como o "Find in Files" do IntelliJ: maiúsculas,
+  palavra inteira, regex e máscara de arquivos (crates `ignore` + `regex`, respeita `.gitignore`)
+- Substituir no projeto (`Ctrl+Shift+R`), com prévia das alterações
+- Mockup das janelas de `Ctrl+Shift+F` em `docs/design/` (hoje seguem a linguagem visual
+  dos outros mockups, sem um próprio)
 - Símbolos hoje saem de uma leitura das declarações Java linha a linha; trocar pelo jdtls
   (`workspace/symbol`) na fase 1
 - Usos hoje são ocorrências do nome; trocar por usos semânticos (jdtls) + textuais em

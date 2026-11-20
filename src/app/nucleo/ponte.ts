@@ -8,6 +8,7 @@
 import { Channel, invoke, isTauri } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { exemplo, RAIZ_EXEMPLO } from './exemplo';
+import type { OpcoesTexto } from '../busca/texto';
 
 export const noApp = (): boolean => isTauri();
 
@@ -78,11 +79,14 @@ export const ponte = {
     return noApp() ? invoke<Indice>('busca_indexar', { raiz }) : exemplo.indexar();
   },
 
-  /** Busca literal no conteúdo dos arquivos (smart case). */
-  async buscarTexto(raiz: string, consulta: string, limite = 200): Promise<Ocorrencia[]> {
+  /**
+   * Busca no conteúdo dos arquivos. Sem opções: literal, smart case, todos os arquivos.
+   * Rejeita com a mensagem de erro se a regex ou a máscara forem inválidas.
+   */
+  async buscarTexto(raiz: string, consulta: string, limite = 200, opcoes: OpcoesTexto = {}): Promise<Ocorrencia[]> {
     return noApp()
-      ? invoke<Ocorrencia[]>('busca_texto', { raiz, consulta, limite })
-      : exemplo.buscarTexto(consulta, limite);
+      ? invoke<Ocorrencia[]>('busca_texto', { raiz, consulta, limite, opcoes })
+      : exemplo.buscarTexto(consulta, limite, opcoes);
   },
 
   async temaCarregar(): Promise<ArquivoTema | null> {

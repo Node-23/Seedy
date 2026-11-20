@@ -5,6 +5,7 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { TemaService } from '../tema/tema';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { BuscaService } from '../busca/busca.service';
+import { BuscaProjetoService } from '../busca/busca-projeto.service';
 
 export interface AcaoLider {
   tecla: string;
@@ -21,7 +22,8 @@ export interface AcaoLider {
  *
  * - Tecla líder (␣ no modo normal do vim, ou fora de campos de texto) abre o
  *   menu de atalhos, estilo which-key.
- * - ␣␣ abre a busca em tudo (Search Everywhere); ␣ f, ␣ / e ␣ s já com filtro.
+ * - Buscas: Ctrl+F no arquivo aberto, Ctrl+P arquivo (␣ f; ␣␣ abre a mesma
+ *   janela em "Tudo"), Ctrl+Shift+F no projeto (␣ /).
  * - Atalhos globais: Ctrl+S salva, Alt+F12 abre/fecha o terminal,
  *   Ctrl+Tab troca de buffer.
  */
@@ -33,13 +35,14 @@ export class AtalhosService {
   private readonly tema = inject(TemaService);
   private readonly mensagens = inject(MensagensService);
   private readonly busca = inject(BuscaService);
+  private readonly buscaProjeto = inject(BuscaProjetoService);
 
   readonly liderAberto = signal(false);
 
   readonly acoes: AcaoLider[] = [
     { tecla: ' ', rotulo: 'buscar tudo', disponivel: true, busca: true, executar: () => this.busca.abrir('tudo') },
-    { tecla: 'f', rotulo: 'arquivos', disponivel: true, busca: true, executar: () => this.busca.abrir('arquivos') },
-    { tecla: '/', rotulo: 'buscar texto', disponivel: true, busca: true, executar: () => this.busca.abrir('texto') },
+    { tecla: 'f', rotulo: 'buscar arquivo', disponivel: true, busca: true, executar: () => this.busca.abrir('arquivos') },
+    { tecla: '/', rotulo: 'buscar no projeto', disponivel: true, busca: true, executar: () => this.buscaProjeto.abrir() },
     { tecla: 's', rotulo: 'símbolos', disponivel: true, busca: true, executar: () => this.busca.abrir('simbolos') },
     { tecla: 'e', rotulo: 'árvore de arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
     { tecla: 't', rotulo: 'terminal', disponivel: true, executar: () => this.layout.alternar('terminal') },
@@ -90,7 +93,22 @@ export class AtalhosService {
     }
 
     const ctrl = e.ctrlKey || e.metaKey;
-    if (ctrl && !e.shiftKey && e.key.toLowerCase() === 's') {
+    const soCtrl = ctrl && !e.shiftKey && !e.altKey;
+    // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
+    const livre = !this.busca.aberta() && !this.buscaProjeto.aberta() && !this.noTerminal(e.target);
+
+    if (ctrl && e.shiftKey && !e.altKey && e.code === 'KeyF') {
+      this.engolir(e);
+      if (this.busca.aberta()) this.busca.fechar(false);
+      this.buscaProjeto.abrir();
+    } else if (soCtrl && e.code === 'KeyP' && livre) {
+      this.engolir(e);
+      this.busca.abrir('arquivos');
+    } else if (soCtrl && e.code === 'KeyF' && livre) {
+      // Antes do vim (onde Ctrl+F rola a página) e do navegador (barra de busca dele).
+      this.engolir(e);
+      this.editor.buscarNoArquivo();
+    } else if (ctrl && !e.shiftKey && e.key.toLowerCase() === 's') {
       e.preventDefault();
       void this.editor.salvar();
     } else if (e.altKey && e.key === 'F12') {
@@ -104,6 +122,15 @@ export class AtalhosService {
       e.preventDefault();
       this.abrirLider();
     }
+  }
+
+  private engolir(e: KeyboardEvent): void {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  private noTerminal(alvo: EventTarget | null): boolean {
+    return !!(alvo as HTMLElement | null)?.closest?.('.xterm');
   }
 
   private foraDeCampoDeTexto(alvo: EventTarget | null): boolean {

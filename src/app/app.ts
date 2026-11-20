@@ -7,6 +7,8 @@ import { EditorComponent } from './editor/editor.component';
 import { TerminalComponent } from './terminal/terminal.component';
 import { BuscaComponent } from './busca/busca.component';
 import { BuscaService } from './busca/busca.service';
+import { BuscaProjetoComponent } from './busca/busca-projeto.component';
+import { BuscaProjetoService } from './busca/busca-projeto.service';
 import { LayoutService, Regiao } from './layout/layout.service';
 import { MensagensService } from './nucleo/mensagens.service';
 import { ProjetoService } from './nucleo/projeto.service';
@@ -17,13 +19,13 @@ import { AtalhosService } from './teclado/atalhos.service';
   selector: 'sd-raiz',
   imports: [
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
-    BuscaComponent,
+    BuscaComponent, BuscaProjetoComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="area-principal" [class.esmaecida]="busca.aberta()">
+      <div class="area-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta()">
         @if (layout.disposicao().visiveis.arquivos) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
             <sd-arvore />
@@ -42,6 +44,7 @@ import { AtalhosService } from './teclado/atalhos.service';
         </div>
 
         <sd-busca />
+        <sd-busca-projeto />
       </div>
 
       <sd-barra-status />
@@ -60,6 +63,7 @@ export class App {
   protected readonly layout = inject(LayoutService);
   protected readonly mensagens = inject(MensagensService);
   protected readonly busca = inject(BuscaService);
+  protected readonly buscaProjeto = inject(BuscaProjetoService);
 
   constructor() {
     inject(AtalhosService).iniciar();

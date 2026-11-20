@@ -4,6 +4,7 @@
  * Nada aqui roda dentro do app.
  */
 import type { Entrada, Indice, Ocorrencia, Simbolo } from './ponte';
+import { expressaoDeBusca, OpcoesTexto, passaNaMascara, trechosEncontrados } from '../busca/texto';
 
 export const RAIZ_EXEMPLO = '/exemplo/feirinha-verde';
 
@@ -234,14 +235,17 @@ export const exemplo = {
     return { arquivos: relativos().map((rel) => ({ caminho: absoluto(rel), relativo: rel })), simbolos };
   },
 
-  buscarTexto(consulta: string, limite: number): Ocorrencia[] {
-    const diferencia = consulta !== consulta.toLowerCase();
-    const igual = (linha: string) =>
-      diferencia ? linha.includes(consulta) : linha.toLowerCase().includes(consulta.toLowerCase());
+  buscarTexto(consulta: string, limite: number, opcoes: OpcoesTexto): Ocorrencia[] {
+    let expressao: RegExp;
+    try {
+      expressao = expressaoDeBusca(consulta, opcoes);
+    } catch (e) {
+      throw `expressão inválida: ${(e as Error).message}`;
+    }
     const saida: Ocorrencia[] = [];
-    for (const rel of relativos()) {
+    for (const rel of relativos().filter((r) => passaNaMascara(opcoes.mascara, r))) {
       ARQUIVOS[rel].split('\n').forEach((linha, i) => {
-        if (saida.length < limite && igual(linha)) {
+        if (saida.length < limite && trechosEncontrados(expressao, linha).length) {
           saida.push({ caminho: absoluto(rel), relativo: rel, linha: i + 1, texto: linha.trim() });
         }
       });
