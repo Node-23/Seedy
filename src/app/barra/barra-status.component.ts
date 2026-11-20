@@ -7,6 +7,7 @@ import { JdtlsService } from '../java/jdtls.service';
 import { GitService } from '../git/git.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
+import { IaMergeService } from '../ia/ia-merge.service';
 
 const NOMES_MODO: Record<string, string> = {
   normal: 'NORMAL',
@@ -29,8 +30,14 @@ const NOMES_MODO: Record<string, string> = {
           <span><span class="tecla">]c</span> próximo</span> <span><span class="tecla">[c</span> anterior</span>
           <span><span class="tecla">dp</span> pegar o seu</span> <span><span class="tecla">do</span> pegar o deles</span>
           <span><span class="tecla">:w</span> concluir merge</span>
+          <span><span class="tecla">␣ a</span> IA</span>
         </span>
         <span class="espaco"></span>
+        @if (ia.pensando()) {
+          <span class="segmento com-divisa-esq destaque-texto">✦ IA pensando…</span>
+        } @else if (ia.pendente(); as p) {
+          <span class="segmento com-divisa-esq destaque-texto">✦ IA propôs · conflito {{ p.conflito }}</span>
+        }
         <span class="segmento com-divisa-esq" [class.conflitos-restantes]="merge.restantes() > 0">
           {{ merge.restantes() }} {{ merge.restantes() === 1 ? 'conflito restante' : 'conflitos restantes' }}
         </span>
@@ -83,6 +90,7 @@ export class BarraStatusComponent {
   protected readonly git = inject(GitService);
   protected readonly layout = inject(LayoutService);
   protected readonly merge = inject(MergeService);
+  protected readonly ia = inject(IaMergeService);
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
     this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.buscando() ? 'busca' : this.editor.modo(),

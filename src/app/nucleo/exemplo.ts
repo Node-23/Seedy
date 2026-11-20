@@ -204,6 +204,33 @@ export const exemplo = {
     return ARQUIVOS[caminho.slice(RAIZ_EXEMPLO.length + 1)] ?? '';
   },
 
+  /** IA no modo navegador: uma resposta pronta (texto + proposta), no formato dos eventos SSE. */
+  async iaMensagem(corpo: unknown, aoEvento: (dados: string) => void): Promise<void> {
+    const msgs = (corpo as { messages: { content: { type: string }[] | string }[] }).messages;
+    const ultimo = msgs[msgs.length - 1]?.content;
+    const depoisDaFerramenta = Array.isArray(ultimo) && ultimo.some((b) => b.type === 'tool_result');
+    const ev = (o: unknown) => aoEvento(JSON.stringify(o));
+    const espera = () => new Promise((r) => setTimeout(r, 40));
+    ev({ type: 'message_start', message: { model: 'exemplo', content: [] } });
+    const texto = depoisDaFerramenta
+      ? 'Pronto: a proposta está na coluna do resultado. Aplique com ⏎ ou peça outra.'
+      : 'Os dois lados mudaram o mesmo trecho. Junto as duas intenções assim:';
+    ev({ type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } });
+    for (const pedaco of texto.match(/.{1,12}/g) ?? []) {
+      ev({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: pedaco } });
+      await espera();
+    }
+    ev({ type: 'content_block_stop', index: 0 });
+    if (!depoisDaFerramenta) {
+      const entrada = JSON.stringify({ conflito: 1, codigo: '// resolvido pelo exemplo', explicacao: 'exemplo' });
+      ev({ type: 'content_block_start', index: 1, content_block: { type: 'tool_use', id: 'toolu_exemplo', name: 'propor_resolucao', input: {} } });
+      ev({ type: 'content_block_delta', index: 1, delta: { type: 'input_json_delta', partial_json: entrada } });
+      ev({ type: 'content_block_stop', index: 1 });
+    }
+    ev({ type: 'message_delta', delta: { stop_reason: depoisDaFerramenta ? 'end_turn' : 'tool_use' } });
+    ev({ type: 'message_stop' });
+  },
+
   gravarArquivo(caminho: string, conteudo: string): void {
     ARQUIVOS[caminho.slice(RAIZ_EXEMPLO.length + 1)] = conteudo;
   },

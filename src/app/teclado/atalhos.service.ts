@@ -13,6 +13,7 @@ import { GitService } from '../git/git.service';
 import { GithubService } from '../git/github.service';
 import { PrateleiraService } from '../git/prateleira.service';
 import { GithubFormService } from '../git/github-form.service';
+import { IaMergeService } from '../ia/ia-merge.service';
 import { BlameService } from '../git/blame.service';
 
 export interface AcaoLider {
@@ -53,6 +54,7 @@ export class AtalhosService {
   private readonly github = inject(GithubService);
   private readonly prateleira = inject(PrateleiraService);
   private readonly githubForm = inject(GithubFormService);
+  private readonly ia = inject(IaMergeService);
 
   readonly liderAberto = signal(false);
 
@@ -82,7 +84,7 @@ export class AtalhosService {
     { tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
     { tecla: 'P', rotulo: 'criar pull request', disponivel: true, executar: () => void this.githubForm.abrir('pr') },
     { tecla: 'I', rotulo: 'criar issue', disponivel: true, executar: () => void this.githubForm.abrir('issue') },
-    { tecla: 'a', rotulo: 'IA', disponivel: false },
+    { tecla: 'a', rotulo: 'IA (chat no merge)', disponivel: true, executar: () => this.alternarIA() },
   ];
 
   iniciar(): void {
@@ -194,6 +196,15 @@ export class AtalhosService {
   private alternarGit(): void {
     this.layout.tela.set(this.layout.tela() === 'git' ? 'editor' : 'git');
     if (this.layout.tela() === 'editor') queueMicrotask(() => this.editor.focar());
+  }
+
+  /** ␣ a: o chat da IA, por enquanto ao lado do merge de conflitos (mockup 10). */
+  private alternarIA(): void {
+    if (this.layout.tela() !== 'merge') {
+      this.mensagens.mostrar('o chat da IA fica no merge de conflitos (␣ m)');
+      return;
+    }
+    this.ia.alternar();
   }
 
   /** ␣ m: abre o merge em 3 colunas quando há conflitos. */

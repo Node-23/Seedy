@@ -7,6 +7,7 @@
 mod arquivos;
 mod busca;
 mod git;
+mod ia;
 mod java;
 mod observador;
 mod terminal;
@@ -39,6 +40,10 @@ pub fn run() {
             git::github_repositorios,
             git::github_api,
             git::abrir_no_navegador,
+            ia::ia_tem_chave,
+            ia::ia_definir_chave,
+            ia::ia_esquecer_chave,
+            ia::ia_mensagem,
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,

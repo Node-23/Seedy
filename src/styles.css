@@ -951,6 +951,113 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 .monaco-editor .merge-pegar-seu::before { content: '»'; }
 .monaco-editor .merge-pegar-deles::before { content: '«'; }
 .merge-etiqueta { color: var(--sucesso); font-size: 11px; font-style: italic; }
+/* ---------- chat da IA no merge (mockup 10) ---------- */
+
+.merge-botao-ia { display: flex; align-items: center; gap: 8px; }
+.merge-botao-ia.ligado { background: var(--painel-elevado); box-shadow: inset 0 0 0 1.5px var(--destaque); }
+sd-merge-ia { display: flex; flex-shrink: 0; min-height: 0; }
+.merge-ia { width: 360px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; font-size: 12px; line-height: 18px; }
+.merge-ia .painel-faixa { gap: 8px; }
+.merge-ia .painel-faixa .suave { font-size: 11px; }
+.merge-ia-conversa { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.merge-ia-conversa > * { flex-shrink: 0; }
+.ia-usuario {
+  align-self: flex-end;
+  max-width: 88%;
+  padding: 8px 11px;
+  border-radius: var(--raio-pequeno);
+  background: var(--destaque);
+  color: var(--texto-sobre-destaque);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ia-texto { white-space: pre-wrap; word-break: break-word; }
+.ia-vazio { font-size: 11.5px; }
+.ia-pensando { font-size: 11.5px; }
+.ia-erro {
+  padding: 8px 11px;
+  border-radius: var(--raio-pequeno);
+  background: var(--erro-fundo);
+  color: var(--erro);
+}
+.ia-ferramentas,
+.ia-proposta {
+  border: var(--espessura-borda) solid var(--borda);
+  border-radius: var(--raio-pequeno);
+  background: var(--painel-elevado);
+}
+.ia-ferramentas { padding: 8px 11px; font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; }
+.ia-passo { display: flex; gap: 8px; white-space: nowrap; overflow: hidden; }
+.ia-passo-nome { width: 112px; flex-shrink: 0; }
+.ia-proposta { overflow: hidden; }
+.ia-proposta-titulo {
+  display: flex;
+  gap: 6px;
+  padding: 5px 11px;
+  border-bottom: var(--espessura-borda) solid var(--borda);
+  color: var(--texto-suave);
+  font-size: 11px;
+}
+.ia-proposta-codigo { padding: 5px 0; font-size: 11px; line-height: 18px; overflow-x: auto; }
+.ia-proposta-acoes {
+  display: flex;
+  gap: 6px;
+  padding: 8px 11px;
+  border-top: var(--espessura-borda) solid var(--borda);
+  font-size: 11px;
+}
+.ia-proposta-acoes { flex-wrap: wrap; }
+.ia-proposta-acoes .botao { height: 28px; padding: 0 8px; font-size: 11px; box-shadow: 2px 2px 0 var(--sombra); }
+.ia-proposta-acoes kbd { font-size: 10px; padding: 0 4px; }
+.ia-proposta[data-estado="recusada"] .ia-proposta-codigo { opacity: 0.5; }
+.merge-ia-pe { padding: 10px 12px 12px; border-top: var(--espessura-borda) solid var(--borda); flex-shrink: 0; }
+.ia-contexto { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; font-size: 11px; }
+.ia-chip { padding: 0 7px; border-radius: 6px; border: 1px solid var(--destaque); color: var(--destaque); }
+.ia-campo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 5px 0 12px;
+  border: var(--espessura-borda) solid var(--borda);
+  border-radius: var(--raio-pequeno);
+  background: var(--fundo);
+}
+.ia-campo:focus-within { border-color: var(--destaque); }
+.ia-campo input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--texto); font-family: inherit; font-size: 12px; }
+.ia-enviar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: var(--espessura-borda) solid var(--borda);
+  background: var(--destaque);
+  color: var(--texto-sobre-destaque);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ia-enviar:disabled { opacity: 0.55; cursor: default; }
+.merge-previa-ia {
+  box-sizing: border-box;
+  margin: 4px 8px 4px 0;
+  border: 2px dashed var(--destaque);
+  border-radius: var(--raio-pequeno);
+  background: var(--painel-elevado);
+  overflow: hidden;
+}
+.merge-previa-titulo {
+  display: flex;
+  justify-content: space-between;
+  height: 26px;
+  align-items: center;
+  padding: 0 10px;
+  border-bottom: 1px dashed var(--destaque);
+  color: var(--destaque);
+  font-family: var(--fonte-interface);
+  font-size: 11px;
+}
+.merge-previa-codigo { padding: 4px 10px; color: var(--texto); white-space: pre; overflow: hidden; }
+
 .merge-conflito {
   box-sizing: border-box;
   margin: 4px 8px 4px 0;

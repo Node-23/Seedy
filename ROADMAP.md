@@ -107,6 +107,8 @@ o resto entra como módulos internos:
 2. Servidor MCP do Seedy: a IA opera a IDE — abrir arquivo, ler erros do jdtls,
    rodar build, subir/derrubar servidor, ler log, consultar banco (só leitura)
 3. Painel de revisão: toda alteração vira diff para aceitar ou recusar
+4. ✅ Chat da IA no merge de conflitos (mockup 10, `␣ a`): Claude lê o código e o histórico,
+   propõe a resolução como prévia no resultado e o usuário aplica ou recusa
 
 ## Depois
 

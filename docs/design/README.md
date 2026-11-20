@@ -13,6 +13,7 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Buscar no projeto, `Ctrl+Shift+F` (tela implementada) | [07-busca-projeto.png](07-busca-projeto.png) | 2 ✅ |
 | Substituir no projeto, `Ctrl+Shift+R` (tela implementada) | [08-substituir.png](08-substituir.png) | 2 ✅ |
 | Editor dividido, `^v` / `Ctrl+\` / `:vs` (tela implementada) | [09-editor-dividido.png](09-editor-dividido.png) | 2 ✅ |
+| Merge com chat de IA (conversar sobre o conflito, prévia no resultado) | [10-merge-ia.png](10-merge-ia.png) | 7 ✅ |
 
 As telas 07 a 09 não têm mockup próprio: foram feitas na linguagem visual dos outros e
 capturadas do app. Servem de referência do mesmo jeito.

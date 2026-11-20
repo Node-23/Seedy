@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Merge de conflitos com IA — IDE Java</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+div>span:first-child{flex-shrink:0}
+a{color:#92A9E1}a:hover{color:#B9C8EE}
+</style>
+</helmet>
+<div style="width: 100%; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Inky Mono', 'Martian Mono', ui-monospace, monospace; font-size: 13px">
+
+  <header style="display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0">
+    <button aria-label="Menu" style="width: 40px; height: 40px; border-radius: 10px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer">{ }</button>
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; box-sizing: border-box; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C">
+      <span style="font-weight: 700">feirinha-verde</span>
+      <span style="color: #A29D93">merge: feature/pagamento-pix → develop</span>
+    </div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 4px">
+      <button aria-label="Minimizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">–</button>
+      <button aria-label="Maximizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">□</button>
+      <button aria-label="Fechar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">×</button>
+    </div>
+  </header>
+
+  <div style="display: flex; align-items: center; gap: 14px; height: 54px; flex-shrink: 0; white-space: nowrap; box-sizing: border-box; padding: 0 10px 0 16px; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C">
+    <span style="font-weight: 700">PagamentoService.java</span>
+    <span style="color: #A29D93; font-size: 12px">4 mudanças ·</span>
+    <span style="color: #B7D39C; font-size: 12px">3 automáticas</span>
+    <span style="color: #A29D93; font-size: 12px">·</span>
+    <span style="color: #EE8C84; font-size: 12px">1 conflito</span>
+    <span style="flex: 1"></span>
+    <button style="height: 36px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; font-family: inherit; font-size: 12px; cursor: pointer">aceitar tudo seu</button>
+    <button style="height: 36px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; font-family: inherit; font-size: 12px; cursor: pointer">aceitar tudo deles</button>
+    <button style="height: 36px; padding: 0 14px; border-radius: 9px; border: 2px solid #0B0B0C; background: #222225; color: #92A9E1; box-shadow: inset 0 0 0 1.5px #92A9E1; font-family: inherit; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"></path></svg>IA <span style="font-size: 11px; padding: 1px 6px; border-radius: 5px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C">␣ a</span></button>
+    <button style="height: 36px; padding: 0 16px; border-radius: 9px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer">✦ resolver simples</button>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 344px; gap: 12px; font-size: 10.5px; line-height: 22px">
+
+    <section aria-label="Sua versão" style="display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0; font-size: 12px">
+        <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">SUA VERSÃO</span>
+        <span style="color: #92A9E1">develop</span>
+      </div>
+      <div style="flex: 1; padding: 10px 0; overflow: hidden">
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">1</span>import ...pagamento.Pix;</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">2</span>import org.slf4j.Logger;</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">3</span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">4</span>@Service</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">5</span>public class <span style="color: #92A9E1">PagamentoService</span> {</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">6</span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">7</span>    public void <span style="color: #92A9E1">confirmar</span>(String txid) {</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">8</span>        Pagamento p = repo</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">9</span>            .findByTxid(txid)</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">10</span>            .orElseThrow();</div>
+        <div style="display: flex; white-space: pre; height: 22px"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93"> </span> </div>
+        <div style="display: flex; align-items: center; white-space: pre; background: #3A2A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #EE8C84">11</span><span style="flex: 1">        p.marcarComoPago(</span><button aria-label="Levar a sua versão para o resultado" style="margin-right: 8px; height: 20px; padding: 0 6px; border-radius: 5px; border: 1px solid #EE8C84; background: transparent; color: #EE8C84; font-family: inherit; font-size: 11px; cursor: pointer">»</button></div>
+        <div style="display: flex; white-space: pre; background: #3A2A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #EE8C84">12</span>            LocalDateTime.now());</div>
+        <div style="display: flex; white-space: pre; height: 22px"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93"> </span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">13</span>        repo.save(p);</div>
+        <div style="display: flex; white-space: pre; height: 22px"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93"> </span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">14</span>    }</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">15</span>}</div>
+      </div>
+    </section>
+
+    <section aria-label="Resultado" style="display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; flex-shrink: 0; font-size: 12px">
+        <span style="font-size: 11px; letter-spacing: 0.14em; font-weight: 700">RESULTADO</span>
+        <span>será gravado</span>
+      </div>
+      <div style="flex: 1; padding: 10px 0; overflow: hidden">
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">1</span>import ...pagamento.Pix;</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">2</span><span style="flex: 1">import ...NotificacaoService;</span><span style="margin-right: 8px; color: #B7D39C; font-size: 10.5px">✦ auto</span></div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">3</span><span style="flex: 1">import org.slf4j.Logger;</span><span style="margin-right: 8px; color: #B7D39C; font-size: 10.5px">os dois lados</span></div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">4</span>@Service</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">5</span>public class <span style="color: #92A9E1">PagamentoService</span> {</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">6</span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">7</span>    public void <span style="color: #92A9E1">confirmar</span>(String txid) {</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">8</span>        Pagamento p = repo</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">9</span>            .findByTxid(txid)</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">10</span>            .orElseThrow();</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">11</span><span style="flex: 1">        if (p.pago()) return;</span><span style="margin-right: 8px; color: #B7D39C; font-size: 10.5px">✦ deles</span></div>
+        <div style="margin: 4px 8px; border: 2px dashed #92A9E1; border-radius: 10px; background: #222225; overflow: hidden">
+          <div style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; color: #92A9E1; font-size: 11px; border-bottom: 1px dashed #92A9E1"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"></path></svg>prévia da IA · conflito 1<span style="flex: 1"></span><span style="color: #A29D93">⏎ aplica</span></div>
+          <div style="padding: 4px 0">
+            <div style="display: flex; white-space: pre"><span style="width: 32px; text-align: right; padding-right: 10px; color: #92A9E1">12</span>        p.marcarComoPago(</div>
+            <div style="display: flex; white-space: pre"><span style="width: 32px; text-align: right; padding-right: 10px; color: #92A9E1">13</span>            Instant.now());</div>
+          </div>
+        </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">14</span>        repo.save(p);</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">15</span><span style="flex: 1">        notificacao.confirmado(p);</span><span style="margin-right: 8px; color: #B7D39C; font-size: 10.5px">✦ deles</span></div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">16</span>    }</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">17</span>}</div>
+      </div>
+    </section>
+
+    <section aria-label="Versão deles" style="display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0; font-size: 12px">
+        <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">DELES</span>
+        <span style="color: #E3A9CC">feature/pagamento-pix</span>
+      </div>
+      <div style="flex: 1; padding: 10px 0; overflow: hidden">
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">1</span>import ...pagamento.Pix;</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">2</span>import ...NotificacaoService;</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">3</span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">4</span>@Service</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">5</span>public class <span style="color: #92A9E1">PagamentoService</span> {</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">6</span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">7</span>    public void <span style="color: #92A9E1">confirmar</span>(String txid) {</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">8</span>        Pagamento p = repo</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">9</span>            .findByTxid(txid)</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">10</span>            .orElseThrow();</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">11</span>        if (p.pago()) return;</div>
+        <div style="display: flex; align-items: center; white-space: pre; background: #3A2A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #EE8C84">12</span><button aria-label="Levar a versão deles para o resultado" style="margin-right: 8px; height: 20px; padding: 0 6px; border-radius: 5px; border: 1px solid #EE8C84; background: transparent; color: #EE8C84; font-family: inherit; font-size: 11px; cursor: pointer">«</button><span>    p.setStatus(Status.PAGO);</span></div>
+        <div style="display: flex; white-space: pre; background: #3A2A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #EE8C84">13</span>        p.setPagoEm(Instant.now());</div>
+        <div style="display: flex; white-space: pre; height: 22px"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93"> </span> </div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">14</span>        repo.save(p);</div>
+        <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">15</span>        notificacao.confirmado(p);</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">16</span>    }</div>
+        <div style="display: flex; white-space: pre"><span style="width: 36px; text-align: right; padding-right: 12px; color: #A29D93">17</span>}</div>
+      </div>
+    </section>
+
+    <section aria-label="Conversar com a IA sobre o conflito" style="display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden; font-size: 12px; line-height: 18px">
+      <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 0.14em; color: #92A9E1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"></path></svg>IA</span>
+        <span style="color: #A29D93; font-size: 11px">· conflito 1 de 1</span>
+        <span style="flex: 1"></span>
+        <kbd style="font-family: inherit; font-size: 11px; padding: 2px 7px; border-radius: 6px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C">␣ a</kbd>
+      </div>
+
+      <div style="flex: 1; min-height: 0; padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+        <div style="align-self: flex-end; max-width: 88%; padding: 8px 11px; border-radius: 11px; background: #92A9E1; color: #16171C">qual dos dois eu mantenho? os dois marcam como pago</div>
+
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 11px; border: 2px solid #0B0B0C; border-radius: 11px; background: #222225; font-size: 11.5px">
+          <div style="display: flex; gap: 8px"><span style="color: #B7D39C">✓</span><span style="color: #92A9E1; width: 112px">conflito.ler</span><span style="color: #A29D93">base, seu e deles</span></div>
+          <div style="display: flex; gap: 8px"><span style="color: #B7D39C">✓</span><span style="color: #92A9E1; width: 112px">codigo.abrir</span><span style="color: #A29D93">Pagamento.java:48</span></div>
+          <div style="display: flex; gap: 8px"><span style="color: #B7D39C">✓</span><span style="color: #92A9E1; width: 112px">git.log</span><span style="color: #A29D93">pagamento-pix · 2</span></div>
+        </div>
+
+        <div><span style="color: #92A9E1">marcarComoPago()</span> já muda o status e grava a data (Pagamento:48), então o seu cobre o que o deles faz em duas linhas. A coluna agora é <span style="color: #E3A9CC">Instant</span> (veio deles), então troquei o argumento:</div>
+
+        <div style="border: 2px solid #0B0B0C; border-radius: 11px; background: #222225; overflow: hidden">
+          <div style="display: flex; justify-content: space-between; padding: 5px 11px; border-bottom: 2px solid #0B0B0C; color: #A29D93; font-size: 11px"><span>conflito 1 → resultado</span><span><span style="color: #B7D39C">+2</span> <span style="color: #EE8C84">−4</span></span></div>
+          <div style="padding: 5px 0; font-size: 11px; line-height: 18px">
+            <div style="display: flex; white-space: pre; background: #3A2A2B"><span style="width: 20px; text-align: center; color: #EE8C84">−</span>p.setStatus(Status.PAGO);</div>
+            <div style="display: flex; white-space: pre; background: #3A2A2B"><span style="width: 20px; text-align: center; color: #EE8C84">−</span>p.setPagoEm(Instant.now());</div>
+            <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 20px; text-align: center; color: #B7D39C">+</span>p.marcarComoPago(</div>
+            <div style="display: flex; white-space: pre; background: #2E3A2B"><span style="width: 20px; text-align: center; color: #B7D39C">+</span>    Instant.now());</div>
+          </div>
+          <div style="display: flex; gap: 6px; padding: 8px 11px; border-top: 2px solid #0B0B0C">
+            <button style="height: 28px; padding: 0 10px; border-radius: 8px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; box-shadow: 2px 2px 0 #0B0B0C; font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer">aplicar ⏎</button>
+            <button style="height: 28px; padding: 0 10px; border-radius: 8px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; font-family: inherit; font-size: 11px; cursor: pointer">recusar esc</button>
+            <button style="height: 28px; padding: 0 10px; border-radius: 8px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; font-family: inherit; font-size: 11px; cursor: pointer">outra ^r</button>
+          </div>
+        </div>
+
+        <div style="color: #A29D93; font-size: 11px">a guarda <span style="color: #E9E2D3">if (p.pago()) return;</span> que veio deles continua na linha 11.</div>
+      </div>
+
+      <div style="padding: 10px 12px 12px; border-top: 2px solid #0B0B0C; flex-shrink: 0">
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; font-size: 11px">
+          <span style="padding: 0 7px; border-radius: 6px; border: 1px solid #92A9E1; color: #92A9E1">@conflito 1</span>
+          <span style="padding: 0 7px; border-radius: 6px; border: 1px solid #92A9E1; color: #92A9E1">@Pagamento.java</span>
+          <span style="padding: 0 7px; border-radius: 6px; border: 1px solid #A29D93; color: #A29D93">+</span>
+        </div>
+        <label style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 5px 0 12px; border: 2px solid #0B0B0C; border-radius: 11px; background: #19191B">
+          <span style="flex: 1; color: #A29D93">pergunte sobre o conflito…</span>
+          <button aria-label="Enviar" style="width: 30px; height: 30px; border-radius: 8px; border: 2px solid #0B0B0C; background: #92A9E1; color: #16171C; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+        </label>
+      </div>
+    </section>
+
+  </div>
+
+  <footer style="display: flex; align-items: stretch; height: 30px; flex-shrink: 0; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden; font-size: 12px">
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #E3A9CC; color: #16171C; font-weight: 700; letter-spacing: 0.08em">MERGE</span>
+    <span style="display: flex; align-items: center; gap: 14px; padding: 0 14px; color: #A29D93">
+      <span><span style="color: #92A9E1">]c</span> próximo</span>
+      
+      <span><span style="color: #92A9E1">dp</span> pegar o seu</span>
+      <span><span style="color: #92A9E1">do</span> pegar o deles</span>
+      <span><span style="color: #92A9E1">:w</span> concluir merge</span>
+      <span><span style="color: #92A9E1">␣ a</span> IA</span>
+    </span>
+    <span style="flex: 1"></span>
+    <span style="display: flex; align-items: center; gap: 6px; padding: 0 12px; border-left: 2px solid #0B0B0C; color: #92A9E1">✦ IA propôs</span>
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #3A2A2B; color: #EE8C84; border-left: 2px solid #0B0B0C">1 conflito restante</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C; color: #A29D93">1 de 3 arquivos</span>
+  </footer>
+  <div style="height: 20px; flex-shrink: 0"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

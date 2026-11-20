@@ -217,6 +217,20 @@ export const ponte = {
     parar: (id: number) => invoke<void>('lsp_parar', { id }),
   },
 
+  /** IA (Claude): a chave fica no núcleo; aqui só vão o corpo do pedido e os eventos do stream. */
+  ia: {
+    temChave: async (): Promise<boolean> => (noApp() ? invoke<boolean>('ia_tem_chave') : true),
+    definirChave: (chave: string) => invoke<void>('ia_definir_chave', { chave }),
+    esquecerChave: () => invoke<void>('ia_esquecer_chave'),
+    /** Manda o pedido à Messages API (com stream) e entrega o JSON de cada evento SSE. */
+    async mensagem(corpo: unknown, aoEvento: (dados: string) => void): Promise<void> {
+      if (!noApp()) return exemplo.iaMensagem(corpo, aoEvento);
+      const eventos = new Channel<string>();
+      eventos.onmessage = aoEvento;
+      await invoke<void>('ia_mensagem', { corpo, eventos });
+    },
+  },
+
   terminal: {
     async abrir(
       pasta: string | null,

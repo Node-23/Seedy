@@ -55,6 +55,11 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   merge em 3 colunas. Fica dentro da pasta `.git` (nunca vai num commit).
 - **Pull request e issue** sem sair da IDE (`␣ P` / `␣ I`): o PR vai da branch atual (o Seedy
   faz o push antes, se faltar) para a base escolhida, com título e descrição sugeridos pelos commits.
+- **IA no merge** (mockup 10): `␣ a` abre um chat ao lado das três colunas para conversar
+  sobre os conflitos. A IA (Claude) lê o código relacionado e o histórico do arquivo e propõe a
+  resolução, que aparece como prévia no resultado: `⏎` aplica, `esc` recusa, `ctrl+r` pede outra.
+  Na primeira mensagem o Seedy pede a chave da API da Anthropic (fica no arquivo `ia.chave` da
+  pasta de configuração, ou use `ANTHROPIC_API_KEY`); a chave nunca passa pela interface.
 - **Conta do GitHub**: entre como no IntelliJ (pelo navegador, via Git Credential Manager, ou com
   um token) com `␣ G` ou pelo botão da tela do Git; clone os seus repositórios de lá. O token fica no
   núcleo e no cofre do sistema, nunca na interface.
@@ -127,6 +132,7 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | `␣ b` | trocar de branch (ou criar uma) |
 | `␣ n` | blame no arquivo aberto |
 | `␣ m` | resolver conflitos (merge em 3 colunas) |
+| `␣ a` (no merge) | chat da IA: `⏎` envia (vazio: aplica a proposta), `esc` recusa, `ctrl+r` outra |
 | `␣ G` | GitHub: conectar, clonar, criar PR ou issue, desconectar |
 | `␣ P` / `␣ I` | criar pull request / issue (`ctrl+⏎` cria, `alt+b` troca a base, `alt+r` rascunho) |
 | `␣ S` | guardar as mudanças na prateleira (no commit: `alt+s` com os arquivos marcados) |
@@ -190,6 +196,7 @@ src/                         interface (Angular)
   app/layout/                registro de painéis e disposição
   app/java/                  cliente LSP do jdtls: ciclo de vida, sincronia, provedores do Monaco, gerar código
   app/git/                   tela do Git, grafo, commit, diff, blame, merge em 3 colunas, GitHub
+  app/ia/                    chat da IA no merge: conversa, ferramentas (ler arquivo, git log), propostas
   app/escolha/               janela de escolha (uma ou várias opções), usada por quem precisa perguntar
   app/teclado/               atalhos
   styles.css                 todo o visual (só usa as variáveis do tema)
@@ -198,6 +205,7 @@ src-tauri/                   núcleo (Rust)
   src/terminal.rs            PTY (ConPTY no Windows)
   src/tema.rs                tema.json, fontes e recarga ao vivo
   src/git.rs                 roda o git, conta do GitHub (credential manager e API)
+  src/ia.rs                  chave da API da Anthropic e pedido com streaming (SSE)
   src/busca.rs               índice de arquivos/símbolos Java e busca de texto
   src/java.rs                acha os JDKs, baixa e verifica o jdtls, processo e canal LSP
   src/observador.rs          observa a pasta do projeto (mudanças feitas fora do editor)

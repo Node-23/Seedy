@@ -9,7 +9,9 @@ import { MensagensService } from '../nucleo/mensagens.service';
 import { ponte } from '../nucleo/ponte';
 import { Bloco, diff3, resolverSimples } from './diff';
 import { GitService } from './git.service';
-import { MergeService } from './merge.service';
+import { ContextoDoMerge, MergeService } from './merge.service';
+import { IaMergeService } from '../ia/ia-merge.service';
+import { MergeIaComponent } from '../ia/merge-ia.component';
 
 interface Conflito {
   bloco: Bloco;
@@ -32,6 +34,7 @@ const ROTULO: Record<string, string> = { seu: '« seu', deles: 'deles »', ambos
  */
 @Component({
   selector: 'sd-merge',
+  imports: [MergeIaComponent],
   template: `
     <div class="merge-tela">
       <div class="merge-barra">
@@ -45,7 +48,9 @@ const ROTULO: Record<string, string> = { seu: '« seu', deles: 'deles »', ambos
         <span class="espaco"></span>
         <button class="botao" (click)="aceitarTudo('seu')">aceitar tudo seu</button>
         <button class="botao" (click)="aceitarTudo('deles')">aceitar tudo deles</button>
-        <button class="botao destaque-texto" disabled title="Fase 7 (IA)">✦ IA: sugerir</button>
+        <button class="botao destaque-texto merge-botao-ia" [class.ligado]="ia.aberto()" title="Conversar com a IA sobre os conflitos" (click)="ia.alternar()">
+          ✦ IA <kbd>␣ a</kbd>
+        </button>
         <button class="botao destaque" (click)="resolverTudoSimples()">✦ resolver simples</button>
       </div>
       <div class="merge-colunas">
@@ -61,12 +66,14 @@ const ROTULO: Record<string, string> = { seu: '« seu', deles: 'deles »', ambos
           <div class="painel-faixa"><span class="rotulo">DELES</span><span class="rosa-texto">{{ nomeDeles() }}</span></div>
           <div #hostDeles class="merge-monaco"></div>
         </section>
+        @if (ia.aberto()) { <sd-merge-ia /> }
       </div>
     </div>
   `,
 })
 export class MergeComponent {
   protected readonly servico = inject(MergeService);
+  protected readonly ia = inject(IaMergeService);
   private readonly git = inject(GitService);
   private readonly editor = inject(EditorService);
   private readonly tema = inject(TemaService);
@@ -175,10 +182,20 @@ export class MergeComponent {
           if (c) this.resolver(c, lado);
         },
         gravar: () => this.gravar(),
+        contexto: () => this.contextoParaIA(),
+        aplicarIA: (n, linhas) => {
+          const c = this.conflitos[n - 1];
+          if (!c || c.resolvido) return false;
+          this.resolver(c, { linhas, tag: '✦ IA' });
+          return true;
+        },
+        focarResultado: () => this.eResultado?.focus(),
       };
 
       destruir.onDestroy(() => {
         this.servico.acoes = null;
+        this.servico.arquivo.set(null);
+        this.servico.previa.set(null);
         vim.dispose?.();
         barra.remove();
         this.limpar();
@@ -188,6 +205,12 @@ export class MergeComponent {
       // Só em desenvolvimento: inspecionar pelo DevTools.
       if (isDevMode()) Object.assign(window, { seedyMerge: this, seedyMergeVim: vim });
       void this.iniciar();
+    });
+
+    // Proposta da IA: a caixa do conflito vira a prévia (e volta quando sai).
+    effect(() => {
+      this.servico.previa();
+      untracked(() => this.desenharZonas());
     });
 
     // Se outro programa resolver tudo, o merge fecha sozinho.
@@ -221,6 +244,7 @@ export class MergeComponent {
     const rel = this.fila[i];
     this.servico.arquivoAtual.set(i);
     this.relativo.set(rel);
+    this.servico.arquivo.set(rel);
     const [base, seu, deles] = await Promise.all([':1', ':2', ':3'].map((rev) => this.git.conteudo(rev, rel)));
     if (!seu || !deles) {
       // Um lado apagou o arquivo: não há o que juntar linha a linha.
@@ -329,6 +353,11 @@ export class MergeComponent {
         c.zona = null;
         if (c.resolvido) return;
         const linha = m.getDecorationRange(c.ancora)?.startLineNumber ?? 1;
+        const previa = this.servico.previa();
+        if (previa?.conflito === i + 1) {
+          c.zona = acc.addZone({ afterLineNumber: linha - 1, heightInPx: this.alturaDaPrevia(previa.linhas.length), domNode: this.caixaDaPrevia(i + 1, previa.linhas) });
+          return;
+        }
         const caixa = document.createElement('div');
         caixa.className = 'merge-conflito';
         const titulo = document.createElement('div');
@@ -348,12 +377,17 @@ export class MergeComponent {
     });
   }
 
-  private resolver(c: Conflito, como: 'seu' | 'deles' | 'ambos' | 'simples'): void {
+  private resolver(c: Conflito, como: 'seu' | 'deles' | 'ambos' | 'simples' | { linhas: string[]; tag: string }): void {
     const m = this.eResultado?.getModel();
     if (!m || c.resolvido) return;
     let linhas: string[];
     let tag: string;
-    if (como === 'simples') {
+    const numero = this.conflitos.indexOf(c) + 1;
+    if (this.servico.previa()?.conflito === numero) this.servico.previa.set(null);
+    if (typeof como === 'object') {
+      linhas = como.linhas;
+      tag = como.tag;
+    } else if (como === 'simples') {
       const r = resolverSimples(c.bloco);
       if (!r) return;
       linhas = r.linhas;
@@ -365,10 +399,62 @@ export class MergeComponent {
     const pos = m.getDecorationRange(c.ancora);
     const linha = pos?.startLineNumber ?? 1;
     if (linhas.length) m.pushEditOperations([], [{ range: new monaco.Range(linha, 1, linha, 1), text: linhas.join('\n') + '\n' }], () => null);
-    c.resolvido = como;
+    c.resolvido = typeof como === 'object' ? 'ia' : como;
     m.deltaDecorations([], this.marcaDoResultado(m, linha, linha + linhas.length - 1, tag));
     this.desenharZonas();
     this.atualizarRestantes();
+  }
+
+  /** Altura da caixa da prévia: título + linhas de código (na altura de linha do editor). */
+  private alturaDaPrevia(n: number): number {
+    const linha = this.eResultado?.getOption(monaco.editor.EditorOption.lineHeight) ?? 20;
+    return 8 + 26 + n * linha + 10;
+  }
+
+  /** Caixa tracejada (lavanda) com o código que a IA propôs, antes de aplicar. */
+  private caixaDaPrevia(numero: number, linhas: string[]): HTMLElement {
+    const caixa = document.createElement('div');
+    caixa.className = 'merge-previa-ia';
+    const titulo = document.createElement('div');
+    titulo.className = 'merge-previa-titulo';
+    titulo.textContent = `✦ prévia da IA · conflito ${numero}`;
+    const dica = document.createElement('span');
+    dica.className = 'suave';
+    dica.textContent = '⏎ aplica no chat';
+    titulo.appendChild(dica);
+    const codigo = document.createElement('div');
+    codigo.className = 'merge-previa-codigo';
+    const f = this.tema.tema().fontes.codigo;
+    codigo.style.fontFamily = `"${f.familia}", ${this.tema.tema().fontes.reserva}`;
+    codigo.style.fontSize = `${f.tamanho}px`;
+    codigo.style.lineHeight = `${this.eResultado?.getOption(monaco.editor.EditorOption.lineHeight) ?? 20}px`;
+    codigo.textContent = linhas.join('\n');
+    caixa.append(titulo, codigo);
+    return caixa;
+  }
+
+  /** O arquivo e os conflitos, para a IA (o chat monta a conversa com isto). */
+  private contextoParaIA(): ContextoDoMerge | null {
+    const m = this.eResultado?.getModel();
+    const rel = this.relativo();
+    if (!m || !rel) return null;
+    const perto = this.conflitoPerto();
+    return {
+      arquivo: rel,
+      linguagem: this.editor.linguagemDe(rel),
+      nomeSeu: this.nomeSeu(),
+      nomeDeles: this.nomeDeles(),
+      resultado: m.getLinesContent(),
+      conflitos: this.conflitos.map((c, i) => ({
+        numero: i + 1,
+        resolvido: !!c.resolvido,
+        linha: m.getDecorationRange(c.ancora)?.startLineNumber ?? 1,
+        base: c.bloco.base,
+        seu: c.bloco.seu,
+        deles: c.bloco.deles,
+      })),
+      atual: perto ? this.conflitos.indexOf(perto) + 1 : null,
+    };
   }
 
   protected aceitarTudo(lado: 'seu' | 'deles'): void {
