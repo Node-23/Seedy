@@ -49,14 +49,19 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - ✅ Dividir (`^v` / `shift+⏎`): abre o resultado ao lado — o editor ganhou divisão vertical
   (`Ctrl+\`, `:vs`, `Ctrl+W h/l/w/q/o`, `:q` fecha o painel)
 
-## Fase 3 — Banco de dados
+## ✅ Fase 3 — Banco de dados
 
-- Conexões PostgreSQL, MySQL e Oracle, com perfis (Local / Homolog / Produção)
-- Cor por ambiente; Produção somente leitura por padrão, com confirmação
-- Túnel SSH por conexão (lendo `~/.ssh/config` e `known_hosts`)
-- Árvore de schemas, editor SQL com autocomplete, `Ctrl+Enter` executa
-- Grade de resultados **somente leitura** (alterações só por SQL), exportar CSV
-- Oracle: driver Rust depende do Instant Client; se der problema, sidecar Java (JDBC)
+- ✅ Conexões PostgreSQL, MySQL e Oracle, com perfis (Local / Homolog / Produção); senhas no
+  cofre do sistema
+- ✅ Cor por ambiente; Produção somente leitura por padrão (o próprio banco recusa a escrita), e
+  liberada pede confirmação antes de alterar
+- ✅ Túnel SSH por conexão, pelo `ssh` do sistema (`~/.ssh/config`, `known_hosts`, ssh-agent)
+- ✅ Árvore de schemas, tabelas, views, funções e colunas; editor SQL com autocomplete
+  (tabelas, colunas, apelidos); `Ctrl+Enter` executa a instrução sob o cursor; explain
+- ✅ Grade de resultados **somente leitura** (alterações só por SQL), exportar CSV, histórico
+- Oracle: driver Rust com o Instant Client (implementado, ainda sem teste contra um Oracle de
+  verdade); se der problema, sidecar Java (JDBC)
+- Depois: cancelar consulta em andamento, editar dados na grade gerando o SQL para revisar
 
 ## ✅ Fase 4 — Git
 

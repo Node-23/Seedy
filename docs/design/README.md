@@ -6,7 +6,7 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 |---|---|---|
 | Editor (árvore, código, statusline, menu do líder) | [01-editor.png](01-editor.png) | 0 ✅ |
 | Busca de arquivo, `Ctrl+P` (Search Everywhere, estilo Telescope) | [02-busca.png](02-busca.png) | 2 ✅ |
-| Banco de dados (conexões, SQL, grade só leitura, túnel SSH) | [03-banco.png](03-banco.png) | 3 |
+| Banco de dados (conexões, SQL, grade só leitura, túnel SSH) | [03-banco.png](03-banco.png) | 3 ✅ |
 | Git (árvore de commits, detalhe, diff) | [04-git.png](04-git.png) | 4 |
 | Merge de conflitos (3 colunas, resolver simples) | [05-merge.png](05-merge.png) | 4 |
 | IA + console do servidor | [06-ia-servidor.png](06-ia-servidor.png) | 5 e 7 |

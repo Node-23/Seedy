@@ -27,23 +27,27 @@ import { ProjetoService } from './nucleo/projeto.service';
 import { TemaService } from './tema/tema';
 import { AtalhosService } from './teclado/atalhos.service';
 import { JdtlsService } from './java/jdtls.service';
+import { ConexoesComponent } from './banco/conexoes.component';
+import { ResultadoSqlComponent } from './banco/resultado-sql.component';
+import { PerfilBancoComponent } from './banco/perfil-banco.component';
+import { BancoService } from './banco/banco.service';
 
 @Component({
   selector: 'sd-raiz',
   imports: [
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
-    GithubFormComponent, MergeComponent,
+    GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta()">
+      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando()">
       <div class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
-        @if (layout.disposicao().visiveis.arquivos) {
+        @if (layout.disposicao().visiveis.arquivos || layout.disposicao().visiveis.conexoes) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
-            <sd-arvore />
+            @if (layout.disposicao().visiveis.conexoes) { <sd-conexoes /> } @else { <sd-arvore /> }
           </div>
           <div class="divisor vertical" role="separator" aria-orientation="vertical" (pointerdown)="arrastar($event, 'esquerda')"></div>
         }
@@ -56,6 +60,7 @@ import { JdtlsService } from './java/jdtls.service';
               <sd-editor [painel]="1" />
             }
           </div>
+          @if (banco.ehSql()) { <sd-resultado-sql /> }
           <div class="divisor horizontal" role="separator" aria-orientation="horizontal"
                [class.oculto]="!layout.disposicao().visiveis.terminal" (pointerdown)="arrastar($event, 'inferior')"></div>
           <div class="regiao-inferior" [class.oculto]="!layout.disposicao().visiveis.terminal"
@@ -73,6 +78,7 @@ import { JdtlsService } from './java/jdtls.service';
       <sd-busca-projeto />
       <sd-commit />
       <sd-github-form />
+      <sd-perfil-banco />
       <sd-escolha />
       </div>
 
@@ -96,6 +102,7 @@ export class App {
   protected readonly buscaProjeto = inject(BuscaProjetoService);
   protected readonly escolha = inject(EscolhaService);
   protected readonly commit = inject(CommitService);
+  protected readonly banco = inject(BancoService);
 
   constructor() {
     inject(AtalhosService).iniciar();

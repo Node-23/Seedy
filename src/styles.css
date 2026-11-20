@@ -57,7 +57,7 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
 
 .area-principal { position: relative; flex: 1; min-height: 0; display: flex; }
 .regiao-principal { position: relative; flex: 1; min-height: 0; display: flex; }
-.regiao-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto):not(sd-escolha):not(sd-commit) { opacity: 0.35; pointer-events: none; }
+.regiao-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto):not(sd-escolha):not(sd-commit):not(sd-github-form):not(sd-perfil-banco) { opacity: 0.35; pointer-events: none; }
 .tela-cheia { flex: 1; min-width: 0; display: flex; }
 .regiao-esquerda { flex-shrink: 0; display: flex; min-width: 0; }
 .regiao-esquerda > * { flex: 1; min-width: 0; display: flex; }
@@ -1077,3 +1077,124 @@ sd-merge-ia { display: flex; flex-shrink: 0; min-height: 0; }
 .dicas-merge { gap: 14px; }
 .dicas-merge .tecla { color: var(--destaque); }
 .barra-status .conflitos-restantes { background: var(--erro-fundo); color: var(--erro); }
+
+/* ---------- banco de dados (mockup 03) ---------- */
+
+/* Conexões: a cor do ambiente (verde local, lavanda homolog, vermelho produção). */
+.bolinha-ambiente { font-size: 9px; color: var(--texto-suave); }
+[data-ambiente="local"] .bolinha-ambiente,
+.bolinha-ambiente.conectada { color: var(--sucesso); }
+[data-ambiente="homolog"] .bolinha-ambiente { color: var(--destaque); }
+[data-ambiente="producao"] .bolinha-ambiente { color: var(--erro); }
+.conexao-item { gap: 8px; }
+.conexao-item .detalhe-conexao { flex-shrink: 0; font-size: 11.5px; }
+.conexao-item[data-ambiente="producao"] { background: var(--erro-fundo); color: var(--erro); font-weight: 700; }
+.conexao-item[data-ambiente="producao"] .detalhe-conexao { color: var(--erro); font-weight: 400; }
+.conexao-item[data-tipo="perfil"] { margin: 1px 8px; border-radius: var(--raio-pequeno); }
+.conexao-item.selecionado { background: var(--selecao); }
+.conexao-item.ativo { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
+.conexao-item.ativo .suave, .conexao-item.ativo .bolinha-ambiente, .conexao-item.ativo .detalhe-conexao { color: inherit; }
+.cartao-tunel {
+  margin: 0 10px 10px;
+  padding: 10px 12px;
+  border: var(--espessura-borda) solid var(--borda);
+  border-radius: var(--raio-pequeno);
+  background: var(--painel-elevado);
+  font-size: 12px;
+  line-height: 20px;
+}
+.cartao-tunel-titulo { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.conexoes-nova { margin: 0 10px 10px; justify-content: center; }
+
+/* Editor de .sql: faixa com a conexão e os botões de executar. */
+.faixa-sql { justify-content: flex-start; gap: 10px; padding-right: 70px; }
+.faixa-sql[data-ambiente="producao"] { background: var(--erro-fundo); border-radius: calc(var(--raio) - 2px) calc(var(--raio) - 2px) 0 0; }
+.faixa-sql-conexao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--texto);
+  font: inherit;
+  cursor: pointer;
+}
+.faixa-sql-ambiente { font-weight: 700; letter-spacing: 0.04em; }
+.faixa-sql[data-ambiente="producao"] .faixa-sql-ambiente,
+.faixa-sql[data-ambiente="producao"] .faixa-sql-acao { color: var(--erro); }
+.faixa-sql[data-ambiente="homolog"] .faixa-sql-ambiente { color: var(--destaque); }
+.faixa-sql[data-ambiente="local"] .faixa-sql-ambiente { color: var(--sucesso); }
+.faixa-sql-acao { font-size: 12px; white-space: nowrap; border: 0; background: transparent; color: var(--texto); font-family: inherit; }
+button.faixa-sql-acao { cursor: pointer; text-decoration: underline; }
+.acoes-sql { position: absolute; right: 14px; bottom: 14px; display: flex; gap: 8px; z-index: 5; }
+.acoes-sql .botao { height: 34px; }
+.monaco-editor .sql-executado { background: var(--selecao); }
+
+/* Resultado da consulta. */
+sd-resultado-sql { flex: 0 0 54%; min-height: 0; min-width: 0; display: flex; margin-top: var(--espaco); }
+.resultado-sql .painel-faixa { gap: 10px; justify-content: flex-start; }
+.resultado-sql .painel-faixa .botao { height: 28px; font-size: 12px; box-shadow: none; }
+.resultado-corpo { flex: 1; min-height: 0; overflow: auto; outline: none; font-size: 12.5px; }
+.resultado-corpo:focus .celula-atual { outline: 1px solid var(--destaque); outline-offset: -1px; }
+.grade-sql { border-collapse: collapse; min-width: 100%; }
+.grade-sql th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 36px;
+  padding: 0 14px;
+  border-bottom: var(--espessura-borda) solid var(--borda);
+  border-right: 1px solid var(--borda);
+  background: var(--painel);
+  text-align: left;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.grade-sql td {
+  height: 35px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--borda);
+  border-right: 1px solid var(--borda);
+  white-space: nowrap;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.grade-sql .num { width: 1%; text-align: right; color: var(--texto-suave); }
+.grade-sql .numero { text-align: right; }
+.grade-sql td.numero { color: var(--rosa); }
+.grade-sql td.nulo { color: var(--texto-suave); font-style: italic; }
+.grade-sql tr.selecionada td { background: var(--painel-elevado); }
+.grade-sql tr.selecionada .num { color: var(--destaque); }
+.tipo-coluna { margin-left: 6px; font-size: 10.5px; color: var(--texto-suave); }
+.resultado-vazio { padding: 16px; }
+.resultado-erro { margin: 12px; padding: 10px 12px; border-radius: var(--raio-pequeno); background: var(--erro-fundo); color: var(--erro); white-space: pre-wrap; }
+.resultado-rodape { flex-shrink: 0; padding: 10px 14px; border-top: var(--espessura-borda) solid var(--borda); font-size: 12px; }
+
+/* Statusline: o ambiente da conexão do .sql. */
+.barra-status .ambiente-banco[data-ambiente="producao"] { background: var(--erro-fundo); color: var(--erro); font-weight: 700; }
+.barra-status .ambiente-banco[data-ambiente="homolog"] { color: var(--destaque); font-weight: 700; }
+.barra-status .ambiente-banco[data-ambiente="local"] { color: var(--sucesso); font-weight: 700; }
+
+/* Formulário da conexão. */
+.busca.perfil-banco { width: 720px; height: auto; max-height: 86vh; }
+.perfil-corpo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 14px; overflow: auto; }
+.perfil-corpo .larga { grid-column: 1 / -1; }
+.perfil-corpo .commit-opcao { margin: 0; }
+.campo { display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: var(--texto-suave); letter-spacing: 0.04em; }
+.campo input,
+.campo select {
+  height: 32px;
+  padding: 0 10px;
+  border: var(--espessura-borda) solid var(--selecao);
+  border-radius: var(--raio-pequeno);
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 12.5px;
+  letter-spacing: 0;
+}
+.campo input:focus, .campo select:focus { outline: none; border-color: var(--destaque); }
+.perfil-dica { font-size: 11px; }
+.perfil-acoes { display: flex; gap: 8px; padding: 12px 14px; border-top: var(--espessura-borda) solid var(--borda); }

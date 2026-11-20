@@ -18,6 +18,7 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
+import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
 
 /** API interna do vim (do CodeMirror), que o monaco-vim expõe sem tipos. */
 interface ApiVim {
@@ -46,14 +47,38 @@ let exDefinidos = false;
           </button>
         </div>
       }
-      <div class="painel-faixa migalhas">
-        @for (parte of migalhas(); track $index; let ultimo = $last) {
-          <span [class.atual]="ultimo">{{ parte }}</span>
-          @if (!ultimo) { <span class="sep">›</span> }
-        }
-      </div>
+      @if (sql(); as f) {
+        <div class="painel-faixa faixa-sql" [attr.data-ambiente]="f.perfil?.ambiente ?? null">
+          @if (f.perfil; as p) {
+            <button class="faixa-sql-conexao" title="trocar a conexão deste arquivo" (click)="banco.escolherConexao()">
+              <span class="bolinha-ambiente" [class.conectada]="f.conectado" aria-hidden="true">●</span>
+              <span class="faixa-sql-ambiente">{{ nomeDoAmbiente(p.ambiente).toUpperCase() }}</span>
+              <span>{{ p.banco || p.usuario }} · {{ banco.schemaPadrao(p) }}</span>
+            </button>
+            <span class="espaco"></span>
+            @if (!f.conectado) { <button class="faixa-sql-acao" (click)="banco.conectar(p.id)">conectar</button> }
+            @if (p.somenteLeitura) { <span class="faixa-sql-acao">🔒 somente leitura</span> }
+            @if (p.ssh) { <span class="faixa-sql-acao">⇄ ssh {{ p.ssh }}</span> }
+          } @else {
+            <button class="faixa-sql-conexao" (click)="banco.escolherConexao()"><span class="suave">sem conexão —</span> escolher</button>
+          }
+        </div>
+      } @else {
+        <div class="painel-faixa migalhas">
+          @for (parte of migalhas(); track $index; let ultimo = $last) {
+            <span [class.atual]="ultimo">{{ parte }}</span>
+            @if (!ultimo) { <span class="sep">›</span> }
+          }
+        </div>
+      }
       <div class="editor-corpo">
         <div #hospedeiro class="editor-monaco" [class.oculto]="!buffer()"></div>
+        @if (sql()) {
+          <div class="acoes-sql">
+            <button class="botao" title="plano de execução (ctrl+shift+⏎)" (click)="banco.executarNoCursor(true)">explain</button>
+            <button class="botao destaque" [disabled]="banco.resultadoAtivo()?.executando" (click)="banco.executarNoCursor()">▶ executar <kbd>^⏎</kbd></button>
+          </div>
+        }
         @if (!buffer()) {
           <div class="editor-vazio">
             <div class="logo">seedy</div>
@@ -82,6 +107,19 @@ export class EditorComponent {
   /** Qual painel este é (0 = esquerda; 1 = direita, quando o editor está dividido). */
   readonly painel = input<0 | 1>(0);
   protected readonly buffer = computed(() => this.editor.bufferDoPainel(this.painel()));
+  protected readonly banco = inject(BancoService);
+  /** Arquivo .sql neste painel: a conexão dele (a faixa do topo mostra o ambiente). */
+  protected readonly sql = computed(() => {
+    const b = this.buffer();
+    if (!b || b.somenteLeitura || !/\.sql$/i.test(b.caminho)) return null;
+    const id = this.banco.associacoes().get(b.caminho);
+    const perfil = this.banco.perfis().find((p) => p.id === id) ?? null;
+    return { perfil, conectado: !!perfil && this.banco.sessoes().has(perfil.id) };
+  });
+
+  protected nomeDoAmbiente(a: string): string {
+    return NOME_DO_AMBIENTE[a] ?? a;
+  }
   protected readonly dividido = computed(() => !!this.editor.divisao());
   protected readonly desfocado = computed(() => this.dividido() && this.editor.painelFocado() !== this.painel());
   /** O recorte com o botão de foco fica só no painel da direita. */

@@ -7,6 +7,7 @@ import { JdtlsService } from '../java/jdtls.service';
 import { GitService } from '../git/git.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
+import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
 import { IaMergeService } from '../ia/ia-merge.service';
 
 const NOMES_MODO: Record<string, string> = {
@@ -63,6 +64,11 @@ const NOMES_MODO: Record<string, string> = {
       @if (jdtls.estado().fase !== 'inativo') {
         <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase" [title]="tituloJdtls()">{{ textoJdtls() }}</span>
       }
+      @if (banco.perfilAtivo(); as p) {
+        <span class="segmento com-divisa-esq ambiente-banco" [attr.data-ambiente]="p.ambiente">{{ nomeDoAmbiente(p.ambiente).toUpperCase() }}</span>
+        <span class="segmento com-divisa-esq">{{ p.tipo }}@if (!banco.sessaoAtiva()) { <span class="suave"> · desconectado</span> }</span>
+        @if (banco.sessaoAtiva()?.tunel) { <span class="segmento com-divisa-esq">ssh ✓</span> }
+      }
       @if (buffer(); as b) {
         <span class="segmento com-divisa-esq suave">UTF-8 · {{ fimDeLinha() }} · {{ b.modelo.getLanguageId() }}</span>
         <span class="segmento com-divisa-esq posicao">{{ editor.cursor().linha }}:{{ editor.cursor().coluna }}</span>
@@ -91,6 +97,11 @@ export class BarraStatusComponent {
   protected readonly layout = inject(LayoutService);
   protected readonly merge = inject(MergeService);
   protected readonly ia = inject(IaMergeService);
+  protected readonly banco = inject(BancoService);
+
+  protected nomeDoAmbiente(a: string): string {
+    return NOME_DO_AMBIENTE[a] ?? a;
+  }
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
     this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.buscando() ? 'busca' : this.editor.modo(),

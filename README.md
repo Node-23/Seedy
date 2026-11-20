@@ -4,8 +4,8 @@ IDE Java minimalista, guiada pelo teclado, com o visual sob controle de quem usa
 Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 
 > Status: **v0.1 em andamento**. Editor com modo vim, árvore de arquivos, terminal,
-> tema, buscas, inteligência de Java (jdtls) e Git já funcionam. Banco, servidores
-> (JBoss/Tomcat) e IA vêm nas próximas fases — ver [ROADMAP.md](ROADMAP.md).
+> tema, buscas, inteligência de Java (jdtls), Git e banco de dados já funcionam. Servidores
+> (JBoss/Tomcat) e o resto da IA vêm nas próximas fases — ver [ROADMAP.md](ROADMAP.md).
 
 ## O que já tem
 
@@ -55,6 +55,14 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   merge em 3 colunas. Fica dentro da pasta `.git` (nunca vai num commit).
 - **Pull request e issue** sem sair da IDE (`␣ P` / `␣ I`): o PR vai da branch atual (o Seedy
   faz o push antes, se faltar) para a base escolhida, com título e descrição sugeridos pelos commits.
+- **Banco de dados** (mockup 03, `␣ d`): conexões PostgreSQL, MySQL/MariaDB e Oracle com perfis
+  Local / Homolog / Produção (cor por ambiente; Produção nasce somente leitura e, liberada, pede
+  confirmação antes de alterar). Senhas no cofre do sistema (Gerenciador de Credenciais do
+  Windows, Secret Service no Linux). Túnel SSH pelo `ssh` do sistema (usa `~/.ssh/config`,
+  `known_hosts`, chaves e o ssh-agent). Árvore de schemas, tabelas, views, funções e colunas;
+  console SQL por conexão ou qualquer `.sql` do projeto, com autocompletar (tabelas, colunas e
+  apelidos); `Ctrl+Enter` executa a instrução sob o cursor; grade **somente leitura**, explain,
+  exportar CSV (o resultado inteiro) e histórico por conexão.
 - **IA no merge** (mockup 10): `␣ a` abre um chat ao lado das três colunas para conversar
   sobre os conflitos. A IA (Claude) lê o código relacionado e o histórico do arquivo e propõe a
   resolução, que aparece como prévia no resultado: `⏎` aplica, `esc` recusa, `ctrl+r` pede outra.
@@ -71,12 +79,16 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 |---|---|---|
 | Node.js 20+ | [nodejs.org](https://nodejs.org) | `sudo apt install nodejs npm` ou nvm |
 | Rust (stable) | [rustup.rs](https://rustup.rs) | `curl https://sh.rustup.rs -sSf \| sh` |
-| Bibliotecas do sistema | Visual Studio Build Tools (C++) e WebView2 (já vem no Windows 10/11) | `sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev build-essential libssl-dev` |
+| Bibliotecas do sistema | Visual Studio Build Tools (C++) e WebView2 (já vem no Windows 10/11) | `sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev build-essential libssl-dev libdbus-1-dev pkg-config` |
 | JDK 25+ (roda o jdtls) | [adoptium.net](https://adoptium.net) ou `winget install EclipseAdoptium.Temurin.25.JDK` | `sudo apt install openjdk-25-jdk` ou SDKMAN |
 
 O JDK 25 é só para rodar o jdtls: o projeto continua compilando com a versão do `pom.xml` /
 `build.gradle`. O Seedy procura o JDK em `SEEDY_JAVA_HOME`, `JAVA_HOME` e nas pastas de
 instalação comuns (Adoptium, Oracle, Microsoft, Zulu, Corretto, `/usr/lib/jvm`, `~/.sdkman`, `~/.jdks`).
+
+Para o **Oracle**, o Seedy usa o Oracle Instant Client (só quando há uma conexão Oracle):
+baixe em https://www.oracle.com/database/technologies/instant-client/downloads.html e ponha a
+pasta no `PATH` (Windows) ou em `LD_LIBRARY_PATH` (Linux). PostgreSQL e MySQL não precisam de nada.
 
 Guia oficial do Tauri, se algo faltar: https://tauri.app/start/prerequisites/
 
@@ -91,7 +103,18 @@ npm run empacotar    # gera o instalador (.msi/.exe no Windows, .deb/.AppImage n
 Para abrir já num projeto: `seedy /caminho/do/projeto` (ou `␣ o` dentro do app).
 
 Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
-(modo navegador, com arquivos de exemplo; o terminal não funciona aqui).
+(modo navegador, com arquivos e conexões de exemplo; o terminal não funciona aqui).
+
+### Testes do banco
+
+Os testes dos drivers contra bancos de verdade ficam marcados como `#[ignore]`. Com Docker:
+
+```bash
+docker run -d --name seedy-pg -e POSTGRES_PASSWORD=seedy -e POSTGRES_DB=feira_db -p 55432:5432 postgres:17
+docker run -d --name seedy-mysql -e MYSQL_ROOT_PASSWORD=seedy -e MYSQL_DATABASE=feira_db -p 53306:3306 mysql:8.4
+# crie as tabelas feira/banca (e no PostgreSQL a tabela grande) como em src-tauri/src/banco/mod.rs
+cd src-tauri && cargo test --lib -- --include-ignored
+```
 
 ## Atalhos
 
@@ -132,6 +155,9 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | `␣ b` | trocar de branch (ou criar uma) |
 | `␣ n` | blame no arquivo aberto |
 | `␣ m` | resolver conflitos (merge em 3 colunas) |
+| `␣ d` | conexões (banco): `j`/`k`, `l`/`⏎` abre/conecta, `⏎` numa tabela consulta, `c` console, `n` nova, `e` editar, `x` desconectar, `r` recarregar, `del` apagar |
+| `Ctrl+Enter` / `Ctrl+Shift+Enter` (num .sql) | executa a instrução sob o cursor (ou a seleção) / explain |
+| grade do resultado | `j`/`k`/`h`/`l` andam, `y` copia a célula, `Y` copia a linha, `esc` volta ao editor |
 | `␣ a` (no merge) | chat da IA: `⏎` envia (vazio: aplica a proposta), `esc` recusa, `ctrl+r` outra |
 | `␣ G` | GitHub: conectar, clonar, criar PR ou issue, desconectar |
 | `␣ P` / `␣ I` | criar pull request / issue (`ctrl+⏎` cria, `alt+b` troca a base, `alt+r` rascunho) |
@@ -196,6 +222,7 @@ src/                         interface (Angular)
   app/layout/                registro de painéis e disposição
   app/java/                  cliente LSP do jdtls: ciclo de vida, sincronia, provedores do Monaco, gerar código
   app/git/                   tela do Git, grafo, commit, diff, blame, merge em 3 colunas, GitHub
+  app/banco/                 conexões, formulário, grade de resultado, SQL (divisão, autocompletar)
   app/ia/                    chat da IA no merge: conversa, ferramentas (ler arquivo, git log), propostas
   app/escolha/               janela de escolha (uma ou várias opções), usada por quem precisa perguntar
   app/teclado/               atalhos
@@ -206,6 +233,7 @@ src-tauri/                   núcleo (Rust)
   src/tema.rs                tema.json, fontes e recarga ao vivo
   src/git.rs                 roda o git, conta do GitHub (credential manager e API)
   src/ia.rs                  chave da API da Anthropic e pedido com streaming (SSE)
+  src/banco/                 perfis e cofre de senhas, drivers (postgres, mysql, oracle), túnel SSH, SQL
   src/busca.rs               índice de arquivos/símbolos Java e busca de texto
   src/java.rs                acha os JDKs, baixa e verifica o jdtls, processo e canal LSP
   src/observador.rs          observa a pasta do projeto (mudanças feitas fora do editor)

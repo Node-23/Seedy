@@ -14,6 +14,7 @@ import { GithubService } from '../git/github.service';
 import { PrateleiraService } from '../git/prateleira.service';
 import { GithubFormService } from '../git/github-form.service';
 import { IaMergeService } from '../ia/ia-merge.service';
+import { BancoService } from '../banco/banco.service';
 import { BlameService } from '../git/blame.service';
 
 export interface AcaoLider {
@@ -55,6 +56,7 @@ export class AtalhosService {
   private readonly prateleira = inject(PrateleiraService);
   private readonly githubForm = inject(GithubFormService);
   private readonly ia = inject(IaMergeService);
+  private readonly banco = inject(BancoService);
 
   readonly liderAberto = signal(false);
 
@@ -77,7 +79,7 @@ export class AtalhosService {
     { tecla: 'k', rotulo: 'commit', disponivel: true, executar: () => void this.commit.abrir() },
     { tecla: 'b', rotulo: 'trocar de branch', disponivel: true, executar: () => void this.trocarDeBranch() },
     { tecla: 'n', rotulo: 'anotar (blame)', disponivel: true, executar: () => void this.blame.alternar() },
-    { tecla: 'd', rotulo: 'banco', disponivel: false },
+    { tecla: 'd', rotulo: 'conexões (banco)', disponivel: true, executar: () => this.layout.alternar('conexoes') },
     { tecla: 'j', rotulo: 'servidor', disponivel: false },
     { tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
     { tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
@@ -139,7 +141,7 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta();
+    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {
@@ -151,6 +153,10 @@ export class AtalhosService {
       // Voltar/avançar nos arquivos vistos.
       this.engolir(e);
       void this.editor.navegar(e.key === 'ArrowLeft' ? -1 : 1);
+    } else if (ctrl && !e.altKey && e.key === 'Enter' && !janelaAberta && this.banco.ehSql() && this.noEditor(e.target)) {
+      // Ctrl+Enter executa o SQL sob o cursor; Ctrl+Shift+Enter mostra o plano (explain).
+      this.engolir(e);
+      void this.banco.executarNoCursor(e.shiftKey);
     } else if (ctrl && !e.altKey && e.code === 'KeyK' && !janelaAberta) {
       // Ctrl+K commit, Ctrl+Shift+K push (como no IntelliJ).
       this.engolir(e);
@@ -306,6 +312,11 @@ export class AtalhosService {
 
   private noTerminal(alvo: EventTarget | null): boolean {
     return !!(alvo as HTMLElement | null)?.closest?.('.xterm');
+  }
+
+  /** O foco está no editor de código (não no merge, nas buscas ou no terminal). */
+  private noEditor(alvo: EventTarget | null): boolean {
+    return !!(alvo as HTMLElement | null)?.closest?.('sd-editor .monaco-editor');
   }
 
   private foraDeCampoDeTexto(alvo: EventTarget | null): boolean {

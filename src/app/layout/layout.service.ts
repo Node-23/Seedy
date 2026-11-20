@@ -7,7 +7,7 @@ import { Injectable, signal } from '@angular/core';
  * passa por aqui: quando o layout for editável, basta mudar este registro e
  * salvar/carregar a disposição de um arquivo (ver ROADMAP.md).
  */
-export type IdPainel = 'arquivos' | 'terminal';
+export type IdPainel = 'arquivos' | 'conexoes' | 'terminal';
 /** Tela que ocupa a área principal: o editor (com árvore e terminal), o Git ou o merge. */
 export type Tela = 'editor' | 'git' | 'merge';
 export type Regiao = 'esquerda' | 'inferior';
@@ -21,6 +21,7 @@ export interface Painel {
 
 export const PAINEIS: Painel[] = [
   { id: 'arquivos', titulo: 'Arquivos', regiao: 'esquerda', atalho: '␣ e' },
+  { id: 'conexoes', titulo: 'Conexões', regiao: 'esquerda', atalho: '␣ d' },
   { id: 'terminal', titulo: 'Terminal', regiao: 'inferior', atalho: 'alt f12' },
 ];
 
@@ -32,7 +33,7 @@ interface Disposicao {
 
 const CHAVE = 'seedy.layout';
 const PADRAO: Disposicao = {
-  visiveis: { arquivos: true, terminal: false },
+  visiveis: { arquivos: true, conexoes: false, terminal: false },
   larguraEsquerda: 280,
   alturaInferior: 280,
 };
@@ -52,13 +53,20 @@ export class LayoutService {
 
   alternar(id: IdPainel): void {
     const abrir = !this.visivel(id);
-    this.atualizar((d) => ({ ...d, visiveis: { ...d.visiveis, [id]: abrir } }));
+    this.atualizar((d) => ({ ...d, visiveis: { ...d.visiveis, ...this.vizinhosFechados(id, abrir), [id]: abrir } }));
     if (abrir) this.focar(id);
   }
 
   mostrar(id: IdPainel): void {
-    if (!this.visivel(id)) this.atualizar((d) => ({ ...d, visiveis: { ...d.visiveis, [id]: true } }));
+    if (!this.visivel(id)) this.atualizar((d) => ({ ...d, visiveis: { ...d.visiveis, ...this.vizinhosFechados(id, true), [id]: true } }));
     this.focar(id);
+  }
+
+  /** A região da esquerda mostra um painel por vez: abrir um fecha os outros dela. */
+  private vizinhosFechados(id: IdPainel, abrindo: boolean): Partial<Record<IdPainel, boolean>> {
+    const regiao = PAINEIS.find((p) => p.id === id)?.regiao;
+    if (!abrindo || regiao !== 'esquerda') return {};
+    return Object.fromEntries(PAINEIS.filter((p) => p.regiao === regiao && p.id !== id).map((p) => [p.id, false]));
   }
 
   focar(id: IdPainel): void {

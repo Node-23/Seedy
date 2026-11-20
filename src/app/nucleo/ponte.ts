@@ -53,6 +53,73 @@ export interface SaidaGit {
   erro: string;
 }
 
+export type AmbienteBanco = 'local' | 'homolog' | 'producao';
+export type TipoBanco = 'postgres' | 'mysql' | 'oracle';
+
+/** Conexão salva (a senha fica no cofre do sistema, não aqui). */
+export interface PerfilBanco {
+  id: string;
+  nome: string;
+  ambiente: AmbienteBanco;
+  tipo: TipoBanco;
+  host: string;
+  porta: number;
+  /** Banco (PostgreSQL/MySQL) ou serviço (Oracle). */
+  banco: string;
+  usuario: string;
+  somenteLeitura: boolean;
+  ssl: 'desligado' | 'exigir' | 'verificar';
+  /** Destino do túnel SSH (Host do ~/.ssh/config ou usuario@servidor). */
+  ssh: string | null;
+}
+
+export interface InfoTunel {
+  alvo: string;
+  destino: string;
+  portaLocal: number;
+  identidade: string | null;
+}
+
+export interface InfoConexao {
+  versao: string;
+  tunel: InfoTunel | null;
+}
+
+export interface ColunaSql {
+  nome: string;
+  tipo: string;
+}
+
+export interface ResultadoSql {
+  colunas: ColunaSql[];
+  /** null = NULL. */
+  linhas: (string | null)[][];
+  cortado: boolean;
+  afetadas: number | null;
+  ms: number;
+}
+
+export interface SchemaBanco {
+  nome: string;
+  tabelas: string[];
+  views: string[];
+  funcoes: string[];
+}
+
+export interface ColunaDeTabela {
+  tabela: string;
+  coluna: string;
+  tipo: string;
+}
+
+export interface EntradaDoHistoricoSql {
+  sql: string;
+  quando: number;
+  ms: number;
+  linhas: number | null;
+  erro: string | null;
+}
+
 export interface UsuarioGithub {
   login: string;
   nome: string | null;
@@ -193,6 +260,13 @@ export const ponte = {
     return typeof escolha === 'string' ? escolha : null;
   },
 
+  /** Pergunta onde salvar um arquivo (ex.: exportar CSV). null = cancelou. */
+  async escolherOndeSalvar(titulo: string, nomeSugerido: string, extensao: string): Promise<string | null> {
+    if (!noApp()) return `${RAIZ_EXEMPLO}/${nomeSugerido}`;
+    const { save } = await import('@tauri-apps/plugin-dialog');
+    return save({ title: titulo, defaultPath: nomeSugerido, filters: [{ name: extensao.toUpperCase(), extensions: [extensao] }] });
+  },
+
   /** Java: JDK, instalação do jdtls e o canal LSP (só dentro do app). */
   java: {
     async estado(jdk: string | null): Promise<EstadoJava | null> {
@@ -229,6 +303,28 @@ export const ponte = {
       eventos.onmessage = aoEvento;
       await invoke<void>('ia_mensagem', { corpo, eventos });
     },
+  },
+
+  /** Banco de dados (Fase 3): perfis, sessões, consultas. Fora do app, dados de exemplo. */
+  banco: {
+    perfis: async (): Promise<PerfilBanco[]> => (noApp() ? invoke<PerfilBanco[]>('banco_perfis') : exemplo.bancoPerfis()),
+    salvarPerfil: (perfil: PerfilBanco, senha: string | null) =>
+      noApp() ? invoke<void>('banco_salvar_perfil', { perfil, senha }) : Promise.resolve(exemplo.bancoSalvar(perfil)),
+    apagarPerfil: (id: string) => (noApp() ? invoke<void>('banco_apagar_perfil', { id }) : Promise.resolve(exemplo.bancoApagar(id))),
+    temSenha: async (id: string): Promise<boolean> => (noApp() ? invoke<boolean>('banco_tem_senha', { id }) : true),
+    /** Erro "SEM_SENHA" = não há senha guardada: pergunte e chame de novo com ela. */
+    conectar: (id: string, senha: string | null, lembrar: boolean) =>
+      noApp() ? invoke<InfoConexao>('banco_conectar', { id, senha, lembrar }) : Promise.resolve(exemplo.bancoConectar(id)),
+    desconectar: (id: string) => (noApp() ? invoke<void>('banco_desconectar', { id }) : Promise.resolve()),
+    consultar: (id: string, sql: string, limite: number) =>
+      noApp() ? invoke<ResultadoSql>('banco_consultar', { id, sql, limite }) : exemplo.bancoConsultar(sql),
+    exportarCsv: (id: string, sql: string, caminho: string) =>
+      noApp() ? invoke<number>('banco_exportar_csv', { id, sql, caminho }) : Promise.resolve(4),
+    catalogo: (id: string) => (noApp() ? invoke<SchemaBanco[]>('banco_catalogo', { id }) : Promise.resolve(exemplo.bancoCatalogo())),
+    colunas: (id: string, schema: string) =>
+      noApp() ? invoke<ColunaDeTabela[]>('banco_colunas', { id, schema }) : Promise.resolve(exemplo.bancoColunas()),
+    historico: (id: string) => (noApp() ? invoke<EntradaDoHistoricoSql[]>('banco_historico', { id }) : Promise.resolve([])),
+    console: (id: string) => (noApp() ? invoke<string>('banco_console', { id }) : Promise.resolve(exemplo.bancoConsole(id))),
   },
 
   terminal: {

@@ -3,7 +3,7 @@
  * Serve para trabalhar no visual com dados parecidos com os dos mockups.
  * Nada aqui roda dentro do app.
  */
-import type { Entrada, Indice, Ocorrencia, Simbolo } from './ponte';
+import type { ColunaDeTabela, Entrada, Indice, InfoConexao, Ocorrencia, PerfilBanco, ResultadoSql, SchemaBanco, Simbolo } from './ponte';
 import { expressaoDeBusca, OpcoesTexto, passaNaMascara, trechosEncontrados } from '../busca/texto';
 
 export const RAIZ_EXEMPLO = '/exemplo/feirinha-verde';
@@ -184,6 +184,12 @@ class ReservaBancaTest {
 };
 
 const absoluto = (rel: string) => `${RAIZ_EXEMPLO}/${rel}`;
+
+const PERFIS_EXEMPLO: PerfilBanco[] = [
+  { id: 'local', nome: 'Local', ambiente: 'local', tipo: 'postgres', host: 'localhost', porta: 5432, banco: 'feira_db', usuario: 'postgres', somenteLeitura: false, ssl: 'desligado', ssh: null },
+  { id: 'homolog', nome: 'Homolog', ambiente: 'homolog', tipo: 'postgres', host: '10.0.0.12', porta: 5432, banco: 'feira_db', usuario: 'app', somenteLeitura: false, ssl: 'exigir', ssh: null },
+  { id: 'producao', nome: 'Produção', ambiente: 'producao', tipo: 'postgres', host: 'localhost', porta: 5432, banco: 'feira_db', usuario: 'leitura', somenteLeitura: true, ssl: 'desligado', ssh: 'vps' },
+];
 const relativos = () => Object.keys(ARQUIVOS).sort();
 
 export const exemplo = {
@@ -229,6 +235,67 @@ export const exemplo = {
     }
     ev({ type: 'message_delta', delta: { stop_reason: depoisDaFerramenta ? 'end_turn' : 'tool_use' } });
     ev({ type: 'message_stop' });
+  },
+
+  // ---------- banco (modo navegador) ----------
+
+  bancoPerfis(): PerfilBanco[] {
+    return PERFIS_EXEMPLO;
+  },
+
+  bancoSalvar(p: PerfilBanco): void {
+    const i = PERFIS_EXEMPLO.findIndex((x) => x.id === p.id);
+    if (i >= 0) PERFIS_EXEMPLO[i] = p;
+    else PERFIS_EXEMPLO.push(p);
+  },
+
+  bancoApagar(id: string): void {
+    const i = PERFIS_EXEMPLO.findIndex((x) => x.id === id);
+    if (i >= 0) PERFIS_EXEMPLO.splice(i, 1);
+  },
+
+  bancoConectar(id: string): InfoConexao {
+    const p = PERFIS_EXEMPLO.find((x) => x.id === id);
+    return {
+      versao: 'PostgreSQL 17.2',
+      tunel: p?.ssh ? { alvo: p.ssh, destino: `${p.host}:${p.porta}`, portaLocal: 54321, identidade: '~/.ssh/id_ed25519' } : null,
+    };
+  },
+
+  async bancoConsultar(sql: string): Promise<ResultadoSql> {
+    await new Promise((r) => setTimeout(r, 120));
+    if (!/^\s*(--.*\n\s*)*(select|with)/i.test(sql)) return { colunas: [], linhas: [], cortado: false, afetadas: 1, ms: 12 };
+    return {
+      colunas: [
+        { nome: 'nome', tipo: 'varchar' },
+        { nome: 'data', tipo: 'date' },
+        { nome: 'bancas', tipo: 'int8' },
+      ],
+      linhas: [
+        ['Feira Central', '2026-11-07', '42'],
+        ['Feira do Jockey', '2026-11-14', '37'],
+        ['Feira Central', '2026-11-21', '18'],
+        ['Feira do Jockey', '2026-11-28', '6'],
+      ],
+      cortado: false,
+      afetadas: null,
+      ms: 38,
+    };
+  },
+
+  bancoCatalogo(): SchemaBanco[] {
+    return [{ nome: 'public', tabelas: ['banca', 'feira', 'feirante', 'pagamento', 'reserva'], views: ['resumo'], funcoes: ['total_bancas'] }];
+  },
+
+  bancoColunas(): ColunaDeTabela[] {
+    const c = (tabela: string, coluna: string, tipo: string) => ({ tabela, coluna, tipo });
+    return [c('feira', 'id', 'integer'), c('feira', 'nome', 'character varying'), c('feira', 'data', 'date'), c('banca', 'id', 'integer'), c('banca', 'feira_id', 'integer')];
+  },
+
+  bancoConsole(id: string): string {
+    const rel = 'reservas-mes.sql';
+    if (!(rel in ARQUIVOS)) ARQUIVOS[rel] = `-- console ${id}\n`;
+    return absoluto(rel);
   },
 
   gravarArquivo(caminho: string, conteudo: string): void {

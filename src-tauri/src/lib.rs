@@ -5,6 +5,7 @@
 //! de acesso ao sistema (arquivos, busca, processos, PTY, Git) mora aqui.
 
 mod arquivos;
+mod banco;
 mod busca;
 mod git;
 mod ia;
@@ -20,6 +21,7 @@ pub fn run() {
         .manage(java::Servidores::default())
         .manage(observador::Observador::default())
         .manage(git::ContaGithub::default())
+        .manage(banco::Bancos::default())
         .setup(|app| {
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
@@ -44,6 +46,19 @@ pub fn run() {
             ia::ia_definir_chave,
             ia::ia_esquecer_chave,
             ia::ia_mensagem,
+            banco::banco_perfis,
+            banco::banco_salvar_perfil,
+            banco::banco_apagar_perfil,
+            banco::banco_tem_senha,
+            banco::banco_conectar,
+            banco::banco_desconectar,
+            banco::banco_conectados,
+            banco::banco_consultar,
+            banco::banco_exportar_csv,
+            banco::banco_catalogo,
+            banco::banco_colunas,
+            banco::banco_historico,
+            banco::banco_console,
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,
