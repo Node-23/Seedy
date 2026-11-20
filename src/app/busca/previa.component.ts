@@ -27,7 +27,14 @@ export class PreviaComponent {
       queueMicrotask(() => {
         const caixa = this.codigo().nativeElement;
         const marca = caixa.querySelector<HTMLElement>('.alvo .casado');
-        caixa.scrollLeft = marca ? Math.max(0, marca.offsetLeft - caixa.clientWidth / 2) : 0;
+        if (!marca) {
+          caixa.scrollLeft = 0;
+          return;
+        }
+        // Só rola se o trecho encontrado não couber na largura visível.
+        const inicio = marca.getBoundingClientRect().left - caixa.getBoundingClientRect().left + caixa.scrollLeft;
+        const fim = inicio + marca.getBoundingClientRect().width;
+        caixa.scrollLeft = fim > caixa.clientWidth - 24 ? Math.max(0, inicio - caixa.clientWidth / 2) : 0;
       });
     });
   }

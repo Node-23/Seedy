@@ -11,7 +11,7 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - Terminal integrado com abas (PTY real)
 - Tecla líder + menu de atalhos, statusline, painéis redimensionáveis
 
-## Fase 1 — Inteligência de Java (jdtls) (em andamento)
+## ✅ Fase 1 — Inteligência de Java (jdtls)
 
 - ✅ Baixar/gerenciar o jdtls (versão fixa 1.63.0, conferida por SHA-256; roda em JDK 25+)
 - ✅ Ponte LSP no núcleo (stdio ↔ interface) e cliente LSP no Monaco
@@ -20,11 +20,18 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
   ações rápidas, organizar imports, formatar, estrutura do arquivo
 - ✅ Destaque de definições via semantic tokens (Alabaster completo)
 - ✅ Maven e Gradle (importação do jdtls; os arquivos do Eclipse ficam no cache, não no projeto)
-- Abrir código de bibliotecas/JDK (`jdt://`, com `java/classFileContents`)
-- "Símbolos" e "usos" do `Ctrl+P` vindos do jdtls (`workspace/symbol`, `textDocument/references`)
-- Extrair variável/método com prompt de nome; gerar getters/construtor com escolha de campos
-- Dica inline de "import não usado" como no mockup 01
-- Selecionar o JDK do jdtls em configuração (hoje: `SEEDY_JAVA_HOME`)
+- ✅ Abrir código de bibliotecas/JDK somente leitura (`jdt://`, com `java/classFileContents`),
+  navegando de dentro dele também
+- ✅ `Ctrl+P` com classes de bibliotecas/JDK (`workspace/symbol`) e usos de verdade
+  (`textDocument/references`); os símbolos do projeto seguem vindo do índice (instantâneo)
+- ✅ Extrair variável/campo/método já abrindo o renomear no nome gerado
+- ✅ Dica inline de código não usado ("◆ import não usado"), avisos configuráveis em `jdtls.prefs`
+
+Ficou para depois:
+
+- Gerar getters/construtor/toString com escolha de campos (prompts do jdtls)
+- Selecionar o JDK do jdtls em configuração (hoje: `SEEDY_JAVA_HOME` ou o mais novo instalado)
+- Árvore de arquivos atualizando sozinha (hoje: ↻ na faixa) — ver "Depois"
 
 ## Fase 2 — Busca (em andamento)
 

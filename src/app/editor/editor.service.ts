@@ -11,6 +11,12 @@ export interface Buffer {
   modelo: monaco.editor.ITextModel;
   /** Versão do modelo no último salvamento; diferente = arquivo sujo. */
   versaoSalva: number;
+  /**
+   * Buffer que não é um arquivo do projeto (ex.: código de biblioteca vindo do jdtls).
+   * Não salva, não edita; `caminho` é a URI e `descricao` o nome para mostrar.
+   */
+  somenteLeitura?: boolean;
+  descricao?: string;
 }
 
 export type ModoVim = 'normal' | 'insert' | 'visual' | 'replace';
@@ -43,10 +49,16 @@ export class EditorService {
     // quem abre é o Seedy, como um buffer.
     monaco.editor.registerEditorOpener({
       openCodeEditor: (_origem, recurso, selecao) => {
-        if (recurso.scheme !== 'file') return false;
         const pos = selecao && 'startLineNumber' in selecao
           ? { linha: selecao.startLineNumber, coluna: selecao.startColumn }
           : selecao ? { linha: selecao.lineNumber, coluna: selecao.column } : null;
+        if (recurso.scheme !== 'file') {
+          // Modelo virtual (ex.: jdt:// do jdtls), criado por quem achou a definição.
+          const modelo = monaco.editor.getModel(recurso);
+          if (!modelo) return false;
+          this.abrirModelo(modelo, undefined, pos?.linha, pos?.coluna);
+          return true;
+        }
         const caminho = recurso.fsPath.replace(/^([a-z]):/, (_, l: string) => `${l.toUpperCase()}:`);
         void this.abrir(caminho, pos?.linha, pos?.coluna);
         return true;
@@ -56,6 +68,7 @@ export class EditorService {
 
   sujo(b: Buffer): boolean {
     this.edicoes();
+    if (b.somenteLeitura) return false;
     return b.modelo.getAlternativeVersionId() !== b.versaoSalva;
   }
 
@@ -85,8 +98,34 @@ export class EditorService {
 
   /** Buffer aberto deste arquivo, comparando pela URI (no Windows, `c:\` e `C:\` são o mesmo). */
   bufferDe(caminho: string): Buffer | undefined {
+    const direto = this.buffers().find((b) => b.caminho === caminho);
+    if (direto) return direto;
     const uri = monaco.Uri.file(caminho).toString();
     return this.buffers().find((b) => b.modelo.uri.toString() === uri);
+  }
+
+  /**
+   * Abre como buffer somente leitura um modelo que não é arquivo do projeto
+   * (código de biblioteca/JDK). `descricao` aparece na statusline e nas migalhas.
+   */
+  abrirModelo(modelo: monaco.editor.ITextModel, descricao?: string, linha?: number, coluna?: number): Buffer {
+    const chave = modelo.uri.toString();
+    let buffer = this.buffers().find((b) => b.caminho === chave);
+    if (!buffer) {
+      const nome = decodeURIComponent(modelo.uri.path.split('/').pop() ?? chave);
+      buffer = {
+        caminho: chave,
+        nome,
+        modelo,
+        versaoSalva: modelo.getAlternativeVersionId(),
+        somenteLeitura: true,
+        descricao: descricao ?? descricaoDeClasse(modelo.uri) ?? nome,
+      };
+      this.buffers.update((lista) => [...lista, buffer!]);
+    }
+    this.ativo.set(buffer.caminho);
+    if (linha) this.irPara(buffer, linha, coluna);
+    return buffer;
   }
 
   /**
@@ -140,6 +179,10 @@ export class EditorService {
   async salvar(caminho = this.ativo(), avisar = true): Promise<boolean> {
     const b = this.buffers().find((x) => x.caminho === caminho);
     if (!b) return false;
+    if (b.somenteLeitura) {
+      if (avisar) this.mensagens.mostrar(`"${b.nome}" é somente leitura`);
+      return false;
+    }
     try {
       await ponte.gravarArquivo(b.caminho, b.modelo.getValue());
       b.versaoSalva = b.modelo.getAlternativeVersionId();
@@ -206,4 +249,13 @@ export class EditorService {
       .find((l) => l.filenames?.some((f) => f.toLowerCase() === nome) || l.extensions?.includes(ext));
     return linguagem?.id ?? 'plaintext';
   }
+}
+
+/** `jdt://contents/java.base/java.util/ArrayList.class?...` (ou `.java`) → `java.util.ArrayList`. */
+function descricaoDeClasse(uri: monaco.Uri): string | null {
+  if (uri.scheme !== 'jdt') return null;
+  const partes = decodeURIComponent(uri.path).split('/').filter(Boolean);
+  const classe = partes.pop()?.replace(/\.(class|java)$/, '');
+  const pacote = partes.pop();
+  return classe ? (pacote ? `${pacote}.${classe}` : classe) : null;
 }

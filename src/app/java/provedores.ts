@@ -28,6 +28,29 @@ import {
 const L = 'java';
 /** Comando do Monaco que executa um comando do jdtls (usado pelas ações rápidas). */
 const CMD_EXECUTAR = 'seedy.jdtls.executar';
+/** Comando do Monaco que abre o renomear no nome que o "extrair" acabou de criar. */
+const CMD_RENOMEAR_EXTRAIDO = 'seedy.jdtls.renomearExtraido';
+
+/**
+ * Nome que o jdtls deu ao extrair: a declaração nova no texto inserido
+ * (método `private int extracted(`, campo `private int size;`, variável `int size =`).
+ */
+export function nomeExtraido(edicao: EdicaoDeWorkspaceLsp): string | null {
+  const textos = [...edicoesPorArquivo(edicao).values()].flat().map((e) => e.newText);
+  const tipo = String.raw`[\w$<>\[\],.?]+(?:\s*<[^>]*>)?`;
+  const padroes = [
+    new RegExp(String.raw`(?:private|protected|public)\s+(?:static\s+)?(?:final\s+)?${tipo}\s+(\w+)\s*\(`),
+    new RegExp(String.raw`(?:private|protected|public)\s+(?:static\s+)?(?:final\s+)?${tipo}\s+(\w+)\s*[;=]`),
+    new RegExp(String.raw`(?:^|[\s;{])(?:final\s+)?(?:var|${tipo})\s+(\w+)\s*=`),
+  ];
+  for (const re of padroes) {
+    for (const t of textos) {
+      const m = re.exec(t);
+      if (m) return m[1];
+    }
+  }
+  return null;
+}
 
 /** Tipos (LSP) que contam como definição quando vêm com o modificador `declaration`. */
 const TIPOS_DE_DEFINICAO = new Set([
@@ -35,7 +58,7 @@ const TIPOS_DE_DEFINICAO = new Set([
 ]);
 
 export function registrarProvedores(jdtls: JdtlsService, editor: EditorService, mensagens: MensagensService): void {
-  const doc = (m: monaco.editor.ITextModel) => ({ uri: m.uri.toString() });
+  const doc = (m: monaco.editor.ITextModel) => ({ uri: jdtls.uriLsp(m.uri) });
   const pos = (m: monaco.editor.ITextModel, p: monaco.IPosition) => ({ textDocument: doc(m), position: paraPosicaoLsp(p) });
 
   /** Garante modelos para os arquivos de destino (o Monaco precisa deles para prévias e listas). */
@@ -44,16 +67,17 @@ export function registrarProvedores(jdtls: JdtlsService, editor: EditorService, 
       'targetUri' in l ? { uri: l.targetUri, range: l.targetSelectionRange ?? l.targetRange } : l,
     ) as LocalLsp[];
     const saida: monaco.languages.Location[] = [];
-    let foraDoProjeto = 0;
     for (const l of lista) {
       const uri = uriMonaco(l.uri);
-      if (uri.scheme !== 'file') {
-        foraDoProjeto++;
-        continue;
+      if (uri.scheme === 'file') {
+        if (await editor.garantirModelo(caminhoDaUri(uri))) saida.push({ uri, range: paraIntervalo(l.range) });
+      } else if (uri.scheme === 'jdt') {
+        // Biblioteca ou JDK: o jdtls manda o código (fonte anexado ou decompilado).
+        const modelo = await jdtls.modeloDeClasse(l.uri);
+        if (modelo) saida.push({ uri: modelo.uri, range: paraIntervalo(l.range) });
+        else mensagens.mostrar('o jdtls não tem o código desta classe');
       }
-      if (await editor.garantirModelo(caminhoDaUri(uri))) saida.push({ uri, range: paraIntervalo(l.range) });
     }
-    if (!saida.length && foraDoProjeto) mensagens.mostrar('a definição está numa biblioteca (código de bibliotecas: em breve)');
     return saida;
   };
 
@@ -270,6 +294,22 @@ export function registrarProvedores(jdtls: JdtlsService, editor: EditorService, 
     await c.pedir('workspace/executeCommand', { command: comando.command, arguments: comando.arguments }).catch((e) => mensagens.erro(`jdtls: ${e.message ?? e}`));
   });
 
+  // Depois de extrair: põe o cursor no nome gerado mais perto de onde foi pedido e abre o renomear.
+  monaco.editor.registerCommand(CMD_RENOMEAR_EXTRAIDO, (_acessor, args: { nome: string; linha: number }) => {
+    const ed = editor.instancia;
+    const m = ed?.getModel();
+    if (!ed || !m) return;
+    const achados = m.findMatches(`\\b${args.nome}\\b`, false, true, true, null, false);
+    const perto = achados.sort(
+      (a, b) => Math.abs(a.range.startLineNumber - args.linha) - Math.abs(b.range.startLineNumber - args.linha),
+    )[0];
+    if (!perto) return;
+    ed.setPosition({ lineNumber: perto.range.startLineNumber, column: perto.range.startColumn });
+    ed.focus();
+    // Espera o jdtls receber o texto novo (didChange) antes de pedir o renomear.
+    setTimeout(() => ed.trigger('extrair', 'editor.action.rename', null), 150);
+  });
+
   const originaisDeAcao = new WeakMap<monaco.languages.CodeAction, any>();
   const paraAcao = async (a: any): Promise<monaco.languages.CodeAction> => {
     // Sem "kind", é um Command solto (formato antigo do LSP).
@@ -310,14 +350,25 @@ export function registrarProvedores(jdtls: JdtlsService, editor: EditorService, 
           },
           cancel,
         );
+        // Lembra onde foi pedida (para achar o nome extraído depois).
+        for (const a of r ?? []) a.__linha = intervalo.startLineNumber;
         return { actions: await Promise.all((r ?? []).map(paraAcao)), dispose: () => {} };
       },
       async resolveCodeAction(acao, cancel) {
         const original = originaisDeAcao.get(acao);
         const c = jdtls.cliente();
         if (!original || !c) return acao;
-        const edicao = original.edit ?? (await c.pedir('codeAction/resolve', original, cancel))?.edit;
-        return { ...acao, edit: edicao ? await edicaoDeWorkspace(edicao) : undefined };
+        const { __linha: _linha, ...paraOJdtls } = original;
+        const edicao: EdicaoDeWorkspaceLsp | undefined = original.edit ?? (await c.pedir('codeAction/resolve', paraOJdtls, cancel))?.edit;
+        // O Monaco só copia `edit` do resultado: muda a própria ação.
+        acao.edit = edicao ? await edicaoDeWorkspace(edicao) : undefined;
+        // Extrair variável/método/campo: o jdtls inventa o nome ("size", "extracted");
+        // depois de aplicar, já abre o renomear nele, como o IntelliJ.
+        const nome = String(original.kind ?? '').startsWith('refactor.extract') && edicao ? nomeExtraido(edicao) : null;
+        if (nome && !acao.command) {
+          acao.command = { id: CMD_RENOMEAR_EXTRAIDO, title: 'renomear', arguments: [{ nome, linha: original.__linha }] };
+        }
+        return acao;
       },
     },
     { providedCodeActionKinds: ['quickfix', 'refactor', 'source', 'source.organizeImports'] },

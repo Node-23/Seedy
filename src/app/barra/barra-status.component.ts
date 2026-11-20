@@ -69,6 +69,7 @@ export class BarraStatusComponent {
     const b = this.buffer();
     const raiz = this.projeto.raiz();
     if (!b) return '';
+    if (b.somenteLeitura) return `${b.descricao ?? b.nome} (somente leitura)`;
     return raiz && b.caminho.startsWith(raiz) ? b.caminho.slice(raiz.length + 1).replace(/\\/g, '/') : b.caminho;
   });
   protected readonly fimDeLinha = computed(() => {

@@ -7,6 +7,8 @@ import { nomeBase, Ocorrencia, ponte } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { EditorService } from '../editor/editor.service';
 import { AtalhosService } from '../teclado/atalhos.service';
+import { JdtlsService } from '../java/jdtls.service';
+import { monaco } from '../editor/monaco';
 
 type TipoItem = 'classe' | 'metodo' | 'arquivo' | 'texto' | 'acao';
 
@@ -20,11 +22,19 @@ interface Item {
   linha?: number;
   /** Nome do símbolo (classes e métodos), para a prévia e os usos. */
   nome?: string;
+  /** Classe de biblioteca/JDK (URI `jdt://` do jdtls): abre somente leitura. */
+  uriJdt?: string;
   executar?: () => void;
 }
 
 interface Previa extends PreviaBase {
   arquivo: string;
+}
+
+interface SimboloDeBiblioteca {
+  name: string;
+  containerName?: string;
+  uri: string;
 }
 
 interface Usos {
@@ -39,6 +49,19 @@ const LIMITE = 100;
 /** Código de teste vem depois do código principal. */
 const PENALIDADE_TESTE = 60;
 const ehTeste = (caminho: string) => /[\\/]src[\\/]test[\\/]/.test(caminho);
+/** Classes de bibliotecas e do JDK vêm depois das do projeto. */
+const PENALIDADE_BIBLIOTECA = 150;
+/** SymbolKind do LSP que são tipos: classe, enum, interface, struct (record). */
+const TIPOS_LSP = new Set([5, 10, 11, 23]);
+
+const escaparNome = (nome: string) => nome.replace(/[$]/g, '\\$');
+
+/** Linha (1..n) onde o tipo é declarado no código. */
+function linhaDaDeclaracao(conteudo: string, nome: string): number {
+  const re = new RegExp(`\\b(class|interface|enum|record|@interface)\\s+${escaparNome(nome)}\\b`);
+  const i = conteudo.split(/\r?\n/).findIndex((l) => re.test(l));
+  return i >= 0 ? i + 1 : 1;
+}
 
 /** Pedaços do rótulo, com as letras casadas marcadas para sublinhar. */
 function marcar(texto: string, posicoes: number[]): Pedaco[] {
@@ -144,6 +167,7 @@ export class BuscaComponent {
   private readonly projeto = inject(ProjetoService);
   private readonly editor = inject(EditorService);
   private readonly atalhos = inject(AtalhosService);
+  private readonly jdtls = inject(JdtlsService);
   private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
   private readonly lista = viewChild<ElementRef<HTMLUListElement>>('lista');
 
@@ -156,6 +180,18 @@ export class BuscaComponent {
   private readonly usos = signal<Usos | null>(null);
   private readonly cacheArquivos = new Map<string, string>();
   private readonly cacheUsos = new Map<string, Usos>();
+  /** Tipos de bibliotecas/JDK que o jdtls achou para a consulta atual. */
+  private readonly classesDeBiblioteca = signal<{ consulta: string; simbolos: SimboloDeBiblioteca[] }>({
+    consulta: '',
+    simbolos: [],
+  });
+
+  /** Consulta para o jdtls: ≥ 2 letras, nos filtros que mostram classes. */
+  private readonly consultaDeClasses = computed(() => {
+    const q = this.busca.consulta().trim();
+    const f = this.busca.filtro();
+    return q.length >= 2 && (f === 'tudo' || f === 'classes' || f === 'simbolos') ? q : '';
+  });
 
   /** Busca de texto só a partir de 2 letras, e só nos filtros que mostram texto. */
   private readonly consultaDeTexto = computed(() => {
@@ -185,6 +221,25 @@ export class BuscaComponent {
           caminho: s.caminho,
           linha: s.linha,
           nome: s.nome,
+        });
+      }
+    }
+
+    // Bibliotecas e JDK (jdtls), depois das classes do projeto.
+    const biblioteca = this.classesDeBiblioteca();
+    if (q && biblioteca.consulta === this.consultaDeClasses()) {
+      for (const s of biblioteca.simbolos) {
+        const c = casar(q, s.name);
+        if (!c) continue;
+        itens.push({
+          id: `j:${s.uri}`,
+          tipo: 'classe',
+          pedacos: marcar(s.name, c.posicoes),
+          detalhe: s.containerName ?? '',
+          // Classe aninhada (o contêiner é outra classe, ex.: java.util.Arrays) vem depois da de topo.
+          pontos: c.pontos + PESO.classe - PENALIDADE_BIBLIOTECA - (/(^|\.)[A-Z][^.]*$/.test(s.containerName ?? '') ? 5 : 0),
+          nome: s.name,
+          uriJdt: s.uri,
         });
       }
     }
@@ -262,6 +317,7 @@ export class BuscaComponent {
 
   protected readonly rodapePrevia = computed(() => {
     const item = this.selecionado();
+    if (item?.uriJdt) return { usos: null, texto: `biblioteca · ${item.detalhe}.${item.nome} (somente leitura)` };
     if (!item?.caminho) return null;
     if (item.nome) return { usos: this.usos(), texto: 'procurando usos…' };
     const raiz = this.projeto.raiz();
@@ -308,19 +364,41 @@ export class BuscaComponent {
       const q = this.busca.consulta().trim();
       let valido = true;
       aoLimpar(() => (valido = false));
-      if (!item?.caminho) {
+      if (!item?.caminho && !item?.uriJdt) {
         this.previa.set(null);
         return;
       }
       void untracked(() => this.montarPrevia(item, q)).then((p) => valido && this.previa.set(p));
     });
 
-    // Usos do símbolo selecionado (por enquanto, ocorrências do nome; com o jdtls, usos de verdade).
+    // Classes de bibliotecas e do JDK, pelo jdtls (workspace/symbol).
+    effect((aoLimpar) => {
+      const q = this.consultaDeClasses();
+      const cliente = this.jdtls.cliente();
+      if (!q || !cliente) return;
+      let valido = true;
+      const t = setTimeout(async () => {
+        const r = await cliente
+          .pedir<{ name: string; kind: number; containerName?: string; location?: { uri: string } }[] | null>('workspace/symbol', { query: q })
+          .catch(() => null);
+        const simbolos = (r ?? [])
+          .filter((s) => TIPOS_LSP.has(s.kind) && s.location?.uri.startsWith('jdt:'))
+          .map((s) => ({ name: s.name, containerName: s.containerName, uri: s.location!.uri }));
+        if (valido) this.classesDeBiblioteca.set({ consulta: q, simbolos });
+      }, 200);
+      aoLimpar(() => {
+        valido = false;
+        clearTimeout(t);
+      });
+    });
+
+    // Usos do símbolo selecionado: do jdtls quando ele está pronto; senão, ocorrências do nome.
     effect((aoLimpar) => {
       const item = this.selecionado();
       const raiz = this.projeto.raiz();
+      const comJdtls = !!this.jdtls.cliente();
       this.usos.set(null);
-      if (!item?.nome || !raiz) return;
+      if (!item?.nome || !item.caminho || !raiz) return;
       const chave = `${item.caminho}:${item.linha}`;
       const pronto = this.cacheUsos.get(chave);
       if (pronto) {
@@ -329,6 +407,12 @@ export class BuscaComponent {
       }
       let valido = true;
       const t = setTimeout(async () => {
+        const doJdtls = comJdtls ? await this.usosPeloJdtls(item) : null;
+        if (doJdtls) {
+          this.cacheUsos.set(chave, doJdtls);
+          if (valido) this.usos.set(doJdtls);
+          return;
+        }
         const achados = await ponte.buscarTexto(raiz, item.nome!, 500).catch(() => []);
         const palavra = new RegExp(`\\b${item.nome!.replace(/[$]/g, '\\$')}\\b`);
         const fora = achados.filter(
@@ -394,9 +478,51 @@ export class BuscaComponent {
       item.executar();
       return;
     }
+    if (item.uriJdt) {
+      const modelo = await this.jdtls.modeloDeClasse(item.uriJdt);
+      if (!modelo) return;
+      this.busca.fechar(false);
+      this.editor.abrirModelo(modelo, undefined, linhaDaDeclaracao(modelo.getValue(), item.nome ?? ''));
+      return;
+    }
     if (!item.caminho) return;
     this.busca.fechar(false);
     await this.editor.abrir(item.caminho, item.linha);
+  }
+
+  /** Usos de verdade (textDocument/references), na posição do nome na linha da declaração. */
+  private async usosPeloJdtls(item: Item): Promise<Usos | null> {
+    const cliente = this.jdtls.cliente();
+    const conteudo = await this.conteudoDe(item);
+    if (!cliente || conteudo === null || !item.linha || !item.nome) return null;
+    const texto = conteudo.split(/\r?\n/)[item.linha - 1] ?? '';
+    const coluna = texto.search(new RegExp(`\\b${escaparNome(item.nome)}\\b`));
+    if (coluna < 0) return null;
+    const r = await cliente
+      .pedir<{ uri: string; range: { start: { line: number } } }[] | null>('textDocument/references', {
+        textDocument: { uri: monaco.Uri.file(item.caminho!).toString() },
+        position: { line: item.linha - 1, character: coluna },
+        context: { includeDeclaration: false },
+      })
+      .catch(() => null);
+    if (!r) return null;
+    const nomeDe = (uri: string) => decodeURIComponent(uri.split('/').pop() ?? '').replace(/\.[^.]+$/, '');
+    return { total: r.length, lugares: r.slice(0, 3).map((l) => `${nomeDe(l.uri)}:${l.range.start.line + 1}`) };
+  }
+
+  /** Conteúdo do arquivo do item (com cache), ou da classe de biblioteca pelo jdtls. */
+  private async conteudoDe(item: Item): Promise<string | null> {
+    if (item.uriJdt) return (await this.jdtls.modeloDeClasse(item.uriJdt))?.getValue() ?? null;
+    let conteudo = this.cacheArquivos.get(item.caminho!);
+    if (conteudo === undefined) {
+      try {
+        conteudo = await ponte.lerArquivo(item.caminho!);
+      } catch {
+        return null;
+      }
+      this.cacheArquivos.set(item.caminho!, conteudo);
+    }
+    return conteudo;
   }
 
   private mover(passo: number): void {
@@ -412,19 +538,12 @@ export class BuscaComponent {
   }
 
   private async montarPrevia(item: Item, consulta: string): Promise<Previa | null> {
-    let conteudo = this.cacheArquivos.get(item.caminho!);
-    if (conteudo === undefined) {
-      try {
-        conteudo = await ponte.lerArquivo(item.caminho!);
-      } catch {
-        return null;
-      }
-      this.cacheArquivos.set(item.caminho!, conteudo);
-    }
+    const conteudo = await this.conteudoDe(item);
+    if (conteudo === null) return null;
     const previa = await montarPrevia({
       conteudo,
-      linguagem: this.editor.linguagemDe(item.caminho!),
-      linha: item.linha,
+      linguagem: item.uriJdt ? 'java' : this.editor.linguagemDe(item.caminho!),
+      linha: item.uriJdt ? linhaDaDeclaracao(conteudo, item.nome ?? '') : item.linha,
       marcas: (texto, alvo) => {
         if (!alvo) return {};
         const termo = item.nome && item.tipo !== 'texto' ? casarNome(consulta, item.nome) : consulta;
@@ -434,7 +553,7 @@ export class BuscaComponent {
         return { casado, definicao: i >= 0 ? Array.from({ length: item.nome.length }, (_, k) => i + k) : [] };
       },
     });
-    return { ...previa, arquivo: nomeBase(item.caminho!) };
+    return { ...previa, arquivo: item.uriJdt ? `${item.nome}.java` : nomeBase(item.caminho!) };
   }
 }
 

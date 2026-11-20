@@ -147,7 +147,7 @@ export const ponte = {
       mensagens.onmessage = aoReceber;
       const fim = new Channel<null>();
       fim.onmessage = aoEncerrar;
-      return invoke<{ id: number; pid: number }>('lsp_iniciar', { raiz, mensagens, fim });
+      return invoke<{ id: number; pid: number; preferencias: string }>('lsp_iniciar', { raiz, mensagens, fim });
     },
     enviar: (id: number, mensagem: string) => invoke<void>('lsp_enviar', { id, mensagem }),
     parar: (id: number) => invoke<void>('lsp_parar', { id }),

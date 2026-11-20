@@ -56,6 +56,27 @@ pub struct Iniciado {
     pub id: u32,
     /// PID do Seedy: o jdtls encerra sozinho se o Seedy morrer (initialize.processId).
     pub pid: u32,
+    /// Arquivo de preferências do compilador (vai em `java.settings.url`).
+    pub preferencias: String,
+}
+
+/// Preferências do compilador Java que o jdtls usa (formato `.prefs` do Eclipse).
+/// Fica na pasta de configuração do Seedy, para o usuário editar como o tema.
+const PREFERENCIAS_PADRAO: &str = "# Preferências do compilador Java usadas pelo jdtls (formato .prefs do Eclipse).
+# Valores: error, warning, info, ignore. Depois de mudar, reinicie o jdtls (␣ l).
+org.eclipse.jdt.core.compiler.problem.unusedImport=warning
+org.eclipse.jdt.core.compiler.problem.unusedLocal=warning
+org.eclipse.jdt.core.compiler.problem.unusedPrivateMember=warning
+org.eclipse.jdt.core.compiler.problem.unusedParameter=ignore
+";
+
+fn garantir_preferencias() -> Result<PathBuf, String> {
+    let caminho = crate::tema::pasta_config().join("jdtls.prefs");
+    if !caminho.exists() {
+        fs::create_dir_all(caminho.parent().unwrap_or(Path::new("."))).map_err(|e| e.to_string())?;
+        fs::write(&caminho, PREFERENCIAS_PADRAO).map_err(|e| format!("não consegui criar {}: {e}", caminho.display()))?;
+    }
+    Ok(caminho)
 }
 
 // ---------- JDK ----------
@@ -271,6 +292,7 @@ pub fn lsp_iniciar(
     } else {
         "config_linux"
     });
+    let preferencias = garantir_preferencias()?;
     let dados = pasta_dados(&raiz);
     fs::create_dir_all(&dados).map_err(|e| e.to_string())?;
     let log = File::create(dados.join("seedy-stderr.log")).map_err(|e| e.to_string())?;
@@ -327,7 +349,7 @@ pub fn lsp_iniciar(
 
     let id = estado.proximo_id.fetch_add(1, Ordering::Relaxed);
     estado.lista.lock().unwrap().insert(id, Servidor { entrada, processo, raiz });
-    Ok(Iniciado { id, pid: std::process::id() })
+    Ok(Iniciado { id, pid: std::process::id(), preferencias: preferencias.to_string_lossy().into_owned() })
 }
 
 #[tauri::command]

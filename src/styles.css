@@ -639,3 +639,6 @@ body.arrastando iframe, body.arrastando .monaco-editor { pointer-events: none; }
   border-radius: var(--raio-pequeno) !important;
   box-shadow: 3px 3px 0 var(--sombra) !important;
 }
+
+/* Dica no fim da linha para código não usado (mockup 01: "◆ import não usado"). */
+.dica-inline { color: var(--texto-suave); font-style: italic; }

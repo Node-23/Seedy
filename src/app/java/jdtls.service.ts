@@ -66,6 +66,11 @@ export class JdtlsService {
   private servidor: { id: number; cliente: ClienteLsp; raiz: string } | null = null;
   private readonly abertos = new Map<string, Aberto>();
   private readonly diagnosticos = new Map<string, DiagnosticoLsp[]>();
+  private readonly urisOriginais = new Map<string, string>();
+  /** Decorações de dica (◆) por modelo. */
+  private readonly dicas = new Map<string, string[]>();
+  /** Arquivo .prefs do compilador (criado pelo núcleo na pasta de configuração). */
+  private preferencias: string | null = null;
   private geracao = 0;
 
   /** Projeto de Java? Decide pelo índice da busca (pom.xml, build.gradle ou .java). */
@@ -98,8 +103,35 @@ export class JdtlsService {
     // Diagnósticos de arquivos que só agora ganharam modelo.
     monaco.editor.onDidCreateModel((m) => {
       const d = this.diagnosticos.get(m.uri.toString());
-      if (d) monaco.editor.setModelMarkers(m, 'jdtls', d.map(paraMarcador));
+      if (d) {
+        monaco.editor.setModelMarkers(m, 'jdtls', d.map(paraMarcador));
+        this.aplicarDicas(m, d);
+      }
     });
+  }
+
+  /**
+   * URI para mandar ao jdtls. Para código de biblioteca (`jdt://`), a original que
+   * ele mandou: o Monaco recodifica a URI e o jdtls não reconheceria a versão dele.
+   */
+  uriLsp(uri: monaco.Uri): string {
+    return this.urisOriginais.get(uri.toString()) ?? uri.toString();
+  }
+
+  /**
+   * Modelo (somente leitura) com o código de uma classe de biblioteca ou do JDK.
+   * O jdtls devolve o código-fonte anexado ou, sem ele, o decompilado.
+   */
+  async modeloDeClasse(uri: string): Promise<monaco.editor.ITextModel | null> {
+    const uriMonaco = monaco.Uri.parse(uri);
+    const existente = monaco.editor.getModel(uriMonaco);
+    if (existente) return existente;
+    const cliente = this.cliente();
+    if (!cliente) return null;
+    const conteudo = await cliente.pedir<string | null>('java/classFileContents', { uri }).catch(() => null);
+    if (!conteudo) return null;
+    this.urisOriginais.set(uriMonaco.toString(), uri);
+    return monaco.editor.getModel(uriMonaco) ?? monaco.editor.createModel(conteudo, 'java', uriMonaco);
   }
 
   /**
@@ -168,7 +200,7 @@ export class JdtlsService {
 
       this.estado.set({ fase: 'iniciando', detalhe: 'iniciando' });
       let cliente!: ClienteLsp;
-      const { id, pid } = await ponte.java.iniciar(
+      const { id, pid, preferencias } = await ponte.java.iniciar(
         raiz,
         (m) => cliente.receber(m),
         () => this.aoEncerrar(geracao),
@@ -178,13 +210,14 @@ export class JdtlsService {
       if (!atual()) return void this.parar();
       this.ouvir(cliente, geracao);
 
-      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid));
+      this.preferencias = preferencias;
+      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias));
       if (!atual()) return;
       const capacidades = resultado?.capabilities ?? {};
       this.legenda = capacidades.semanticTokensProvider?.legend ?? null;
       this.gatilhos = capacidades.completionProvider?.triggerCharacters ?? this.gatilhos;
       cliente.notificar('initialized', {});
-      cliente.notificar('workspace/didChangeConfiguration', { settings: configuracao() });
+      cliente.notificar('workspace/didChangeConfiguration', { settings: configuracao(preferencias) });
       this.estado.set({ fase: 'importando', detalhe: 'importando' });
       this.sincronizar(this.editor.buffers());
     } catch (e) {
@@ -230,7 +263,10 @@ export class JdtlsService {
       const uri = uriMonaco(p.uri);
       this.diagnosticos.set(uri.toString(), p.diagnostics);
       const modelo = monaco.editor.getModel(uri);
-      if (modelo) monaco.editor.setModelMarkers(modelo, 'jdtls', p.diagnostics.map(paraMarcador));
+      if (modelo) {
+        monaco.editor.setModelMarkers(modelo, 'jdtls', p.diagnostics.map(paraMarcador));
+        this.aplicarDicas(modelo, p.diagnostics);
+      }
     });
 
     // Status do jdtls: "Starting", "ServiceReady", "Error"...
@@ -261,7 +297,7 @@ export class JdtlsService {
       return { applied: r.applied };
     });
     cliente.aoPedir('workspace/configuration', (p: { items: { section?: string }[] }) =>
-      p.items.map((i) => (i.section === 'java' || !i.section ? configuracao().java : null)),
+      p.items.map((i) => (i.section === 'java' || !i.section ? configuracao(this.preferencias).java : null)),
     );
     cliente.aoPedir('client/registerCapability', () => null);
     cliente.aoPedir('client/unregisterCapability', () => null);
@@ -275,7 +311,8 @@ export class JdtlsService {
   private sincronizar(buffers: Buffer[]): void {
     const cliente = this.servidor?.cliente;
     if (!cliente) return;
-    const java = buffers.filter((b) => b.modelo.getLanguageId() === 'java' && !b.modelo.isDisposed());
+    // Código de biblioteca não precisa de didOpen: o jdtls lê direto do .class.
+    const java = buffers.filter((b) => b.modelo.getLanguageId() === 'java' && !b.modelo.isDisposed() && !b.somenteLeitura);
     const chaves = new Set(java.map((b) => b.modelo.uri.toString()));
 
     for (const [uri, a] of this.abertos) {
@@ -315,18 +352,60 @@ export class JdtlsService {
   private limparDiagnosticos(): void {
     for (const uri of this.diagnosticos.keys()) {
       const m = monaco.editor.getModel(monaco.Uri.parse(uri));
-      if (m) monaco.editor.setModelMarkers(m, 'jdtls', []);
+      if (m) {
+        monaco.editor.setModelMarkers(m, 'jdtls', []);
+        this.aplicarDicas(m, []);
+      }
     }
     this.diagnosticos.clear();
   }
+
+  /**
+   * Código desnecessário (import, variável, campo ou método não usado) ganha uma
+   * dica no fim da linha, como no mockup 01: "◆ import não usado".
+   */
+  private aplicarDicas(modelo: monaco.editor.ITextModel, diagnosticos: DiagnosticoLsp[]): void {
+    if (modelo.isDisposed()) return;
+    const porLinha = new Map<number, string>();
+    for (const d of diagnosticos) {
+      if (!d.tags?.includes(1)) continue;
+      const linha = d.range.end.line + 1;
+      if (linha <= modelo.getLineCount() && !porLinha.has(linha)) porLinha.set(linha, dicaCurta(d.message));
+    }
+    const novas = [...porLinha].map(([linha, texto]) => {
+      const fim = modelo.getLineMaxColumn(linha);
+      return {
+        range: new monaco.Range(linha, fim, linha, fim),
+        options: { after: { content: `  ◆ ${texto}`, inlineClassName: 'dica-inline' }, showIfCollapsed: true },
+      };
+    });
+    const chave = modelo.uri.toString();
+    this.dicas.set(chave, modelo.deltaDecorations(this.dicas.get(chave) ?? [], novas));
+  }
+}
+
+/** Mensagem do compilador (em inglês) → dica curta em português. */
+function dicaCurta(mensagem: string): string {
+  const regras: [RegExp, string][] = [
+    [/^The import .+ is never used/, 'import não usado'],
+    [/^The value of the local variable .+ is not used/, 'variável não usada'],
+    [/^The value of the field .+ is not used/, 'campo não usado'],
+    [/^The (private )?method .+ is never used/, 'método não usado'],
+    [/^The (private )?(type|constructor) .+ is never used/, 'não usado'],
+    [/^The value of the parameter .+ is not used/, 'parâmetro não usado'],
+    [/^Unnecessary/, 'desnecessário'],
+  ];
+  return regras.find(([re]) => re.test(mensagem))?.[1] ?? mensagem.slice(0, 60);
 }
 
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(0)} MB`;
 
 /** Configurações do jdtls (as mesmas chaves `java.*` da extensão do VS Code). */
-function configuracao() {
+function configuracao(preferencias: string | null) {
   return {
     java: {
+      // Preferências do compilador (ex.: avisar import não usado), editáveis pelo usuário.
+      settings: preferencias ? { url: preferencias } : undefined,
       format: { enabled: true },
       signatureHelp: { enabled: true },
       contentProvider: { preferred: 'fernflower' },
@@ -345,7 +424,7 @@ function configuracao() {
   };
 }
 
-function parametrosDeInicio(raiz: string, pid: number) {
+function parametrosDeInicio(raiz: string, pid: number, preferencias: string) {
   const uri = monaco.Uri.file(raiz).toString();
   const formatos = ['markdown', 'plaintext'];
   return {
@@ -416,10 +495,10 @@ function parametrosDeInicio(raiz: string, pid: number) {
     initializationOptions: {
       bundles: [],
       workspaceFolders: [uri],
-      settings: configuracao(),
+      settings: configuracao(preferencias),
       extendedClientCapabilities: {
         progressReportProvider: true,
-        classFileContentsSupport: false,
+        classFileContentsSupport: true,
         overrideMethodsPromptSupport: false,
         hashCodeEqualsPromptSupport: false,
         advancedOrganizeImportsSupport: false,

@@ -76,6 +76,7 @@ export class EditorComponent {
   protected readonly migalhas = computed(() => {
     const b = this.editor.bufferAtivo();
     if (!b) return [this.projeto.nome() ?? 'seedy'];
+    if (b.somenteLeitura) return [...(b.descricao ?? b.nome).split('.'), 'somente leitura'];
     const raiz = this.projeto.raiz();
     const relativo = raiz && b.caminho.startsWith(raiz) ? b.caminho.slice(raiz.length) : b.caminho;
     return relativo.split(/[\\/]/).filter(Boolean);
@@ -159,6 +160,7 @@ export class EditorComponent {
       const b = this.editor.bufferAtivo();
       const instancia = this.editor.instancia;
       if (!instancia) return;
+      instancia.updateOptions({ readOnly: !!b?.somenteLeitura });
       if (instancia.getModel() !== (b?.modelo ?? null)) {
         instancia.setModel(b?.modelo ?? null);
         if (b) queueMicrotask(() => instancia.focus());

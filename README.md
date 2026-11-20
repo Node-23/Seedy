@@ -27,7 +27,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   - Nas janelas: `↑↓` / `^n` `^p` navegam, `⏎` abre na linha, `esc` fecha.
 - **Inteligência de Java (jdtls)**: erros e avisos enquanto digita, completar (com import
   automático), documentação no hover, assinatura dos métodos, ir para definição e implementação,
-  usos, renomear em vários arquivos, ações rápidas, organizar imports, formatar, Maven e Gradle.
+  usos, renomear em vários arquivos, ações rápidas, extrair variável/método/campo (já abre o
+  renomear no nome novo), organizar imports, formatar, Maven e Gradle. Código de bibliotecas e
+  do JDK abre somente leitura (fonte anexado ou decompilado), e o `Ctrl+P` também acha essas
+  classes. Código não usado ganha uma dica no fim da linha (`◆ import não usado`).
   Só as definições ganham cor (Alabaster), via tokens semânticos. O Seedy baixa o jdtls sozinho
   na primeira vez que abre um projeto Java; o status aparece na statusline (`jdtls ✓`).
 - Painéis redimensionáveis (arraste os divisores) e modo foco.
@@ -88,6 +91,14 @@ Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 | `␣ l` | reiniciar o jdtls |
 
 Os atalhos ficam em `src/app/teclado/atalhos.service.ts`.
+
+## Avisos do compilador Java
+
+Os avisos que o jdtls mostra (import, variável ou campo não usado...) vêm de
+`jdtls.prefs`, na mesma pasta do tema (formato `.prefs` do Eclipse). O Seedy cria o
+arquivo na primeira vez; depois de editar, reinicie o jdtls com `␣ l`.
+Detalhe do compilador do Java: num arquivo com erro de compilação, "import não usado"
+só aparece depois que o erro é corrigido.
 
 ## Tema
 
