@@ -4,8 +4,9 @@ IDE Java minimalista, guiada pelo teclado, com o visual sob controle de quem usa
 Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 
 > Status: **v0.1 em andamento**. Editor com modo vim, árvore de arquivos, terminal,
-> tema, buscas, inteligência de Java (jdtls), Git e banco de dados já funcionam. Servidores
-> (JBoss/Tomcat) e o resto da IA vêm nas próximas fases — ver [ROADMAP.md](ROADMAP.md).
+> tema, buscas, inteligência de Java (jdtls), Git, banco de dados e servidores (JBoss/WildFly e
+> Tomcat, com debug) já funcionam. Web (TS/Angular) e o resto da IA vêm nas próximas fases — ver
+> [ROADMAP.md](ROADMAP.md).
 
 ## O que já tem
 
@@ -63,6 +64,16 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   console SQL por conexão ou qualquer `.sql` do projeto, com autocompletar (tabelas, colunas e
   apelidos); `Ctrl+Enter` executa a instrução sob o cursor; grade **somente leitura**, explain,
   exportar CSV (o resultado inteiro) e histórico por conexão.
+- **Servidores de aplicação** (mockup 06, `␣ j`): JBoss/WildFly e Tomcat atrás do mesmo adaptador.
+  O Seedy monta a aplicação explodida a partir do projeto, sem Maven/Gradle: a pasta web, as
+  classes que o jdtls compila ao salvar e os jars das dependências (os da API do servidor ficam de
+  fora). Cada perfil roda numa pasta de servidor própria (a instalação não é tocada). Enquanto roda,
+  JSP, estáticos e classes alterados vão para o servidor sozinhos (hot swap). Saída com contadores
+  de ERROR/WARN, filtro por nível, stack trace clicável (frames de framework recolhidos) e a linha
+  da última exceção marcada no editor (`◆ NullPointerException`).
+- **Debug** (java-debug, DAP): breakpoints na margem (`ctrl+F8`), `F8`/`F7`/`shift+F8`/`F9`, pilha,
+  variáveis, avaliar expressão (`alt+F8`) e hot code replace (classe alterada entra no servidor sem
+  redeploy).
 - **IA no merge** (mockup 10): `␣ a` abre um chat ao lado das três colunas para conversar
   sobre os conflitos. A IA (Claude) lê o código relacionado e o histórico do arquivo e propõe a
   resolução, que aparece como prévia no resultado: `⏎` aplica, `esc` recusa, `ctrl+r` pede outra.
@@ -104,6 +115,16 @@ Para abrir já num projeto: `seedy /caminho/do/projeto` (ou `␣ o` dentro do ap
 
 Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 (modo navegador, com arquivos e conexões de exemplo; o terminal não funciona aqui).
+
+### Testes dos servidores
+
+Também `#[ignore]`: sobem um Tomcat e um WildFly de verdade com um JSP, conferem a página, o hot
+swap e o encerrar. Aponte para as instalações e um JDK 17+:
+
+```bash
+SEEDY_TESTE_TOMCAT=/opt/apache-tomcat-11.0.29 SEEDY_TESTE_WILDFLY=/opt/wildfly-42.0.0.Final \
+SEEDY_TESTE_JDK=/usr/lib/jvm/java-21 cargo test --lib de_verdade -- --ignored
+```
 
 ### Testes do banco
 
@@ -155,6 +176,9 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `␣ b` | trocar de branch (ou criar uma) |
 | `␣ n` | blame no arquivo aberto |
 | `␣ m` | resolver conflitos (merge em 3 colunas) |
+| `␣ j` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
+| `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | iniciar / iniciar em debug / parar / redeploy (como no IntelliJ) |
+| `ctrl+F8` · `F8` · `F7` · `shift+F8` · `F9` · `alt+F8` | breakpoint · passar · entrar · sair · continuar · avaliar |
 | `␣ d` | conexões (banco): `j`/`k`, `l`/`⏎` abre/conecta, `⏎` numa tabela consulta, `c` console, `n` nova, `e` editar, `x` desconectar, `r` recarregar, `del` apagar |
 | `Ctrl+Enter` / `Ctrl+Shift+Enter` (num .sql) | executa a instrução sob o cursor (ou a seleção) / explain |
 | grade do resultado | `j`/`k`/`h`/`l` andam, `y` copia a célula, `Y` copia a linha, `esc` volta ao editor |
@@ -222,6 +246,7 @@ src/                         interface (Angular)
   app/layout/                registro de painéis e disposição
   app/java/                  cliente LSP do jdtls: ciclo de vida, sincronia, provedores do Monaco, gerar código
   app/git/                   tela do Git, grafo, commit, diff, blame, merge em 3 colunas, GitHub
+  app/servidor/              servidores: perfis, painel e log (stack clicável), depurador (DAP), breakpoints
   app/banco/                 conexões, formulário, grade de resultado, SQL (divisão, autocompletar)
   app/ia/                    chat da IA no merge: conversa, ferramentas (ler arquivo, git log), propostas
   app/escolha/               janela de escolha (uma ou várias opções), usada por quem precisa perguntar
@@ -233,6 +258,8 @@ src-tauri/                   núcleo (Rust)
   src/tema.rs                tema.json, fontes e recarga ao vivo
   src/git.rs                 roda o git, conta do GitHub (credential manager e API)
   src/ia.rs                  chave da API da Anthropic e pedido com streaming (SSE)
+  src/servidor/              servidores: adaptador WildFly/Tomcat, pasta de servidor por perfil, processo, deploy explodido e hot swap
+  src/depurador.rs           plugin java-debug (baixado e conferido) e transporte DAP
   src/banco/                 perfis e cofre de senhas, drivers (postgres, mysql, oracle), túnel SSH, SQL
   src/busca.rs               índice de arquivos/símbolos Java e busca de texto
   src/java.rs                acha os JDKs, baixa e verifica o jdtls, processo e canal LSP

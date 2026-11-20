@@ -15,6 +15,8 @@ import { PrateleiraService } from '../git/prateleira.service';
 import { GithubFormService } from '../git/github-form.service';
 import { IaMergeService } from '../ia/ia-merge.service';
 import { BancoService } from '../banco/banco.service';
+import { ServidorService } from '../servidor/servidor.service';
+import { DepuradorService } from '../servidor/depurador.service';
 import { BlameService } from '../git/blame.service';
 
 export interface AcaoLider {
@@ -57,6 +59,8 @@ export class AtalhosService {
   private readonly githubForm = inject(GithubFormService);
   private readonly ia = inject(IaMergeService);
   private readonly banco = inject(BancoService);
+  private readonly servidor = inject(ServidorService);
+  private readonly depurador = inject(DepuradorService);
 
   readonly liderAberto = signal(false);
 
@@ -80,7 +84,7 @@ export class AtalhosService {
     { tecla: 'b', rotulo: 'trocar de branch', disponivel: true, executar: () => void this.trocarDeBranch() },
     { tecla: 'n', rotulo: 'anotar (blame)', disponivel: true, executar: () => void this.blame.alternar() },
     { tecla: 'd', rotulo: 'conexões (banco)', disponivel: true, executar: () => this.layout.alternar('conexoes') },
-    { tecla: 'j', rotulo: 'servidor', disponivel: false },
+    { tecla: 'j', rotulo: 'servidor (painel)', disponivel: true, executar: () => this.layout.alternar('servidor') },
     { tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
     { tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
     { tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
@@ -141,7 +145,7 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando();
+    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {
@@ -153,6 +157,9 @@ export class AtalhosService {
       // Voltar/avançar nos arquivos vistos.
       this.engolir(e);
       void this.editor.navegar(e.key === 'ArrowLeft' ? -1 : 1);
+    } else if (!janelaAberta && this.teclaDoServidor(e, ctrl)) {
+      // Servidor e debug com as teclas do IntelliJ (ver teclaDoServidor).
+      this.engolir(e);
     } else if (ctrl && !e.altKey && e.key === 'Enter' && !janelaAberta && this.banco.ehSql() && this.noEditor(e.target)) {
       // Ctrl+Enter executa o SQL sob o cursor; Ctrl+Shift+Enter mostra o plano (explain).
       this.engolir(e);
@@ -312,6 +319,44 @@ export class AtalhosService {
 
   private noTerminal(alvo: EventTarget | null): boolean {
     return !!(alvo as HTMLElement | null)?.closest?.('.xterm');
+  }
+
+  /**
+   * Servidor (como no IntelliJ): shift+F10 inicia, shift+F9 inicia em debug, ctrl+F2 para,
+   * ctrl+F10 redeploy. Debug: ctrl+F8 breakpoint, F8 passa, F7 entra, shift+F8 sai,
+   * F9 continua, alt+F8 avalia. true = a tecla foi usada.
+   */
+  private teclaDoServidor(e: KeyboardEvent, ctrl: boolean): boolean {
+    const so = (c: boolean, s: boolean, a: boolean) => ctrl === c && e.shiftKey === s && e.altKey === a;
+    const pausado = !!this.depurador.pausado();
+    switch (e.key) {
+      case 'F10':
+        if (so(false, true, false)) { void this.servidor.iniciar(false); return true; }
+        if (so(true, false, false)) { void this.servidor.redeploy(); return true; }
+        return false;
+      case 'F9':
+        if (so(false, true, false)) { void this.servidor.iniciar(true); return true; }
+        if (so(false, false, false) && pausado) { this.depurador.continuar(); return true; }
+        return false;
+      case 'F2':
+        if (so(true, false, false)) { void this.servidor.parar(); return true; }
+        return false;
+      case 'F8':
+        if (so(true, false, false)) { this.depurador.alternarNoCursor(); return true; }
+        if (so(false, false, false) && pausado) { this.depurador.passar(); return true; }
+        if (so(false, true, false) && pausado) { this.depurador.sair(); return true; }
+        if (so(false, false, true) && this.depurador.ativo()) {
+          this.layout.mostrar('servidor');
+          queueMicrotask(() => (document.querySelector('.depurador-avaliar') as HTMLInputElement | null)?.focus());
+          return true;
+        }
+        return false;
+      case 'F7':
+        if (so(false, false, false) && pausado) { this.depurador.entrar(); return true; }
+        return false;
+      default:
+        return false;
+    }
   }
 
   /** O foco está no editor de código (não no merge, nas buscas ou no terminal). */

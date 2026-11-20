@@ -8,6 +8,8 @@ import { GitService } from '../git/git.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
 import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
+import { ServidorService } from '../servidor/servidor.service';
+import { DepuradorService } from '../servidor/depurador.service';
 import { IaMergeService } from '../ia/ia-merge.service';
 
 const NOMES_MODO: Record<string, string> = {
@@ -64,6 +66,12 @@ const NOMES_MODO: Record<string, string> = {
       @if (jdtls.estado().fase !== 'inativo') {
         <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase" [title]="tituloJdtls()">{{ textoJdtls() }}</span>
       }
+      @for (e of servidor.rodando(); track e.perfilId) {
+        <span class="segmento com-divisa-esq servidor-status" [attr.data-fase]="e.fase">● {{ servidor.perfil(e.perfilId)?.tipo === 'tomcat' ? 'tomcat' : 'jboss' }} :{{ servidor.perfil(e.perfilId)?.portaHttp }}</span>
+        @if (e.info?.portaDebug) {
+          <span class="segmento com-divisa-esq" [class.destaque-texto]="depurador.ativo()">debug :{{ e.info?.portaDebug }}@if (depurador.pausado()) { <span class="aviso-texto"> · pausado</span> }</span>
+        }
+      }
       @if (banco.perfilAtivo(); as p) {
         <span class="segmento com-divisa-esq ambiente-banco" [attr.data-ambiente]="p.ambiente">{{ nomeDoAmbiente(p.ambiente).toUpperCase() }}</span>
         <span class="segmento com-divisa-esq">{{ p.tipo }}@if (!banco.sessaoAtiva()) { <span class="suave"> · desconectado</span> }</span>
@@ -98,6 +106,8 @@ export class BarraStatusComponent {
   protected readonly merge = inject(MergeService);
   protected readonly ia = inject(IaMergeService);
   protected readonly banco = inject(BancoService);
+  protected readonly servidor = inject(ServidorService);
+  protected readonly depurador = inject(DepuradorService);
 
   protected nomeDoAmbiente(a: string): string {
     return NOME_DO_AMBIENTE[a] ?? a;

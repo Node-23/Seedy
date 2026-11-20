@@ -31,6 +31,10 @@ import { ConexoesComponent } from './banco/conexoes.component';
 import { ResultadoSqlComponent } from './banco/resultado-sql.component';
 import { PerfilBancoComponent } from './banco/perfil-banco.component';
 import { BancoService } from './banco/banco.service';
+import { ServidorComponent } from './servidor/servidor.component';
+import { PerfilServidorComponent } from './servidor/perfil-servidor.component';
+import { ServidorService } from './servidor/servidor.service';
+import { DepuradorService } from './servidor/depurador.service';
 
 @Component({
   selector: 'sd-raiz',
@@ -38,12 +42,13 @@ import { BancoService } from './banco/banco.service';
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
+    ServidorComponent, PerfilServidorComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando()">
+      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando()">
       <div class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
         @if (layout.disposicao().visiveis.arquivos || layout.disposicao().visiveis.conexoes) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
@@ -62,10 +67,12 @@ import { BancoService } from './banco/banco.service';
           </div>
           @if (banco.ehSql()) { <sd-resultado-sql /> }
           <div class="divisor horizontal" role="separator" aria-orientation="horizontal"
-               [class.oculto]="!layout.disposicao().visiveis.terminal" (pointerdown)="arrastar($event, 'inferior')"></div>
-          <div class="regiao-inferior" [class.oculto]="!layout.disposicao().visiveis.terminal"
+               [class.oculto]="!inferiorVisivel()" (pointerdown)="arrastar($event, 'inferior')"></div>
+          <div class="regiao-inferior" [class.oculto]="!inferiorVisivel()"
                [style.height.px]="layout.disposicao().alturaInferior">
-            <sd-terminal />
+            <!-- O terminal fica vivo (só escondido) enquanto o painel do servidor aparece. -->
+            <sd-terminal [class.oculto]="!layout.disposicao().visiveis.terminal" />
+            @if (layout.disposicao().visiveis.servidor) { <sd-servidor /> }
           </div>
         </div>
 
@@ -79,6 +86,7 @@ import { BancoService } from './banco/banco.service';
       <sd-commit />
       <sd-github-form />
       <sd-perfil-banco />
+      <sd-perfil-servidor />
       <sd-escolha />
       </div>
 
@@ -103,12 +111,19 @@ export class App {
   protected readonly escolha = inject(EscolhaService);
   protected readonly commit = inject(CommitService);
   protected readonly banco = inject(BancoService);
+  protected readonly servidor = inject(ServidorService);
+
+  protected inferiorVisivel(): boolean {
+    const v = this.layout.disposicao().visiveis;
+    return v.terminal || v.servidor;
+  }
 
   constructor() {
     inject(AtalhosService).iniciar();
     inject(JdtlsService); // liga o jdtls quando o projeto é de Java
     inject(GitService); // acompanha o repositório do projeto
     inject(MargemGitService); // marcas de alteração na margem do editor
+    inject(DepuradorService); // breakpoints e o depurador anexa quando o servidor sobe em debug
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
     void inject(ProjetoService).iniciar();

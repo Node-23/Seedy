@@ -9,7 +9,7 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Banco de dados (conexões, SQL, grade só leitura, túnel SSH) | [03-banco.png](03-banco.png) | 3 ✅ |
 | Git (árvore de commits, detalhe, diff) | [04-git.png](04-git.png) | 4 |
 | Merge de conflitos (3 colunas, resolver simples) | [05-merge.png](05-merge.png) | 4 |
-| IA + console do servidor | [06-ia-servidor.png](06-ia-servidor.png) | 5 e 7 |
+| IA + console do servidor | [06-ia-servidor.png](06-ia-servidor.png) | 5 ✅ (servidor) e 7 |
 | Buscar no projeto, `Ctrl+Shift+F` (tela implementada) | [07-busca-projeto.png](07-busca-projeto.png) | 2 ✅ |
 | Substituir no projeto, `Ctrl+Shift+R` (tela implementada) | [08-substituir.png](08-substituir.png) | 2 ✅ |
 | Editor dividido, `^v` / `Ctrl+\` / `:vs` (tela implementada) | [09-editor-dividido.png](09-editor-dividido.png) | 2 ✅ |

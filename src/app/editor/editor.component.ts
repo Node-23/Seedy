@@ -19,6 +19,7 @@ import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
 import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
+import { DepuradorService } from '../servidor/depurador.service';
 
 /** API interna do vim (do CodeMirror), que o monaco-vim expõe sem tipos. */
 interface ApiVim {
@@ -108,6 +109,7 @@ export class EditorComponent {
   readonly painel = input<0 | 1>(0);
   protected readonly buffer = computed(() => this.editor.bufferDoPainel(this.painel()));
   protected readonly banco = inject(BancoService);
+  private readonly depurador = inject(DepuradorService);
   /** Arquivo .sql neste painel: a conexão dele (a faixa do topo mostra o ambiente). */
   protected readonly sql = computed(() => {
     const b = this.buffer();
@@ -150,6 +152,8 @@ export class EditorComponent {
         automaticLayout: true,
         minimap: { enabled: false },
         lineNumbers: 'relative',
+        // Margem dos breakpoints (clique ou ctrl+F8).
+        glyphMargin: true,
         renderLineHighlight: 'line',
         scrollBeyondLastLine: false,
         overviewRulerLanes: 0,
@@ -169,6 +173,12 @@ export class EditorComponent {
       });
       const painel = this.painel();
       this.editor.registrarInstancia(painel, instancia);
+      instancia.onMouseDown((ev) => {
+        if (ev.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
+        const b = this.buffer();
+        const linha = ev.target.position?.lineNumber;
+        if (b && linha && !b.somenteLeitura && /\.java$/i.test(b.caminho)) this.depurador.alternar(b.caminho, linha);
+      });
       this.instancia.set(instancia);
       instancia.setModel(this.buffer()?.modelo ?? null);
 

@@ -53,6 +53,46 @@ export interface SaidaGit {
   erro: string;
 }
 
+export type TipoServidor = 'wildfly' | 'tomcat';
+
+/** Servidor de aplicação configurado para um projeto. */
+export interface PerfilServidor {
+  id: string;
+  nome: string;
+  tipo: TipoServidor;
+  /** Pasta de instalação (JBOSS_HOME / CATALINA_HOME). */
+  instalacao: string;
+  /** JAVA_HOME do servidor (null = o do sistema). */
+  jdk: string | null;
+  portaHttp: number;
+  portaDebug: number;
+  opcoesJvm: string;
+  variaveis: Record<string, string>;
+  /** Caminho na URL ("/feira"; "/" = raiz). */
+  contexto: string;
+  /** Raiz do projeto e, relativas a ela, a pasta web e a das classes compiladas. */
+  projeto: string;
+  pastaWeb: string;
+  pastaClasses: string;
+}
+
+/** Uma origem do deploy explodido (pasta inteira ou arquivo) e onde ela entra na aplicação. */
+export interface FonteDeDeploy {
+  origem: string;
+  destino: string;
+}
+
+export interface InfoExecucao {
+  versao: string;
+  url: string;
+  portaDebug: number | null;
+  aplicacao: string;
+  copiados: number;
+  pid: number;
+}
+
+export type EventoServidor = { tipo: 'copiados'; arquivos: string[] } | { tipo: 'encerrado'; codigo: number | null };
+
 export type AmbienteBanco = 'local' | 'homolog' | 'producao';
 export type TipoBanco = 'postgres' | 'mysql' | 'oracle';
 
@@ -275,6 +315,8 @@ export const ponte = {
     async jdks(): Promise<Jdk[]> {
       return noApp() ? invoke<Jdk[]>('java_jdks') : [];
     },
+    /** Plugin java-debug para o jdtls (baixado e conferido na primeira vez). */
+    debugPlugin: () => invoke<string>('java_debug_plugin'),
     async instalar(aoProgresso: (p: ProgressoJdtls) => void): Promise<void> {
       const canal = new Channel<ProgressoJdtls>();
       canal.onmessage = aoProgresso;
@@ -303,6 +345,45 @@ export const ponte = {
       eventos.onmessage = aoEvento;
       await invoke<void>('ia_mensagem', { corpo, eventos });
     },
+  },
+
+  /** Servidores de aplicação (Fase 5): WildFly/JBoss e Tomcat. Só no app. */
+  servidor: {
+    perfis: async (): Promise<PerfilServidor[]> => (noApp() ? invoke<PerfilServidor[]>('servidor_perfis') : []),
+    salvarPerfil: (perfil: PerfilServidor) => invoke<void>('servidor_salvar_perfil', { perfil }),
+    apagarPerfil: (id: string) => invoke<void>('servidor_apagar_perfil', { id }),
+    inspecionar: (instalacao: string) => invoke<{ tipo: TipoServidor; versao: string }>('servidor_inspecionar', { instalacao }),
+    async iniciar(
+      id: string,
+      fontes: FonteDeDeploy[],
+      debug: boolean,
+      aoLer: (linhas: string[]) => void,
+      aoEvento: (e: EventoServidor) => void,
+    ): Promise<InfoExecucao> {
+      const saida = new Channel<string[]>();
+      saida.onmessage = aoLer;
+      const eventos = new Channel<EventoServidor>();
+      eventos.onmessage = aoEvento;
+      return invoke<InfoExecucao>('servidor_iniciar', { id, fontes, debug, saida, eventos });
+    },
+    parar: (id: string) => invoke<void>('servidor_parar', { id }),
+    redeploy: (id: string, fontes: FonteDeDeploy[]) => invoke<number>('servidor_redeploy', { id, fontes }),
+    emExecucao: async (): Promise<{ id: string; url: string; portaDebug: number | null }[]> =>
+      noApp() ? invoke<{ id: string; url: string; portaDebug: number | null }[]>('servidor_em_execucao') : [],
+    abrirUrl: (url: string) => invoke<void>('servidor_abrir_url', { url }),
+  },
+
+  /** Debug (DAP) do java-debug: só o transporte; o protocolo fica em depurador.service.ts. */
+  dap: {
+    async conectar(porta: number, aoReceber: (mensagem: string) => void, aoEncerrar: () => void): Promise<number> {
+      const mensagens = new Channel<string>();
+      mensagens.onmessage = aoReceber;
+      const fim = new Channel<null>();
+      fim.onmessage = aoEncerrar;
+      return invoke<number>('dap_conectar', { porta, mensagens, fim });
+    },
+    enviar: (id: number, mensagem: string) => invoke<void>('dap_enviar', { id, mensagem }),
+    fechar: (id: number) => invoke<void>('dap_fechar', { id }),
   },
 
   /** Banco de dados (Fase 3): perfis, sessões, consultas. Fora do app, dados de exemplo. */

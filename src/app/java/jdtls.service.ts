@@ -163,6 +163,13 @@ export class JdtlsService {
     return this.pronto() ? (this.servidor?.cliente ?? null) : null;
   }
 
+  /** Comando do jdtls (`workspace/executeCommand`), ex.: classpath do projeto, sessão de debug. */
+  async executar<T = unknown>(comando: string, ...argumentos: unknown[]): Promise<T> {
+    const c = this.cliente();
+    if (!c) throw new Error('o jdtls ainda não está pronto');
+    return c.pedir('workspace/executeCommand', { command: comando, arguments: argumentos }) as Promise<T>;
+  }
+
   /** Aplica uma WorkspaceEdit: abre (em segundo plano) os arquivos tocados e edita os modelos. */
   async aplicarEdicao(edicao: EdicaoDeWorkspaceLsp): Promise<{ applied: boolean; arquivos: number }> {
     const porArquivo = edicoesPorArquivo(edicao);
@@ -264,7 +271,12 @@ export class JdtlsService {
       this.ouvir(cliente, geracao);
 
       this.preferencias = preferencias;
-      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias, this.runtimes));
+      // O debug (Fase 5) é um plugin do jdtls: sem ele o resto funciona igual.
+      const debug = await ponte.java.debugPlugin().catch((e) => {
+        this.mensagens.erro(`java-debug: ${e}`);
+        return null;
+      });
+      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias, this.runtimes, debug ? [debug] : []));
       if (!atual()) return;
       const capacidades = resultado?.capabilities ?? {};
       this.legenda = capacidades.semanticTokensProvider?.legend ?? null;
@@ -509,7 +521,7 @@ function configuracao(preferencias: string | null, runtimes: Runtime[]) {
   };
 }
 
-function parametrosDeInicio(raiz: string, pid: number, preferencias: string, runtimes: Runtime[]) {
+function parametrosDeInicio(raiz: string, pid: number, preferencias: string, runtimes: Runtime[], bundles: string[]) {
   const uri = monaco.Uri.file(raiz).toString();
   const formatos = ['markdown', 'plaintext'];
   return {
@@ -578,7 +590,7 @@ function parametrosDeInicio(raiz: string, pid: number, preferencias: string, run
       window: { workDoneProgress: true, showMessage: {} },
     },
     initializationOptions: {
-      bundles: [],
+      bundles,
       workspaceFolders: [uri],
       settings: configuracao(preferencias, runtimes),
       extendedClientCapabilities: {

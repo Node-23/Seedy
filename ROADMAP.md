@@ -82,7 +82,7 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 - ✅ Criar pull request e issue direto da IDE (`␣ P` / `␣ I`), com push antes se faltar
 - Sugestão de resolução por IA (fica para a fase de IA)
 
-## Fase 5 — Servidores de aplicação: JBoss/WildFly **e** Tomcat
+## ✅ Fase 5 — Servidores de aplicação: JBoss/WildFly **e** Tomcat
 
 Um adaptador comum, com uma implementação para cada servidor:
 
@@ -93,10 +93,14 @@ Um adaptador comum, com uma implementação para cada servidor:
 | debug | `-agentlib:jdwp=...` via `JAVA_OPTS` | `catalina jpda run` / `JPDA_OPTS` |
 | log | `standalone/log/server.log` | `logs/catalina.out` |
 
-- Perfis por servidor (porta, memória, variáveis), iniciar/parar/redeploy
-- Hot swap de JSP e recursos estáticos ao salvar
-- Debug via java-debug (DAP): breakpoints, step, avaliar expressão
-- Console de log com filtro por nível e stack trace clicável
+- ✅ Perfis por servidor (porta, JDK, memória, variáveis), iniciar/parar/redeploy; cada perfil
+  numa pasta de servidor própria (`jboss.server.base.dir` / `CATALINA_BASE`)
+- ✅ Deploy explodido montado pelo Seedy (pasta web + classes do jdtls + jars), sem Maven/Gradle
+- ✅ Hot swap de JSP, estáticos e classes ao salvar (e de edições feitas fora do Seedy)
+- ✅ Debug via java-debug (DAP): breakpoints, step, variáveis, avaliar expressão, hot code replace
+- ✅ Console de log com filtro por nível, stack trace clicável e a exceção marcada no editor
+- Testado com WildFly 42 e Tomcat 11 no Windows; falta testar no Linux e com JBoss EAP
+- Depois: comando de build próprio (Ant/Maven) como alternativa ao deploy montado pelo Seedy
 
 ## Fase 6 — Web: JS / TS / HTML / CSS / Angular
 

@@ -7,7 +7,7 @@ import { Injectable, signal } from '@angular/core';
  * passa por aqui: quando o layout for editável, basta mudar este registro e
  * salvar/carregar a disposição de um arquivo (ver ROADMAP.md).
  */
-export type IdPainel = 'arquivos' | 'conexoes' | 'terminal';
+export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor';
 /** Tela que ocupa a área principal: o editor (com árvore e terminal), o Git ou o merge. */
 export type Tela = 'editor' | 'git' | 'merge';
 export type Regiao = 'esquerda' | 'inferior';
@@ -23,6 +23,7 @@ export const PAINEIS: Painel[] = [
   { id: 'arquivos', titulo: 'Arquivos', regiao: 'esquerda', atalho: '␣ e' },
   { id: 'conexoes', titulo: 'Conexões', regiao: 'esquerda', atalho: '␣ d' },
   { id: 'terminal', titulo: 'Terminal', regiao: 'inferior', atalho: 'alt f12' },
+  { id: 'servidor', titulo: 'Servidor', regiao: 'inferior', atalho: '␣ j' },
 ];
 
 interface Disposicao {
@@ -33,7 +34,7 @@ interface Disposicao {
 
 const CHAVE = 'seedy.layout';
 const PADRAO: Disposicao = {
-  visiveis: { arquivos: true, conexoes: false, terminal: false },
+  visiveis: { arquivos: true, conexoes: false, terminal: false, servidor: false },
   larguraEsquerda: 280,
   alturaInferior: 280,
 };
@@ -62,10 +63,10 @@ export class LayoutService {
     this.focar(id);
   }
 
-  /** A região da esquerda mostra um painel por vez: abrir um fecha os outros dela. */
+  /** Cada região mostra um painel por vez: abrir um fecha os outros dela. */
   private vizinhosFechados(id: IdPainel, abrindo: boolean): Partial<Record<IdPainel, boolean>> {
     const regiao = PAINEIS.find((p) => p.id === id)?.regiao;
-    if (!abrindo || regiao !== 'esquerda') return {};
+    if (!abrindo || !regiao) return {};
     return Object.fromEntries(PAINEIS.filter((p) => p.regiao === regiao && p.id !== id).map((p) => [p.id, false]));
   }
 

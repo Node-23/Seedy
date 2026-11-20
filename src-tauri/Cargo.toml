@@ -35,3 +35,4 @@ postgres-native-tls = "0.5.1"
 mysql = "28.0.4"
 oracle = "0.6.3"
 keyring = { version = "3.6.3", features = ["windows-native", "sync-secret-service", "crypto-rust"] }
+sha1 = "0.10"
