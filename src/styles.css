@@ -122,6 +122,8 @@ sd-raiz > .seedy {
 .botao-quadrado:hover { background: var(--selecao); }
 .botao-quadrado:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sombra); }
 .botao-quadrado.grande { width: 40px; height: 40px; font-weight: 700; white-space: nowrap; font-size: 12px; letter-spacing: -0.04em; }
+.botao-quadrado.logo { padding: 0; }
+.botao-quadrado.logo svg { display: block; }
 .botao-quadrado.destaque { background: var(--destaque); color: var(--texto-sobre-destaque); }
 .botao-quadrado.destaque-texto { color: var(--destaque); }
 .botao-quadrado.ligado { background: var(--selecao); color: var(--destaque); }

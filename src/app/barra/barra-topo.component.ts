@@ -9,13 +9,16 @@ import { GitService } from '../git/git.service';
 import { MergeService } from '../git/merge.service';
 import { CommitService } from '../git/commit.service';
 import { ExecucaoService } from '../execucao/execucao.service';
+import { CAMINHO_DO_LOGO } from '../marca/logo';
 
 /** Barra de cima: menu, projeto, buffers abertos, ferramentas e controles da janela. */
 @Component({
   selector: 'sd-barra-topo',
   template: `
     <header class="barra-topo" data-tauri-drag-region>
-      <button class="botao-quadrado destaque grande" aria-label="Menu de atalhos" title="Atalhos (␣)" (click)="atalhos.abrirLider()">{{ '{ }' }}</button>
+      <button class="botao-quadrado destaque grande logo" aria-label="Menu de atalhos" title="Atalhos (␣)" (click)="atalhos.abrirLider()">
+        <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" [attr.d]="logo"></path></svg>
+      </button>
       <button class="chip-projeto" title="Abrir outro projeto (␣ o)" (click)="projeto.escolher()">
         <span class="forte">{{ projeto.nome() ?? 'abrir projeto' }}</span>
         @if (layout.tela() === 'merge') {
@@ -110,6 +113,7 @@ export class BarraTopoComponent {
   protected readonly merge = inject(MergeService);
   protected readonly commit = inject(CommitService);
   protected readonly janela = ponte.janela;
+  protected readonly logo = CAMINHO_DO_LOGO;
   protected readonly exec = inject(ExecucaoService);
 
   /** DEBUG: já depurando, só mostra a tela de debug; senão, sobe em debug. */

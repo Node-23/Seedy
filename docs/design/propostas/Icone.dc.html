@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ícone do Seedy — proposta</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B;color:#E9E2D3;font-family:'Martian Mono',ui-monospace,monospace}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:56px 64px;display:flex;flex-direction:column;gap:36px}
+.rot{font-size:11px;letter-spacing:.14em;color:#A29D93}
+.linha{display:flex;align-items:flex-end;gap:40px}
+.card{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;padding:28px;display:flex;flex-direction:column;gap:18px}
+.tam{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:11px;color:#A29D93}
+.claro{background:#E9E2D3}
+.paleta{display:flex;gap:14px}
+.cor{display:flex;flex-direction:column;gap:8px;font-size:11px;color:#A29D93}
+.amostra{width:120px;height:56px;border:2px solid #0B0B0C;border-radius:10px;box-shadow:3px 3px 0 #0B0B0C}
+</style>
+</head>
+<body>
+<div class="tela">
+  <div style="display:flex;align-items:center;gap:22px">
+    <img src="icone-broto.svg" width="88" height="88" alt="">
+    <div><div style="font-size:30px;font-weight:700">seedy</div><div class="rot" style="margin-top:6px">ÍCONE · UM BROTO SAINDO DA SEMENTE</div></div>
+  </div>
+
+  <div class="linha">
+    <div class="card">
+      <span class="rot">TAMANHOS (FUNDO ESCURO)</span>
+      <div class="linha" style="gap:32px">
+        <div class="tam"><img src="icone-broto.svg" width="256" height="256" alt="">256</div>
+        <div class="tam"><img src="icone-broto.svg" width="128" height="128" alt="">128</div>
+        <div class="tam"><img src="icone-broto.svg" width="64" height="64" alt="">64</div>
+        <div class="tam"><img src="icone-broto.svg" width="32" height="32" alt="">32</div>
+        <div class="tam"><img src="icone-broto.svg" width="16" height="16" alt="">16</div>
+      </div>
+    </div>
+    <div class="card claro">
+      <span class="rot" style="color:#55524C">BARRA DE TAREFAS CLARA</span>
+      <div class="linha" style="gap:24px">
+        <div class="tam" style="color:#55524C"><img src="icone-broto.svg" width="64" height="64" alt="">64</div>
+        <div class="tam" style="color:#55524C"><img src="icone-broto.svg" width="32" height="32" alt="">32</div>
+        <div class="tam" style="color:#55524C"><img src="icone-broto.svg" width="16" height="16" alt="">16</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="align-self:flex-start">
+    <span class="rot">DESTAQUE: DO LAVANDA PARA O VERDE (MESMA LUMINOSIDADE)</span>
+    <div class="paleta">
+      <div class="cor"><div class="amostra" style="background:#92A9E1"></div>antes · #92A9E1</div>
+      <div class="cor"><div class="amostra" style="background:#9CD7BA"></div>--destaque · #9CD7BA</div>
+      <div class="cor"><div class="amostra" style="background:#BAE8D1"></div>hover · #BAE8D1</div>
+      <div class="cor"><div class="amostra" style="background:#B7D39C"></div>--sucesso · #B7D39C</div>
+      <div class="cor"><div class="amostra" style="background:#E9E2D3"></div>semente · --texto</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

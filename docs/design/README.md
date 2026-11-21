@@ -48,7 +48,7 @@ estão nos `style` de cada elemento. Abra no navegador para inspecionar.
 | `#0B0B0C` | `--borda` / `--sombra` |
 | `#E9E2D3` | `--texto` |
 | `#A29D93` | `--texto-suave` |
-| `#92A9E1` | `--destaque` |
+| `#9CD7BA` (os mockups 01 a 12 ainda mostram o lavanda antigo `#92A9E1`) | `--destaque` |
 | `#16171C` | `--texto-sobre-destaque` |
 | `#B7D39C` / `#2E3A2B` | `--sucesso` / `--sucesso-fundo` |
 | `#E8C979` | `--aviso` |

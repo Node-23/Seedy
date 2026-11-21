@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Logo do Seedy — conceitos</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B;color:#E9E2D3;font-family:'Martian Mono',ui-monospace,monospace}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:40px 48px;display:flex;flex-direction:column;gap:22px}
+.rot{font-size:11px;letter-spacing:.14em;color:#A29D93}
+.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;align-items:start}
+.card{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;padding:20px;display:flex;flex-direction:column;gap:16px}
+.titulo{display:flex;flex-direction:column;gap:4px}
+.titulo b{font-size:15px}
+.grande{height:300px;border-radius:12px;background:#19191B;display:flex;align-items:center;justify-content:center}
+.grande svg{width:200px;height:200px}
+.tamanhos{display:flex;align-items:flex-end;gap:14px}
+.app{border-radius:22%;background:#19191B;display:flex;align-items:center;justify-content:center;border:1.5px solid #0B0B0C}
+.app svg{width:72%;height:72%}
+.claro{background:#E9E2D3;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:12px}
+.claro svg{width:30px;height:30px}
+.botao{width:40px;height:40px;border-radius:10px;border:2px solid #0B0B0C;background:#9CD7BA;box-shadow:3px 3px 0 #0B0B0C;display:flex;align-items:center;justify-content:center}
+.botao svg{width:26px;height:26px}
+.marca{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.marca svg{width:30px;height:30px}
+.desc{font-size:11px;line-height:17px;color:#A29D93}
+</style>
+</head>
+<body>
+<!-- Os quatro desenhos ficam em <symbol> e são usados em todos os tamanhos (currentColor = cor do lugar). -->
+<svg width="0" height="0" style="position:absolute">
+  <!-- A: feijão com o broto saindo da fenda -->
+  <symbol id="a" viewBox="0 0 100 100">
+    <path d="M42 64 C31 56 30 44 39 37 C43.5 33.5 48 32 50 27" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M49.5 30 C44 20 33 15 19 18 C23.5 30 35.5 35 49.5 30 Z" fill="currentColor"/>
+    <path d="M50.5 28 C53.5 17 63.5 9.5 79 10 C76.5 23.5 65.5 31 50.5 28 Z" fill="currentColor"/>
+    <path d="M37 66 C38.5 58.5 46 56 51 60 C54.5 62.8 57.5 63.5 61.5 61.5 C69 57.5 80 61 81.5 71.5 C83 83 72 92.5 58 92.5 C44 92.5 35 82 37 66 Z" fill="currentColor"/>
+  </symbol>
+  <!-- B: semente aberta (arco) cujo fim vira caule com duas folhas -->
+  <symbol id="b" viewBox="0 0 100 100">
+    <path d="M42.8 26.5 A 29 29 0 1 0 75 45.5 C77.5 37 76 29 71 22" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+    <path d="M71.5 25 C61.5 23 55.5 14.5 56.5 4.5 C66.5 6.5 72.5 14 71.5 25 Z" fill="currentColor"/>
+    <path d="M75 33.5 C78.5 26.5 85 23 93 24 C90 31.5 83.5 35 75 33.5 Z" fill="currentColor"/>
+  </symbol>
+  <!-- C: semente (oval deitado) e duas folhas abertas em V, separadas como num carimbo -->
+  <symbol id="c" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="76" rx="17" ry="10.5" fill="currentColor"/>
+    <path d="M47 59 C35.5 58 24.5 48 23 30 C38 30.5 48 42 47 59 Z" fill="currentColor"/>
+    <path d="M53 59 C52 42 62 30.5 77 30 C75.5 48 64.5 58 53 59 Z" fill="currentColor"/>
+  </symbol>
+  <!-- D: selo redondo com o broto vazado subindo da semente -->
+  <symbol id="d" viewBox="0 0 100 100">
+    <mask id="vazado">
+      <rect width="100" height="100" fill="#fff"/>
+      <path d="M50 76 C50 66 48.5 58 50 49" fill="none" stroke="#000" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M49.5 54 C47.5 43.5 38.5 37 26.5 38 C28 49.5 37 56 49.5 54 Z" fill="#000"/>
+      <path d="M50.5 51 C53 41 61 34.5 73 35 C71 46 62 52.5 50.5 51 Z" fill="#000"/>
+      <ellipse cx="50" cy="82" rx="16" ry="8" fill="#000"/>
+    </mask>
+    <circle cx="50" cy="50" r="44" fill="currentColor" mask="url(#vazado)"/>
+  </symbol>
+</svg>
+
+<div class="tela">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <span style="font-size:22px;font-weight:700">Logo do Seedy</span>
+    <span class="rot">QUATRO CONCEITOS · FORMAS CHAPADAS · VERDE #9CD7BA</span>
+  </div>
+
+  <div class="grade">
+    <div class="card" style="color:#9CD7BA">
+      <div class="titulo"><b style="color:#E9E2D3">A · Feijão</b><span class="rot">o broto sai da fenda</span></div>
+      <div class="grande"><svg><use href="#a"/></svg></div>
+      <div class="tamanhos">
+        <div class="app" style="width:64px;height:64px"><svg><use href="#a"/></svg></div>
+        <div class="app" style="width:32px;height:32px"><svg><use href="#a"/></svg></div>
+        <div class="app" style="width:16px;height:16px"><svg><use href="#a"/></svg></div>
+        <span style="flex:1"></span>
+        <div class="botao" style="color:#16171C"><svg><use href="#a"/></svg></div>
+      </div>
+      <div class="claro" style="color:#2E3A2B"><svg><use href="#a"/></svg><span class="marca" style="color:#16171C">seedy</span></div>
+      <div class="desc">A ideia mais literal: semente em forma de feijão, caule em S e duas folhas com ponta.</div>
+    </div>
+
+    <div class="card" style="color:#9CD7BA">
+      <div class="titulo"><b style="color:#E9E2D3">B · Semente aberta</b><span class="rot">o contorno vira caule</span></div>
+      <div class="grande"><svg><use href="#b"/></svg></div>
+      <div class="tamanhos">
+        <div class="app" style="width:64px;height:64px"><svg><use href="#b"/></svg></div>
+        <div class="app" style="width:32px;height:32px"><svg><use href="#b"/></svg></div>
+        <div class="app" style="width:16px;height:16px"><svg><use href="#b"/></svg></div>
+        <span style="flex:1"></span>
+        <div class="botao" style="color:#16171C"><svg><use href="#b"/></svg></div>
+      </div>
+      <div class="claro" style="color:#2E3A2B"><svg><use href="#b"/></svg><span class="marca" style="color:#16171C">seedy</span></div>
+      <div class="desc">Um traço só: a semente é um círculo aberto e o fim dele cresce em folhas. Lembra um "{" e um "s".</div>
+    </div>
+
+    <div class="card" style="color:#9CD7BA">
+      <div class="titulo"><b style="color:#E9E2D3">C · Carimbo</b><span class="rot">três formas soltas</span></div>
+      <div class="grande"><svg><use href="#c"/></svg></div>
+      <div class="tamanhos">
+        <div class="app" style="width:64px;height:64px"><svg><use href="#c"/></svg></div>
+        <div class="app" style="width:32px;height:32px"><svg><use href="#c"/></svg></div>
+        <div class="app" style="width:16px;height:16px"><svg><use href="#c"/></svg></div>
+        <span style="flex:1"></span>
+        <div class="botao" style="color:#16171C"><svg><use href="#c"/></svg></div>
+      </div>
+      <div class="claro" style="color:#2E3A2B"><svg><use href="#c"/></svg><span class="marca" style="color:#16171C">seedy</span></div>
+      <div class="desc">O mais simples: a semente embaixo e as duas folhas abrindo em V. Lê bem até em 16 px.</div>
+    </div>
+
+    <div class="card" style="color:#9CD7BA">
+      <div class="titulo"><b style="color:#E9E2D3">D · Selo</b><span class="rot">broto vazado no círculo</span></div>
+      <div class="grande"><svg><use href="#d"/></svg></div>
+      <div class="tamanhos">
+        <div class="app" style="width:64px;height:64px"><svg><use href="#d"/></svg></div>
+        <div class="app" style="width:32px;height:32px"><svg><use href="#d"/></svg></div>
+        <div class="app" style="width:16px;height:16px"><svg><use href="#d"/></svg></div>
+        <span style="flex:1"></span>
+        <div class="botao" style="color:#16171C"><svg><use href="#d"/></svg></div>
+      </div>
+      <div class="claro" style="color:#2E3A2B"><svg><use href="#d"/></svg><span class="marca" style="color:#16171C">seedy</span></div>
+      <div class="desc">Círculo cheio com o broto e a semente em negativo. Funciona como selo e como ícone redondo.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

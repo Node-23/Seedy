@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Editor em verde — proposta</title>
+
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+a{color:#9CD7BA}a:hover{color:#BAE8D1}
+</style>
+</helmet>
+<div style="width: 100%; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Inky Mono', 'Martian Mono', ui-monospace, monospace; font-size: 13px">
+
+  <header style="display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0">
+    <button aria-label="Menu" style="width: 40px; height: 40px; border-radius: 10px; border: 2px solid #0B0B0C; background: #9CD7BA; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0"><svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true" style="display:block;margin:auto"><path d="M32 40 C32 33 31.2 28.5 32 22" fill="none" stroke="#16171C" stroke-width="4" stroke-linecap="round"/><path d="M31.4 26.5 C24.5 26.8 19.2 22.6 18.2 15.2 C25.6 14.8 30.4 19 31.4 26.5 Z" fill="#16171C"/><path d="M32.4 23.2 C38.4 23.2 43.4 19.4 45.4 12.6 C38.6 12.4 33.8 16.2 32.4 23.2 Z" fill="#16171C"/><path d="M17 45.5 C17 39.6 23.6 36.2 29.6 36 L32 39.6 L34.4 36 C40.4 36.2 47 39.6 47 45.5 C47 50.8 40.2 54 32 54 C23.8 54 17 50.8 17 45.5 Z" fill="#16171C"/></svg></button>
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; box-sizing: border-box; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C">
+      <span style="font-weight: 700">feirinha-verde</span>
+      <span style="color: #A29D93">develop</span>
+    </div>
+    <nav aria-label="Buffers abertos" style="display: flex; align-items: center; gap: 6px; margin-left: 6px">
+      <a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; background: #9CD7BA; color: #16171C; text-decoration: none; font-weight: 700; font-size: 12px">1 FeiraService.java</a>
+      <a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; border: 2px solid #333337; box-sizing: border-box; color: #A29D93; text-decoration: none; font-size: 12px">2 BancaController.java</a>
+      <a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; border: 2px solid #333337; box-sizing: border-box; color: #A29D93; text-decoration: none; font-size: 12px">3 application.yml</a>
+    </nav>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 8px">
+      <button aria-label="Buscar" style="width: 38px; height: 38px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg></button>
+      <button aria-label="Git" style="width: 38px; height: 38px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="5" r="2.5"></circle><circle cx="6" cy="19" r="2.5"></circle><circle cx="18" cy="8" r="2.5"></circle><path d="M6 7.5v9M18 10.5v1a4 4 0 0 1-4 4H8.5"></path></svg></button>
+      <button aria-label="Banco de dados" style="width: 38px; height: 38px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"></ellipse><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"></path></svg></button>
+      <button aria-label="Servidor" style="width: 38px; height: 38px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"></rect><rect x="4" y="13" width="16" height="7" rx="2"></rect><path d="M8 7.5h.01M8 16.5h.01"></path></svg></button>
+      <button aria-label="Assistente de IA" style="width: 38px; height: 38px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #9CD7BA; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"></path></svg></button>
+    </div>
+    <div style="display: flex; gap: 4px; margin-left: 8px">
+      <button aria-label="Minimizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">–</button>
+      <button aria-label="Maximizar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">□</button>
+      <button aria-label="Fechar" style="width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: #A29D93; font-family: inherit; cursor: pointer">×</button>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 12px">
+
+    <section aria-label="Arquivos" style="width: 280px; flex-shrink: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0">
+        <span style="font-size: 11px; letter-spacing: 0.14em; color: #A29D93">ARQUIVOS</span>
+        <kbd style="font-family: inherit; font-size: 11px; padding: 2px 7px; border-radius: 6px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C">␣ e</kbd>
+      </div>
+      <div style="flex: 1; padding: 8px 0; font-size: 12px; line-height: 26px; overflow: hidden">
+        <div style="padding-left: 12px"><span style="color: #A29D93">▾ </span>feirinha-verde</div>
+        <div style="padding-left: 24px"><span style="color: #A29D93">▾ </span>src/main/java</div>
+        <div style="padding-left: 36px"><span style="color: #A29D93">▾ </span>br.com.feirinhaverde</div>
+        <div style="padding-left: 48px"><span style="color: #A29D93">▾ </span>feira</div>
+        <div style="padding-left: 72px">Feira.java</div>
+        <div style="padding-left: 72px">FeiraController.java</div>
+        <div style="padding-left: 72px">FeiraRepository.java</div>
+        <div style="display: flex; justify-content: space-between; margin: 0 8px; padding: 0 10px 0 64px; border-radius: 7px; background: #9CD7BA; color: #16171C; font-weight: 700"><span>FeiraService.java</span><span>M</span></div>
+        <div style="padding-left: 48px"><span style="color: #A29D93">▸ </span>banca</div>
+        <div style="padding-left: 48px"><span style="color: #A29D93">▸ </span>feirante</div>
+        <div style="padding-left: 48px"><span style="color: #A29D93">▸ </span>pagamento</div>
+        <div style="padding-left: 48px"><span style="color: #A29D93">▸ </span>config</div>
+        <div style="padding-left: 24px"><span style="color: #A29D93">▾ </span>src/main/resources</div>
+        <div style="display: flex; justify-content: space-between; padding: 0 18px 0 48px"><span>application.yml</span><span style="color: #E8C979">M</span></div>
+        <div style="padding-left: 36px"><span style="color: #A29D93">▸ </span>db/migration</div>
+        <div style="padding-left: 24px"><span style="color: #A29D93">▸ </span>src/test/java</div>
+        <div style="padding-left: 24px">pom.xml</div>
+        <div style="padding-left: 24px">docker-compose.yml</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-top: 2px solid #0B0B0C; font-size: 12px; flex-shrink: 0">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #B7D39C"></span>
+        <span>spring-boot</span>
+        <span style="color: #A29D93">:8080 rodando</span>
+      </div>
+    </section>
+
+    <section aria-label="Editor" style="position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C">
+      <div style="position: absolute; top: -2px; right: -6px; width: 56px; height: 52px; box-sizing: border-box; background: #19191B; border-left: 2px solid #0B0B0C; border-bottom: 2px solid #0B0B0C; border-bottom-left-radius: 16px; z-index: 2">
+        <button aria-label="Modo foco" style="position: absolute; top: 2px; right: 6px; width: 36px; height: 36px; border-radius: 9px; border: 2px solid #0B0B0C; background: #9CD7BA; color: #16171C; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 70px 0 14px; border-bottom: 2px solid #0B0B0C; font-size: 12px; color: #A29D93; flex-shrink: 0">
+        <span>feira</span><span>›</span><span>FeiraService</span><span>›</span><span style="color: #E9E2D3">reservarBanca</span>
+      </div>
+      <div style="position: relative; flex: 1; min-height: 0; padding: 10px 0; line-height: 19px; overflow: hidden; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px">
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">32</span><span style="width: 18px"></span><span style="white-space: pre">package br.com.feirinhaverde.feira;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">31</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">30</span><span style="width: 18px"></span><span style="white-space: pre">import java.time.LocalDate;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">29</span><span style="width: 18px"></span><span style="white-space: pre">import java.util.List;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">28</span><span style="width: 18px"></span><span style="white-space: pre">import java.util.Optional;</span><span style="margin-left: 24px; color: #A29D93; font-style: italic">◆ import não usado</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">27</span><span style="width: 18px"></span><span style="white-space: pre">import org.springframework.stereotype.Service;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">26</span><span style="width: 18px"></span><span style="white-space: pre">import org.springframework.transaction.annotation.Transactional;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">25</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">24</span><span style="width: 18px"></span><span style="white-space: pre">@Service</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">23</span><span style="width: 18px"></span><span style="white-space: pre">public class <span style="color: #9CD7BA">FeiraService</span> {</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">22</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">21</span><span style="width: 18px; text-align: center; color: #B7D39C">▎</span><span style="white-space: pre">    private static final int <span style="color: #9CD7BA">LIMITE_BANCAS</span> = <span style="color: #E3A9CC">120</span>;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">20</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">19</span><span style="width: 18px"></span><span style="white-space: pre">    private final FeiraRepository <span style="color: #9CD7BA">feiraRepository</span>;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">18</span><span style="width: 18px"></span><span style="white-space: pre">    private final BancaRepository <span style="color: #9CD7BA">bancaRepository</span>;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">17</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">16</span><span style="width: 18px"></span><span style="white-space: pre">    public <span style="color: #9CD7BA">FeiraService</span>(FeiraRepository feiraRepository, BancaRepository bancaRepository) {</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">15</span><span style="width: 18px"></span><span style="white-space: pre">        this.feiraRepository = feiraRepository;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">14</span><span style="width: 18px"></span><span style="white-space: pre">        this.bancaRepository = bancaRepository;</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">13</span><span style="width: 18px"></span><span style="white-space: pre">    }</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">12</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">11</span><span style="width: 18px"></span><span style="white-space: pre; color: #E8C979">    // Lista as feiras abertas a partir de hoje</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">10</span><span style="width: 18px"></span><span style="white-space: pre">    @Transactional(readOnly = <span style="color: #E3A9CC">true</span>)</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">9</span><span style="width: 18px"></span><span style="white-space: pre">    public List&lt;Feira&gt; <span style="color: #9CD7BA">listarAbertas</span>() {</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">8</span><span style="width: 18px"></span><span style="white-space: pre">        return feiraRepository.findByDataGreaterThanEqual(LocalDate.now());</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">7</span><span style="width: 18px"></span><span style="white-space: pre">    }</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">6</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">5</span><span style="width: 18px"></span><span style="white-space: pre">    @Transactional</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">4</span><span style="width: 18px"></span><span style="white-space: pre">    public Banca <span style="color: #9CD7BA">reservarBanca</span>(Long feiraId, Long feiranteId) {</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">3</span><span style="width: 18px"></span><span style="white-space: pre">        Feira feira = feiraRepository.findById(feiraId)</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">2</span><span style="width: 18px"></span><span style="white-space: pre">            .orElseThrow(() -&gt; new RegraNegocioException(<span style="color: #B7D39C">"Feira não encontrada"</span>));</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">1</span><span style="width: 18px"></span><span style="white-space: pre"> </span></div>
+        <div style="display: flex; height: 19px; background: #333337"><span style="width: 44px; text-align: right; color: #9CD7BA; font-weight: 700">33</span><span style="width: 18px; text-align: center; color: #B7D39C">▎</span><span style="white-space: pre">        if (feira.getBancas().<span style="background: #9CD7BA; color: #16171C">s</span>ize() &gt;= LIMITE_BANCAS) {</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">1</span><span style="width: 18px; text-align: center; color: #B7D39C">▎</span><span style="white-space: pre">            throw new RegraNegocioException(<span style="color: #B7D39C">"Feira lotada"</span>);</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">2</span><span style="width: 18px; text-align: center; color: #B7D39C">▎</span><span style="white-space: pre">        }</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">3</span><span style="width: 18px"></span><span style="white-space: pre">        return bancaRepository.save(new Banca(feira, feiranteId));</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">4</span><span style="width: 18px"></span><span style="white-space: pre">    }</span></div>
+        <div style="display: flex; height: 19px"><span style="width: 44px; text-align: right; color: #A29D93">5</span><span style="width: 18px"></span><span style="white-space: pre">}</span></div>
+
+        <div role="dialog" aria-label="Atalhos do líder" style="position: absolute; right: 18px; bottom: 18px; width: 380px; box-sizing: border-box; padding: 14px 16px 16px; border: 2px solid #0B0B0C; border-radius: 14px; background: #222225; box-shadow: 4px 4px 0 #0B0B0C; font-size: 12px; line-height: 18px">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px">
+            <span style="font-size: 11px; letter-spacing: 0.14em; color: #9CD7BA">␣  LÍDER</span>
+            <span style="color: #A29D93">esc fecha</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 18px">
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">f</span><span>arquivos</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">g</span><span>git</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">/</span><span>buscar texto</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">d</span><span>banco</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">s</span><span>símbolos</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">j</span><span>servidor jboss</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">r</span><span>rodar / debug</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">m</span><span>diff / merge</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">a</span><span>IA</span></div>
+            <div style="display: flex; gap: 12px"><span style="width: 12px; color: #9CD7BA; font-weight: 700">t</span><span>terminal</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer style="display: flex; align-items: stretch; height: 30px; flex-shrink: 0; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden; font-size: 12px">
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #9CD7BA; color: #16171C; font-weight: 700; letter-spacing: 0.08em">NORMAL</span>
+    <span style="display: flex; align-items: center; gap: 6px; padding: 0 12px; border-right: 2px solid #0B0B0C">develop <span style="color: #A29D93">↑1</span></span>
+    <span style="display: flex; align-items: center; padding: 0 12px">feira/FeiraService.java <span style="color: #E8C979; margin-left: 6px">[+]</span></span>
+    <span style="flex: 1"></span>
+    <span style="display: flex; align-items: center; gap: 6px; padding: 0 12px; border-left: 2px solid #0B0B0C"><span style="width: 7px; height: 7px; border-radius: 50%; background: #B7D39C"></span>spring-boot :8080</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C">jdtls ✓</span>
+    <span style="display: flex; align-items: center; padding: 0 12px; border-left: 2px solid #0B0B0C; color: #A29D93">UTF-8 · LF · java</span>
+    <span style="display: flex; align-items: center; padding: 0 14px; background: #333337; border-left: 2px solid #0B0B0C">33:28</span>
+  </footer>
+  <div style="height: 20px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 12px; color: #A29D93">"FeiraService.java" 38L gravado</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

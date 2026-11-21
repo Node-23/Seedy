@@ -14,7 +14,7 @@
     "sombra": "#0B0B0C",
     "texto": "#E9E2D3",
     "textoSuave": "#A29D93",
-    "destaque": "#92A9E1",
+    "destaque": "#9CD7BA",
     "textoSobreDestaque": "#16171C",
     "sucesso": "#B7D39C",
     "sucessoFundo": "#2E3A2B",
@@ -25,7 +25,7 @@
   },
   "sintaxe": {
     "padrao": "#E9E2D3",
-    "definicao": "#92A9E1",
+    "definicao": "#9CD7BA",
     "string": "#B7D39C",
     "constante": "#E3A9CC",
     "comentario": "#E8C979"
