@@ -1635,3 +1635,51 @@ sd-scripts { flex: 1; min-width: 0; display: flex; }
 .entender-passo.selecionado .num { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
 .entender-explicacao { padding: 6px 14px 10px; font-size: 11.5px; line-height: 18px; white-space: pre-wrap; }
 .entender-regra-id { margin-left: 6px; }
+
+/* ---------- TODO (␣ T, mockup 20): barra de ícones à esquerda e o painel por cima ---------- */
+.barra-icones { width: 44px; flex-shrink: 0; margin-right: var(--espaco); display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 2px; }
+.icone-lateral {
+  position: relative; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  border: var(--espessura-borda) solid var(--borda); border-radius: 10px; background: var(--painel); color: var(--texto-suave);
+}
+.icone-lateral:hover { color: var(--texto); }
+.icone-lateral.ativo { background: var(--destaque); color: var(--texto-sobre-destaque); box-shadow: 3px 3px 0 var(--sombra); }
+.icone-contador {
+  position: absolute; right: -6px; top: -6px; min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 4px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700;
+  background: var(--aviso); color: var(--texto-sobre-destaque); border: var(--espessura-borda) solid var(--borda);
+}
+.barra-status .modo[data-modo="todo"] { background: var(--aviso); }
+.todo-painel { position: absolute; left: 56px; top: 0; bottom: 0; width: 500px; z-index: 30; box-shadow: 6px 6px 0 var(--sombra); }
+.todo-novo { padding: 12px 14px 4px; flex-shrink: 0; }
+.todo-campo { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--fundo); font-size: 12px; }
+.todo-campo input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--texto); font: inherit; }
+.todo-campo:focus-within { box-shadow: 0 0 0 2px var(--destaque); }
+.todo-lista { flex: 1; min-height: 0; overflow: auto; outline: none; padding: 10px 14px; display: flex; flex-direction: column; gap: 10px; }
+.todo-card {
+  flex-shrink: 0; display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; cursor: pointer;
+  border: var(--espessura-borda) solid var(--borda); border-radius: 11px; background: var(--painel-elevado); box-shadow: 3px 3px 0 var(--sombra);
+}
+.todo-card.selecionado { background: var(--painel); box-shadow: 0 0 0 2px var(--destaque), 3px 3px 0 var(--sombra); }
+.todo-lista:focus .todo-card.selecionado { box-shadow: 0 0 0 2px var(--destaque), 0 0 0 4px var(--selecao), 3px 3px 0 var(--sombra); }
+.todo-titulo { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; line-height: 18px; }
+.todo-caixa { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; box-sizing: border-box; border: 2px solid var(--texto-suave); border-radius: 5px; cursor: pointer; }
+.todo-caixa:hover { border-color: var(--sucesso); }
+.todo-caixa.feita { margin-top: 0; background: var(--sucesso); border-color: var(--sucesso); color: var(--texto-sobre-destaque); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.todo-nota { padding-left: 26px; font-size: 11.5px; line-height: 17px; color: var(--texto-suave); white-space: pre-wrap; }
+.todo-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 26px; }
+.todo-chip { display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--borda); background: var(--fundo); font-size: 11px; white-space: nowrap; max-width: 100%; overflow: hidden; }
+.todo-chip:hover { border-color: var(--destaque); }
+.todo-chip-x { display: none; color: var(--texto-suave); margin-left: 2px; }
+.todo-chip:hover .todo-chip-x { display: inline; }
+.todo-chip-x:hover { color: var(--erro); }
+.todo-editar { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--borda); border-radius: 7px; background: var(--fundo); color: var(--texto); font: inherit; font-size: 12px; outline: none; resize: vertical; }
+.todo-editar:focus { box-shadow: 0 0 0 2px var(--destaque); }
+.todo-grupo { margin: 4px -14px 0; }
+.todo-feito { display: flex; align-items: center; gap: 10px; min-height: 26px; padding: 0 6px; font-size: 12px; cursor: pointer; border-radius: 6px; flex-shrink: 0; }
+.todo-feito .suave { text-decoration: line-through; }
+.todo-feito.selecionado { background: var(--selecao); box-shadow: inset 3px 0 0 var(--destaque); }
+.todo-ligar { margin: 6px 14px 12px; padding: 10px 12px; flex-shrink: 0; border: 2px dashed var(--selecao); border-radius: 10px; font-size: 11.5px; line-height: 18px; }
+.todo-dica { padding: 10px 14px; flex-shrink: 0; border-top: var(--espessura-borda) solid var(--borda); font-size: 11px; white-space: nowrap; overflow: hidden; }
+.monaco-editor .todo-marca { color: var(--aviso) !important; font-style: normal; }
+.monaco-editor .todo-margem { border-left: 3px solid var(--aviso); margin-left: 3px; }

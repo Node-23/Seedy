@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>TODO — IDE Java</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{position:relative;width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Inky Mono','Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:32px;padding:0 11px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px}
+.quad{width:36px;height:36px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:3px 3px 0 #0B0B0C}
+.suave{color:#A29D93}.dest{color:#9CD7BA}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.cod{flex:1;padding:8px 0;overflow:hidden;font-size:12px;line-height:22px;position:relative}
+.l{display:block;white-space:pre;position:relative}
+.l .n{display:inline-block;width:46px;text-align:right;padding-right:16px;color:#A29D93}
+.arv div{height:24px;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;white-space:nowrap}
+.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.onda{text-decoration:underline wavy #E8C979;text-underline-offset:4px}
+.log div{white-space:pre;padding:0 14px;line-height:20px;font-size:11.5px}
+.script{display:flex;align-items:center;gap:8px;height:28px;padding:0 12px;font-size:12px;white-space:nowrap}
+.seg{display:flex;align-items:center;padding:0 12px;border-left:2px solid #0B0B0C}
+
+.icone{width:40px;height:40px;border-radius:10px;border:2px solid #0B0B0C;background:#2A2A2D;color:#A29D93;display:flex;align-items:center;justify-content:center;position:relative}
+.icone.on{background:#9CD7BA;color:#16171C;box-shadow:3px 3px 0 #0B0B0C}
+.badge{position:absolute;right:-6px;top:-6px;min-width:18px;height:18px;border-radius:9px;background:#E8C979;color:#16171C;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #0B0B0C;box-sizing:border-box;padding:0 4px}
+.card{border:2px solid #0B0B0C;border-radius:11px;background:#222225;box-shadow:3px 3px 0 #0B0B0C;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.card.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#2D2D30}
+.ct{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;line-height:18px}
+.caixa{width:16px;height:16px;flex-shrink:0;margin-top:1px;border:2px solid #A29D93;border-radius:5px;box-sizing:border-box}
+.caixa.feita{background:#B7D39C;border-color:#B7D39C;color:#16171C;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding-left:26px}
+.chip{display:flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:7px;border:1px solid #0B0B0C;background:#19191B;font-size:11px;white-space:nowrap}
+.nota{padding-left:26px;font-size:11.5px;line-height:17px;color:#A29D93}
+.grupo{padding:12px 14px 6px;font-size:10.5px;letter-spacing:.14em;color:#A29D93}
+</style>
+</head>
+<body>
+<div class="tela">
+
+  <header style="display:flex;align-items:center;gap:10px;height:40px;flex-shrink:0">
+    <button style="width:40px;height:40px;border-radius:10px;border:2px solid #0B0B0C;background:#9CD7BA;color:#16171C;box-shadow:3px 3px 0 #0B0B0C;display:flex;align-items:center;justify-content:center;padding:0"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path fill="#16171C" fill-rule="evenodd" d="M59.85 58.86Q58.80 58.36 58.16 58.10Q57.52 57.84 56.64 57.55Q55.75 57.26 54.42 56.92Q53.08 56.59 52.21 56.44Q51.34 56.28 50.79 56.22Q50.24 56.16 49.42 56.09Q48.59 56.03 48.12 56.03Q47.65 56.03 46.90 56.11Q46.15 56.18 45.68 56.30Q45.21 56.41 44.83 56.56Q44.46 56.70 44.13 56.89Q43.81 57.08 43.59 57.26Q43.37 57.44 43.14 57.69Q42.92 57.94 42.75 58.23Q42.58 58.52 42.44 58.94Q42.30 59.36 42.26 59.73Q42.21 60.09 42.22 60.42Q42.22 60.74 42.28 61.16Q42.34 61.59 42.48 62.11Q42.62 62.64 42.80 63.16Q42.99 63.68 44.22 66.44Q45.46 69.19 45.82 70.12Q46.17 71.05 46.43 71.85Q46.69 72.65 46.96 73.76Q47.22 74.86 47.33 75.47Q47.43 76.09 47.55 77.32Q47.67 78.55 47.69 79.52Q47.70 80.49 47.63 81.42Q47.57 82.35 47.49 82.96Q47.42 83.58 47.21 84.71Q47.00 85.84 46.71 86.92Q46.42 87.99 46.01 89.18Q45.59 90.38 45.10 91.52Q44.62 92.65 44.07 93.70Q43.52 94.75 42.82 95.86Q42.12 96.98 41.67 97.59Q41.23 98.21 40.91 98.58Q40.60 98.96 40.58 99.02Q40.56 99.09 40.60 99.14Q40.65 99.19 41.26 99.20Q41.88 99.20 43.20 99.04Q44.53 98.88 46.03 98.55Q47.53 98.23 48.59 97.94Q49.65 97.65 50.74 97.30Q51.83 96.96 53.30 96.39Q54.77 95.83 56.15 95.20Q57.53 94.56 58.59 94.00Q59.64 93.45 60.57 92.90Q61.50 92.35 62.46 91.72Q63.41 91.09 64.33 90.39Q65.25 89.70 66.11 88.95Q66.97 88.19 67.48 87.69Q67.99 87.19 68.48 86.64Q68.97 86.10 69.55 85.36Q70.13 84.63 70.70 83.73Q71.27 82.84 71.56 82.26Q71.84 81.69 72.09 81.04Q72.35 80.39 72.52 79.79Q72.69 79.18 72.81 78.27Q72.94 77.36 72.94 76.65Q72.94 75.94 72.80 74.97Q72.65 73.99 72.45 73.24Q72.25 72.49 71.89 71.55Q71.53 70.61 71.09 69.75Q70.65 68.89 70.13 68.04Q69.61 67.20 68.99 66.37Q68.37 65.54 67.73 64.82Q67.08 64.10 66.28 63.33Q65.49 62.56 64.61 61.86Q63.74 61.17 63.02 60.68Q62.29 60.20 61.60 59.78Q60.90 59.36 59.85 58.86ZM86.41 1.93Q86.26 1.81 85.82 1.63Q85.38 1.46 84.64 1.30Q83.90 1.15 82.74 1.03Q81.57 0.91 80.62 0.90Q79.68 0.89 78.54 0.95Q77.40 1.02 76.64 1.10Q75.88 1.18 74.58 1.38Q73.28 1.59 72.26 1.80Q71.25 2.01 70.46 2.21Q69.68 2.41 68.51 2.77Q67.34 3.12 66.81 3.32Q66.28 3.51 65.19 3.96Q64.09 4.42 63.14 4.89Q62.19 5.36 61.31 5.87Q60.43 6.39 59.61 6.94Q58.80 7.50 58.13 8.02Q57.47 8.54 56.85 9.09Q56.23 9.64 55.71 10.17Q55.19 10.69 54.64 11.31Q54.10 11.93 53.62 12.54Q53.14 13.15 52.52 14.07Q51.91 14.99 51.52 15.68Q51.12 16.38 50.77 17.09Q50.42 17.81 50.12 18.51Q49.83 19.20 49.54 20.02Q49.26 20.84 49.00 21.74Q48.75 22.64 48.45 24.17Q48.15 25.69 48.08 26.27Q48.01 26.84 47.93 28.00Q47.85 29.17 47.86 31.37Q47.87 33.56 47.84 33.72Q47.80 33.87 47.77 33.85Q47.73 33.84 47.68 33.74Q47.63 33.65 47.08 32.04Q46.54 30.43 46.00 29.24Q45.46 28.04 44.75 26.74Q44.04 25.43 43.34 24.39Q42.64 23.34 41.81 22.34Q40.97 21.33 40.17 20.54Q39.36 19.76 38.39 18.98Q37.41 18.21 36.37 17.57Q35.32 16.93 34.17 16.39Q33.02 15.84 31.76 15.41Q30.50 14.97 29.02 14.64Q27.53 14.31 26.92 14.21Q26.30 14.12 25.40 14.04Q24.50 13.96 23.91 13.93Q23.32 13.90 21.93 13.93Q20.53 13.96 19.95 14.00Q19.36 14.04 18.32 14.17Q17.28 14.29 16.63 14.44Q15.98 14.58 15.59 14.72Q15.20 14.86 14.92 15.02Q14.65 15.17 14.49 15.35Q14.33 15.53 14.24 15.80Q14.14 16.06 14.16 16.30Q14.17 16.53 14.24 16.77Q14.31 17.00 15.13 18.69Q15.95 20.37 16.83 21.93Q17.72 23.48 18.40 24.46Q19.07 25.44 19.61 26.06Q20.15 26.69 20.65 27.22Q21.16 27.74 22.03 28.50Q22.89 29.25 23.70 29.82Q24.50 30.39 25.36 30.89Q26.22 31.39 26.97 31.74Q27.73 32.09 28.72 32.44Q29.70 32.79 30.47 32.99Q31.24 33.19 31.96 33.34Q32.67 33.48 33.43 33.58Q34.19 33.68 35.68 33.82Q37.16 33.96 38.18 34.10Q39.19 34.24 39.77 34.38Q40.35 34.51 40.94 34.73Q41.54 34.95 41.83 35.10Q42.13 35.25 42.36 35.41Q42.59 35.57 42.86 35.79Q43.12 36.02 43.29 36.20Q43.45 36.38 43.63 36.63Q43.81 36.89 43.93 37.13Q44.05 37.37 44.14 37.64Q44.22 37.92 44.27 38.17Q44.31 38.43 44.32 38.75Q44.34 39.07 44.28 39.60Q44.22 40.13 44.00 40.79Q43.78 41.45 43.56 41.90Q43.34 42.35 43.08 42.78Q42.81 43.21 42.50 43.65Q42.19 44.09 41.74 44.63Q41.28 45.17 40.17 46.27Q39.05 47.36 38.37 47.91Q37.70 48.46 36.46 49.33Q35.23 50.21 31.95 52.26Q28.67 54.31 27.65 54.99Q26.63 55.67 25.10 56.82Q23.58 57.96 22.99 58.45Q22.40 58.94 21.70 59.57Q21.00 60.21 20.29 60.92Q19.58 61.63 19.00 62.29Q18.43 62.95 17.94 63.56Q17.45 64.18 16.98 64.86Q16.50 65.54 16.13 66.16Q15.76 66.78 15.40 67.48Q15.03 68.17 14.56 69.36Q14.09 70.54 13.84 71.46Q13.59 72.37 13.49 72.95Q13.39 73.53 13.33 74.40Q13.28 75.28 13.29 75.85Q13.30 76.42 13.34 76.90Q13.39 77.38 13.54 78.25Q13.69 79.12 13.90 79.87Q14.11 80.61 14.41 81.46Q14.71 82.30 15.18 83.32Q15.65 84.33 16.14 85.18Q16.63 86.03 17.09 86.71Q17.55 87.40 18.26 88.31Q18.98 89.22 19.47 89.78Q19.97 90.34 21.01 91.34Q22.06 92.35 22.68 92.87Q23.30 93.39 23.83 93.80Q24.35 94.20 25.31 94.86Q26.27 95.52 27.38 96.16Q28.50 96.81 29.64 97.33Q30.78 97.86 31.71 98.19Q32.65 98.52 33.09 98.63Q33.53 98.74 34.02 98.81Q34.50 98.89 34.74 98.89Q34.98 98.89 35.28 98.84Q35.59 98.78 35.83 98.70Q36.08 98.61 36.33 98.47Q36.59 98.33 36.82 98.15Q37.06 97.96 37.43 97.60Q37.80 97.23 38.31 96.56Q38.82 95.89 39.50 94.68Q40.19 93.47 40.66 92.38Q41.13 91.30 41.49 90.29Q41.85 89.28 42.12 88.30Q42.38 87.31 42.57 86.35Q42.75 85.38 42.86 84.64Q42.96 83.89 43.03 82.87Q43.09 81.85 43.08 81.01Q43.08 80.17 42.93 78.78Q42.78 77.40 42.63 76.64Q42.49 75.88 42.09 74.39Q41.69 72.89 40.46 69.34Q39.24 65.79 38.96 64.68Q38.68 63.58 38.54 62.74Q38.40 61.91 38.37 60.96Q38.34 60.01 38.43 59.33Q38.51 58.65 38.69 57.93Q38.87 57.21 39.04 56.75Q39.21 56.28 39.38 55.95Q39.54 55.61 39.92 55.01Q40.30 54.40 40.75 53.84Q41.20 53.28 42.87 51.57Q44.54 49.86 45.13 49.20Q45.73 48.54 46.27 47.90Q46.82 47.26 47.52 46.31Q48.22 45.36 48.74 44.46Q49.27 43.56 49.65 42.77Q50.03 41.97 50.31 41.17Q50.59 40.38 51.02 38.89Q51.46 37.41 51.62 37.00Q51.78 36.59 52.20 35.84Q52.62 35.10 52.96 34.68Q53.30 34.26 53.70 33.83Q54.11 33.40 54.48 33.07Q54.85 32.74 55.30 32.41Q55.74 32.08 56.41 31.67Q57.07 31.25 57.70 30.91Q58.33 30.58 59.35 30.11Q60.36 29.64 62.60 28.77Q64.84 27.89 65.87 27.46Q66.91 27.03 67.45 26.78Q67.99 26.53 69.06 25.97Q70.13 25.42 71.23 24.72Q72.33 24.02 73.12 23.42Q73.92 22.82 74.79 22.04Q75.65 21.26 76.23 20.64Q76.82 20.01 77.64 18.96Q78.47 17.92 78.92 17.27Q79.38 16.62 79.77 15.98Q80.16 15.34 80.65 14.47Q81.13 13.61 81.73 12.42Q82.33 11.24 83.06 9.63Q83.80 8.02 84.28 7.07Q84.76 6.12 85.16 5.43Q85.57 4.75 86.07 4.00Q86.57 3.25 86.67 3.03Q86.76 2.81 86.76 2.62Q86.76 2.42 86.66 2.23Q86.56 2.05 86.41 1.93Z"/></svg></button>
+    <div style="display:flex;align-items:center;gap:10px;height:40px;box-sizing:border-box;padding:0 14px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C"><span style="font-weight:700">feirinha-verde</span><span class="suave">develop</span></div>
+    <div style="display:flex;gap:6px;margin-left:6px">
+      <span style="height:36px;display:flex;align-items:center;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#9CD7BA;color:#16171C;font-weight:700;font-size:12px">1 ReservaService.java</span>
+      <span style="height:36px;display:flex;align-items:center;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;font-size:12px">2 reserva-form.component.ts</span>
+      
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="quad"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+      <span class="quad"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7l5 5-5 5M12 18h7"/></svg></span>
+      <button class="btn" style="height:38px;gap:10px;box-shadow:3px 3px 0 #0B0B0C"><span class="dest" style="font-weight:700">◆</span>FeiraApplication <span class="suave">▾</span></button>
+      <span class="quad" style="background:#2E3A2B;color:#B7D39C"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>
+      <span class="quad"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="7" width="10" height="13" rx="5"/><path d="M12 7V4M9 4.5l1.5 2.5M15 4.5l-1.5 2.5M7 12H3.5M20.5 12H17M7 16.5l-3 2M17 16.5l3 2M12 11v9"/></svg></span>
+      <span class="quad" style="color:#EE8C84"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></span>
+    </div>
+    <div style="display:flex;gap:4px;margin-left:8px"><span class="suave" style="width:28px;text-align:center">–</span><span class="suave" style="width:28px;text-align:center">□</span><span class="suave" style="width:28px;text-align:center">×</span></div>
+  </header>
+
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:44px 280px minmax(0,1fr);gap:12px;position:relative">
+
+    <!-- barra de ícones -->
+    <nav style="display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:2px">
+      <span class="icone" title="arquivos ␣ e"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg></span>
+      <span class="icone on" title="TODO ␣ T"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l2.8 2.8L16.5 9"/></svg><span class="badge">3</span></span>
+      <span class="icone" title="entender ␣ A"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="8.5" y="15" width="7" height="6" rx="1.5"/><path d="M6.5 10v2.5h11V10M12 12.5V15"/></svg></span>
+    </nav>
+
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">ARQUIVOS</span><span style="flex:1"></span><kbd>␣ e</kbd></div>
+      <div class="arv" style="padding:6px 0">
+        <div><span class="suave">▾</span>feirinha-verde</div>
+        <div style="padding-left:24px"><span class="suave">▾</span>back/src/main/java</div>
+        <div style="padding-left:36px"><span class="suave">▾</span>br.com.feira.reserva</div>
+        <div style="padding-left:58px"><span class="dest">J</span>ReservaController.java</div>
+        <div class="sel" style="padding-left:58px"><span class="dest">J</span>ReservaService.java</div>
+        <div style="padding-left:58px"><span class="dest">J</span>ReservaRepository.java</div>
+        <div style="padding-left:36px"><span class="suave">▸</span>br.com.feira.feira</div>
+        <div style="padding-left:24px"><span class="suave">▸</span>front/src/app</div>
+        <div style="padding-left:12px"><span class="suave">▾</span>.seedy</div>
+        <div style="padding-left:34px"><span class="suave">#</span>regras.md</div>
+        <div style="padding-left:34px"><span class="aviso">#</span>todo.md</div>
+        <div style="padding-left:12px"><span class="aviso">{}</span>docker-compose.yml</div>
+      </div>
+    </section>
+
+    <section class="janela">
+      <div class="faixa"><span class="suave">back › … › reserva ›</span><span>ReservaService.java</span><span class="suave">› ReservaService › reservar</span></div>
+      <div class="cod">
+<div class="l"><span class="n">19</span>    <span class="dest">public</span> Reserva <span class="dest">reservar</span>(Long feiraId, String numero) {</div>
+<div class="l"><span class="n">20</span>        Feirante feirante = usuarioLogado.feirante();</div>
+<div class="l"><span class="n">21</span>        <span class="dest">if</span> (feirante.inadimplente()) <span class="dest">throw new</span> AcessoNegadoException(<span class="ok">"Feirante com pagamento atrasado"</span>);</div>
+<div class="l"><span class="n">22</span>        Feira feira = feiraRepository.findById(feiraId)</div>
+<div class="l"><span class="n">23</span>            .orElseThrow(() -&gt; <span class="dest">new</span> NaoEncontradaException(<span class="ok">"Feira não encontrada"</span>));</div>
+<div class="l" style="background:#333337"><span class="n" style="color:#E9E2D3">24</span>        <span class="dest">if</span> (feira.getBancas().size() &gt;= LIMITE_BANCAS) {<span style="margin-left:18px;color:#E8C979">☐ TODO: limite vem do banco</span></div>
+<div class="l"><span class="n">25</span>            <span class="dest">throw new</span> RegraNegocioException(<span class="ok">"Feira lotada"</span>);</div>
+<div class="l"><span class="n">26</span>        }</div>
+<div class="l"><span class="n">27</span>        <span class="dest">if</span> (bancas.ocupada(feiraId, numero)) {</div>
+<div class="l"><span class="n">28</span>            <span class="dest">throw new</span> RegraNegocioException(<span class="ok">"Banca já reservada"</span>);</div>
+<div class="l"><span class="n">29</span>        }</div>
+<div class="l"><span class="n">30</span>        <span class="dest">return</span> reservas.save(<span class="dest">new</span> Reserva(feira, numero));</div>
+<div class="l"><span class="n">31</span>    }</div>
+      </div>
+    </section>
+
+    <!-- painel do TODO, por cima -->
+    <section class="janela" style="position:absolute;left:56px;top:0;bottom:0;width:500px;box-shadow:6px 6px 0 #0B0B0C;z-index:2">
+      <div class="faixa"><span class="rotulo">TODO</span><span class="suave">3 abertos · 2 feitos</span><span style="flex:1"></span><span class="suave">.seedy/todo.md</span><kbd>␣ T</kbd></div>
+
+      <div style="padding:12px 14px 4px">
+        <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:2px solid #0B0B0C;border-radius:9px;background:#19191B;font-size:12px">
+          <span class="dest">+</span><span class="suave">novo card…</span><span style="flex:1"></span><kbd>o</kbd>
+        </div>
+      </div>
+
+      <div style="padding:10px 14px;display:flex;flex-direction:column;gap:10px">
+        <div class="card on">
+          <div class="ct"><span class="caixa"></span><b>Limite de bancas vem do banco, não da constante</b></div>
+          <div class="nota">Hoje é LIMITE_BANCAS = 120 fixo; cada feira tem o seu.</div>
+          <div class="chips">
+            <span class="chip"><span class="dest">{}</span>ReservaService.java:24</span>
+            <span class="chip"><span class="aviso">⚑</span>R12 Feira lotada</span>
+            <span class="chip"><span class="dest">⇢</span>caminho reservar</span>
+            <span class="chip"><span class="suave">▦</span>feira (tabela)</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ct"><span class="caixa"></span><span>Redis recusando conexão no compose</span></div>
+          <div class="chips">
+            <span class="chip"><span class="rosa">◇</span>container redis</span>
+            <span class="chip"><span class="dest">{}</span>application.yml:12</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ct"><span class="caixa"></span><span>Escrever teste do retorno do Pix</span></div>
+          <div class="chips">
+            <span class="chip"><span class="suave">▦</span>PixWebhook</span>
+            <span class="chip"><span class="aviso">⚑</span>R6 Pagamento não concluído</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo" style="border-top:2px solid #0B0B0C">FEITOS · 2</div>
+      <div style="padding:0 14px;display:flex;flex-direction:column;gap:4px;font-size:12px">
+        <div style="display:flex;align-items:center;gap:10px;height:26px"><span class="caixa feita">✓</span><span class="suave" style="text-decoration:line-through">Validar número da banca no front</span></div>
+        <div style="display:flex;align-items:center;gap:10px;height:26px"><span class="caixa feita">✓</span><span class="suave" style="text-decoration:line-through">Subir o Postgres do compose no Homolog</span></div>
+      </div>
+
+      <div style="flex:1"></div>
+      <div style="margin:0 14px 12px;padding:10px 12px;border:2px dashed #3F3F44;border-radius:10px;font-size:11.5px;line-height:18px">
+        <span class="rotulo">LIGAR AO CARD</span><br>
+        <span class="dest">l</span> liga o que está aberto: <span class="dest">{}</span> ReservaService.java:27 <span class="suave">· reservar</span><br>
+        <span class="suave">também liga: bloco da arquitetura, regra, caminho, container, conexão do banco</span>
+      </div>
+      <div class="suave" style="padding:10px 14px;border-top:2px solid #0B0B0C;font-size:11px;white-space:nowrap">
+        j k · <span class="dest">x</span> feito · <span class="dest">⏎</span> abre · <span class="dest">e</span> edita · <span class="dest">l</span> liga · <span class="dest">dd</span> apaga · esc
+      </div>
+    </section>
+  </div>
+
+  <footer style="display:flex;align-items:stretch;height:30px;flex-shrink:0;box-sizing:border-box;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C;overflow:hidden;font-size:12px">
+    <span style="display:flex;align-items:center;padding:0 14px;background:#E8C979;color:#16171C;font-weight:700;letter-spacing:.08em">TODO</span>
+    <span class="seg" style="border-left:0">develop</span>
+    <span class="seg">back/…/reserva/ReservaService.java</span>
+    <span style="flex:1"></span>
+    <span class="seg"><span class="aviso">☐</span>&nbsp;3 abertos</span>
+    <span class="seg">jdtls ✓</span>
+    <span class="seg suave">UTF-8 · LF · java</span>
+    <span class="seg" style="background:#333337">27:9</span>
+  </footer>
+  <div style="height:20px;flex-shrink:0"></div>
+</div>
+</body>
+</html>

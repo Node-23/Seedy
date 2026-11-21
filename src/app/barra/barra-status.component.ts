@@ -18,6 +18,7 @@ import { RevisaoService } from '../ia/revisao.service';
 import { McpService } from '../ia/mcp.service';
 import { IaMergeService } from '../ia/ia-merge.service';
 import { EntenderService } from '../entender/entender.service';
+import { TodoService } from '../todo/todo.service';
 
 const NOMES_MODO: Record<string, string> = {
   normal: 'NORMAL',
@@ -167,6 +168,7 @@ export class BarraStatusComponent {
   protected readonly scripts = inject(ScriptsService);
   protected readonly docker = inject(DockerService);
   protected readonly entender = inject(EntenderService);
+  protected readonly todo = inject(TodoService);
 
   protected hhmm(d: Date): string {
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -207,10 +209,10 @@ export class BarraStatusComponent {
   }
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
-    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.buscando() ? 'busca' : this.editor.modo(),
+    this.todo.aberto() ? 'todo' : this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.buscando() ? 'busca' : this.editor.modo(),
   );
   protected readonly rotuloDoModo = computed(() =>
-    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.layout.tela() === 'entender' ? this.entender.aba().toUpperCase() : this.buscando() ? 'BUSCA' : this.nomeModo(),
+    this.todo.aberto() ? 'TODO' : this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.layout.tela() === 'entender' ? this.entender.aba().toUpperCase() : this.buscando() ? 'BUSCA' : this.nomeModo(),
   );
   protected readonly buscando = computed(() => this.busca.aberta() || this.buscaProjeto.aberta());
 

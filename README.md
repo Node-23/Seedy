@@ -89,6 +89,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Debug no navegador** (mockup 14): o DEBUG de um script sobe o servidor de desenvolvimento,
   abre o Edge/Chrome com o js-debug e para nos breakpoints do `.ts` (source maps), na mesma tela
   de debug do Java, com o console do navegador embaixo.
+- **TODO** (mockup 20, `␣ T` ou o botão na barra de ícones à esquerda): um painel por cima das
+  telas com cards ligados a linhas de código, regras, caminhos, blocos da arquitetura, containers
+  e conexões de banco. `l` liga ao card o que está aberto embaixo; a linha ligada ganha a marca
+  "☐ TODO" no editor. Os cards ficam em `.seedy/todo.md` (vai para o git, dá para editar à mão).
 - **Entender o sistema** (Fase 9, mockups 17 a 19, `␣ A`): a arquitetura do projeto em blocos
   (domínios × camadas, da tela do Angular até a tabela), as regras de negócio achadas no código
   (guardadas em `.seedy/regras.md`, reescritas pela IA) e o caminho de um método — `ctrl+.` →

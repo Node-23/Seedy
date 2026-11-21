@@ -49,6 +49,9 @@ import { TelaContainersComponent } from './containers/tela-containers.component'
 import { ContainersPainelComponent } from './containers/containers-painel.component';
 import { TelaEntenderComponent } from './entender/tela-entender.component';
 import { EntenderService } from './entender/entender.service';
+import { BarraIconesComponent } from './todo/barra-icones.component';
+import { TodoPainelComponent } from './todo/todo-painel.component';
+import { TodoService } from './todo/todo.service';
 
 @Component({
   selector: 'sd-raiz',
@@ -56,13 +59,14 @@ import { EntenderService } from './entender/entender.service';
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, BarraIconesComponent, TodoPainelComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
       <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta() || novoProjeto.aberta()">
+      <sd-barra-icones />
       <div class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
         @if (layout.disposicao().visiveis.arquivos) {
           <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
@@ -117,6 +121,7 @@ import { EntenderService } from './entender/entender.service';
       <sd-revisao />
       <sd-novo-projeto />
       <sd-escolha />
+      @if (todo.aberto()) { <sd-todo-painel /> }
       </div>
 
       <sd-barra-status />
@@ -143,6 +148,7 @@ export class App {
   protected readonly servidor = inject(ServidorService);
   protected readonly revisao = inject(RevisaoService);
   protected readonly novoProjeto = inject(NovoProjetoService);
+  protected readonly todo = inject(TodoService);
 
   protected inferiorVisivel(): boolean {
     const v = this.layout.disposicao().visiveis;

@@ -23,6 +23,7 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Arquitetura em blocos (domínios × camadas, da tela ao banco), `␣ A` | [17-arquitetura.png](17-arquitetura.png) | 9 ✅ |
 | Regras de negócio por domínio (IA + código, em .seedy/regras.md) | [18-regras.png](18-regras.png) | 9 ✅ |
 | Caminho do método (ctrl+. "acompanhar método"): de onde vem, para onde vai, condições | [19-caminho.png](19-caminho.png) | 9 ✅ |
+| TODO por cima das outras telas (barra de ícones à esquerda, cards ligados a código, regras, diagramas e containers), `␣ T` | [20-todo.png](20-todo.png) | ✅ |
 
 As telas 07 a 09 não têm mockup próprio: foram feitas na linguagem visual dos outros e
 capturadas do app. Servem de referência do mesmo jeito.

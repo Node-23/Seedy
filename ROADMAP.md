@@ -158,6 +158,9 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 
 ## Depois
 
+- ✅ TODO por cima das telas (mockup 20, `␣ T`): barra de ícones à esquerda, cards em
+  `.seedy/todo.md` ligados a código, regras, caminhos, blocos, containers e bancos
+
 - Layout editável (arrastar painéis, salvar disposições) — a base já existe em
   `src/app/layout/layout.service.ts`
 - ✅ Watcher de arquivos: árvore, busca e jdtls se atualizam com mudanças feitas fora do

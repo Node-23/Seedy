@@ -23,6 +23,7 @@ import { ServidorService } from '../servidor/servidor.service';
 import { aceitaBreakpoint, DepuradorService } from '../servidor/depurador.service';
 import { BlameService } from '../git/blame.service';
 import { EntenderService } from '../entender/entender.service';
+import { TodoService } from '../todo/todo.service';
 
 export interface AcaoLider {
   tecla: string;
@@ -71,6 +72,7 @@ export class AtalhosService {
   private readonly servidor = inject(ServidorService);
   private readonly depurador = inject(DepuradorService);
   private readonly entender = inject(EntenderService);
+  private readonly todo = inject(TodoService);
 
   readonly liderAberto = signal(false);
 
@@ -100,6 +102,7 @@ export class AtalhosService {
     { tecla: 'p', rotulo: 'scripts do package.json', disponivel: true, executar: () => this.layout.alternar('scripts') },
     { tecla: 'h', rotulo: 'containers (painel)', disponivel: true, executar: () => this.layout.alternar('containers') },
     { tecla: 'D', rotulo: 'containers e o mapa (Docker)', disponivel: true, executar: () => this.alternarContainers() },
+    { tecla: 'T', rotulo: 'TODO (cards ligados ao código, regras e containers)', disponivel: true, executar: () => this.todo.alternar() },
     { tecla: 'A', rotulo: 'entender o sistema (arquitetura, regras, caminho)', disponivel: true, executar: () => this.entender.alternar() },
     { tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
     { tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
