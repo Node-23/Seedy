@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, isDevMode, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
 import { nomeBase, ponte } from '../nucleo/ponte';
 import { EditorService } from '../editor/editor.service';
 import { ProjetoService } from '../nucleo/projeto.service';
@@ -56,7 +56,21 @@ export class IaService {
   private historico: MensagemDaApi[] = [];
   private geracao = 0;
 
+  /** Projeto da conversa atual: ao abrir outro, a conversa do anterior não vale mais. */
+  private raizDaConversa: string | null | undefined;
+
   constructor() {
+    effect(() => {
+      const raiz = this.projeto.raiz();
+      untracked(() => {
+        const trocou = this.raizDaConversa !== undefined && this.raizDaConversa !== raiz;
+        this.raizDaConversa = raiz;
+        if (trocou && (this.itens().length || this.pensando())) {
+          this.reiniciar();
+          this.mensagens.mostrar('conversa da IA zerada: outro projeto');
+        }
+      });
+    });
     this.revisao.aoProporDaIa = (id) => this.registrarProposta(id);
     if (isDevMode()) Object.assign(window, { seedyIa: this });
   }
@@ -66,6 +80,19 @@ export class IaService {
     this.historico = [];
     this.itens.set([]);
     this.pensando.set(false);
+  }
+
+
+  /**
+   * Comandos do chat (`/clear`, `/limpar`, `/novo`): zeram a conversa, mesmo no meio de uma
+   * resposta. Devolve true se o texto era um comando (e então não vai para a IA).
+   */
+  comando(texto: string): boolean {
+    const c = texto.trim().toLowerCase();
+    if (c !== '/clear' && c !== '/limpar' && c !== '/novo') return false;
+    this.reiniciar();
+    this.mensagens.mostrar('conversa zerada');
+    return true;
   }
 
   async enviar(texto: string): Promise<void> {

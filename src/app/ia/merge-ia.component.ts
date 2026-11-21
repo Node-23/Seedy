@@ -153,6 +153,7 @@ export class MergeIaComponent {
 
   protected async enviar(): Promise<void> {
     const t = this.texto();
+    if (this.ia.comando(t)) return void this.texto.set('');
     if (!t.trim() || this.ia.pensando()) return;
     this.texto.set('');
     await this.ia.enviar(t);

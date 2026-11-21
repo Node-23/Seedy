@@ -92,7 +92,7 @@ import { nomeBase } from '../nucleo/ponte';
         </div>
         <label class="ia-campo ia-campo-grande">
           <input #campo type="text" spellcheck="false" aria-label="Mensagem para a IA"
-                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça uma alteração ou pergunte…'"
+                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça uma alteração ou pergunte… (/clear zera a conversa)'"
                  [value]="texto()" (input)="texto.set($any($event.target).value)" (keydown)="teclar($event)" />
           <button class="ia-enviar" aria-label="Enviar" [disabled]="ia.pensando()" (click)="enviar()">→</button>
         </label>
@@ -180,6 +180,7 @@ export class IaComponent {
 
   protected async enviar(): Promise<void> {
     const t = this.texto();
+    if (this.ia.comando(t)) return void this.texto.set('');
     if (!t.trim() || this.ia.pensando()) return;
     this.texto.set('');
     await this.ia.enviar(t);

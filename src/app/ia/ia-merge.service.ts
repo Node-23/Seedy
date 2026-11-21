@@ -133,6 +133,19 @@ export class IaMergeService {
     this.merge.previa.set(null);
   }
 
+
+  /**
+   * Comandos do chat (`/clear`, `/limpar`, `/novo`): zeram a conversa, mesmo no meio de uma
+   * resposta. Devolve true se o texto era um comando (e então não vai para a IA).
+   */
+  comando(texto: string): boolean {
+    const c = texto.trim().toLowerCase();
+    if (c !== '/clear' && c !== '/limpar' && c !== '/novo') return false;
+    this.reiniciar();
+    this.mensagens.mostrar('conversa zerada');
+    return true;
+  }
+
   /** Manda uma pergunta (ou pedido) e roda a resposta até o fim, com as ferramentas. */
   async enviar(texto: string): Promise<void> {
     const pergunta = texto.trim();

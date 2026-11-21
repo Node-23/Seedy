@@ -61,7 +61,7 @@ import { DockerService } from '../containers/docker.service';
         </div>
       }
       @if (layout.tela() === 'editor' || layout.tela() === 'debug') {
-        <!-- Configuração de execução + RUN / DEBUG / parar (mockup 11). -->
+        <!-- Configuração de execução + RUN / DEBUG; rodando, o botão pressionado vira o de parar (mockup 11). -->
         <div class="ferramentas execucao">
           <button class="botao execucao-config" title="o que o RUN/DEBUG roda (␣ r)" (click)="exec.escolherConfig()">
             @if (exec.atual()?.tipo === 'script') {
@@ -74,15 +74,26 @@ import { DockerService } from '../containers/docker.service';
             <span>{{ exec.atual()?.nome ?? (exec.procurando() ? 'procurando…' : 'nada para rodar') }}</span>
             <span class="suave">▾</span>
           </button>
-          <button class="botao-quadrado rodar" [class.ligado]="exec.rodando() && !exec.depurando()" aria-label="Rodar" title="Rodar (shift+F10)" (click)="exec.rodar(false)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"></path></svg>
-          </button>
-          <button class="botao-quadrado depurar" [class.ativo]="exec.depurando() || layout.tela() === 'debug'" aria-label="Depurar" title="Depurar (shift+F9) · tela de debug: ␣ x" (click)="depurar()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="7" width="10" height="13" rx="5"></rect><path d="M12 7V4M9 4.5l1.5 2.5M15 4.5l-1.5 2.5M7 12H3.5M20.5 12H17M7 16.5l-3 2M17 16.5l3 2M12 11v9"></path></svg>
-          </button>
-          <button class="botao-quadrado parar" [disabled]="!exec.rodando()" aria-label="Parar" title="Parar (ctrl+F2)" (click)="exec.parar()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
-          </button>
+          @if (exec.rodando() && !exec.depurando()) {
+            <!-- Rodando: o botão de rodar vira o de parar (como no IntelliJ). -->
+            <button class="botao-quadrado parar" aria-label="Parar" title="Parar (ctrl+F2)" (click)="exec.parar()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
+            </button>
+          } @else {
+            <button class="botao-quadrado rodar" [disabled]="exec.rodando()" aria-label="Rodar" title="Rodar (shift+F10)" (click)="exec.rodar(false)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"></path></svg>
+            </button>
+          }
+          @if (exec.rodando() && exec.depurando()) {
+            <!-- Depurando: o botão de depurar vira o de parar (a tela de debug: ␣ x). -->
+            <button class="botao-quadrado parar" aria-label="Parar" title="Parar (ctrl+F2) · tela de debug: ␣ x" (click)="exec.parar()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
+            </button>
+          } @else {
+            <button class="botao-quadrado depurar" [disabled]="exec.rodando()" [class.ativo]="layout.tela() === 'debug'" aria-label="Depurar" title="Depurar (shift+F9) · tela de debug: ␣ x" (click)="depurar()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="7" width="10" height="13" rx="5"></rect><path d="M12 7V4M9 4.5l1.5 2.5M15 4.5l-1.5 2.5M7 12H3.5M20.5 12H17M7 16.5l-3 2M17 16.5l3 2M12 11v9"></path></svg>
+            </button>
+          }
         </div>
       }
       <div class="janela">
