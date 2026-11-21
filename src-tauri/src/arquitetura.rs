@@ -8,7 +8,9 @@
 //! É uma leitura do texto, sem compilar: nada de jdtls nem tsserver, então funciona logo ao
 //! abrir o projeto, e o front e o back entram no mesmo grafo.
 
+mod cenarios;
 mod telas;
+pub use cenarios::TesteInfo;
 
 use crate::busca::{percorrer, relativo};
 use regex::Regex;
@@ -32,6 +34,8 @@ pub struct Analise {
     pub tecnologias: Vec<String>,
     pub componentes: Vec<Componente>,
     pub regras: Vec<Regra>,
+    /// Os testes do projeto (tipo, se esperam erro, o que tocam).
+    pub testes: Vec<TesteInfo>,
     /// Arquivos lidos (para o "52 classes" do topo).
     pub arquivos: usize,
 }
@@ -187,6 +191,8 @@ pub struct Regra {
     pub detalhe: String,
     pub aparece_em: Vec<Lugar>,
     pub teste: Option<Lugar>,
+    /// Ids (`Classe.metodo`) de todos os testes que citam esta regra (mensagem, exceção ou validação).
+    pub testes: Vec<String>,
 }
 
 #[tauri::command]
@@ -218,6 +224,10 @@ impl Fonte {
         let nome = relativo.rsplit('/').next().unwrap_or("");
         let teste = relativo.contains("src/test/")
             || nome.ends_with(".spec.ts")
+            || nome.ends_with(".test.ts")
+            || nome.ends_with(".cy.ts")
+            || nome.ends_with(".e2e-spec.ts")
+            || (ts && (relativo.contains("/e2e/") || relativo.contains("/cypress/")) && nome.ends_with(".ts") && nome.contains("spec"))
             || nome.ends_with("Test.java")
             || nome.ends_with("Tests.java")
             || nome.ends_with("IT.java");
@@ -1862,12 +1872,14 @@ fn montar_com(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>, jsp
                 detalhe,
                 aparece_em: vec![],
                 teste: None,
+                testes: vec![],
             });
         }
     }
+    let testes = cenarios::descobrir(&fontes, &brutos);
     let mut componentes: Vec<Componente> = brutos.into_iter().map(|b| b.comp).collect();
     componentes.extend(jsp_comps);
-    Analise { tecnologias: vec![], componentes, regras, arquivos: fontes.len() + jsps.len() }
+    Analise { tecnologias: vec![], componentes, regras, testes, arquivos: fontes.len() + jsps.len() }
 }
 
 fn nome_externo(f: &Fonte, b: &Bruto) -> String {
@@ -2059,6 +2071,7 @@ fn regras(fontes: &[Fonte], brutos: &[Bruto], status_da: &dyn Fn(&str) -> Option
             detalhe: String::new(),
             aparece_em: vec![],
             teste: None,
+            testes: vec![],
         };
         for m in &b.comp.metodos {
             for d in &m.desvios {
@@ -2180,6 +2193,12 @@ fn regras(fontes: &[Fonte], brutos: &[Bruto], status_da: &dyn Fn(&str) -> Option
             r.teste = Some(lugar(f, f.linha(m.nome_pos), &format!("{}.{}", b.comp.nome, m.nome)));
             usados.insert((i, 0));
         }
+    }
+    // Todos os testes que citam cada regra (o de cima fica com um só; a tela quer a lista).
+    let candidatos: Vec<(String, String)> = testes.iter().map(|(b, m)| (format!("{}.{}", b.comp.nome, m.nome), corpo_de(b, m))).collect();
+    for r in &mut lista {
+        let validacao = if r.tipo == "validacao" { r.condicao.as_deref() } else { None };
+        r.testes = cenarios::testes_da_regra(r.mensagem.as_deref(), r.excecao.as_deref(), r.metodo.as_deref(), validacao, &candidatos);
     }
     lista
 }
@@ -2417,6 +2436,27 @@ export class ReservaFormComponent {
         assert_eq!(reservar.gatilhos[0].texto, "Reservar");
         assert_eq!(reservar.gatilhos[0].linha, 3);
         assert!(reservar.chamadas.iter().any(|c| c.alvo == "ReservaApi" && c.metodo == "criar"));
+    }
+
+    #[test]
+    fn descobre_os_testes_e_os_cenarios_de_erro() {
+        let a = analise();
+        let t = a.testes.iter().find(|t| t.id == "ReservaServiceTest.naoReservaEmFeiraLotada").expect("teste");
+        assert_eq!(t.tipo, "unitario");
+        assert!(t.espera_erro, "assertThrows é um cenário de erro");
+        assert!(t.componentes.iter().any(|c| c == "ReservaService"));
+        assert!(t.chamadas.iter().any(|c| c == "reservar"));
+        let lotada = a.regras.iter().find(|r| r.mensagem.as_deref() == Some("Feira lotada") && r.tipo == "excecao").unwrap();
+        assert!(lotada.testes.iter().any(|id| id == "ReservaServiceTest.naoReservaEmFeiraLotada"));
+    }
+
+    #[test]
+    fn tipo_e_erro_esperado_pelo_texto() {
+        use super::cenarios::espera_erro;
+        assert!(espera_erro("x", "mockMvc.perform(post(\"/r\")).andExpect(status().isConflict())", ""));
+        assert!(espera_erro("naoReserva", "", ""));
+        assert!(espera_erro("x", "expect(() => f()).toThrow()", ""));
+        assert!(!espera_erro("reservaBancaLivre", "assertEquals(200, r.getStatus())", ""));
     }
 
     #[test]

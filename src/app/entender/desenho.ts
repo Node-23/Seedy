@@ -39,6 +39,8 @@ export interface Bloco {
   caminho?: string;
   linha?: number;
   coluna: number;
+  /** Segunda linha de texto (a visão geral por domínio). */
+  detalhe?: string;
 }
 
 const LARGURA = 150;
@@ -113,6 +115,28 @@ export interface DesenhoArquitetura {
   divisas: { x: number; rotulo: string }[];
   largura: number;
   altura: number;
+  /** Visão geral: um bloco por domínio e uma seta por par de domínios. */
+  visaoGeral?: boolean;
+  resumos?: ResumoDominio[];
+}
+
+export interface ResumoDominio {
+  nome: string;
+  telas: number;
+  acoes: number;
+  servicos: number;
+  daos: number;
+  tabelas: number;
+  regras: number;
+  /** Domínios com quem mais conversa (chamadas nos dois sentidos). */
+  ligados: { nome: string; chamadas: number }[];
+}
+
+export interface OpcoesArquitetura {
+  /** Só os componentes deste domínio (null = a visão geral por domínio). */
+  dominio: string | null;
+  /** Camadas escondidas (chaves de Camada). */
+  camadasOff: ReadonlySet<string>;
 }
 
 const CAMADAS: { chave: Camada['chave']; rotulo: string; papeis: string[] }[] = [
@@ -162,9 +186,12 @@ function resumo(c: ComponenteAnalise, regras: number): { sub: string; cor: CorTe
   }
 }
 
-export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<string, number>): DesenhoArquitetura {
-  const visiveis = a.componentes.filter((c) => PAPEIS_NA_GRADE.has(c.papel));
+const SEM_FILTRO: OpcoesArquitetura = { dominio: null, camadasOff: new Set() };
+
+export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<string, number>, opcoes: OpcoesArquitetura = SEM_FILTRO): DesenhoArquitetura {
   const camadaDe = (c: ComponenteAnalise) => CAMADAS.findIndex((x) => x.papeis.includes(c.papel));
+  const visiveis = a.componentes.filter((c) => PAPEIS_NA_GRADE.has(c.papel) && (!opcoes.dominio || c.dominio === opcoes.dominio) && !opcoes.camadasOff.has(CAMADAS[camadaDe(c)].chave));
+  const semBanco = opcoes.camadasOff.has('banco');
   // Camadas sem nada somem (um projeto só de back não mostra as do Angular).
   const jsp = visiveis.some((c) => c.linguagem === 'jsp');
   const ng = visiveis.some((c) => c.papel === 'tela' && c.linguagem === 'ts');
@@ -188,9 +215,9 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
       const k = CAMADAS[camadaDe(c)].chave;
       celulas.set(k, [...(celulas.get(k) ?? []), c]);
     }
-    const externos = [...new Set(lista.filter((c) => c.externo).map((c) => c.externo!))];
+    const externos = semBanco ? [] : [...new Set(lista.filter((c) => c.externo).map((c) => c.externo!))];
     // Tabelas de DAO sem entidade (JDBC): um bloco de banco para cada.
-    const tabelasSoltas = [...new Set(lista.filter((c) => c.papel === 'repositorio' && !c.entidade && c.tabela).map((c) => c.tabela!))];
+    const tabelasSoltas = semBanco ? [] : [...new Set(lista.filter((c) => c.papel === 'repositorio' && !c.entidade && c.tabela).map((c) => c.tabela!))];
     const banco = (celulas.get('banco')?.length ?? 0) + externos.length + tabelasSoltas.length;
     const linhas = Math.max(1, banco, ...[...celulas.entries()].filter(([k]) => k !== 'banco').map(([, v]) => v.length));
     const altura = linhas * (ALTURA + 40) + 10;
@@ -293,6 +320,99 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
 
   const largura = (camadas.at(-1)?.x ?? 0) + LARGURA + 40;
   return { camadas, dominios, blocos, setas, divisas, largura, altura: y + 30 };
+}
+
+// ---------- visão geral por domínio ----------
+
+export const LARGURA_DOMINIO = 280;
+export const ALTURA_DOMINIO = 92;
+
+/** Um bloco por domínio e uma seta por par de domínios (com o total de chamadas): a primeira tela da arquitetura. */
+export function desenharVisaoGeral(a: AnaliseArquitetura, regrasPorComp: Map<string, number>): DesenhoArquitetura {
+  const visiveis = a.componentes.filter((c) => PAPEIS_NA_GRADE.has(c.papel));
+  const porId = new Map(a.componentes.map((c) => [c.id, c]));
+  const resumos = new Map<string, ResumoDominio>();
+  const resumoDe = (nome: string) => {
+    let r = resumos.get(nome);
+    if (!r) resumos.set(nome, (r = { nome, telas: 0, acoes: 0, servicos: 0, daos: 0, tabelas: 0, regras: 0, ligados: [] }));
+    return r;
+  };
+  const tabelas = new Map<string, Set<string>>();
+  for (const c of visiveis) {
+    const r = resumoDe(c.dominio);
+    r.regras += regrasPorComp.get(c.id) ?? 0;
+    if (c.papel === 'tela' || c.papel === 'front') r.telas++;
+    else if (c.papel === 'entrada' || c.papel === 'job') r.acoes++;
+    else if (c.papel === 'servico') r.servicos++;
+    else if (c.papel === 'repositorio') r.daos++;
+    if (c.papel === 'entidade' || (c.papel === 'repositorio' && c.tabela)) tabelas.set(c.dominio, (tabelas.get(c.dominio) ?? new Set()).add(c.tabela ?? c.nome));
+  }
+  for (const [d, t] of tabelas) resumoDe(d).tabelas = t.size;
+
+  // Chamadas entre domínios (injeção e HTTP do front para a API), nos dois sentidos juntas por par.
+  const pares = new Map<string, number>();
+  const contar = (de: string, para: string) => {
+    if (de === para) return;
+    const k = `${de}\u0000${para}`;
+    pares.set(k, (pares.get(k) ?? 0) + 1);
+  };
+  for (const c of visiveis) {
+    for (const u of c.usa) {
+      const alvo = porId.get(u);
+      if (alvo && alvo.papel !== 'entidade' && PAPEIS_NA_GRADE.has(alvo.papel)) contar(c.dominio, alvo.dominio);
+    }
+    for (const m of c.metodos) for (const h of m.httpSaida) {
+      const alvo = h.alvo ? porId.get(h.alvo.alvo) : undefined;
+      if (alvo) contar(c.dominio, alvo.dominio);
+    }
+  }
+  for (const [k, n] of pares) {
+    const [de, para] = k.split('\u0000');
+    resumoDe(de).ligados.push({ nome: para, chamadas: n });
+    resumoDe(para).ligados.push({ nome: de, chamadas: n });
+  }
+  for (const r of resumos.values()) r.ligados.sort((x, y) => y.chamadas - x.chamadas || x.nome.localeCompare(y.nome));
+
+  const ordem = [...resumos.values()].sort((x, y) => y.telas + y.acoes + y.servicos + y.daos - (x.telas + x.acoes + x.servicos + x.daos) || x.nome.localeCompare(y.nome));
+  const colunas = Math.max(2, Math.min(5, Math.ceil(Math.sqrt(ordem.length * 1.4))));
+  const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
+  const blocos: Bloco[] = ordem.map((r, i) => ({
+    id: `dom:${r.nome}`,
+    titulo: r.nome,
+    sub: [r.telas && plural(r.telas, 'tela', 'telas'), r.acoes && plural(r.acoes, 'ação', 'ações'), r.servicos && plural(r.servicos, 'serviço', 'serviços')].filter(Boolean).join(' · ') || '—',
+    subCor: 'suave',
+    detalhe: [r.daos && plural(r.daos, 'DAO', 'DAOs'), r.tabelas && plural(r.tabelas, 'tabela', 'tabelas'), r.regras && `⚑ ${r.regras}`].filter(Boolean).join(' · '),
+    x: 44 + (i % colunas) * (LARGURA_DOMINIO + 110),
+    y: 40 + Math.floor(i / colunas) * (ALTURA_DOMINIO + 84),
+    largura: LARGURA_DOMINIO,
+    altura: ALTURA_DOMINIO,
+    coluna: i % colunas,
+  }));
+
+  // Uma seta por par (soma dos dois sentidos), apontando para quem mais é chamado.
+  const porNome = new Map(blocos.map((b) => [b.id, b]));
+  const somados = new Map<string, { de: string; para: string; n: number }>();
+  for (const [k, n] of pares) {
+    const [de, para] = k.split('\u0000');
+    const [x, y] = de < para ? [de, para] : [para, de];
+    const s = somados.get(`${x}|${y}`) ?? { de, para, n: 0 };
+    s.n += n;
+    const inverso = pares.get(`${para}\u0000${de}`) ?? 0;
+    if (inverso > n) [s.de, s.para] = [para, de];
+    somados.set(`${x}|${y}`, s);
+  }
+  const setas: Seta[] = [];
+  for (const s of somados.values()) {
+    const b1 = porNome.get(`dom:${s.de}`);
+    const b2 = porNome.get(`dom:${s.para}`);
+    if (!b1 || !b2) continue;
+    setas.push({ ...ligar(b1, b2), tipo: 'dominio', rotulo: s.n > 1 ? `${s.n} chamadas` : '1', de: b1.id, para: b2.id });
+  }
+  setas.sort((x, y) => Number(y.rotulo?.split(' ')[0] ?? 0) - Number(x.rotulo?.split(' ')[0] ?? 0));
+
+  const largura = 44 + colunas * (LARGURA_DOMINIO + 110);
+  const altura = 40 + Math.ceil(ordem.length / colunas) * (ALTURA_DOMINIO + 84);
+  return { camadas: [], dominios: [], blocos, setas, divisas: [], largura, altura, visaoGeral: true, resumos: ordem };
 }
 
 // ---------- caminho de um método ----------

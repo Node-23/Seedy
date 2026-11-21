@@ -18,6 +18,8 @@ export interface Config {
   /** id da ação do líder → tecla (ex.: { "todo": "T" }). */
   atalhos: { lider: Record<string, string> };
   ia: { modelo: string; modo: 'chave' | 'assinatura' };
+  /** Barra de ícones: ordem dos botões (arraste para reorganizar). */
+  barra?: { ordem?: string[] };
   /** Disposições do layout (gravadas pelo próprio Seedy ao editar o layout). */
   layout?: unknown;
 }

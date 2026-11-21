@@ -14,6 +14,7 @@ import { monaco } from './monaco';
 import { initVimMode, VimMode } from '../../vendor/monaco-vim';
 import { EditorService, ModoVim } from './editor.service';
 import { BookmarksService } from './bookmarks.service';
+import { MenuGutterService } from './menu-gutter.service';
 import { TemaService } from '../tema/tema';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { AtalhosService } from '../teclado/atalhos.service';
@@ -105,6 +106,7 @@ export class EditorComponent {
   private readonly tema = inject(TemaService);
   private readonly atalhos = inject(AtalhosService);
   private readonly bookmarks = inject(BookmarksService);
+  private readonly menuGutter = inject(MenuGutterService);
   private readonly layout = inject(LayoutService);
   private readonly merge = inject(MergeService);
   private readonly hospedeiro = viewChild.required<ElementRef<HTMLDivElement>>('hospedeiro');
@@ -179,6 +181,19 @@ export class EditorComponent {
       });
       const painel = this.painel();
       this.editor.registrarInstancia(painel, instancia);
+      // Botão direito na margem (ao lado do número da linha): bookmark e breakpoint.
+      this.hospedeiro().nativeElement.addEventListener(
+        'contextmenu',
+        (ev) => {
+          if (!(ev.target as HTMLElement).closest('.margin')) return;
+          const linha = instancia.getTargetAtClientPoint(ev.clientX, ev.clientY)?.position?.lineNumber;
+          const b = this.buffer();
+          ev.preventDefault();
+          ev.stopPropagation(); // o menu do Monaco não abre por cima
+          if (linha && b) this.menuGutter.abrir(ev.clientX, ev.clientY, linha, b.caminho);
+        },
+        true,
+      );
       instancia.onMouseDown((ev) => {
         if (ev.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
         const b = this.buffer();

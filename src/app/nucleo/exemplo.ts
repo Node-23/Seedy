@@ -3,7 +3,7 @@
  * Serve para trabalhar no visual com dados parecidos com os dos mockups.
  * Nada aqui roda dentro do app.
  */
-import type { AnaliseArquitetura, ColunaDeTabela, Entrada, Indice, InfoConexao, MetadadosSpring, Ocorrencia, PedidoDeProjeto, PerfilBanco, ProjetoCriado, ResultadoSql, SchemaBanco, Simbolo } from './ponte';
+import type { AnaliseArquitetura, ResultadoTeste, ColunaDeTabela, Entrada, Indice, InfoConexao, MetadadosSpring, Ocorrencia, PedidoDeProjeto, PerfilBanco, ProjetoCriado, ResultadoSql, SchemaBanco, Simbolo } from './ponte';
 import { expressaoDeBusca, OpcoesTexto, passaNaMascara, trechosEncontrados } from '../busca/texto';
 
 export const RAIZ_EXEMPLO = '/exemplo/feirinha-verde';
@@ -196,6 +196,23 @@ export const exemplo = {
   /** Fase 9: a análise de um projeto Spring Boot + Angular de feiras (carregada só quando pedida). */
   async analiseArquitetura(): Promise<AnaliseArquitetura> {
     return (await import('./exemplo-arquitetura.json')).default as unknown as AnaliseArquitetura;
+  },
+
+  /** O que o último `mvn test` deixaria nos relatórios (para o modo navegador). */
+  relatoriosDeTestes(): ResultadoTeste[] {
+    const r = (classe: string, metodo: string, estado: ResultadoTeste['estado'], segundos: number, mensagem: string | null = null, detalhe: string | null = null, integracao = false): ResultadoTeste => ({ classe, metodo, estado, segundos, mensagem, detalhe, integracao });
+    return [
+      r('ReservaServiceTest', 'reservaBancaLivre', 'ok', 0.012),
+      r('ReservaServiceTest', 'naoReservaEmFeiraLotada', 'falhou', 0.048, 'expected: <409> but was: <200>', 'org.opentest4j.AssertionFailedError: expected: <409> but was: <200>\n\tat ReservaServiceTest.naoReservaEmFeiraLotada(ReservaServiceTest.java:41)'),
+      r('ReservaServiceTest', 'naoReservaBancaOcupada', 'ok', 0.009),
+      r('ReservaServiceTest', 'expiraPendenteApos30Minutos', 'falhou', 0.031, 'Expecting actual not to be null', null),
+      r('ReservaControllerIT', 'POST_reservas_devolve_409_sem_vaga', 'ok', 0.21, null, null, true),
+      r('ReservaPagamentoIT', 'fluxoReservaEPagamentoNoBanco', 'ok', 1.4, null, null, true),
+      r('FeiraServiceTest', 'buscaFeiraExistente', 'ok', 0.004),
+      r('FeiraServiceTest', 'naoEncerraFeiraJaEncerrada', 'ok', 0.006),
+      r('PagamentoServiceTest', 'confirmaPagamentoPix', 'ok', 0.022),
+      r('PagamentoServiceTest', 'estornaPagamento', 'ignorado', 0),
+    ];
   },
 
   springMetadados(): MetadadosSpring {

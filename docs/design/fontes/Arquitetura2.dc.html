@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Arquitetura em escala — IDE Java</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Inky Mono','Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:34px;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px;box-shadow:3px 3px 0 #0B0B0C}
+.suave{color:#A29D93}.dest{color:#9CD7BA}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.abas{display:flex;align-items:center;gap:6px;height:54px;flex-shrink:0;box-sizing:border-box;padding:0 10px 0 16px;border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;white-space:nowrap}
+.aba{height:36px;padding:0 14px;border-radius:9px;border:2px solid #0B0B0C;display:flex;align-items:center;gap:8px;font-size:12px;background:#2A2A2D}
+.aba.on{background:#9CD7BA;color:#16171C;font-weight:700;box-shadow:3px 3px 0 #0B0B0C}
+.aba.on kbd{background:transparent;color:#16171C;border-color:#16171C}
+.item{display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;font-size:12px;white-space:nowrap}
+.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.grupo{padding:10px 12px 4px;font-size:10.5px;letter-spacing:.14em;color:#A29D93}
+.kv{display:flex;gap:8px;font-size:11.5px;line-height:21px;white-space:nowrap}
+.kv .k{width:92px;color:#A29D93;flex-shrink:0}
+.l{display:block;white-space:pre;font-size:11.5px;line-height:21px}
+.l .n{display:inline-block;width:38px;text-align:right;padding-right:12px;color:#A29D93}
+.cols span{position:absolute;top:10px;font-size:10.5px;letter-spacing:.14em;color:#A29D93;white-space:nowrap}
+.dom{position:absolute;left:10px;right:10px;height:96px;border-radius:12px;background:#252528}
+.dom span{position:absolute;left:6px;top:50%;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;font-size:10px;letter-spacing:.16em;color:#A29D93}
+.bl{position:absolute;width:150px;height:72px;box-sizing:border-box;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C;padding:9px 10px;font-size:11.5px;line-height:18px;white-space:nowrap;overflow:hidden}
+.bl.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#333337}
+.bl.db{background:#19191B}
+.bl.ext{border-style:dashed;background:#19191B}
+.detalhe .kv{white-space:normal}
+.btn{white-space:nowrap}
+.regra{border:2px solid #0B0B0C;border-radius:11px;background:#222225;box-shadow:3px 3px 0 #0B0B0C;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.regra.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#2D2D30}
+.rt{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.rt .id{font-size:11px;padding:1px 7px;border-radius:6px;background:#19191B;border:1px solid #0B0B0C;color:#E8C979}
+.tag{margin-left:auto;font-size:10.5px;padding:1px 7px;border-radius:6px;border:1px solid currentColor}
+.rd{font-size:11.5px;line-height:18px;color:#E9E2D3}
+.ro{display:flex;gap:8px;font-size:11px;white-space:nowrap}
+.bl.err{border-color:#EE8C84;background:#3A2A2B;box-shadow:3px 3px 0 #0B0B0C}
+.passo{display:flex;gap:10px;padding:6px 14px}
+.passo .num{width:20px;height:20px;flex-shrink:0;border-radius:6px;background:#19191B;border:1px solid #0B0B0C;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#A29D93}
+.passo.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.passo.sel .num{background:#9CD7BA;color:#16171C;font-weight:700}
+
+.dm{position:absolute;width:240px;height:120px;box-sizing:border-box;border:2px solid #0B0B0C;border-radius:12px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C;padding:12px 14px;font-size:12px}
+.dm b{display:block;font-size:13px;letter-spacing:.08em;margin-bottom:8px}
+.dm.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#333337}
+.bl.dim{opacity:.35}
+.chip{display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:8px;border:2px solid #0B0B0C;background:#222225;font-size:11.5px}
+.chip.on{background:#333337;box-shadow:inset 0 0 0 1px #9CD7BA;color:#9CD7BA}
+</style></head><body>
+<div class="tela">
+ <div class="abas">
+  <span class="aba on">▦ Arquitetura <kbd>1</kbd></span><span class="aba">⚑ Regras de negócio <kbd>2</kbd></span><span class="aba">⇢ Caminho <kbd>3</kbd></span>
+  <span style="flex:1"></span><span class="suave" style="font-size:12px">Struts 1 · JSP · 9 domínios · 412 classes · 63 tabelas</span><span class="btn" style="margin-left:10px">↻ reanalisar <kbd>r</kbd></span>
+ </div>
+ <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px">
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">ARQUITETURA</span><span id="trilha" class="suave"></span><span style="flex:1"></span>
+    <span class="suave">arraste · <kbd>+</kbd> <kbd>-</kbd> zoom 100%</span></div>
+   <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0">
+    <div class="chip" style="width:230px"><span class="dest">/</span><span class="suave">buscar componente…</span></div>
+    <span class="suave" style="margin-left:6px;font-size:11px;letter-spacing:.1em">CAMADAS</span>
+    <span class="chip on">telas <kbd>t</kbd></span><span class="chip on">ações <kbd>a</kbd></span><span class="chip on">serviços <kbd>s</kbd></span><span class="chip on">DAOs <kbd>d</kbd></span><span class="chip">tabelas <kbd>b</kbd></span>
+    <span style="flex:1"></span>
+    <span class="chip" id="viz">vizinhança: 1 salto</span>
+   </div>
+   <div id="vgeral" style="flex:1;min-height:0;flex-direction:column">
+<div style="position:relative;flex:1;overflow:hidden">
+ <svg width="100%" height="100%" style="position:absolute;inset:0" aria-hidden="true">
+  <defs><marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E8C979"/></marker></defs>
+  <g stroke="#E8C979" fill="none" stroke-dasharray="4 3" marker-end="url(#s)">
+   <path d="M290 150 C380 150 380 150 450 150" stroke-width="3"/>
+   <path d="M290 175 C370 260 370 300 450 330" stroke-width="2"/>
+   <path d="M610 175 C640 260 640 300 610 330" stroke-width="2.5"/>
+   <path d="M290 360 C380 360 380 360 450 360" stroke-width="1.8"/>
+   <path d="M290 385 C370 430 540 470 600 470" stroke-width="1.8"/>
+   <path d="M450 380 C380 430 330 470 290 470" stroke-width="1.4"/>
+   <path d="M760 150 C830 150 840 330 760 340" stroke-width="2"/>
+  </g>
+  <g fill="#E8C979" font-size="11" text-anchor="middle">
+   <text x="370" y="142">47 chamadas</text><text x="352" y="268">18</text><text x="656" y="268">29 chamadas</text><text x="370" y="352">9</text><text x="470" y="448">6</text><text x="810" y="260">12</text>
+  </g>
+ </svg>
+ <div class="dm" style="left:70px;top:70px"><b>ADMIN</b><div class="kv"><span class="k">telas</span><span>14 JSP</span></div><div class="kv"><span class="k">camadas</span><span>3 ações · 5 DAOs</span></div><div class="kv"><span class="k">banco</span><span>8 tabelas</span></div></div>
+ <div class="dm on" style="left:450px;top:70px"><b>SISTEMA</b><div class="kv"><span class="k">telas</span><span>22 JSP</span></div><div class="kv"><span class="k">camadas</span><span>9 ações · 7 DAOs</span></div><div class="kv"><span class="k">banco</span><span>11 tabelas</span></div></div>
+ <div class="dm" style="left:810px;top:70px"><b>MARKETING</b><div class="kv"><span class="k">telas</span><span>6 JSP</span></div><div class="kv"><span class="k">camadas</span><span>2 ações · 2 DAOs</span></div><div class="kv"><span class="k">banco</span><span>3 tabelas</span></div></div>
+ <div class="dm" style="left:70px;top:290px"><b>CONVITE</b><div class="kv"><span class="k">telas</span><span>31 JSP</span></div><div class="kv"><span class="k">camadas</span><span>14 ações · 9 DAOs</span></div><div class="kv"><span class="k">banco</span><span>13 tabelas</span></div></div>
+ <div class="dm" style="left:450px;top:290px"><b>PAGAMENTO</b><div class="kv"><span class="k">telas</span><span>5 JSP</span></div><div class="kv"><span class="k">camadas</span><span>4 ações · 3 DAOs</span></div><div class="kv"><span class="k">banco</span><span>4 tabelas</span></div></div>
+ <div class="dm" style="left:70px;top:430px;width:200px;height:72px;opacity:.8"><b>OUTROS · 6 domínios</b><div class="kv"><span class="k suave" style="width:auto">↵ para expandir</span></div></div>
+ <div class="dm" style="left:450px;top:430px;width:160px;height:72px;background:#19191B;border-style:dashed"><b class="rosa">HTTP externa</b><div class="kv"><span class="k">3</span><span>serviços</span></div></div>
+ <div style="position:absolute;left:810px;top:290px;width:240px;padding:12px;border:2px dashed #3F3F44;border-radius:10px;font-size:11.5px;line-height:19px">
+  <span class="rotulo">COMO LER</span><br>cada bloco é um domínio<br>a seta soma as chamadas entre dois<br><span class="dest">⏎</span> entra no domínio · <span class="dest">esc</span> volta</div>
+</div></div>
+   <div id="vfoco" style="display:none;flex:1;min-height:0;flex-direction:column">
+<div style="position:relative;flex:1;overflow:hidden">
+ <div class="cols"><span style="left:70px">TELAS · JSP</span><span style="left:260px">AÇÕES</span><span style="left:450px">SERVIÇOS</span><span style="left:640px">DAOs</span><span style="left:830px">TABELAS</span></div>
+ <svg width="100%" height="100%" style="position:absolute;inset:0" aria-hidden="true">
+  <defs><marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E9E2D3"/></marker></defs>
+  <g stroke="#E9E2D3" stroke-width="1.8" fill="none" marker-end="url(#f)">
+   <path d="M410 168 C440 168 430 160 450 160"/><path d="M410 168 C430 168 440 260 450 262"/>
+   <path d="M600 160 C620 160 620 168 640 168"/><path d="M600 262 C620 262 620 280 640 280"/>
+   <path d="M790 168 C805 168 810 170 830 170"/><path d="M790 280 C805 280 810 280 830 282"/>
+   <path d="M220 160 C240 160 240 168 260 168"/>
+  </g>
+ </svg>
+ <div class="bl " style="left:70px;top:120px"><b class="">log.jsp</b><br><span class="suave">JSP</span></div><div class="bl dim" style="left:70px;top:220px"><b class="">logs.jsp</b><br><span class="suave">JSP</span></div><div class="bl dim" style="left:70px;top:320px"><b class="">dynDenied.jsp</b><br><span class="suave">JSP</span></div><div class="bl " style="left:260px;top:128px"><b class="">LogAction</b><br><span class="suave">Action · 4 métodos</span></div><div class="bl dim" style="left:260px;top:228px"><b class="">ModuleAction</b><br><span class="suave">Action</span></div><div class="bl on" style="left:450px;top:120px"><b class="">LogService</b><br><span class="suave">3 métodos</span></div><div class="bl " style="left:450px;top:222px"><b class="">AuditService</b><br><span class="suave">2 métodos</span></div><div class="bl " style="left:640px;top:128px"><b class="">LogDao</b><br><span class="suave">DAO</span></div><div class="bl " style="left:640px;top:240px"><b class="aviso">UserDao</b><br><span class="suave">DAO · usado por 34</span></div><div class="bl db" style="left:830px;top:130px"><b class="">admin_log</b><br><span class="suave">tabela</span></div><div class="bl db" style="left:830px;top:242px"><b class="">admin_user</b><br><span class="suave">tabela</span></div>
+ <div style="position:absolute;left:640px;top:318px;padding:6px 10px;border:2px dashed #E8C979;border-radius:9px;font-size:11px;color:#E8C979;background:#252528">34 componentes usam UserDao · <span class="dest">⏎</span> ver quem</div>
+ <div style="position:absolute;left:70px;bottom:16px;font-size:11.5px" class="suave">12 blocos fora do foco ficam apagados · setas só de LogService, 1 salto de vizinhança (<span class="dest">+</span> <span class="dest">-</span>)</div>
+</div></div>
+  </section>
+  <section class="janela detalhe">
+   <div class="faixa"><span class="rotulo" id="dt"></span><span style="flex:1"></span><kbd>⏎</kbd></div>
+   <div id="dgeral" style="padding:12px;font-size:12px;line-height:21px">
+    <div class="kv"><span class="k">telas</span><span>22 JSP</span></div><div class="kv"><span class="k">entradas</span><span>9 ações</span></div><div class="kv"><span class="k">DAOs</span><span>7</span></div><div class="kv"><span class="k">tabelas</span><span>11</span></div>
+    <div class="grupo" style="padding-left:0">MAIS LIGADO A</div>
+    <div class="kv"><span class="k">ADMIN</span><span class="aviso">47 chamadas</span></div><div class="kv"><span class="k">PAGAMENTO</span><span class="aviso">29 chamadas</span></div><div class="kv"><span class="k">CONVITE</span><span>18 chamadas</span></div>
+    <div class="grupo" style="padding-left:0">REGRAS</div><div class="kv"><span class="k">⚑</span><span>14 regras neste domínio</span></div>
+    <div style="margin-top:14px" class="btn">entrar no domínio <kbd>⏎</kbd></div>
+   </div>
+   <div id="dfoco" style="display:none;padding:12px;font-size:12px;line-height:21px">
+    <div class="kv"><span class="k">pacote</span><span>br.com.sistema.admin</span></div><div class="kv"><span class="k">camada</span><span>serviço · domínio ADMIN</span></div>
+    <div class="kv"><span class="k">usa</span><span>LogDao, UserDao, AuditService</span></div><div class="kv"><span class="k">usado por</span><span>LogAction, ModuleAction</span></div>
+    <div class="grupo" style="padding-left:0">MÉTODOS</div>
+    <div class="item sel" style="padding:0 8px"><span class="dest">registrar</span><span class="suave">(tipo, usuario)</span></div><div class="item" style="padding:0 8px">listarPorData (data)</div><div class="item" style="padding:0 8px">limpar ()</div>
+    <div style="margin-top:14px;display:flex;gap:8px"><span class="btn">acompanhar <kbd>c</kbd></span><span class="btn">abrir <kbd>⏎</kbd></span></div>
+   </div>
+  </section>
+ </div>
+ <div style="height:30px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;display:flex;align-items:stretch;font-size:12px;overflow:hidden;white-space:nowrap">
+  <span style="display:flex;align-items:center;padding:0 14px;background:#9CD7BA;color:#16171C;font-weight:700;letter-spacing:.08em">ARQUITETURA</span>
+  <span style="display:flex;align-items:center;padding:0 12px" id="dicas" class="suave"></span>
+ </div>
+</div>
+<script>
+const a=(location.hash||'#g').slice(1);
+function modo(m){
+ document.getElementById('vgeral').style.display=m=='g'?'flex':'none';
+ document.getElementById('vfoco').style.display=m=='f'?'flex':'none';
+ document.getElementById('dgeral').style.display=m=='g'?'block':'none';
+ document.getElementById('dfoco').style.display=m=='f'?'block':'none';
+ document.getElementById('viz').style.display=m=='f'?'flex':'none';
+ document.getElementById('trilha').textContent=m=='g'?'visão geral · 9 domínios':'Visão geral › SISTEMA › LogService';
+ document.getElementById('dt').textContent=m=='g'?'SISTEMA · DOMÍNIO':'LOGSERVICE';
+ document.getElementById('dicas').innerHTML=m=='g'?'h j k l domínios · <b class="dest">⏎</b> entra · / busca · r reanalisar':'h j k l blocos · <b class="dest">+</b> <b class="dest">-</b> vizinhança · / busca · <b class="dest">esc</b> volta à visão geral';
+}
+modo(a);
+</script></body></html>

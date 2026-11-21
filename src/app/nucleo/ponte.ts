@@ -363,12 +363,44 @@ export interface RegraAnalise {
   detalhe: string;
   apareceEm: LugarAnalise[];
   teste: LugarAnalise | null;
+  /** Ids de todos os testes que citam a regra (mensagem, exceção ou validação). */
+  testes: string[];
+}
+
+export type TipoDeTeste = 'unitario' | 'integracao' | 'api' | 'e2e';
+
+/** Um teste do projeto, lido do código. */
+export interface TesteInfo {
+  id: string;
+  classe: string;
+  metodo: string;
+  caminho: string;
+  relativo: string;
+  linha: number;
+  tipo: TipoDeTeste;
+  /** Confere um erro (exceção, 4xx, 5xx): é um cenário que dá errado. */
+  esperaErro: boolean;
+  componentes: string[];
+  chamadas: string[];
+  linguagem: 'java' | 'ts';
+}
+
+/** O resultado de um teste num relatório JUnit XML (Maven/Gradle). */
+export interface ResultadoTeste {
+  classe: string;
+  metodo: string;
+  estado: 'ok' | 'falhou' | 'ignorado';
+  segundos: number;
+  mensagem: string | null;
+  detalhe: string | null;
+  integracao: boolean;
 }
 
 export interface AnaliseArquitetura {
   tecnologias: string[];
   componentes: ComponenteAnalise[];
   regras: RegraAnalise[];
+  testes: TesteInfo[];
   arquivos: number;
 }
 
@@ -519,6 +551,11 @@ export const ponte = {
     temChave: async (): Promise<boolean> => (ponte.ia.modo === 'assinatura' ? (await ponte.ia.claudeEstado()) !== null : ponte.ia.temChaveDaApi()),
     definirChave: (chave: string) => invoke<void>('ia_definir_chave', { chave }),
     esquecerChave: () => invoke<void>('ia_esquecer_chave'),
+    /** Limites de uso da assinatura que o Claude Code informa (janela de 5 horas e semana). */
+    async aoLimites(fn: (l: { tipo: string; utilizacao: number | null; reiniciaEm: number | null; estado: string | null }) => void): Promise<UnlistenFn> {
+      if (!noApp()) return () => {};
+      return listen<{ tipo: string; utilizacao: number | null; reiniciaEm: number | null; estado: string | null }>('ia-limites', (e) => fn(e.payload));
+    },
     /** Manda o pedido à Messages API (com stream) e entrega o JSON de cada evento SSE. */
     async mensagem(corpo: unknown, aoEvento: (dados: string) => void): Promise<void> {
       if (!noApp()) return exemplo.iaMensagem(corpo, aoEvento);
@@ -604,6 +641,13 @@ export const ponte = {
   arquitetura: {
     analisar: async (raiz: string): Promise<AnaliseArquitetura> =>
       noApp() ? invoke<AnaliseArquitetura>('arquitetura_analisar', { raiz }) : exemplo.analiseArquitetura(),
+  },
+
+  /** Testes: o comando (Maven/Gradle) e o que os relatórios do último run mostram. */
+  testes: {
+    comando: async (raiz: string, tipo: string, filtro: string | null): Promise<string[]> =>
+      noApp() ? invoke<string[]>('testes_comando', { raiz, tipo, filtro }) : ['mvn', 'test', '-B'],
+    relatorios: async (raiz: string): Promise<ResultadoTeste[]> => (noApp() ? invoke<ResultadoTeste[]>('testes_relatorios', { raiz }) : exemplo.relatoriosDeTestes()),
   },
 
   /** Comandos do projeto (scripts do package.json, npm install) com a saída em lotes de linhas. */

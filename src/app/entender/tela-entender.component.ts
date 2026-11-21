@@ -1,9 +1,11 @@
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { EntenderService, AbaEntender, RegraVisivel } from './entender.service';
-import { Bloco, CorTexto, nomeCurto, nomeDaTela, TipoSeta } from './desenho';
+import { Bloco, CorTexto, nomeCurto, nomeDaTela, Seta, TipoSeta } from './desenho';
 import { trechosDoTexto } from './regras';
 import { LayoutService } from '../layout/layout.service';
 import { ComponenteAnalise, ponte } from '../nucleo/ponte';
+import { TestesService } from '../testes/testes.service';
+import { TestesDaRegraService } from '../testes/testes-da-regra.service';
 
 const COR: Record<TipoSeta, string> = { chama: 'var(--texto)', dominio: 'var(--aviso)', http: 'var(--rosa)', desvio: 'var(--erro)' };
 const TRACO: Record<TipoSeta, string | null> = { chama: null, dominio: '4 3', http: null, desvio: '4 3' };
@@ -55,12 +57,24 @@ type Parte = 'diagrama' | 'metodos';
             <div class="entender-grade arquitetura">
               <section class="painel" aria-label="Arquitetura">
                 <div class="painel-faixa">
-                  <span class="rotulo">ARQUITETURA</span><span class="suave">domínios × camadas · da tela até o banco</span><span class="espaco"></span>
+                  <span class="rotulo">ARQUITETURA</span><span class="suave">{{ trilha() }}</span><span class="espaco"></span>
                   <span class="docker-legenda"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--texto)" stroke-width="2" /></svg>chama</span>
                   <span class="docker-legenda"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--aviso)" stroke-width="2" stroke-dasharray="4 3" /></svg>entre domínios</span>
                   <span class="docker-legenda"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--rosa)" stroke-width="2" /></svg>HTTP</span>
                   <span class="espaco"></span>
-                  <span class="suave entender-zoom-dica">arraste · <kbd>+</kbd> <kbd>-</kbd> zoom {{ (zoom() * 100).toFixed(0) }}%</span>
+                  <span class="suave entender-zoom-dica">arraste · <kbd>z</kbd> <kbd>Z</kbd> zoom {{ (zoom() * 100).toFixed(0) }}%</span>
+                </div>
+                <div class="entender-filtros">
+                  <label class="entender-busca"><span class="destaque-texto">/</span>
+                    <input #busca type="text" spellcheck="false" placeholder="buscar componente…" [value]="e.busca()" (input)="e.busca.set(valor($event))" (keydown)="teclarBusca($event)" /></label>
+                  @if (e.dominioAberto()) {
+                    <span class="suave entender-filtro-rotulo">CAMADAS</span>
+                    @for (c of camadasFiltro; track c.chave) {
+                      <button class="entender-chip" [class.ligado]="!e.camadasOff().has(c.chave)" (click)="e.alternarCamada(c.chave)">{{ c.rotulo }} <kbd>{{ c.tecla }}</kbd></button>
+                    }
+                  }
+                  <span class="espaco"></span>
+                  <span class="entender-chip" title="saltos de vizinhança desenhados (+ e -)">vizinhança: {{ e.vizinhanca() }} {{ e.vizinhanca() === 1 ? 'salto' : 'saltos' }} <kbd>+</kbd> <kbd>-</kbd></span>
                 </div>
                 @if (e.desenhoArquitetura(); as d) {
                   <div #area class="entender-area" tabindex="0" (focus)="parte.set('diagrama')" (pointerdown)="arrastarArea($event)" (wheel)="rolarArea($event)">
@@ -80,15 +94,17 @@ type Parte = 'diagrama' | 'metodos';
                             <marker [attr.id]="'arq-' + t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" [attr.fill]="cor(t)" /></marker>
                           }
                         </defs>
-                        @for (s of d.setas; track $index) {
-                          <path [attr.d]="s.d" fill="none" [attr.stroke]="cor(s.tipo)" stroke-width="1.8" [attr.stroke-dasharray]="traco(s.tipo)" [attr.marker-end]="'url(#arq-' + s.tipo + ')'" [attr.opacity]="opacidade(s.de, s.para)" />
+                        @for (s of foco().setas; track $index) {
+                          <path [attr.d]="s.d" fill="none" [attr.stroke]="cor(s.tipo)" [attr.stroke-width]="espessura(s)" [attr.stroke-dasharray]="traco(s.tipo)" [attr.marker-end]="'url(#arq-' + s.tipo + ')'" />
                           @if (s.rotulo) { <text [attr.x]="s.rx" [attr.y]="s.ry" [attr.fill]="cor(s.tipo)" [attr.text-anchor]="s.ancora ?? 'middle'" class="docker-rotulo">{{ s.rotulo }}</text> }
                         }
                       </svg>
                       @for (b of d.blocos; track b.id) {
-                        <div class="entender-bloco" [attr.data-id]="b.id" [class.db]="b.estilo === 'db'" [class.ext]="b.estilo === 'ext'" [class.selecionado]="b.id === e.selecionado()"
-                             [style.left.px]="b.x" [style.top.px]="b.y" [style.width.px]="b.largura" (click)="escolherBloco(b)" (dblclick)="e.abrirNoEditor(b.caminho, b.linha)">
+                        <div class="entender-bloco" [attr.data-id]="b.id" [class.db]="b.estilo === 'db'" [class.ext]="b.estilo === 'ext'" [class.selecionado]="b.id === e.selecionado()" [class.apagado]="apagado(b.id, b.titulo)"
+                             [style.left.px]="b.x" [style.top.px]="b.y" [style.width.px]="b.largura" [style.height.px]="b.detalhe !== undefined ? b.altura : null" (click)="escolherBloco(b)" (dblclick)="duploClique(b)">
                           <b [class]="corDe(b.tituloCor)">{{ b.titulo }}</b><br /><span [class]="corDe(b.subCor)">{{ b.sub }}</span>
+                          @if (b.detalhe) { <br /><span class="suave">{{ b.detalhe }}</span> }
+                          @if (hub(b.id); as n) { <br /><span class="aviso-texto">usado por {{ n }}</span> }
                         </div>
                       }
                     </div>
@@ -131,6 +147,24 @@ type Parte = 'diagrama' | 'metodos';
                     <button class="botao" (click)="acompanharSel()">⇢ acompanhar <kbd>c</kbd></button>
                     <button class="botao" (click)="e.abrirNoEditor(c.caminho, c.linha)">abrir <kbd>⏎</kbd></button>
                   </div>
+                } @else if (resumoSel(); as r) {
+                  <div class="painel-faixa"><span class="rotulo">{{ r.nome.toUpperCase() }}</span><span class="suave">domínio</span><span class="espaco"></span><kbd>⏎</kbd></div>
+                  <div class="docker-kv entender-kv">
+                    <div><span class="k">telas</span><span>{{ r.telas }}</span></div>
+                    <div><span class="k">ações</span><span>{{ r.acoes }}</span></div>
+                    <div><span class="k">serviços</span><span>{{ r.servicos }}</span></div>
+                    <div><span class="k">DAOs</span><span>{{ r.daos }}</span></div>
+                    <div><span class="k">tabelas</span><span>{{ r.tabelas }}</span></div>
+                    @if (r.regras) { <div><span class="k">regras</span><span class="aviso-texto">⚑ {{ r.regras }}</span></div> }
+                  </div>
+                  @if (r.ligados.length) {
+                    <div class="entender-grupo">MAIS LIGADO A</div>
+                    <div class="docker-kv entender-kv">
+                      @for (l of r.ligados.slice(0, 8); track l.nome) { <div><span class="k">{{ l.nome }}</span><span class="aviso-texto">{{ l.chamadas }} {{ l.chamadas === 1 ? 'chamada' : 'chamadas' }}</span></div> }
+                    </div>
+                  }
+                  <div class="espaco-v"></div>
+                  <div class="docker-acoes entender-acoes"><button class="botao" (click)="e.entrarNoDominio(r.nome)">entrar no domínio <kbd>⏎</kbd></button></div>
                 } @else {
                   <div class="painel-faixa"><span class="rotulo">DETALHE</span></div>
                   <div class="debug-vazio suave">{{ blocoSel()?.estilo === 'ext' ? 'sistema externo, chamado por HTTP' : 'escolha um bloco' }}</div>
@@ -147,7 +181,7 @@ type Parte = 'diagrama' | 'metodos';
                   @for (d of e.dominiosDasRegras(); track d.nome) {
                     <div class="entender-item" [class.selecionado]="d.nome === dominioAtual()" (click)="escolherDominio(d.nome)">
                       <span [class.forte]="d.nome === dominioAtual()">{{ d.nome }}</span>
-                      <span class="entender-direita" [class.aviso-texto]="d.nome === dominioAtual()" [class.suave]="d.nome !== dominioAtual()">⚑ {{ d.total }}</span>
+                      <span class="entender-direita" [class.aviso-texto]="d.nome === dominioAtual()" [class.suave]="d.nome !== dominioAtual()">⚑ {{ d.total }}@if (cobDominio(d.nome); as c) { <span [class]="c.classe"> · {{ c.texto }}</span> }</span>
                     </div>
                   } @empty { <div class="debug-vazio suave">nenhuma regra achada no código</div> }
                 </div>
@@ -157,11 +191,14 @@ type Parte = 'diagrama' | 'metodos';
               <section class="painel" aria-label="Regras">
                 <div class="painel-faixa">
                   <span class="rotulo">{{ (dominioAtual() ?? '').toUpperCase() }}</span><span class="suave">{{ e.regrasDoDominio().length }} {{ e.regrasDoDominio().length === 1 ? 'regra' : 'regras' }}</span><span class="espaco"></span>
+                  <button class="entender-chip" [class.ligado]="e.filtroCobertura() === 'todas'" (click)="e.filtroCobertura.set('todas')">todas</button>
+                  <button class="entender-chip" [class.ligado]="e.filtroCobertura() === 'sem'" (click)="e.filtroCobertura.set(e.filtroCobertura() === 'sem' ? 'todas' : 'sem')">sem teste <kbd>u</kbd></button>
+                  <button class="entender-chip" [class.ligado]="e.filtroCobertura() === 'falhando'" (click)="e.filtroCobertura.set(e.filtroCobertura() === 'falhando' ? 'todas' : 'falhando')">falhando <kbd>x</kbd></button>
                   <label class="docker-filtro"><span class="destaque-texto">/</span><input #filtro type="text" spellcheck="false" placeholder="filtrar" [value]="e.filtro()" (input)="e.filtro.set($any($event.target).value)" (keydown)="teclarFiltro($event)" /></label>
                 </div>
                 <div #cartoes class="entender-cartoes" tabindex="0">
-                  @for (r of e.regrasDoDominio(); track r.id) {
-                    <div class="entender-regra" [attr.data-id]="r.id" [class.selecionada]="r.id === e.regraAtual()?.id" (click)="e.regraSel.set(r.id)" (dblclick)="abrirRegra(r)">
+                  @for (r of regrasVisiveis(); track r.id) {
+                    <div class="entender-regra" [attr.data-id]="r.id" [class.selecionada]="r.id === e.regraAtual()?.id" [class.falhando]="cobDe(r)?.estado === 'falhando'" (click)="e.regraSel.set(r.id)" (dblclick)="abrirRegra(r)" (contextmenu)="menuDaRegra($event, r)">
                       <div class="rt">
                         <span class="id">{{ r.id }}</span><b>{{ r.titulo }}</b>
                         <span class="tag" [class.git-mais]="r.estado === 'revisada'" [class.aviso-texto]="r.estado === 'nova' && !!r.chave" [class.suave]="!r.chave || (!r.codigo && !!r.chave)">{{ !r.chave ? 'à mão' : !r.codigo ? 'sumiu do código' : r.estado }}</span>
@@ -171,11 +208,17 @@ type Parte = 'diagrama' | 'metodos';
                         <div class="ro">
                           <span class="destaque-texto">⇢ {{ nome(c.componente) }}{{ c.metodo ? '.' + c.metodo : c.condicao ? '.' + c.condicao : '' }} :{{ c.linha }}</span>
                           <span class="suave">· {{ rodapeDaRegra(r) }}</span>
-                          <span class="entender-direita" [class.git-mais]="!!c.teste" [class.aviso-texto]="!c.teste">{{ c.teste ? '✓ testada' : 'sem teste' }}</span>
+                          <span class="entender-direita" [class]="estadoDoCard(r).classe">{{ estadoDoCard(r).texto }}</span>
                         </div>
+                        @if (cobDe(r); as cb) {
+                          @if (cb.estado === 'sem' && !cb.cenarios.length) { <div class="ro aviso-texto">⚠ nenhum cenário testado</div> }
+                          @else if (cb.estado === 'so-feliz') { <div class="ro aviso-texto">⚠ só o caminho feliz é testado; este erro não</div> }
+                          @else if (cb.estado === 'sem') { <div class="ro aviso-texto">⚠ nenhum cenário testado (nem o feliz)</div> }
+                          @else { <div class="ro entender-cenarios">@for (cn of cb.cenarios; track cn.id) { <span [class]="classeDoCenario(cn.estado)">{{ iconeDoCenario(cn.estado) }} {{ cn.rotulo }}</span> }</div> }
+                        }
                       }
                     </div>
-                  } @empty { <div class="debug-vazio suave">nenhuma regra{{ e.filtro() ? ' com esse filtro' : '' }}</div> }
+                  } @empty { <div class="debug-vazio suave">nenhuma regra{{ e.filtro() || e.filtroCobertura() !== 'todas' ? ' com esse filtro' : '' }}</div> }
                 </div>
               </section>
 
@@ -193,10 +236,26 @@ type Parte = 'diagrama' | 'metodos';
                       @for (l of c.apareceEm; track $index) {
                         <div class="entender-item entender-link" (click)="e.abrirNoEditor(l.caminho, l.linha)"><span class="destaque-texto">⇢</span> {{ arquivoCurto(l.relativo) }}:{{ l.linha }} <span class="suave">{{ l.detalhe === 'mensagem' ? 'mensagem' : '→ ' + (l.detalhe.split('→ ')[1] ?? l.detalhe) }}</span></div>
                       }
-                      @if (c.teste; as t) { <div class="entender-item entender-link" (click)="e.abrirNoEditor(t.caminho, t.linha)"><span class="git-mais">✓</span> {{ t.detalhe }}</div> }
+                    }
+                    @if (cobDe(r); as cb) {
+                      <div class="entender-grupo">CENÁRIOS DESTA REGRA (do código)</div>
+                      @for (cn of cb.cenarios; track cn.id) {
+                        <div class="entender-item"><span [class]="classeDoCenario(cn.estado)">{{ iconeDoCenario(cn.estado) }}</span> {{ cn.rotulo }}<span class="entender-direita suave">{{ cn.estado === 'falhou' ? 'falhando' : cn.estado === 'sem' ? 'sem teste' : cn.testes.length + (cn.testes.length === 1 ? ' teste' : ' testes') }}</span></div>
+                      }
+                      @if (cb.testes.length) {
+                        <div class="entender-grupo">TESTES</div>
+                        @for (tt of cb.testes.slice(0, 6); track tt.id) {
+                          <div class="entender-item entender-link" (click)="e.abrirNoEditor(tt.caminho, tt.linha)"><span [class]="classeDoTeste(tt)">{{ iconeDoTeste(tt) }}</span> {{ tt.classe }}.{{ tt.metodo }}<span class="entender-direita suave">{{ tt.tipo }}{{ tt.esperaErro ? ' ⚠' : '' }}</span></div>
+                        }
+                      }
                     }
                   }
                   <div class="espaco-v"></div>
+                  <div class="docker-acoes entender-acoes">
+                    <button class="botao" (click)="acoesDeTeste.criar(r)"><span class="destaque-texto">✦</span> escrever teste <kbd>t</kbd></button>
+                    <button class="botao" (click)="acoesDeTeste.sugerirCenarios(r)"><span class="destaque-texto">✦</span> sugerir cenários <kbd>s</kbd></button>
+                    <button class="botao" [disabled]="!cobDe(r)?.testes?.length" (click)="acoesDeTeste.rodar(r)">▶ <kbd>r</kbd></button>
+                  </div>
                   <div class="docker-acoes entender-acoes">
                     <button class="botao" [disabled]="!r.codigo?.metodo" (click)="caminhoDaRegra(r)">⇢ caminho <kbd>c</kbd></button>
                     <button class="botao" (click)="e.editarRegra(r)">✎ editar <kbd>e</kbd></button>
@@ -296,13 +355,163 @@ export class TelaEntenderComponent {
   private readonly elFiltro = viewChild<ElementRef<HTMLInputElement>>('filtro');
 
   protected readonly tipos = ['chama', 'dominio', 'http', 'desvio'] as const;
+  protected readonly testes = inject(TestesService);
+  protected readonly acoesDeTeste = inject(TestesDaRegraService);
+
+  protected cobDe(r: RegraVisivel) {
+    return this.acoesDeTeste.cobertura(r);
+  }
+
+  /** As regras do domínio, no filtro de cobertura (u: só sem teste, x: só falhando). */
+  protected readonly regrasVisiveis = computed(() => {
+    const f = this.e.filtroCobertura();
+    const lista = this.e.regrasDoDominio();
+    if (f === 'todas') return lista;
+    return lista.filter((r) => {
+      const c = this.cobDe(r);
+      return f === 'falhando' ? c?.estado === 'falhando' : !c || c.estado === 'sem' || c.estado === 'so-feliz';
+    });
+  });
+
+  protected estadoDoCard(r: RegraVisivel): { texto: string; classe: string } {
+    const c = this.cobDe(r);
+    if (!c || c.estado === 'sem') return { texto: '○ sem teste', classe: 'aviso-texto' };
+    if (c.estado === 'falhando') return { texto: '✗ teste falhando', classe: 'erro-texto' };
+    if (c.estado === 'so-feliz') return { texto: '○ sem teste deste erro', classe: 'aviso-texto' };
+    const n = c.testes.length;
+    return { texto: `✓ ${n} ${n === 1 ? 'teste' : 'testes'}${this.testes.resultados().size ? ' passando' : ''}`, classe: 'git-mais' };
+  }
+
+  protected iconeDoCenario(e: string): string {
+    return e === 'falhou' ? '✗' : e === 'sem' ? '○' : '✓';
+  }
+
+  protected classeDoCenario(e: string): string {
+    return e === 'falhou' ? 'erro-texto' : e === 'sem' ? 'aviso-texto' : 'git-mais';
+  }
+
+  protected iconeDoTeste(t: Parameters<TestesService['estadoDe']>[0]): string {
+    const e = this.testes.estadoDe(t);
+    return e === 'ok' ? '✓' : e === 'falhou' ? '✗' : e === 'ignorado' ? '○' : '·';
+  }
+
+  protected classeDoTeste(t: Parameters<TestesService['estadoDe']>[0]): string {
+    const e = this.testes.estadoDe(t);
+    return e === 'ok' ? 'git-mais' : e === 'falhou' ? 'erro-texto' : 'suave';
+  }
+
+  /** Quantas regras do domínio têm teste (e se algum falha). */
+  protected cobDominio(nome: string): { texto: string; classe: string } | null {
+    const regras = this.e.regras().filter((r) => r.dominio === nome && r.codigo);
+    if (!regras.length) return null;
+    const cobs = regras.map((r) => this.cobDe(r));
+    const testadas = cobs.filter((c) => c && c.estado !== 'sem' && c.estado !== 'so-feliz').length;
+    const falha = cobs.some((c) => c?.estado === 'falhando');
+    return { texto: `${testadas}/${regras.length}${falha ? ' ✗' : ''}`, classe: falha ? 'erro-texto' : testadas === regras.length ? 'git-mais' : 'aviso-texto' };
+  }
+
+  protected menuDaRegra(ev: MouseEvent, r: RegraVisivel): void {
+    ev.preventDefault();
+    this.e.regraSel.set(r.id);
+    this.acoesDeTeste.abrirMenu(ev.clientX, ev.clientY, r);
+  }
   /** Zoom do diagrama de arquitetura (ctrl + roda, + e -). */
   protected readonly zoom = signal(1);
 
-  /** Com um bloco selecionado, só as setas dele ficam fortes: o resto vira pano de fundo. */
-  protected opacidade(de: string, para: string): number {
+  protected readonly camadasFiltro = [
+    { chave: 'tela', tecla: 't', rotulo: 'telas' },
+    { chave: 'entrada', tecla: 'a', rotulo: 'ações' },
+    { chave: 'servico', tecla: 's', rotulo: 'serviços' },
+    { chave: 'repositorio', tecla: 'd', rotulo: 'DAOs' },
+    { chave: 'banco', tecla: 'b', rotulo: 'tabelas' },
+  ];
+  private readonly elBusca = viewChild<ElementRef<HTMLInputElement>>('busca');
+
+  protected readonly trilha = computed(() => {
+    const d = this.e.dominioAberto();
+    const desenho = this.e.desenhoArquitetura();
+    if (!d) return `visão geral · ${desenho?.resumos?.length ?? 0} domínios`;
+    const c = this.compSel();
+    return `Visão geral › ${d}${c ? ` › ${c.nome}` : ''}`;
+  });
+  protected readonly resumoSel = computed(() => {
     const sel = this.e.selecionado();
-    return !sel ? 0.55 : de === sel || para === sel ? 1 : 0.1;
+    return this.e.desenhoArquitetura()?.resumos?.find((r) => `dom:${r.nome}` === sel) ?? null;
+  });
+
+  /**
+   * O que fica em foco: o bloco selecionado e os vizinhos até N saltos. Só as setas que saem desse
+   * conjunto são desenhadas (o resto do sistema fica quieto); sem seleção, só as mais fortes.
+   */
+  protected readonly foco = computed(() => {
+    const d = this.e.desenhoArquitetura();
+    const sel = this.e.selecionado();
+    if (!d) return { ids: null as Set<string> | null, setas: [] as Seta[], graus: new Map<string, number>() };
+    const graus = new Map<string, number>();
+    for (const s of d.setas) {
+      graus.set(s.para, (graus.get(s.para) ?? 0) + 1);
+      graus.set(s.de, graus.get(s.de) ?? 0);
+    }
+    if (!sel || !d.blocos.some((b) => b.id === sel)) return { ids: null, setas: d.visaoGeral ? d.setas.slice(0, 12) : [], graus };
+    const vizinhos = new Map<string, string[]>();
+    for (const s of d.setas) {
+      (vizinhos.get(s.de) ?? vizinhos.set(s.de, []).get(s.de)!).push(s.para);
+      (vizinhos.get(s.para) ?? vizinhos.set(s.para, []).get(s.para)!).push(s.de);
+    }
+    const dist = new Map<string, number>([[sel, 0]]);
+    let fronteira = [sel];
+    for (let salto = 1; salto <= this.e.vizinhanca(); salto++) {
+      const proximos: string[] = [];
+      for (const a of fronteira) {
+        for (const b of vizinhos.get(a) ?? []) {
+          if (!dist.has(b)) {
+            dist.set(b, salto);
+            proximos.push(b);
+          }
+        }
+      }
+      fronteira = proximos;
+    }
+    const setas = d.setas.filter((s) => Math.min(dist.get(s.de) ?? Infinity, dist.get(s.para) ?? Infinity) < this.e.vizinhanca());
+    return { ids: new Set(dist.keys()), setas, graus };
+  });
+
+  /** Bloco fora do foco (ou que não casa com a busca) fica apagado. */
+  protected apagado(id: string, titulo: string): boolean {
+    const f = this.foco().ids;
+    const busca = this.e.busca().trim().toLowerCase();
+    if (busca) return !titulo.toLowerCase().includes(busca);
+    return !!f && !f.has(id);
+  }
+
+  /** Componente que quase todos usam (DAO de usuário...): em vez de dezenas de linhas, um aviso no bloco. */
+  protected hub(id: string): number {
+    if (this.e.desenhoArquitetura()?.visaoGeral || id === this.e.selecionado()) return 0;
+    const n = this.foco().graus.get(id) ?? 0;
+    return n >= 12 ? n : 0;
+  }
+
+  protected espessura(s: Seta): number {
+    const n = Number(s.rotulo?.split(' ')[0]);
+    return this.e.desenhoArquitetura()?.visaoGeral && n > 1 ? Math.min(6, 1.8 + Math.log2(n)) : 1.8;
+  }
+
+  protected duploClique(b: Bloco): void {
+    if (b.id.startsWith('dom:')) this.e.entrarNoDominio(b.id.slice(4));
+    else this.e.abrirNoEditor(b.caminho, b.linha);
+  }
+
+  protected teclarBusca(ev: KeyboardEvent): void {
+    if (ev.key !== 'Enter' && ev.key !== 'Escape') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (ev.key === 'Escape') this.e.busca.set('');
+    else if (!this.e.buscar()) return;
+    this.elArea()?.nativeElement.focus();
+  }
+
+  protected valor(ev: Event): string {
+    return (ev.target as HTMLInputElement).value;
   }
 
   /** Arrastar o fundo do diagrama anda por ele (como num mapa). */
@@ -552,7 +761,7 @@ export class TelaEntenderComponent {
       ev.preventDefault();
       ev.stopPropagation();
     };
-    if (k === 'Escape') return (feito(), this.e.fechar());
+    if (k === 'Escape') return (feito(), this.e.aba() === 'arquitetura' && this.e.dominioAberto() ? this.e.sairDoDominio() : this.e.fechar());
     if (k === '1' || k === '2' || k === '3') return (feito(), this.trocar((['arquitetura', 'regras', 'caminho'] as const)[Number(k) - 1]));
     if (k === 'r' && this.e.aba() === 'arquitetura') return (feito(), void this.e.analisar());
     if (this.e.aba() === 'arquitetura') this.teclarArquitetura(ev, feito);
@@ -572,9 +781,14 @@ export class TelaEntenderComponent {
     }
     const d = this.e.desenhoArquitetura();
     if (!d) return;
-    if (ev.key === '+' || ev.key === '=') return (feito(), this.mudarZoom(this.zoom() * 1.15, this.elArea()?.nativeElement));
-    if (ev.key === '-' || ev.key === '_') return (feito(), this.mudarZoom(this.zoom() / 1.15, this.elArea()?.nativeElement));
+    if (ev.key === '+' || ev.key === '=') return (feito(), this.e.vizinhanca.set(Math.min(3, this.e.vizinhanca() + 1)));
+    if (ev.key === '-' || ev.key === '_') return (feito(), this.e.vizinhanca.set(Math.max(1, this.e.vizinhanca() - 1)));
+    if (ev.key === 'z') return (feito(), this.mudarZoom(this.zoom() * 1.15, this.elArea()?.nativeElement));
+    if (ev.key === 'Z') return (feito(), this.mudarZoom(this.zoom() / 1.15, this.elArea()?.nativeElement));
     if (ev.key === '0') return (feito(), this.mudarZoom(1, this.elArea()?.nativeElement));
+    if (ev.key === '/') return (feito(), this.elBusca()?.nativeElement.focus());
+    const camada = this.e.dominioAberto() ? this.camadasFiltro.find((c) => c.tecla === ev.key) : null;
+    if (camada) return (feito(), this.e.alternarCamada(camada.chave));
     const dir = direcao(ev.key);
     if (dir) {
       feito();
@@ -583,13 +797,13 @@ export class TelaEntenderComponent {
       if (prox) this.escolherBloco(prox);
       return;
     }
-    if (ev.key === 'Enter') return (feito(), this.e.abrirNoEditor(c?.caminho, c?.linha));
+    if (ev.key === 'Enter') return (feito(), this.resumoSel() ? this.e.entrarNoDominio(this.resumoSel()!.nome) : this.e.abrirNoEditor(c?.caminho, c?.linha));
     if (ev.key === 'c') return (feito(), this.acompanharSel());
     if (ev.key === 'Tab' && this.elMetodos()) return (feito(), this.elMetodos()!.nativeElement.focus());
   }
 
   private teclarRegras(ev: KeyboardEvent, feito: () => void): void {
-    const lista = this.e.regrasDoDominio();
+    const lista = this.regrasVisiveis();
     const atual = this.e.regraAtual();
     const i = atual ? lista.indexOf(atual) : -1;
     const dominios = this.e.dominiosDasRegras().map((d) => d.nome);
@@ -638,6 +852,30 @@ export class TelaEntenderComponent {
       case '/':
         feito();
         this.elFiltro()?.nativeElement.focus();
+        return;
+      case 'u':
+        feito();
+        this.e.filtroCobertura.set(this.e.filtroCobertura() === 'sem' ? 'todas' : 'sem');
+        return;
+      case 'x':
+        feito();
+        this.e.filtroCobertura.set(this.e.filtroCobertura() === 'falhando' ? 'todas' : 'falhando');
+        return;
+      case 't':
+        feito();
+        if (atual) void this.acoesDeTeste.criar(atual);
+        return;
+      case 's':
+        feito();
+        if (atual) void this.acoesDeTeste.sugerirCenarios(atual);
+        return;
+      case 'r':
+        feito();
+        if (atual) void this.acoesDeTeste.rodar(atual);
+        return;
+      case 'g':
+        feito();
+        if (atual) void this.acoesDeTeste.irParaTeste(atual);
         return;
     }
   }

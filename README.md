@@ -98,6 +98,18 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   telas com cards ligados a linhas de código, regras, caminhos, blocos da arquitetura, containers
   e conexões de banco. `l` liga ao card o que está aberto embaixo; a linha ligada ganha a marca
   "☐ TODO" no editor. Os cards ficam em `.seedy/todo.md` (vai para o git, dá para editar à mão).
+- **Testes** (mockup 21, `␣ E` ou o frasco na barra de ícones): os testes do projeto lidos do código,
+  por tipo (unitários, integração, API e e2e), rodados pelo Maven (surefire e failsafe) ou Gradle, com
+  o resultado dos relatórios, a falha explicada (`a`, com a IA) e a saída do comando. Os do front
+  (`.spec.ts`, Cypress, Playwright) aparecem na lista e rodam pelo painel de scripts. Cenários que
+  conferem um erro levam ⚠.
+- **Regras de negócio com cobertura** (mockups 22 e 23): cada regra mostra se tem teste, se ele falha e
+  quais cenários estão cobertos: o caminho feliz e cada desvio que o código tem (`throw`, validação,
+  4xx). `u` filtra as sem teste, `x` as falhando; o clique direito (ou `t`) abre ir para o teste,
+  rodar, criar teste manualmente ou com a IA e sugerir cenários que faltam. "Testada" quer dizer que
+  um teste passa pelo código da regra, lido do código; não é cobertura de linhas.
+- **Uso da assinatura do Claude** (mockup 24): no modo assinatura, a barra de status mostra a janela de
+  5 horas e a semana, lidas do Claude Code depois de cada resposta (clique para os detalhes).
 - **Entender o sistema** (Fase 9, mockups 17 a 19, `␣ A`): a arquitetura do projeto em blocos
   (domínios × camadas, da tela do Angular até a tabela), as regras de negócio achadas no código
   (guardadas em `.seedy/regras.md`, reescritas pela IA) e o caminho de um método — `ctrl+.` →

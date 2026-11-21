@@ -25,6 +25,7 @@ import { BlameService } from '../git/blame.service';
 import { EntenderService } from '../entender/entender.service';
 import { TodoService } from '../todo/todo.service';
 import { ConfigService } from '../config/config.service';
+import { TestesService } from '../testes/testes.service';
 import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
 
@@ -62,6 +63,7 @@ export class AtalhosService {
   private readonly mensagens = inject(MensagensService);
   private readonly configuracoes = inject(ConfiguracoesService);
   private readonly bookmarks = inject(BookmarksService);
+  private readonly testes = inject(TestesService);
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
   private readonly jdtls = inject(JdtlsService);
@@ -115,6 +117,7 @@ export class AtalhosService {
     { id: 'containers', tecla: 'D', rotulo: 'containers e o mapa (Docker)', disponivel: true, executar: () => this.alternarContainers() },
     { id: 'todo', tecla: 'T', rotulo: 'TODO (cards ligados ao código, regras e containers)', disponivel: true, executar: () => this.todo.alternar() },
     { id: 'entender', tecla: 'A', rotulo: 'entender o sistema (arquitetura, regras, caminho)', disponivel: true, executar: () => this.entender.alternar() },
+    { id: 'testes', tecla: 'E', rotulo: 'testes: rodar, resultado e cobertura das regras', disponivel: true, executar: () => this.testes.alternar() },
     { id: 'bookmark', tecla: 'M', rotulo: 'bookmark: marcar/desmarcar a linha', disponivel: true, executar: () => void this.bookmarks.alternar() },
     { id: 'bookmarks', tecla: 'B', rotulo: 'bookmarks: lista e ir até uma marca', disponivel: true, executar: () => void this.bookmarks.listar() },
     { id: 'merge', tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },

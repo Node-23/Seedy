@@ -18,6 +18,7 @@ mod novo_projeto;
 mod observador;
 mod servidor;
 mod terminal;
+mod testes;
 mod web;
 mod tema;
 
@@ -49,6 +50,8 @@ pub fn run() {
             arquivos::ler_arquivo,
             arquivos::gravar_arquivo,
             arquitetura::arquitetura_analisar,
+            testes::testes_relatorios,
+            testes::testes_comando,
             busca::busca_indexar,
             busca::busca_texto,
             git::branch_atual,

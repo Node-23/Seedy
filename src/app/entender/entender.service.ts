@@ -8,7 +8,7 @@ import { AnaliseArquitetura, ComponenteAnalise, DesvioAnalise, MetodoAnalise, po
 import { caminhoDaUri } from '../java/conversao';
 import { IaService } from '../ia/ia.service';
 import { pedirComStream } from '../ia/stream';
-import { desenharArquitetura, desenharCaminho, PAPEIS_NA_GRADE } from './desenho';
+import { desenharArquitetura, desenharCaminho, desenharVisaoGeral, PAPEIS_NA_GRADE } from './desenho';
 import { ConfigService } from '../config/config.service';
 import { agora, ARQUIVO_VAZIO, ArquivoRegras, escreverRegras, lerRegras, linhaDaRegra, proximoId, RegraEscrita, textoDoCodigo } from './regras';
 
@@ -111,10 +111,81 @@ export class EntenderService {
     return m;
   });
 
+  /** Domínio aberto na arquitetura (null = a visão geral, um bloco por domínio). */
+  readonly dominioAberto = signal<string | null>(null);
+  /** Camadas escondidas dentro do domínio (chaves das camadas do desenho). */
+  readonly camadasOff = signal<ReadonlySet<string>>(new Set());
+  /** Busca por componente: o que não casa fica apagado; ⏎ vai até o primeiro. */
+  readonly busca = signal('');
+  /** Aba Regras: só as sem teste ou as que falham (u e x). */
+  readonly filtroCobertura = signal<'todas' | 'sem' | 'falhando'>('todas');
+  /** Saltos de vizinhança desenhados a partir do bloco selecionado (+ e -). */
+  readonly vizinhanca = signal(1);
+
   readonly desenhoArquitetura = computed(() => {
     const a = this.analise();
-    return a ? desenharArquitetura(a, this.regrasPorComp()) : null;
+    if (!a) return null;
+    const dominio = this.dominioAberto();
+    return dominio ? desenharArquitetura(a, this.regrasPorComp(), { dominio, camadasOff: this.camadasOff() }) : desenharVisaoGeral(a, this.regrasPorComp());
   });
+
+  entrarNoDominio(nome: string): void {
+    this.dominioAberto.set(nome);
+    this.camadasOff.set(new Set());
+    this.busca.set('');
+    this.metodoSel.set(0);
+    const a = this.analise();
+    const doDominio = (a?.componentes ?? []).filter((c) => c.dominio === nome && PAPEIS_NA_GRADE.has(c.papel));
+    const inicial = doDominio.filter((c) => c.papel === 'servico').sort((x, y) => (this.regrasPorComp().get(y.id) ?? 0) - (this.regrasPorComp().get(x.id) ?? 0))[0] ?? doDominio[0];
+    this.selecionado.set(inicial?.id ?? null);
+  }
+
+  sairDoDominio(): void {
+    const d = this.dominioAberto();
+    this.dominioAberto.set(null);
+    this.camadasOff.set(new Set());
+    this.busca.set('');
+    this.selecionado.set(d ? `dom:${d}` : null);
+  }
+
+  /** Liga/desliga uma camada do domínio aberto (as telas levam junto os serviços do front). */
+  alternarCamada(chave: string): void {
+    const novo = new Set(this.camadasOff());
+    const chaves = chave === 'tela' ? ['tela', 'front'] : [chave];
+    const ligar = novo.has(chave);
+    for (const k of chaves) ligar ? novo.delete(k) : novo.add(k);
+    this.camadasOff.set(novo);
+  }
+
+  /** Vai até o componente da busca (abre o domínio dele). Devolve se achou. */
+  buscar(): boolean {
+    const t = this.busca().trim().toLowerCase();
+    const a = this.analise();
+    if (!t || !a) return false;
+    const casa = a.componentes.filter((c) => PAPEIS_NA_GRADE.has(c.papel) && `${c.nome} ${c.tabela ?? ''}`.toLowerCase().includes(t));
+    const melhor = casa.sort((x, y) => Number(!y.nome.toLowerCase().startsWith(t)) - Number(!x.nome.toLowerCase().startsWith(t)) || x.nome.length - y.nome.length)[0];
+    if (!melhor) return false;
+    if (this.dominioAberto() !== melhor.dominio) {
+      this.dominioAberto.set(melhor.dominio);
+      this.camadasOff.set(new Set());
+    }
+    this.selecionado.set(melhor.id);
+    this.metodoSel.set(0);
+    return true;
+  }
+
+  /** De um card do TODO, de uma regra...: mostra o bloco no diagrama (abrindo o domínio dele). */
+  irParaBloco(id: string): void {
+    if (id.startsWith('dom:')) {
+      this.dominioAberto.set(null);
+    } else {
+      const c = this.analise()?.componentes.find((x) => x.id === id);
+      this.dominioAberto.set(c?.dominio ?? null);
+    }
+    this.camadasOff.set(new Set());
+    this.busca.set('');
+    this.selecionado.set(id);
+  }
 
   readonly desenhoCaminho = computed(() => {
     const a = this.analise();
@@ -174,8 +245,15 @@ export class EntenderService {
       this.analise.set(a);
       this.analisadaEm.set(new Date());
       await this.carregarRegras();
+      // O domínio aberto pode ter sumido na análise nova.
+      const aberto = this.dominioAberto();
+      if (aberto && !a.componentes.some((c) => c.dominio === aberto && PAPEIS_NA_GRADE.has(c.papel))) this.dominioAberto.set(null);
       const sel = this.selecionado();
-      if (!sel || !a.componentes.some((c) => c.id === sel)) {
+      if (!this.dominioAberto()) {
+        // Visão geral: o bloco selecionado é um domínio.
+        const doms = this.desenhoArquitetura()?.resumos ?? [];
+        if (!sel?.startsWith('dom:') || !doms.some((r) => `dom:${r.nome}` === sel)) this.selecionado.set(doms[0] ? `dom:${doms[0].nome}` : null);
+      } else if (!sel || !a.componentes.some((c) => c.id === sel)) {
         const inicial = a.componentes.filter((c) => c.papel === 'servico').sort((x, y) => (this.regrasPorComp().get(y.id) ?? 0) - (this.regrasPorComp().get(x.id) ?? 0))[0] ?? a.componentes.find((c) => PAPEIS_NA_GRADE.has(c.papel));
         this.selecionado.set(inicial?.id ?? null);
         this.metodoSel.set(0);

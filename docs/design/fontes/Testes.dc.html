@@ -1,0 +1,231 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Testes, cobertura e limites — IDE Java</title><link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet"><style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Inky Mono','Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:34px;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px;box-shadow:3px 3px 0 #0B0B0C}
+.suave{color:#A29D93}.dest{color:#9CD7BA}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.abas{display:flex;align-items:center;gap:6px;height:54px;flex-shrink:0;box-sizing:border-box;padding:0 10px 0 16px;border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;white-space:nowrap}
+.aba{height:36px;padding:0 14px;border-radius:9px;border:2px solid #0B0B0C;display:flex;align-items:center;gap:8px;font-size:12px;background:#2A2A2D}
+.aba.on{background:#9CD7BA;color:#16171C;font-weight:700;box-shadow:3px 3px 0 #0B0B0C}
+.aba.on kbd{background:transparent;color:#16171C;border-color:#16171C}
+.item{display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;font-size:12px;white-space:nowrap}
+.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.grupo{padding:10px 12px 4px;font-size:10.5px;letter-spacing:.14em;color:#A29D93}
+.kv{display:flex;gap:8px;font-size:11.5px;line-height:21px;white-space:nowrap}
+.kv .k{width:92px;color:#A29D93;flex-shrink:0}
+.l{display:block;white-space:pre;font-size:11.5px;line-height:21px}
+.l .n{display:inline-block;width:38px;text-align:right;padding-right:12px;color:#A29D93}
+.cols span{position:absolute;top:10px;font-size:10.5px;letter-spacing:.14em;color:#A29D93;white-space:nowrap}
+.dom{position:absolute;left:10px;right:10px;height:96px;border-radius:12px;background:#252528}
+.dom span{position:absolute;left:6px;top:50%;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;font-size:10px;letter-spacing:.16em;color:#A29D93}
+.bl{position:absolute;width:150px;height:72px;box-sizing:border-box;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C;padding:9px 10px;font-size:11.5px;line-height:18px;white-space:nowrap;overflow:hidden}
+.bl.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#333337}
+.bl.db{background:#19191B}
+.bl.ext{border-style:dashed;background:#19191B}
+.detalhe .kv{white-space:normal}
+.btn{white-space:nowrap}
+.regra{border:2px solid #0B0B0C;border-radius:11px;background:#222225;box-shadow:3px 3px 0 #0B0B0C;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.regra.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#2D2D30}
+.rt{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.rt .id{font-size:11px;padding:1px 7px;border-radius:6px;background:#19191B;border:1px solid #0B0B0C;color:#E8C979}
+.tag{margin-left:auto;font-size:10.5px;padding:1px 7px;border-radius:6px;border:1px solid currentColor}
+.rd{font-size:11.5px;line-height:18px;color:#E9E2D3}
+.ro{display:flex;gap:8px;font-size:11px;white-space:nowrap}
+.bl.err{border-color:#EE8C84;background:#3A2A2B;box-shadow:3px 3px 0 #0B0B0C}
+.passo{display:flex;gap:10px;padding:6px 14px}
+.passo .num{width:20px;height:20px;flex-shrink:0;border-radius:6px;background:#19191B;border:1px solid #0B0B0C;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#A29D93}
+.passo.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.passo.sel .num{background:#9CD7BA;color:#16171C;font-weight:700}
+
+.bar{height:8px;border-radius:4px;background:#19191B;border:1px solid #0B0B0C;overflow:hidden}
+.bar>i{display:block;height:100%;background:#9CD7BA}
+.bar.av>i{background:#E8C979}.bar.er>i{background:#EE8C84}
+.t{display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;font-size:12px;white-space:nowrap}
+.t .d{margin-left:auto;color:#A29D93;font-size:11px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:8px;border:2px solid #0B0B0C;background:#222225;font-size:11.5px;white-space:nowrap}
+.chip.on{background:#333337;box-shadow:inset 0 0 0 1px #9CD7BA;color:#9CD7BA}
+.tag.er{color:#EE8C84}.tag.ok{color:#B7D39C}.tag.av{color:#E8C979}
+.pop{position:absolute;right:14px;bottom:52px;width:360px;border:2px solid #0B0B0C;border-radius:12px;background:#222225;box-shadow:4px 4px 0 #0B0B0C;padding:14px;font-size:12px;line-height:19px}
+.seg{display:flex;align-items:center;gap:8px;padding:0 12px;border-left:2px solid #0B0B0C;white-space:nowrap}
+.mini{display:inline-block;width:46px;height:7px;border-radius:3px;background:#19191B;border:1px solid #0B0B0C;overflow:hidden;vertical-align:middle}
+.mini>i{display:block;height:100%;background:#9CD7BA}.mini.av>i{background:#E8C979}
+</style></head><body><div id="v-t">
+<div class="tela">
+ <div class="abas" style="gap:8px">
+  <span class="aba on">⚗ Testes</span>
+  <span class="btn dest">▶ rodar tudo <kbd>r</kbd></span>
+  <span class="btn">▶ só as que falharam <kbd>f</kbd></span>
+  <span class="btn">▶ a classe do cursor <kbd>c</kbd></span>
+  <span class="btn suave">◼ parar</span>
+  <span style="flex:1"></span>
+  <span style="font-size:12px"><span class="ok">✓ 123</span> &nbsp; <span class="erro">✗ 3</span> &nbsp; <span class="suave">○ 2 ignorados</span> &nbsp; <span class="suave">128 testes · 14,2 s · há 2 min</span></span>
+ </div>
+ <div style="flex:1;min-height:0;display:grid;grid-template-columns:380px minmax(0,1fr) 340px;grid-template-rows:minmax(0,1fr) 190px;gap:12px">
+  <section class="janela" style="grid-row:1/3">
+   <div class="faixa"><span class="rotulo">TESTES</span><span style="flex:1"></span><span class="chip on">todos</span><span class="chip">falhas <kbd>x</kbd></span><span class="chip">ignorados</span></div>
+   <div style="display:flex;gap:6px;padding:8px 12px;border-bottom:2px solid #0B0B0C;flex-wrap:wrap"><span class="chip on">todos 128</span><span class="chip">unitários 96</span><span class="chip">integração 22 <span class="erro">✗1</span></span><span class="chip">API 6</span><span class="chip">e2e 4</span></div>
+   <div style="padding:6px 0;overflow:hidden;flex:1"><div class="t"><span class="suave">▾</span><b>back</b><span class="d">96 testes</span></div><div class="t" style="padding-left:22px"><span class="suave">▾</span><span class="erro">✗</span>ReservaServiceTest<span class="d">0,8 s</span></div><div class="t" style="padding-left:34px"><span class="ok">✓</span><span class="">reservaBancaLivre</span><span class="d"><span class="suave" style="margin-right:10px">U</span>12 ms</span></div><div class="t sel" style="padding-left:34px"><span class="erro">✗</span><span class="erro">naoReservaEmFeiraLotada</span><span class="aviso">⚠</span><span class="d"><span class="suave" style="margin-right:10px">U</span>48 ms</span></div><div class="t" style="padding-left:34px"><span class="ok">✓</span><span class="">naoReservaBancaOcupada</span><span class="aviso">⚠</span><span class="d"><span class="suave" style="margin-right:10px">U</span>9 ms</span></div><div class="t" style="padding-left:34px"><span class="erro">✗</span><span class="erro">expiraPendenteApos30Minutos</span><span class="d"><span class="suave" style="margin-right:10px">U</span>31 ms</span></div><div class="t" style="padding-left:34px"><span class="ok">✓</span><span class="">POST /reservas devolve 409 sem vaga</span><span class="aviso">⚠</span><span class="d"><span class="rosa" style="margin-right:10px">API</span>210 ms</span></div><div class="t" style="padding-left:34px"><span class="ok">✓</span><span class="">fluxo reserva + pagamento no banco</span><span class="d"><span class="dest" style="margin-right:10px">I</span>1,4 s</span></div><div class="t" style="padding-left:22px"><span class="suave">▸</span><span class="ok">✓</span>FeiraServiceTest<span class="d">0,4 s</span></div><div class="t" style="padding-left:22px"><span class="suave">▸</span><span class="ok">✓</span>BancaRepositoryTest<span class="d">1,9 s</span></div><div class="t" style="padding-left:22px"><span class="suave">▾</span><span class="aviso">◐</span>PagamentoServiceTest<span class="d">0,6 s</span></div><div class="t" style="padding-left:34px"><span class="ok">✓</span><span class="">confirmaPagamentoPix</span><span class="d"><span class="suave" style="margin-right:10px">U</span>22 ms</span></div><div class="t" style="padding-left:34px"><span class="suave">○</span><span class="">estornaPagamento  @Disabled</span><span class="d"><span class="suave" style="margin-right:10px">U</span>—</span></div><div class="t"><span class="suave">▾</span><b>front</b><span class="d">32 testes</span></div><div class="t" style="padding-left:22px"><span class="suave">▸</span><span class="erro">✗</span>reserva-form.component.spec.ts<span class="d">1,1 s</span></div><div class="t" style="padding-left:22px"><span class="suave">▸</span><span class="ok">✓</span>feira.service.spec.ts<span class="d">0,3 s</span></div></div>
+   <div class="suave" style="padding:10px 12px;border-top:2px solid #0B0B0C;font-size:11px">unitário: <b>surefire</b> · integração: <b>failsafe</b> (*IT) · e2e: <b>npm run e2e</b> · <span class="aviso">⚠</span> cenário de erro · <span class="dest">j k</span> · <span class="dest">⏎</span> roda</div>
+  </section>
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">ReservaServiceTest.naoReservaEmFeiraLotada</span><span style="flex:1"></span><span class="tag er" style="margin-left:0">falhou · 48 ms</span></div>
+   <div style="padding:14px 16px;font-size:12px;line-height:20px">
+    <div class="erro">org.opentest4j.AssertionFailedError: expected: &lt;409&gt; but was: &lt;200&gt;</div>
+    <div class="suave" style="margin-top:6px">
+     <div><span class="dest">⇢ ReservaServiceTest.java:41</span> &nbsp; naoReservaEmFeiraLotada()</div>
+     <div>&nbsp;&nbsp;&nbsp;at ReservaService.reservar(ReservaService.java:33)</div>
+     <div style="opacity:.6">&nbsp;&nbsp;&nbsp;at org.junit.jupiter.engine… <span>(12 frames do JUnit escondidos)</span></div></div>
+    <div style="margin-top:12px;border:2px solid #0B0B0C;border-radius:10px;background:#222225;padding:8px 0">
+     <span class="l"><span class="n">38</span>    feira.setBancas(bancasCheias(LIMITE_BANCAS));</span>
+     <span class="l"><span class="n">39</span>    when(feiras.findById(1L)).thenReturn(feira);</span>
+     <span class="l"><span class="n">40</span></span>
+     <span class="l" style="background:#3A2A2B;box-shadow:inset 3px 0 0 #EE8C84"><span class="n erro">41</span>    assertEquals(409, controller.reservar(1L, "A1").getStatus());</span>
+     <span class="l"><span class="n">42</span>  }</span></div>
+    <div style="margin-top:14px" class="suave">REGRAS QUE ESTE TESTE COBRE</div>
+    <div style="display:flex;gap:8px;margin-top:6px"><span class="chip"><span class="aviso">⚑</span> R1 Feira lotada</span><span class="chip"><span class="aviso">⚑</span> R2 Banca única</span></div>
+   </div>
+   <div style="flex:1"></div>
+   <div style="display:flex;gap:8px;padding:10px 14px;border-top:2px solid #0B0B0C"><span class="btn">▶ rodar este <kbd>⏎</kbd></span><span class="btn">⇢ abrir no código <kbd>o</kbd></span><span class="btn"><span class="dest">✦</span> explicar a falha <kbd>a</kbd></span></div>
+  </section>
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">REGRAS DE NEGÓCIO</span><span style="flex:1"></span><kbd>␣ A 2</kbd></div>
+   <div style="padding:14px;font-size:12px;line-height:20px">
+    <div style="display:flex;align-items:baseline;gap:8px"><b style="font-size:22px" class="dest">11</b><span class="suave">de 17 regras com teste (65%)</span></div>
+    <div class="bar" style="margin:8px 0 12px"><i style="width:65%"></i></div>
+    <div class="suave" style="margin:2px 0 8px">cenários de erro: <b class="aviso">7 de 12</b> com teste</div>
+    <div class="kv"><span class="k ok">✓ 9</span><span>passando</span></div>
+    <div class="kv"><span class="k erro">✗ 2</span><span>com teste falhando (R1, R3)</span></div>
+    <div class="kv"><span class="k aviso">○ 6</span><span>sem nenhum teste</span></div>
+    <div style="margin-top:12px" class="btn">ver regras sem teste <kbd>⏎</kbd></div>
+   </div>
+  </section>
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">SAÍDA</span><span class="suave">mvn test -Dtest=ReservaServiceTest</span></div>
+   <div style="padding:8px 0;overflow:hidden;font-size:11.5px">
+    <span class="l suave" style="padding:0 14px">[INFO] Running br.com.feirinha.reserva.ReservaServiceTest</span>
+    <span class="l erro" style="padding:0 14px">[ERROR] naoReservaEmFeiraLotada  Time elapsed: 0.048 s  &lt;&lt;&lt; FAILURE!</span>
+    <span class="l suave" style="padding:0 14px">[INFO] Tests run: 4, Failures: 2, Errors: 0, Skipped: 0</span>
+   </div>
+  </section>
+ </div>
+ <div style="height:30px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;display:flex;align-items:stretch;font-size:12px;overflow:hidden;white-space:nowrap">
+  <span style="display:flex;align-items:center;padding:0 14px;background:#E8C979;color:#16171C;font-weight:700;letter-spacing:.08em">TESTES</span>
+  <span style="display:flex;align-items:center;padding:0 12px" class="suave"><b class="dest">j</b>&nbsp;k testes · <b class="dest">⏎</b>&nbsp;roda · <b class="dest">r</b>&nbsp;tudo · <b class="dest">f</b>&nbsp;falhas · <b class="dest">esc</b>&nbsp;editor</span>
+ </div>
+</div></div><div id="v-r" style="display:none">
+<div class="tela">
+ <div class="abas"><span class="aba">▦ Arquitetura <kbd>1</kbd></span><span class="aba on">⚑ Regras de negócio <kbd>2</kbd></span><span class="aba">⇢ Caminho <kbd>3</kbd></span><span style="flex:1"></span>
+  <span class="suave" style="font-size:12px">17 regras · <span class="ok">9 ✓</span> · <span class="erro">2 ✗</span> · <span class="aviso">6 sem teste</span></span>
+  <span class="btn" style="margin-left:10px"><span class="dest">✦</span> atualizar com IA <kbd>a</kbd></span></div>
+ <div style="flex:1;min-height:0;display:grid;grid-template-columns:260px minmax(0,1fr) 420px;gap:12px">
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">DOMÍNIOS</span><span style="flex:1"></span><span class="suave">testadas</span></div>
+   <div style="padding:6px 0">
+    <div class="item sel" style="height:40px"><div style="flex:1"><b>reserva</b><div class="bar av" style="margin-top:4px"><i style="width:50%"></i></div></div><span class="aviso">2/4</span></div>
+    <div class="item" style="height:40px"><div style="flex:1">feira<div class="bar" style="margin-top:4px"><i style="width:100%"></i></div></div><span class="ok">3/3</span></div>
+    <div class="item" style="height:40px"><div style="flex:1">pagamento<div class="bar er" style="margin-top:4px"><i style="width:50%"></i></div></div><span class="erro">1/2 ✗</span></div>
+    <div class="item" style="height:40px"><div style="flex:1">banca<div class="bar av" style="margin-top:4px"><i style="width:0%"></i></div></div><span class="aviso">0/1</span></div>
+   </div>
+   <div style="flex:1"></div>
+   <div class="suave" style="padding:12px;font-size:11px;line-height:17px;border-top:2px solid #0B0B0C">"testada" = um teste chega até o código da regra (lido do código; o resultado vem da última execução).</div>
+  </section>
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">RESERVA</span><span class="suave">4 regras</span><span style="flex:1"></span>
+    <span class="chip on">todas</span><span class="chip">sem teste <kbd>u</kbd></span><span class="chip">falhando <kbd>x</kbd></span></div>
+   <div style="padding:12px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+    <div class="regra on" style="border-color:#EE8C84">
+  <div class="rt"><span class="id">R1</span><b>Só reserva banca em feira que não está lotada</b></div>
+  <div class="rd">Quando a feira já tem LIMITE_BANCAS (120) bancas, a reserva é recusada com <span class="erro">"Feira lotada"</span> e a API responde <span class="rosa">409</span>.</div>
+  <div class="ro"><span class="dest">⇢ ReservaService.reservar :33</span><span style="margin-left:auto"><span class="erro">✗ teste falhando</span></span></div><div class="ro" style="gap:10px"><span class="ok">✓ caminho feliz</span><span class="erro">✗ lotada → 409</span><span class="aviso">○ banca ocupada → 409</span></div></div>
+    <div class="regra">
+  <div class="rt"><span class="id">R2</span><b>Número da banca é obrigatório e único na feira</b></div>
+  <div class="rd">Sem número a API rejeita; número repetido na mesma feira volta <span class="rosa">409</span>.</div>
+  <div class="ro"><span class="dest">⇢ ReservaRequest.numero</span><span style="margin-left:auto"><span class="ok">✓ 2 testes passando</span></span></div><div class="ro" style="gap:10px"><span class="ok">✓ número vazio</span><span class="ok">✓ repetido → 409</span></div></div>
+    <div class="regra">
+  <div class="rt"><span class="id">R3</span><b>Reserva pendente expira em 30 minutos sem pagamento</b></div>
+  <div class="rd">Um job a cada 5 minutos marca como <span class="dest">EXPIRADA</span> a reserva pendente há mais de 30 min.</div>
+  <div class="ro"><span class="dest">⇢ ReservaService.expirarPendentes</span><span style="margin-left:auto"><span class="aviso">○ sem teste</span></span></div><div class="ro aviso">⚠ nenhum cenário testado (nem o feliz)</div></div>
+    <div class="regra">
+  <div class="rt"><span class="id">R4</span><b>Feirante inadimplente não reserva</b></div>
+  <div class="rd">Se o feirante tem pagamento atrasado, a reserva é recusada com <span class="rosa">403</span>.</div>
+  <div class="ro"><span class="dest">⇢ ReservaService.reservar :29</span><span style="margin-left:auto"><span class="aviso">○ sem teste</span></span></div><div class="ro aviso">⚠ só o caminho feliz da reserva é testado; o erro 403 não</div></div>
+   </div>
+  </section>
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">R1 · TESTES</span><span style="flex:1"></span><kbd>⏎</kbd></div>
+   <div class="grupo">COBREM ESTA REGRA</div>
+   <div class="t"><span class="erro">✗</span>ReservaServiceTest.naoReservaEmFeiraLotada<span class="d">48 ms</span></div>
+   <div class="t"><span class="ok">✓</span>ReservaControllerTest.respondeConflito<span class="d">31 ms</span></div>
+   <div class="grupo" style="margin-top:6px">CENÁRIOS DESTA REGRA (do código)</div>
+   <div class="t"><span class="ok">✓</span>caminho feliz: reserva criada</div>
+   <div class="t"><span class="erro">✗</span>feira lotada → 409 <span class="d">falhando</span></div>
+   <div class="t"><span class="aviso">○</span>banca já ocupada → 409 <span class="d">sem teste</span></div>
+   <div class="t"><span class="aviso">○</span>limite exato (120 bancas) <span class="d">sugerido</span></div>
+   <div class="grupo" style="margin-top:6px">POR QUE FALHA</div>
+   <div style="padding:2px 14px;font-size:11.5px;line-height:19px" class="suave">expected: &lt;409&gt; but was: &lt;200&gt;<br><span class="dest">⇢ ReservaServiceTest.java:41</span></div>
+   <div style="flex:1"></div>
+   <div class="grupo" style="border-top:2px solid #0B0B0C">R3 · SEM TESTE</div>
+   <div style="padding:2px 14px 10px;font-size:11.5px;line-height:19px" class="suave">nenhum teste chega em <span class="dest">ReservaService.expirarPendentes</span>.</div>
+   <div style="display:flex;gap:8px;padding:0 14px 12px"><span class="btn"><span class="dest">✦</span> escrever teste <kbd>t</kbd></span><span class="btn">✦ sugerir cenários <kbd>s</kbd></span><span class="btn">▶ <kbd>r</kbd></span></div>
+  </section>
+ </div>
+ <div style="height:30px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;display:flex;align-items:stretch;font-size:12px;overflow:hidden;white-space:nowrap">
+  <span style="display:flex;align-items:center;padding:0 14px;background:#9CD7BA;color:#16171C;font-weight:700;letter-spacing:.08em">REGRAS</span>
+  <span style="display:flex;align-items:center;padding:0 12px" class="suave"><b class="dest">j</b>&nbsp;k regras · <b class="dest">u</b>&nbsp;só sem teste · <b class="dest">x</b>&nbsp;falhando · <b class="dest">t</b>&nbsp;escrever teste · <b class="dest">r</b>&nbsp;rodar os testes</span>
+ </div>
+</div></div><div id="v-l" style="display:none">
+<div class="tela" style="position:relative">
+ <div style="display:flex;align-items:center;gap:10px;height:40px;flex-shrink:0"><b>feirinha-verde</b><span class="suave">develop</span><span style="flex:1"></span><span class="btn">▶</span></div>
+ <div class="janela" style="flex:1"><div class="faixa"><span class="rotulo">ReservaService.java</span></div>
+  <div style="padding:8px 0">
+   <span class="l"><span class="n">27</span>  <span class="dest">public</span> Reserva <span class="dest">reservar</span>(Long feiraId, String numero) {</span>
+   <span class="l"><span class="n">28</span>    Feirante feirante = usuarioLogado.feirante();</span>
+   <span class="l"><span class="n">29</span>    <span class="dest">if</span> (feirante.inadimplente()) <span class="dest">throw</span> ...</span>
+   <span class="l"><span class="n">30</span>  }</span></div></div>
+ <div class="pop">
+  <div class="rotulo" style="margin-bottom:8px">USO DO CLAUDE · ASSINATURA</div>
+  <div style="display:flex;justify-content:space-between"><span>janela de 5 horas</span><b class="aviso">78%</b></div>
+  <div class="bar av" style="margin:4px 0"><i style="width:78%"></i></div>
+  <div class="suave" style="font-size:11px">renova em 1 h 12 min (às 23:40)</div>
+  <div style="display:flex;justify-content:space-between;margin-top:12px"><span>semana</span><b class="dest">34%</b></div>
+  <div class="bar" style="margin:4px 0"><i style="width:34%"></i></div>
+  <div class="suave" style="font-size:11px">renova na segunda, 09:00</div>
+  <div class="suave" style="margin-top:12px;padding-top:10px;border-top:2px solid #0B0B0C;font-size:11px;line-height:17px">Lido do Claude Code, depois de cada resposta da IA. Com chave da API não há limite por janela, então o indicador não aparece.</div>
+ </div>
+ <div style="height:30px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;display:flex;align-items:stretch;font-size:12px;overflow:hidden;white-space:nowrap;margin-top:12px">
+  <span style="display:flex;align-items:center;padding:0 14px;background:#9CD7BA;color:#16171C;font-weight:700;letter-spacing:.08em">NORMAL</span>
+  <span class="seg" style="border-left:0">develop</span><span class="seg">ReservaService.java</span><span style="flex:1"></span>
+  <span class="seg" style="background:#333337"><span class="suave">✦ 5h</span><span class="mini av"><i style="width:78%"></i></span><b class="aviso">78%</b><span class="suave">· sem</span><span class="mini"><i style="width:34%"></i></span><b>34%</b></span>
+  <span class="seg">jdtls ✓</span><span class="seg suave">UTF-8 · LF · java</span><span class="seg" style="background:#333337">27:9</span>
+ </div>
+</div></div><div id="v-m" style="display:none">
+<div class="tela" style="position:relative">
+ <div class="abas"><span class="aba">▦ Arquitetura <kbd>1</kbd></span><span class="aba on">⚑ Regras de negócio <kbd>2</kbd></span><span class="aba">⇢ Caminho <kbd>3</kbd></span></div>
+ <div style="flex:1;display:grid;grid-template-columns:260px minmax(0,1fr) 420px;gap:12px;min-height:0">
+  <section class="janela"><div class="faixa"><span class="rotulo">DOMÍNIOS</span></div><div class="item sel"><b>reserva</b></div><div class="item">feira</div></section>
+  <section class="janela"><div class="faixa"><span class="rotulo">RESERVA</span><span class="suave">4 regras</span></div>
+   <div style="padding:12px;display:flex;flex-direction:column;gap:10px"><div class="regra on" style="border-color:#EE8C84">
+  <div class="rt"><span class="id">R1</span><b>Só reserva banca em feira que não está lotada</b></div>
+  <div class="rd">Quando a feira já tem LIMITE_BANCAS (120) bancas, a reserva é recusada com 409.</div>
+  <div class="ro"><span class="dest">⇢ ReservaService.reservar :33</span><span style="margin-left:auto"><span class="erro">✗ teste falhando</span></span></div><div class="ro" style="gap:10px"><span class="ok">✓ caminho feliz</span><span class="erro">✗ lotada → 409</span><span class="aviso">○ banca ocupada → 409</span></div></div><div class="regra">
+  <div class="rt"><span class="id">R3</span><b>Reserva pendente expira em 30 minutos sem pagamento</b></div>
+  <div class="rd">Um job a cada 5 minutos marca como EXPIRADA a reserva pendente.</div>
+  <div class="ro"><span class="dest">⇢ ReservaService.expirarPendentes</span><span style="margin-left:auto"><span class="aviso">○ sem teste</span></span></div><div class="ro aviso">⚠ nenhum cenário testado (nem o feliz)</div></div></div></section>
+  <section class="janela"><div class="faixa"><span class="rotulo">R3</span></div></section>
+ </div>
+ <div style="position:absolute;left:460px;top:430px;width:330px;border:2px solid #0B0B0C;border-radius:10px;background:#222225;box-shadow:4px 4px 0 #0B0B0C;padding:6px;font-size:12px">
+  <div class="rotulo" style="padding:4px 8px 6px">R3 · SEM TESTE</div>
+  <div class="t sel" style="border-radius:6px;height:30px"><span class="dest">✦</span>criar teste com a IA<span class="d"><kbd>i</kbd></span></div>
+  <div class="t" style="height:30px"><span class="dest">✎</span>criar teste manualmente<span class="d"><kbd>m</kbd></span></div>
+  <div class="t" style="height:30px"><span class="aviso">⚠</span>sugerir cenários de erro<span class="d"><kbd>s</kbd></span></div>
+  <div style="border-top:2px solid #0B0B0C;margin:4px 0"></div>
+  <div class="t suave" style="height:30px"><span>⇢</span>ir para o teste<span class="d">nenhum ainda</span></div>
+  <div class="t" style="height:30px"><span class="dest">⇢</span>ver no código<span class="d"><kbd>⏎</kbd></span></div>
+  <div class="t" style="height:30px"><span class="dest">⇢</span>caminho do método<span class="d"><kbd>c</kbd></span></div>
+  <div class="t" style="height:30px"><span>✎</span>editar a regra<span class="d"><kbd>e</kbd></span></div>
+ </div>
+</div></div><script>function modo(m){for(const k of ['t','r','l','m'])document.getElementById('v-'+k).style.display=k==m?'block':'none'}modo((location.hash||'#t').slice(1))</script></body></html>

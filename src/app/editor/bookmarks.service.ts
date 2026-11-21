@@ -84,7 +84,7 @@ export class BookmarksService {
     await ponte.gravarArquivo(caminho, JSON.stringify(marcas, null, 2) + '\n').catch((e) => this.mensagens.erro(String(e)));
   }
 
-  private relativo(caminho: string): string {
+  relativo(caminho: string): string {
     const raiz = (this.projeto.raiz() ?? '').replace(/\\/g, '/').replace(/\/+$/, '');
     const c = caminho.replace(/\\/g, '/');
     return raiz && c.toLowerCase().startsWith(raiz.toLowerCase() + '/') ? c.slice(raiz.length + 1) : c;
@@ -98,26 +98,25 @@ export class BookmarksService {
 
   // ---------- ações ----------
 
-  /** Marca ou desmarca a linha do cursor. */
-  async alternar(): Promise<void> {
-    const instancia = this.editor.instancia;
-    const modelo = instancia?.getModel();
-    const pos = instancia?.getPosition();
-    const caminho = this.editor.ativo();
-    if (!instancia || !modelo || !pos || !caminho || !this.projeto.raiz()) {
+  /** Marca ou desmarca uma linha (por padrão, a do cursor; o clique na margem passa a dela). */
+  async alternar(linhaDada?: number, caminhoDado?: string): Promise<void> {
+    const caminho = caminhoDado ?? this.editor.ativo();
+    const modelo = caminhoDado ? this.editor.buffers().find((b) => b.caminho === caminhoDado)?.modelo : this.editor.instancia?.getModel();
+    const linha = linhaDada ?? this.editor.instancia?.getPosition()?.lineNumber;
+    if (!modelo || !linha || !caminho || !this.projeto.raiz()) {
       this.mensagens.mostrar('abra um arquivo do projeto para marcar uma linha');
       return;
     }
     const rel = this.relativo(caminho);
     const marcas = this.marcas();
-    const ja = marcas.some((m) => m.caminho === rel && m.linha === pos.lineNumber);
+    const ja = marcas.some((m) => m.caminho === rel && m.linha === linha);
     if (ja) {
-      await this.salvar(marcas.filter((m) => !(m.caminho === rel && m.linha === pos.lineNumber)));
-      this.mensagens.mostrar(`bookmark removido (${rel}:${pos.lineNumber})`);
+      await this.salvar(marcas.filter((m) => !(m.caminho === rel && m.linha === linha)));
+      this.mensagens.mostrar(`bookmark removido (${rel}:${linha})`);
     } else {
-      const texto = modelo.getLineContent(pos.lineNumber).trim().slice(0, 80);
-      await this.salvar([...marcas, { caminho: rel, linha: pos.lineNumber, texto }]);
-      this.mensagens.mostrar(`bookmark em ${rel}:${pos.lineNumber}`);
+      const texto = modelo.getLineContent(linha).trim().slice(0, 80);
+      await this.salvar([...marcas, { caminho: rel, linha, texto }]);
+      this.mensagens.mostrar(`bookmark em ${rel}:${linha}`);
     }
   }
 

@@ -48,8 +48,12 @@ import { ScriptsComponent } from './web/scripts.component';
 import { WebLspService } from './web/web-lsp.service';
 import { TelaContainersComponent } from './containers/tela-containers.component';
 import { ContainersPainelComponent } from './containers/containers-painel.component';
+import { TelaTestesComponent } from './testes/tela-testes.component';
+import { TestesService } from './testes/testes.service';
 import { TelaConfiguracoesComponent } from './config/tela-configuracoes.component';
 import { BookmarksService } from './editor/bookmarks.service';
+import { MenuRegraComponent } from './testes/menu-regra.component';
+import { MenuGutterComponent } from './editor/menu-gutter.component';
 import { DivisoresService } from './layout/divisores.service';
 import { TelaEntenderComponent } from './entender/tela-entender.component';
 import { EntenderService } from './entender/entender.service';
@@ -65,7 +69,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, MenuGutterComponent, MenuRegraComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
   ],
   template: `
     <div class="seedy">
@@ -129,7 +133,10 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (layout.tela() === 'containers') { <sd-tela-containers class="tela-cheia" /> }
       @if (layout.tela() === 'entender') { <sd-tela-entender class="tela-cheia" /> }
       @if (layout.tela() === 'config') { <sd-tela-configuracoes class="tela-cheia" /> }
+      @if (layout.tela() === 'testes') { <sd-tela-testes class="tela-cheia" /> }
       <sd-diff />
+      <sd-menu-gutter />
+      <sd-menu-regra />
       <sd-busca />
       <sd-busca-projeto />
       <sd-commit />
@@ -182,6 +189,7 @@ export class App {
     inject(McpService); // o Claude Code (MCP) usa as ferramentas do Seedy
     inject(ExecucaoService); // RUN/DEBUG: acha as classes main quando o jdtls fica pronto
     inject(WebLspService); // projeto web: TypeScript, Angular, ESLint e Prettier
+    inject(TestesService); // testes: tela (␣ E) e a cobertura das regras
     inject(BookmarksService); // bookmarks no código (␣ M, ␣ B)
     inject(DivisoresService); // arrastar o vão entre painéis em qualquer tela cheia
     inject(EntenderService); // Fase 9: arquitetura, regras e o "acompanhar método" (ctrl+.)

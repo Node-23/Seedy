@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use std::process::Stdio;
 use std::time::Duration;
 use tauri::ipc::Channel;
+use tauri::{AppHandle, Emitter};
 
 const VERSAO_DA_API: &str = "2026-10-21";
 /// Se o modelo recusar por segurança, o próprio servidor tenta outro modelo.
@@ -80,10 +81,11 @@ pub async fn ia_mensagem(
     eventos: Channel<String>,
     modo: Option<String>,
     mcp: tauri::State<'_, crate::mcp::Mcp>,
+    app: AppHandle,
 ) -> Result<(), String> {
     if modo.as_deref() == Some("assinatura") {
         let config_mcp = mcp.arquivo_de_config_do_claude();
-        return tauri::async_runtime::spawn_blocking(move || via_claude(&corpo, &eventos, config_mcp))
+        return tauri::async_runtime::spawn_blocking(move || via_claude(&corpo, &eventos, config_mcp, &app))
             .await
             .map_err(|e| e.to_string())?;
     }
@@ -179,7 +181,7 @@ fn prompt_do_corpo(corpo: &serde_json::Value) -> String {
 
 /// Modo assinatura: roda o `claude -p` (login do próprio Claude Code, sem ferramentas) e repassa
 /// os eventos de stream, que já vêm no formato da Messages API dentro de `stream_event`.
-fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: Option<PathBuf>) -> Result<(), String> {
+fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: Option<PathBuf>, app: &AppHandle) -> Result<(), String> {
     use std::io::Write;
     let mut args: Vec<String> = ["-p", "--output-format", "stream-json", "--include-partial-messages", "--verbose", "--tools", ""]
         .map(String::from)
@@ -227,6 +229,11 @@ fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: 
                 if parar {
                     let _ = filho.kill();
                     break;
+                }
+            }
+            Some("rate_limit_event") => {
+                if let Some(l) = limite_do_evento(&v) {
+                    let _ = app.emit("ia-limites", l);
                 }
             }
             Some("result") if v["is_error"] == true => falha = v["result"].as_str().map(str::to_string),
@@ -317,6 +324,32 @@ impl Tradutor {
     }
 }
 
+/// Um limite de uso da assinatura (janela de 5 horas, semana) como o Claude Code informa.
+#[derive(serde::Serialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Limite {
+    /// Como veio: "five_hour", "seven_day", "seven_day_opus"...
+    pub tipo: String,
+    /// 0 a 100, quando o Claude Code informa a porcentagem usada.
+    pub utilizacao: Option<f64>,
+    /// Quando a janela renova (segundos desde 1970).
+    pub reinicia_em: Option<i64>,
+    /// "allowed", "allowed_warning", "rejected"...
+    pub estado: Option<String>,
+}
+
+/// O evento `rate_limit_event` do stream-json do Claude Code. O formato muda entre versões, então
+/// aceita os nomes em camelCase e snake_case e só exige o tipo da janela.
+pub fn limite_do_evento(v: &serde_json::Value) -> Option<Limite> {
+    let info = v.get("rate_limit_info").or_else(|| v.get("rateLimitInfo")).unwrap_or(v);
+    let texto = |chaves: &[&str]| chaves.iter().find_map(|k| info.get(*k).and_then(|x| x.as_str())).map(String::from);
+    let numero = |chaves: &[&str]| chaves.iter().find_map(|k| info.get(*k).and_then(|x| x.as_f64()));
+    let tipo = texto(&["rateLimitType", "rate_limit_type"])?;
+    let utilizacao = numero(&["utilization", "utilisation", "usedPercentage", "used_percentage"]).map(|u| if u <= 1.0 { u * 100.0 } else { u });
+    let reinicia_em = numero(&["resetsAt", "resets_at", "resetAt"]).map(|t| if t > 1e12 { (t / 1000.0) as i64 } else { t as i64 });
+    Some(Limite { tipo, utilizacao, reinicia_em, estado: texto(&["status"]) })
+}
+
 /// Conteúdo de uma linha `data: ...` do SSE (as linhas `event:` e vazias são ignoradas).
 fn dados_do_evento(linha: &str) -> Option<&str> {
     let dados = linha.strip_prefix("data:")?.trim_start();
@@ -395,6 +428,18 @@ Usuário: ok
         let inicios: Vec<u64> = saida.iter().filter(|e| e["type"] == "content_block_start").map(|e| e["index"].as_u64().unwrap()).collect();
         assert_eq!(inicios, vec![0, 1, 2]);
         assert_eq!(saida.last().unwrap()["type"], "message_stop");
+    }
+
+    #[test]
+    fn le_o_evento_de_limite() {
+        let v = serde_json::json!({"type": "rate_limit_event", "rate_limit_info": {"status": "allowed_warning", "resetsAt": 1730000000, "rateLimitType": "five_hour", "utilization": 0.78}});
+        let l = limite_do_evento(&v).unwrap();
+        assert_eq!((l.tipo.as_str(), l.reinicia_em, l.estado.as_deref()), ("five_hour", Some(1730000000), Some("allowed_warning")));
+        assert!((l.utilizacao.unwrap() - 78.0).abs() < 1e-9);
+        let so_tipo = serde_json::json!({"type": "rate_limit_event", "rate_limit_info": {"rateLimitType": "seven_day", "resetsAt": 1730000000000i64, "utilization": 34}});
+        let l = limite_do_evento(&so_tipo).unwrap();
+        assert_eq!((l.utilizacao, l.reinicia_em), (Some(34.0), Some(1730000000)));
+        assert!(limite_do_evento(&serde_json::json!({"type": "rate_limit_event"})).is_none());
     }
 
     #[test]

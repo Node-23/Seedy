@@ -24,6 +24,10 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Regras de negócio por domínio (IA + código, em .seedy/regras.md) | [18-regras.png](18-regras.png) | 9 ✅ |
 | Caminho do método (ctrl+. "acompanhar método"): de onde vem, para onde vai, condições | [19-caminho.png](19-caminho.png) | 9 ✅ |
 | TODO por cima das outras telas (barra de ícones à esquerda, cards ligados a código, regras, diagramas e containers), `␣ T` | [20-todo.png](20-todo.png) | ✅ |
+| Tela de testes (árvore por tipo, detalhe da falha, saída e resumo das regras), `␣ E` | [21-testes.jpg](21-testes.jpg) | ✅ |
+| Regras de negócio com cobertura de testes e cenários de erro (`fontes/Testes.dc.html`) | [22-regras-cobertura.jpg](22-regras-cobertura.jpg) | ✅ |
+| Menu do botão direito numa regra (ir para o teste, criar manual/IA, sugerir cenários) | [23-menu-regra.jpg](23-menu-regra.jpg) | ✅ |
+| Uso da assinatura do Claude na barra de status (5 horas e semana) | [24-limites-de-uso.jpg](24-limites-de-uso.jpg) | ✅ |
 
 As telas 07 a 09 não têm mockup próprio: foram feitas na linguagem visual dos outros e
 capturadas do app. Servem de referência do mesmo jeito.

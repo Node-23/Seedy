@@ -3,6 +3,7 @@ import { EditorService } from '../editor/editor.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { BuscaService } from '../busca/busca.service';
 import { BuscaProjetoService } from '../busca/busca-projeto.service';
+import { LimitesUsoComponent } from '../ia/limites-uso.component';
 import { JdtlsService } from '../java/jdtls.service';
 import { GitService } from '../git/git.service';
 import { LayoutService } from '../layout/layout.service';
@@ -30,6 +31,7 @@ const NOMES_MODO: Record<string, string> = {
 /** Statusline no estilo lualine: modo, branch, arquivo, linguagem e posição. */
 @Component({
   selector: 'sd-barra-status',
+  imports: [LimitesUsoComponent],
   template: `
     <footer class="barra-status">
       <span class="segmento modo" [attr.data-modo]="modoDaTela()">{{ rotuloDoModo() }}</span>
@@ -140,6 +142,7 @@ const NOMES_MODO: Record<string, string> = {
         <span class="segmento com-divisa-esq suave">seedy</span>
       }
       }
+      <sd-limites-uso />
     </footer>
   `,
 })
@@ -209,10 +212,10 @@ export class BarraStatusComponent {
   }
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
-    this.todo.aberto() ? 'todo' : this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.layout.tela() === 'config' ? 'entender' : this.buscando() ? 'busca' : this.editor.modo(),
+    this.todo.aberto() ? 'todo' : this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.layout.tela() === 'config' ? 'entender' : this.layout.tela() === 'testes' ? 'testes' : this.buscando() ? 'busca' : this.editor.modo(),
   );
   protected readonly rotuloDoModo = computed(() =>
-    this.todo.aberto() ? 'TODO' : this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.layout.tela() === 'entender' ? this.entender.aba().toUpperCase() : this.layout.tela() === 'config' ? 'CONFIG' : this.buscando() ? 'BUSCA' : this.nomeModo(),
+    this.todo.aberto() ? 'TODO' : this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.layout.tela() === 'entender' ? this.entender.aba().toUpperCase() : this.layout.tela() === 'config' ? 'CONFIG' : this.layout.tela() === 'testes' ? 'TESTES' : this.buscando() ? 'BUSCA' : this.nomeModo(),
   );
   protected readonly buscando = computed(() => this.busca.aberta() || this.buscaProjeto.aberta());
 

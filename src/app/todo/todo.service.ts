@@ -215,7 +215,7 @@ export class TodoService {
       }
       case 'bloco':
         await this.entender.abrir('arquitetura');
-        this.entender.selecionado.set(l.alvo);
+        this.entender.irParaBloco(l.alvo);
         return;
       case 'container':
         this.layout.tela.set('containers');
