@@ -1,5 +1,5 @@
 import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
-import { FonteDeDeploy, InfoExecucao, nomeBase, PerfilServidor, ponte } from '../nucleo/ponte';
+import { FonteDeDeploy, InfoExecucao, nomeBase, PerfilServidor, ponte, TipoServidor } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { EscolhaService } from '../escolha/escolha.service';
@@ -118,7 +118,7 @@ export class ServidorService {
   async novo(): Promise<void> {
     const raiz = this.projeto.raiz();
     if (!raiz) {
-      this.mensagens.mostrar('abra um projeto antes de configurar o servidor');
+      this.mensagens.alerta('abra um projeto antes de configurar o servidor');
       return;
     }
     const nomeDoProjeto = nomeBase(raiz);
@@ -140,6 +140,39 @@ export class ServidorService {
         pastaClasses: (await this.primeiraQueExiste(raiz, PASTAS_CLASSES)) ?? 'target/classes',
       },
     });
+  }
+
+  /**
+   * Cria e salva um perfil de servidor sem o diálogo (a IA usa, pela ferramenta servidor_criar).
+   * Aponta para uma instalação existente de Tomcat ou WildFly/JBoss.
+   */
+  async criarPerfil(o: { instalacao: string; nome?: string; tipo?: TipoServidor; portaHttp?: number; portaDebug?: number; contexto?: string; opcoesJvm?: string }): Promise<PerfilServidor> {
+    const raiz = this.projeto.raiz();
+    if (!raiz) throw new Error('nenhum projeto aberto');
+    const instalacao = o.instalacao.trim().replace(/[\\/]+$/, '');
+    const igual = this.perfis().find((p) => p.instalacao.replace(/[\\/]+$/, '') === instalacao && p.projeto === raiz);
+    if (igual) return igual;
+    const info = await ponte.servidor.inspecionar(instalacao).catch((e) => {
+      throw new Error(`"${instalacao}" não parece uma instalação de Tomcat nem de WildFly/JBoss (${e})`);
+    });
+    const tipo = o.tipo ?? info.tipo;
+    const perfil: PerfilServidor = {
+      id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      nome: o.nome?.trim() || `${tipo === 'tomcat' ? 'Tomcat' : 'WildFly'} ${info.versao}`,
+      tipo,
+      instalacao,
+      jdk: null,
+      portaHttp: o.portaHttp ?? 8080,
+      portaDebug: o.portaDebug ?? 8787,
+      opcoesJvm: o.opcoesJvm ?? '-Xms256m -Xmx1024m',
+      variaveis: {},
+      contexto: o.contexto ?? `/${nomeBase(raiz)}`,
+      projeto: raiz,
+      pastaWeb: (await this.primeiraQueExiste(raiz, PASTAS_WEB)) ?? 'src/main/webapp',
+      pastaClasses: (await this.primeiraQueExiste(raiz, PASTAS_CLASSES)) ?? 'target/classes',
+    };
+    if (!(await this.salvar(perfil))) throw new Error('não consegui salvar o servidor');
+    return perfil;
   }
 
   editar(id: string): void {
@@ -248,7 +281,7 @@ export class ServidorService {
     const p = id ? this.perfil(id) : undefined;
     const e = id ? this.execucoes().get(id) : undefined;
     if (!p || !e || e.fase === 'parado') {
-      this.mensagens.mostrar('o servidor não está rodando');
+      this.mensagens.alerta('o servidor não está rodando');
       return;
     }
     try {
@@ -261,7 +294,7 @@ export class ServidorService {
 
   async abrirNoNavegador(id = this.perfilAtual()?.id): Promise<void> {
     const url = id ? this.execucoes().get(id)?.info?.url : null;
-    if (!url) return void this.mensagens.mostrar('o servidor não está rodando');
+    if (!url) return void this.mensagens.alerta('o servidor não está rodando');
     await ponte.servidor.abrirUrl(url).catch((e) => this.mensagens.erro(String(e)));
   }
 
@@ -383,7 +416,7 @@ export class ServidorService {
   async abrirFrame(f: Frame): Promise<void> {
     const caminho = this.arquivoDoFrame(f);
     if (!caminho) {
-      this.mensagens.mostrar(`${f.classe} não é do projeto`);
+      this.mensagens.alerta(`${f.classe} não é do projeto`);
       return;
     }
     await this.editor.abrir(caminho, f.linha ?? undefined);

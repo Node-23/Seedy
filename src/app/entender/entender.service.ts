@@ -204,6 +204,13 @@ export class EntenderService {
           this.arquivo.set(ARQUIVO_VAZIO);
           this.foco.set(null);
           if (this.layout.tela() === 'entender' && raiz) void this.analisar();
+          else if (raiz) {
+            // Em segundo plano, logo depois de abrir: a barra de status mostra "lendo o código".
+            const pedido = raiz;
+            setTimeout(() => {
+              if (this.projeto.raiz() === pedido && !this.analise() && !this.analisando()) void this.analisar();
+            }, 1500);
+          }
         }
       });
     });

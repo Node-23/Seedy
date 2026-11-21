@@ -3,6 +3,7 @@ import { EditorService } from '../editor/editor.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { BuscaService } from '../busca/busca.service';
 import { BuscaProjetoService } from '../busca/busca-projeto.service';
+import { CarregandoComponent } from './carregando.component';
 import { LimitesUsoComponent } from '../ia/limites-uso.component';
 import { JdtlsService } from '../java/jdtls.service';
 import { GitService } from '../git/git.service';
@@ -31,7 +32,7 @@ const NOMES_MODO: Record<string, string> = {
 /** Statusline no estilo lualine: modo, branch, arquivo, linguagem e posição. */
 @Component({
   selector: 'sd-barra-status',
-  imports: [LimitesUsoComponent],
+  imports: [LimitesUsoComponent, CarregandoComponent],
   template: `
     <footer class="barra-status">
       <span class="segmento modo" [attr.data-modo]="modoDaTela()">{{ rotuloDoModo() }}</span>
@@ -102,6 +103,7 @@ const NOMES_MODO: Record<string, string> = {
         <span class="segmento com-divisa-esq">
           @if (busca.indexando() && !busca.indice()) { indexando… } @else { índice: {{ busca.totalIndice().toLocaleString('pt-BR') }} itens ✓ }
         </span>
+        <sd-carregando />
         @if (jdtls.estado().fase !== 'inativo') {
           <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase">{{ textoJdtls() }}</span>
         }
@@ -110,6 +112,7 @@ const NOMES_MODO: Record<string, string> = {
         <span class="segmento">{{ caminhoRelativo() }}@if (editor.sujo(b)) {<span class="sujo">[+]</span>}</span>
       }
       <span class="espaco"></span>
+      <sd-carregando />
       @if (jdtls.estado().fase !== 'inativo') {
         <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase" [title]="tituloJdtls()">{{ textoJdtls() }}</span>
       }
@@ -142,6 +145,7 @@ const NOMES_MODO: Record<string, string> = {
         <span class="segmento com-divisa-esq suave">seedy</span>
       }
       }
+      @if (layout.tela() !== 'editor') { <sd-carregando /> }
       <sd-limites-uso />
     </footer>
   `,

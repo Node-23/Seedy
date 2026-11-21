@@ -58,6 +58,8 @@ const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } a
           <div class="painel-faixa">
             <span class="rotulo">MAPA</span><span class="suave">conexões entre os containers</span><span class="espaco"></span>
             @if (d.trafegoEm(); as t) { <span class="suave">tráfego medido há {{ segundos(t) }} s</span> }
+            <button class="entender-chip" [class.ligado]="todasAsSetas()" (click)="todasAsSetas.set(!todasAsSetas())" title="mostrar todas as setas (a)">{{ todasAsSetas() ? 'todas as setas' : 'setas do selecionado' }} <kbd>a</kbd></button>
+            @if (!todasAsSetas() && ocultas() > 0) { <span class="suave">{{ ocultas() }} ocultas</span> }
             <kbd>m</kbd>
           </div>
           <div #mapa class="docker-area" tabindex="0" (focus)="parte.set('mapa')" (keydown)="teclarMapa($event)">
@@ -86,11 +88,13 @@ const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } a
               }
               @for (n of desenho().nos; track n.nome) {
                 @if (container(n.nome); as c) {
-                  <div class="docker-no" [style.left.px]="n.x" [style.top.px]="n.y" [class.selecionado]="c.nome === d.atual()?.nome" [class.parado]="c.estado !== 'running'" (click)="d.escolher(c.nome)">
-                    <b>{{ c.composeServico ?? c.nome }}</b> <span [class.git-mais]="c.estado === 'running'" [class.suave]="c.estado !== 'running'">{{ c.estado === 'running' ? '●' : '○ parado' }}</span><br />
-                    <span class="suave">{{ c.imagem }}</span><br />
-                    @if (portaHost(c); as p) { <span class="rosa-texto docker-mini">host {{ p }}</span> }
-                    @if (d.perfisPorContainer().get(c.nome); as perfil) { <span class="destaque-texto docker-mini"> ◆ {{ perfil }}</span> }
+                  <div class="docker-no" [style.left.px]="n.x" [style.top.px]="n.y" [class.selecionado]="c.nome === d.atual()?.nome" [class.parado]="c.estado !== 'running'" [title]="c.nome + '\n' + c.imagem" (click)="d.escolher(c.nome)">
+                    <div class="docker-no-nome"><b>{{ c.composeServico ?? c.nome }}</b> <span [class.git-mais]="c.estado === 'running'" [class.suave]="c.estado !== 'running'">{{ c.estado === 'running' ? '●' : '○ parado' }}</span></div>
+                    <div class="suave docker-no-imagem">{{ c.imagem }}</div>
+                    <div>
+                      @if (portaHost(c); as p) { <span class="rosa-texto docker-mini">host {{ p }}</span> }
+                      @if (d.perfisPorContainer().get(c.nome); as perfil) { <span class="destaque-texto docker-mini"> ◆ {{ perfil }}</span> }
+                    </div>
                   </div>
                 }
               }
@@ -179,16 +183,33 @@ export class TelaContainersComponent {
     const host = this.desenho().host;
     const selecionado = this.d.atual()?.nome;
     const desvios = { depends: -7, trafego: 5, config: -16, porta: 0 } as const;
+    const todas = this.todasAsSetas();
+    const usados: number[] = [];
     return this.d.conexoes().flatMap((x) => {
+      const doSelecionado = !!selecionado && (x.de === selecionado || x.para === selecionado);
+      // Só as setas do container selecionado (com todas elas, o mapa vira um novelo); `a` mostra todas.
+      if (!todas && !doSelecionado) return [];
       const de = x.de === HOST ? host : pos.get(x.de);
       const para = pos.get(x.para);
       if (!de || !para) return [];
       const largura = x.de === HOST ? 122 : LARGURA_NO;
       const c = caminho(de, para, desvios[x.tipo], largura);
       // Porta: o rótulo fica perto do host; tráfego e configuração mostram o rótulo; depends_on não.
-      const rotulo = x.tipo === 'depends' ? '' : x.tipo === 'porta' ? '' : x.rotulo;
-      return [{ ...c, tipo: x.tipo, rotulo, fraca: !!selecionado && x.de !== selecionado && x.para !== selecionado }];
+      const rotulo = x.tipo === 'depends' || x.tipo === 'porta' || !doSelecionado ? '' : x.rotulo;
+      // Rótulos que cairiam um em cima do outro descem um pouco.
+      if (rotulo) {
+        while (usados.some((y) => Math.abs(y - c.ry) < 14)) c.ry += 14;
+        usados.push(c.ry);
+      }
+      return [{ ...c, tipo: x.tipo, rotulo, fraca: !!selecionado && !doSelecionado }];
     });
+  });
+
+  protected readonly todasAsSetas = signal(false);
+  /** Quantas conexões existem e não estão desenhadas (as dos outros containers). */
+  protected readonly ocultas = computed(() => {
+    const sel = this.d.atual()?.nome;
+    return this.d.conexoes().filter((x) => !sel || (x.de !== sel && x.para !== sel)).length;
   });
 
   protected readonly linhas = computed(() => {
@@ -371,6 +392,7 @@ export class TelaContainersComponent {
     } else if (e.key === '+' || e.key === '=') this.zoom.update((z) => Math.min(2, z + 0.1));
     else if (e.key === '-') this.zoom.update((z) => Math.max(0.4, z - 0.1));
     else if (e.key === '0') this.encaixar();
+    else if (e.key === 'a') this.todasAsSetas.set(!this.todasAsSetas());
     else if (e.key === 'Enter') this.elLista().nativeElement.focus();
     else return;
     e.preventDefault();

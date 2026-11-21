@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 /** Grades das telas cheias cujas colunas e linhas o usuário pode arrastar (o vão entre os painéis). */
-const GRADES = '.git-tela, .debug-grade, .docker-grade, .docker-painel-corpo, .entender-grade';
+const GRADES = '.git-tela, .debug-grade, .docker-grade, .docker-painel-corpo, .entender-grade, .testes-grade';
 const MINIMO = 140;
 const FOLGA = 3;
 const CHAVE = 'seedy.divisores';

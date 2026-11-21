@@ -254,12 +254,12 @@ export class ExecucaoService {
 
   /** RUN (shift+F10) e DEBUG (shift+F9). */
   async rodar(debug: boolean): Promise<void> {
-    if (!this.projeto.raiz()) return void this.mensagens.mostrar('abra um projeto primeiro');
+    if (!this.projeto.raiz()) return void this.mensagens.alerta('abra um projeto primeiro');
     // Procura de novo: as classes main mudam (arquivo novo, pastas de fonte corrigidas).
     await this.procurarMains();
     const c = this.atual();
     if (!c) {
-      this.mensagens.mostrar(this.jdtls.pronto() ? 'nenhuma classe com main nem servidor no projeto (␣ r)' : 'o jdtls ainda está carregando o projeto');
+      this.mensagens.alerta(this.jdtls.pronto() ? 'nenhuma classe com main nem servidor no projeto (␣ r)' : 'o jdtls ainda está carregando o projeto');
       return;
     }
     if (c.tipo === 'script') {

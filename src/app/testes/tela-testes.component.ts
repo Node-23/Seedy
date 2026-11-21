@@ -61,7 +61,7 @@ const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
                 }
               }
             }
-            @if (!t.linhas().length) { <p class="suave testes-vazio">{{ t.testes().length ? 'nenhum teste com esse filtro' : 'nenhum teste encontrado neste projeto' }}</p> }
+            @if (!t.linhas().length) { <p class="suave testes-vazio">{{ t.lendoCodigo() ? 'lendo o código do projeto para achar os testes…' : t.testes().length ? 'nenhum teste com esse filtro' : 'nenhum teste encontrado neste projeto' }}</p> }
           </div>
           <div class="suave testes-rodape-lista">unitário: <b>surefire</b> · integração: <b>failsafe</b> (*IT) · e2e: script do package.json · <span class="aviso-texto">⚠</span> cenário de erro</div>
         </section>

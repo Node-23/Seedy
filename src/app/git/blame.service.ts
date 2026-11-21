@@ -41,7 +41,7 @@ export class BlameService {
     const relativo = this.git.relativo(modelo.uri.fsPath);
     const raiz = this.git.estado()?.raiz;
     if (!relativo || !raiz) {
-      this.mensagens.mostrar('este arquivo não está num repositório git');
+      this.mensagens.alerta('este arquivo não está num repositório git');
       return;
     }
     const r = await ponte.git(raiz, ['blame', '--porcelain', '--contents', '-', '--', relativo], modelo.getValue());

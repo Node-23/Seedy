@@ -83,7 +83,7 @@ export function registrarProvedores(
         // Biblioteca ou JDK: o jdtls manda o código (fonte anexado ou decompilado).
         const modelo = await jdtls.modeloDeClasse(l.uri);
         if (modelo) saida.push({ uri: modelo.uri, range: paraIntervalo(l.range) });
-        else mensagens.mostrar('o jdtls não tem o código desta classe');
+        else mensagens.alerta('o jdtls não tem o código desta classe');
       }
     }
     return saida;

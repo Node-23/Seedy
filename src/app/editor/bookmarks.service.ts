@@ -104,7 +104,7 @@ export class BookmarksService {
     const modelo = caminhoDado ? this.editor.buffers().find((b) => b.caminho === caminhoDado)?.modelo : this.editor.instancia?.getModel();
     const linha = linhaDada ?? this.editor.instancia?.getPosition()?.lineNumber;
     if (!modelo || !linha || !caminho || !this.projeto.raiz()) {
-      this.mensagens.mostrar('abra um arquivo do projeto para marcar uma linha');
+      this.mensagens.alerta('abra um arquivo do projeto para marcar uma linha');
       return;
     }
     const rel = this.relativo(caminho);
@@ -124,7 +124,7 @@ export class BookmarksService {
   async listar(): Promise<void> {
     const marcas = [...this.marcas()].sort((a, b) => a.caminho.localeCompare(b.caminho) || a.linha - b.linha);
     if (!marcas.length) {
-      this.mensagens.mostrar('nenhum bookmark ainda: ␣ M marca a linha do cursor');
+      this.mensagens.alerta('nenhum bookmark ainda: ␣ M marca a linha do cursor');
       return;
     }
     const alvo = await this.escolha.escolherUm<Marca | typeof LIMPAR>(

@@ -46,7 +46,7 @@ export class GithubFormService {
 
   async abrir(tipo: TipoDeFormulario): Promise<void> {
     if (!this.git.ehRepositorio()) {
-      this.mensagens.mostrar('este projeto não é um repositório git');
+      this.mensagens.alerta('este projeto não é um repositório git');
       return;
     }
     if (!this.github.usuario()) {

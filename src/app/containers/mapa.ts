@@ -5,10 +5,10 @@
 import { ContainerDocker } from '../nucleo/ponte';
 import { Conexao, HOST } from './docker.service';
 
-export const LARGURA_NO = 164;
-export const ALTURA_NO = 64;
-const COLUNA = 272;
-const LINHA = 88;
+export const LARGURA_NO = 240;
+export const ALTURA_NO = 84;
+const COLUNA = 350;
+const LINHA = 112;
 const MARGEM_REDE = 30;
 const TOPO_REDE = 38;
 const X_REDES = 176;

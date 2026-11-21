@@ -170,7 +170,7 @@ export class TodoService {
     const l = this.emFoco();
     const c = this.atual();
     if (!l) {
-      this.mensagens.mostrar('nada em foco para ligar (abra um arquivo, regra, bloco ou container)');
+      this.mensagens.alerta('nada em foco para ligar (abra um arquivo, regra, bloco ou container)');
       return;
     }
     if (!c) {
@@ -203,7 +203,7 @@ export class TodoService {
       case 'regra': {
         await this.entender.abrir('regras');
         const r = this.entender.regras().find((x) => x.chave === l.alvo);
-        if (!r) return this.mensagens.mostrar('a regra não está mais no código');
+        if (!r) return this.mensagens.alerta('a regra não está mais no código');
         this.entender.dominioSel.set(r.dominio);
         this.entender.regraSel.set(r.id);
         return;

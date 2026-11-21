@@ -467,7 +467,7 @@ export class DepuradorService {
   /** alt+F9: segue até a linha (um breakpoint temporário que some na próxima parada). */
   async ateALinha(caminho: string, linha: number): Promise<void> {
     const p = this.pausado();
-    if (!p) return void this.mensagens.mostrar('a execução não está pausada');
+    if (!p) return void this.mensagens.alerta('a execução não está pausada');
     this.ateOCursor = { caminho, linha };
     await this.enviarBreakpoints(caminho);
     this.continuar();
@@ -475,7 +475,7 @@ export class DepuradorService {
 
   private passo(comando: 'next' | 'stepIn' | 'stepOut'): void {
     const p = this.pausado();
-    if (!p) return void this.mensagens.mostrar('a execução não está pausada');
+    if (!p) return void this.mensagens.alerta('a execução não está pausada');
     void this.pedir(comando, { threadId: p.threadId }).catch((e) => this.mensagens.erro(`debug: ${e.message}`));
   }
 

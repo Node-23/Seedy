@@ -117,7 +117,7 @@ export class ScriptsService {
 
   async abrirNoNavegador(nome = this.selecionado()): Promise<void> {
     const url = nome ? this.execucoes().get(nome)?.url : null;
-    if (!url) return void this.mensagens.mostrar('o script ainda não anunciou um endereço');
+    if (!url) return void this.mensagens.alerta('o script ainda não anunciou um endereço');
     await ponte.servidor.abrirUrl(url).catch((e) => this.mensagens.erro(String(e)));
   }
 

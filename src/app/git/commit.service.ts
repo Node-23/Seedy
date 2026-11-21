@@ -13,12 +13,12 @@ export class CommitService {
 
   async abrir(): Promise<void> {
     if (!this.git.ehRepositorio()) {
-      this.mensagens.mostrar('este projeto não é um repositório git');
+      this.mensagens.alerta('este projeto não é um repositório git');
       return;
     }
     await this.git.atualizar();
     if (!this.git.alterados().length) {
-      this.mensagens.mostrar('nada para commitar: não há alterações');
+      this.mensagens.alerta('nada para commitar: não há alterações');
       return;
     }
     if (!this.aberta()) this.focoAnterior = document.activeElement as HTMLElement | null;

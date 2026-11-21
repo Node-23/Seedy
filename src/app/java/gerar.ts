@@ -86,7 +86,7 @@ export async function executarGerador(
     case 'java.action.generateConstructorsPrompt': {
       const estado = await pedir<{ constructors: Metodo[]; fields: Campo[] }>('java/checkConstructorsStatus', contexto);
       if (!estado?.constructors?.length) {
-        mensagens.mostrar('não há construtor para gerar aqui');
+        mensagens.alerta('não há construtor para gerar aqui');
         return true;
       }
       // Classe com vários construtores na superclasse: primeiro escolhe qual chamar.
@@ -124,7 +124,7 @@ export async function executarGerador(
     case 'java.action.hashCodeEqualsPrompt': {
       const estado = await pedir<{ type: string; fields: Campo[]; existingMethods: string[] }>('java/checkHashCodeEqualsStatus', contexto);
       if (!estado?.fields?.length) {
-        mensagens.mostrar('não há campos para equals/hashCode');
+        mensagens.alerta('não há campos para equals/hashCode');
         return true;
       }
       const existentes = estado.existingMethods ?? [];
@@ -144,7 +144,7 @@ export async function executarGerador(
     case 'java.action.overrideMethodsPrompt': {
       const estado = await pedir<{ type: string; methods: Metodo[] }>('java/listOverridableMethods', contexto);
       if (!estado?.methods?.length) {
-        mensagens.mostrar('nada para sobrescrever');
+        mensagens.alerta('nada para sobrescrever');
         return true;
       }
       const metodos = await escolha.escolher(

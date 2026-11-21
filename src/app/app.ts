@@ -53,6 +53,7 @@ import { TestesService } from './testes/testes.service';
 import { TelaConfiguracoesComponent } from './config/tela-configuracoes.component';
 import { BookmarksService } from './editor/bookmarks.service';
 import { MenuRegraComponent } from './testes/menu-regra.component';
+import { ToastsComponent } from './nucleo/toasts.component';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
 import { DivisoresService } from './layout/divisores.service';
 import { TelaEntenderComponent } from './entender/tela-entender.component';
@@ -69,7 +70,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, MenuGutterComponent, MenuRegraComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, MenuGutterComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
   ],
   template: `
     <div class="seedy">
@@ -136,6 +137,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (layout.tela() === 'testes') { <sd-tela-testes class="tela-cheia" /> }
       <sd-diff />
       <sd-menu-gutter />
+      <sd-toasts />
       <sd-menu-regra />
       <sd-busca />
       <sd-busca-projeto />

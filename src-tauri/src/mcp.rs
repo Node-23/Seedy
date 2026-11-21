@@ -24,7 +24,7 @@ const ESPERA_MAXIMA: Duration = Duration::from_secs(15 * 60);
 const VERSAO_DO_PROTOCOLO: &str = "2025-06-18";
 
 const INSTRUCOES: &str = "Ferramentas do Seedy, a IDE aberta pelo usuário: abrir arquivos no editor, ver os erros de \
-compilação do Java (jdtls), operar o servidor de aplicação (subir, parar, redeploy, ler o log), fazer requisições \
+compilação do Java (jdtls), configurar e operar o servidor de aplicação (servidor_criar, subir, parar, redeploy, ler o log), rodar comandos de build (executar_comando, com a aprovação do usuário), fazer requisições \
 HTTP à aplicação local e consultar os bancos configurados (só leitura). Para alterar código, prefira propor_edicao: \
 a mudança aparece como diff para o usuário aceitar ou recusar, e a resposta diz o que ele decidiu.";
 

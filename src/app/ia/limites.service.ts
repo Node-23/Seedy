@@ -37,7 +37,13 @@ export class LimitesService {
   readonly aberto = signal(false);
   private readonly agora = signal(Date.now());
 
-  readonly visivel = computed(() => this.config.atual().ia.modo === 'assinatura' && (!!this.cincoH() || !!this.semanal()));
+  /** Tipos de janela que já chegaram (para dizer o que falta quando uma das duas não veio). */
+  readonly recebidos = signal<Record<string, number>>({});
+
+  readonly visivel = computed(() => this.config.atual().ia.modo === 'assinatura' && (!!this.cincoH() || !!this.semanal() || Object.keys(this.recebidos()).length > 0));
+  readonly faltaDe5h = computed(() => !this.cincoH());
+  readonly faltaSemana = computed(() => !this.semanal());
+  readonly tiposRecebidos = computed(() => Object.keys(this.recebidos()).join(', '));
   readonly janelaDe5h = computed(() => this.ver(this.cincoH(), 'horas'));
   readonly semana = computed(() => this.ver(this.semanal(), 'dia'));
 
@@ -46,6 +52,7 @@ export class LimitesService {
       const salvo = JSON.parse(localStorage.getItem(CHAVE) ?? '{}');
       if (salvo.cincoH) this.cincoH.set(salvo.cincoH);
       if (salvo.semanal) this.semanal.set(salvo.semanal);
+      if (salvo.recebidos) this.recebidos.set(salvo.recebidos);
     } catch {
       /* sem histórico */
     }
@@ -58,14 +65,15 @@ export class LimitesService {
   receber(l: LimiteDeUso): void {
     const t = l.tipo.toLowerCase();
     const caso = { ...l, visto: Date.now() };
+    this.recebidos.update((r) => ({ ...r, [l.tipo]: Date.now() }));
     if (/five|5h|5_h|hour/.test(t)) this.cincoH.set(caso);
     else if (/seven|week|7/.test(t)) {
       // seven_day, seven_day_opus...: vale o mais cheio.
       const atual = this.semanal();
       if (!atual || (l.utilizacao ?? 0) >= (atual.utilizacao ?? 0) || (atual.reiniciaEm ?? 0) < Date.now() / 1000) this.semanal.set(caso);
-    } else return;
+    }
     try {
-      localStorage.setItem(CHAVE, JSON.stringify({ cincoH: this.cincoH(), semanal: this.semanal() }));
+      localStorage.setItem(CHAVE, JSON.stringify({ cincoH: this.cincoH(), semanal: this.semanal(), recebidos: this.recebidos() }));
     } catch {
       /* só vale até fechar */
     }

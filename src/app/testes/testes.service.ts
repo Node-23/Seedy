@@ -40,6 +40,10 @@ export class TestesService {
   /** Tipo que está rodando agora (null = nada). */
   readonly rodando = signal<FiltroDeTipo | null>(null);
   readonly saida = signal<string[]>([]);
+  /** Lendo os relatórios JUnit do último run. */
+  readonly lendoRelatorios = signal(false);
+  /** A análise do projeto ainda está lendo o código (a lista de testes vem dela). */
+  readonly lendoCodigo = computed(() => this.entender.analisando());
   readonly comandoAtual = signal('');
   readonly ultimaExecucao = signal<{ em: Date; segundos: number; codigo: number | null } | null>(null);
 
@@ -177,7 +181,8 @@ export class TestesService {
   async lerRelatorios(): Promise<void> {
     const raiz = this.projeto.raiz();
     if (!raiz) return;
-    const lista = await ponte.testes.relatorios(raiz).catch(() => [] as ResultadoTeste[]);
+    this.lendoRelatorios.set(true);
+    const lista = await ponte.testes.relatorios(raiz).catch(() => [] as ResultadoTeste[]).finally(() => this.lendoRelatorios.set(false));
     if (!lista.length && this.resultados().size) return; // um run que não gerou relatório não apaga o que já se sabia
     this.resultados.set(new Map(lista.map((r) => [chaveDoResultado(r.classe, r.metodo), r])));
   }
@@ -224,7 +229,7 @@ export class TestesService {
 
   async rodarFalhas(): Promise<void> {
     const falhas = this.testes().filter((t) => t.linguagem === 'java' && this.estadoDe(t) === 'falhou');
-    if (!falhas.length) return this.mensagens.mostrar('nenhum teste falhou no último run');
+    if (!falhas.length) return this.mensagens.alerta('nenhum teste falhou no último run');
     const classes = [...new Set(falhas.map((t) => t.classe))];
     await this.rodar('todos', classes.join(','));
   }
@@ -247,7 +252,7 @@ export class TestesService {
     const candidatos = tipo === 'e2e' ? ['e2e', 'test:e2e', 'cypress:run', 'playwright', 'e2e:ci'] : ['test', 'test:ci'];
     const nome = candidatos.find((c) => nomes.includes(c));
     if (!nome) {
-      this.mensagens.mostrar(tipo === 'e2e' ? 'não achei um script e2e no package.json' : 'não achei um script "test" no package.json');
+      this.mensagens.alerta(tipo === 'e2e' ? 'não achei um script e2e no package.json' : 'não achei um script "test" no package.json');
       return;
     }
     this.layout.mostrar('scripts');
@@ -265,7 +270,7 @@ export class TestesService {
 
   async explicarFalha(t: TesteInfo | null = this.atual()): Promise<void> {
     const r = t ? this.resultadoDe(t) : null;
-    if (!t || !r || r.estado !== 'falhou') return this.mensagens.mostrar('escolha um teste que falhou');
+    if (!t || !r || r.estado !== 'falhou') return this.mensagens.alerta('escolha um teste que falhou');
     this.layout.tela.set('editor');
     this.layout.mostrar('ia');
     await this.ia.enviar(`O teste ${t.id} (${t.relativo}:${t.linha}) falhou.\n\nMensagem: ${r.mensagem ?? '(sem mensagem)'}\n\n${(r.detalhe ?? '').slice(0, 1800)}\n\nExplique a causa provável. Leia o teste e o código que ele exercita antes de responder; se a correção estiver no código, proponha a edição.`);

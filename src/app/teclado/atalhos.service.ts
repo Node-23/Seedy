@@ -282,7 +282,7 @@ export class AtalhosService {
   /** ␣ m: abre o merge em 3 colunas quando há conflitos. */
   private abrirMerge(): void {
     if (!this.git.conflitos().length) {
-      this.mensagens.mostrar('nenhum conflito para resolver');
+      this.mensagens.alerta('nenhum conflito para resolver');
       return;
     }
     this.layout.tela.set('merge');
@@ -312,7 +312,7 @@ export class AtalhosService {
     await this.git.atualizar();
     const arquivos = this.git.alterados().filter((a) => a.letra !== 'C');
     if (!arquivos.length) {
-      this.mensagens.mostrar('nada para guardar: não há alterações');
+      this.mensagens.alerta('nada para guardar: não há alterações');
       return;
     }
     const nome = await this.escolha.perguntar('GUARDAR NA PRATELEIRA', {
@@ -325,7 +325,7 @@ export class AtalhosService {
   /** ␣ b: trocar de branch (locais e remotas), como o menu de branches do IntelliJ. */
   private async trocarDeBranch(): Promise<void> {
     if (!this.git.ehRepositorio()) {
-      this.mensagens.mostrar('este projeto não é um repositório git');
+      this.mensagens.alerta('este projeto não é um repositório git');
       return;
     }
     const b = await this.git.branches();
@@ -507,6 +507,6 @@ export class AtalhosService {
   private abrirTema(): void {
     const caminho = this.tema.caminho();
     if (caminho) void this.editor.abrir(caminho);
-    else this.mensagens.mostrar('o tema.json só existe dentro do app');
+    else this.mensagens.alerta('o tema.json só existe dentro do app');
   }
 }

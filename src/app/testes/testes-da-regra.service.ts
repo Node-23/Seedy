@@ -124,7 +124,7 @@ export class TestesDaRegraService {
 
   async irParaTeste(r: RegraVisivel, doMetodo = false): Promise<void> {
     const lista = doMetodo || !this.testesDaRegra(r).length ? this.testesDoMetodo(r) : this.testesDaRegra(r);
-    if (!lista.length) return this.mensagens.mostrar('esta regra ainda não tem teste: ␣ t cria um');
+    if (!lista.length) return this.mensagens.alerta('esta regra ainda não tem teste: ␣ t cria um');
     const alvo =
       lista.length === 1
         ? lista[0]
@@ -145,7 +145,7 @@ export class TestesDaRegraService {
   async rodar(r: RegraVisivel): Promise<void> {
     const proprios = this.testesDaRegra(r);
     const java = (proprios.length ? proprios : this.testesDoMetodo(r)).filter((t) => t.linguagem === 'java');
-    if (!java.length) return this.mensagens.mostrar('esta regra não tem teste de Java para rodar');
+    if (!java.length) return this.mensagens.alerta('esta regra não tem teste de Java para rodar');
     this.mensagens.mostrar(`rodando ${java.length} ${java.length === 1 ? 'teste' : 'testes'}…`);
     await this.testes.rodar('todos', [...new Set(java.map((t) => t.classe))].join(','));
     this.mensagens.mostrar('testes rodados: o resultado já está nos cards');
@@ -182,7 +182,7 @@ export class TestesDaRegraService {
   async criarManual(r: RegraVisivel): Promise<void> {
     const comp = this.componenteDe(r);
     const raiz = this.projeto.raiz();
-    if (!comp || !raiz) return this.mensagens.mostrar('esta regra não está ligada a um componente do código');
+    if (!comp || !raiz) return this.mensagens.alerta('esta regra não está ligada a um componente do código');
     const nome = this.nomeDoMetodoDeTeste(r);
     const cenario = r.codigo?.mensagem ?? r.codigo?.condicao ?? r.titulo;
     const existente = this.testes.testes().find((t) => t.linguagem === (comp.linguagem === 'ts' ? 'ts' : 'java') && t.componentes.includes(comp.id) && (comp.linguagem === 'ts' || t.classe === `${comp.nome}Test`));

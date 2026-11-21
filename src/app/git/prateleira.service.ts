@@ -71,7 +71,7 @@ export class PrateleiraService {
     if (!raiz) return false;
     const alterados = this.git.alterados().filter((a) => relativos.includes(a.relativo) && a.letra !== 'C');
     if (!alterados.length) {
-      this.mensagens.mostrar('nada para guardar');
+      this.mensagens.alerta('nada para guardar');
       return false;
     }
     // Renomeado: o caminho antigo vai junto (aparece como apagado depois do reset).
@@ -94,7 +94,7 @@ export class PrateleiraService {
     }
     if (!arquivos.length) {
       if (novos.length) await this.rodar(raiz, ['reset', '-q', '--', ...novos]);
-      this.mensagens.mostrar('nada para guardar: os arquivos não têm diferenças');
+      this.mensagens.alerta('nada para guardar: os arquivos não têm diferenças');
       return false;
     }
 

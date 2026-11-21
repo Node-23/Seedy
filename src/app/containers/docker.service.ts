@@ -286,7 +286,7 @@ export class DockerService {
   abrirTerminal(nome = this.atual()?.nome): void {
     const c = this.containers().find((x) => x.nome === nome);
     if (!c) return;
-    if (c.estado !== 'running') return void this.mensagens.mostrar(`${c.nome} não está rodando`);
+    if (c.estado !== 'running') return void this.mensagens.alerta(`${c.nome} não está rodando`);
     this.terminal.abrir(`🐳 ${c.nome}`, ['docker', 'exec', '-it', c.nome, 'sh', '-c', 'command -v bash >/dev/null 2>&1 && exec bash || exec sh']);
     this.layout.tela.set('editor');
   }
@@ -296,10 +296,10 @@ export class DockerService {
     const c = this.containers().find((x) => x.nome === nome);
     if (!c) return;
     const tipo = /postgres|postgis|timescale/i.test(c.imagem) ? 'postgres' : /mysql|mariadb|percona/i.test(c.imagem) ? 'mysql' : null;
-    if (!tipo) return void this.mensagens.mostrar(`${c.nome} não parece um PostgreSQL nem um MySQL`);
+    if (!tipo) return void this.mensagens.alerta(`${c.nome} não parece um PostgreSQL nem um MySQL`);
     const padrao = tipo === 'postgres' ? 5432 : 3306;
     const porta = c.portas.find((p) => p.container === padrao && p.host)?.host ?? c.portas.find((p) => p.host)?.host;
-    if (!porta) return void this.mensagens.mostrar(`${c.nome} não publica a porta ${padrao} no host`);
+    if (!porta) return void this.mensagens.alerta(`${c.nome} não publica a porta ${padrao} no host`);
     const env = (k: string) => c.ambiente.find((e) => e.startsWith(`${k}=`))?.slice(k.length + 1);
     const usuario = tipo === 'postgres' ? (env('POSTGRES_USER') ?? 'postgres') : (env('MYSQL_USER') ?? 'root');
     const senha = tipo === 'postgres' ? env('POSTGRES_PASSWORD') : usuario === 'root' ? env('MYSQL_ROOT_PASSWORD') : env('MYSQL_PASSWORD');

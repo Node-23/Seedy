@@ -247,7 +247,7 @@ export class BancoService {
   async escolherConexao(): Promise<string | null> {
     const b = this.editor.bufferAtivo();
     if (!b || !this.ehSql()) {
-      this.mensagens.mostrar('abra um arquivo .sql (ou o console de uma conexão)');
+      this.mensagens.alerta('abra um arquivo .sql (ou o console de uma conexão)');
       return null;
     }
     if (!this.perfis().length) {
@@ -284,7 +284,7 @@ export class BancoService {
       const pos = ed.getPosition() ?? { lineNumber: 1, column: 1 };
       const inst = instrucaoNoCursor(m.getValue(), m.getOffsetAt(pos));
       if (!inst) {
-        this.mensagens.mostrar('nada para executar');
+        this.mensagens.alerta('nada para executar');
         return;
       }
       texto = inst.texto;
@@ -372,7 +372,7 @@ export class BancoService {
     }
     const h = await ponte.banco.historico(p.id);
     if (!h.length) {
-      this.mensagens.mostrar(`nada executado ainda em ${p.nome}`);
+      this.mensagens.alerta(`nada executado ainda em ${p.nome}`);
       return;
     }
     const agora = Date.now() / 1000;

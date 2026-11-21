@@ -232,6 +232,7 @@ fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: 
                 }
             }
             Some("rate_limit_event") => {
+                guardar_evento_de_limite(&linha);
                 if let Some(l) = limite_do_evento(&v) {
                     let _ = app.emit("ia-limites", l);
                 }
@@ -322,6 +323,17 @@ impl Tradutor {
             serde_json::json!({"type": "message_stop"}),
         ]
     }
+}
+
+/// Os últimos eventos de limite que o Claude Code mandou, crus, em `limites-eventos.log` (para
+/// conferir o formato quando a tela mostra menos do que o esperado).
+fn guardar_evento_de_limite(linha: &str) {
+    let arquivo = pasta_config().join("limites-eventos.log");
+    let mut linhas: Vec<String> = fs::read_to_string(&arquivo).map(|t| t.lines().map(String::from).collect()).unwrap_or_default();
+    linhas.push(linha.trim().to_string());
+    let sobra = linhas.len().saturating_sub(40);
+    let _ = fs::create_dir_all(pasta_config());
+    let _ = fs::write(&arquivo, linhas[sobra..].join("\n") + "\n");
 }
 
 /// Um limite de uso da assinatura (janela de 5 horas, semana) como o Claude Code informa.

@@ -233,7 +233,7 @@ export class MergeComponent {
     this.nomeDeles.set(nome.trim().replace(/~\d+$/, '') || (e?.operacao ? outro.toLowerCase() : (this.servico.origemDeles() ?? 'deles')));
     this.servico.deles.set(this.nomeDeles());
     if (!this.fila.length) {
-      this.mensagens.mostrar('não há arquivos em conflito');
+      this.mensagens.alerta('não há arquivos em conflito');
       this.layout.tela.set('git');
       return;
     }
@@ -483,7 +483,7 @@ export class MergeComponent {
       .map((c) => m.getDecorationRange(c.ancora)?.startLineNumber ?? 1)
       .sort((a, b) => a - b);
     if (!linhas.length) {
-      this.mensagens.mostrar('sem conflitos: :w grava');
+      this.mensagens.alerta('sem conflitos: :w grava');
       return;
     }
     const atual = ed.getPosition()?.lineNumber ?? 1;

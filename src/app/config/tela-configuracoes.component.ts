@@ -181,7 +181,7 @@ export class TelaConfiguracoesComponent {
 
   protected abrirArquivo(): void {
     const caminho = this.config.caminho();
-    if (!caminho) return this.mensagens.mostrar('o seedy.json só existe dentro do app');
+    if (!caminho) return this.mensagens.alerta('o seedy.json só existe dentro do app');
     this.c.fechar();
     void this.editor.abrir(caminho);
   }

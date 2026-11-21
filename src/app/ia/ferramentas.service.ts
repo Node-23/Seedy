@@ -8,6 +8,7 @@ import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
 import { escreve, instrucoes } from '../banco/sql';
 import { monaco } from '../editor/monaco';
 import { OrigemDaAlteracao, RevisaoService } from './revisao.service';
+import { EscolhaService } from '../escolha/escolha.service';
 
 /** Definição de ferramenta no formato da Messages API (o MCP usa `inputSchema`). */
 export interface DefinicaoDeFerramenta {
@@ -107,6 +108,36 @@ export const FERRAMENTAS: DefinicaoDeFerramenta[] = [
     ),
   },
   {
+    name: 'servidor_criar',
+    rotulo: 'servidor.criar',
+    description:
+      'Configura um servidor de aplicação (Tomcat ou WildFly/JBoss) para este projeto, apontando para uma instalação que já existe no disco (pasta do CATALINA_HOME ou JBOSS_HOME). Use quando servidor_estado disser que não há servidor configurado; procure a instalação no projeto (cloud/, dev/, docs, README) antes de perguntar.',
+    input_schema: objeto(
+      {
+        instalacao: texto('Pasta de instalação (a que tem bin/ e conf/ no Tomcat, ou bin/ e standalone/ no WildFly)'),
+        nome: texto('Nome do servidor no Seedy (opcional)'),
+        tipo: { type: 'string', enum: ['tomcat', 'wildfly'], description: 'Opcional: detectado pela pasta' },
+        portaHttp: { type: 'number', description: 'Porta HTTP (padrão 8080)' },
+        contexto: texto('Caminho da aplicação na URL (ex.: /feira; padrão: nome do projeto)'),
+      },
+      ['instalacao'],
+    ),
+  },
+  {
+    name: 'executar_comando',
+    rotulo: 'comando',
+    description:
+      'Roda um comando de shell na raiz do projeto (build, instalação de dependências, scripts do README) e devolve a saída e o código de saída. O usuário vê o comando e aprova cada execução. Para subir o servidor de aplicação use servidor_iniciar, não este. Comando que não termina (modo watch, servidor) precisa de deixar_rodando: ele devolve a saída dos primeiros segundos e continua em segundo plano.',
+    input_schema: objeto(
+      {
+        comando: texto('Comando completo (ex.: "mvn -q -DskipTests package")'),
+        segundos: { type: 'number', description: 'Quanto esperar pelo fim (padrão 120, máximo 600)' },
+        deixar_rodando: { type: 'boolean', description: 'Não matar o comando depois de esperar' },
+      },
+      ['comando'],
+    ),
+  },
+  {
     name: 'banco_conexoes',
     rotulo: 'banco.conexoes',
     description: 'Conexões de banco configuradas no Seedy (nome, ambiente, tipo, se está conectada).',
@@ -134,6 +165,7 @@ export class FerramentasService {
   private readonly servidor = inject(ServidorService);
   private readonly banco = inject(BancoService);
   private readonly revisao = inject(RevisaoService);
+  private readonly escolha = inject(EscolhaService);
 
   rotulo(nome: string): string {
     return FERRAMENTAS.find((f) => f.name === nome)?.rotulo ?? nome;
@@ -155,6 +187,10 @@ export class FerramentasService {
         return this.propor(entrada, origem);
       case 'servidor_estado':
         return this.estadoDoServidor();
+      case 'servidor_criar':
+        return this.criarServidor(entrada);
+      case 'executar_comando':
+        return this.executarComando(str(entrada, 'comando'), num(entrada['segundos']) ?? undefined, entrada['deixar_rodando'] === true);
       case 'servidor_iniciar':
         return this.iniciarServidor(entrada['debug'] === true);
       case 'servidor_parar':
@@ -279,6 +315,53 @@ export class FerramentasService {
         return `${p.nome} (${p.tipo}, :${p.portaHttp}${p.contexto}) — ${fase}${extra}${p.id === this.servidor.perfilAtual()?.id ? ' [selecionado]' : ''}`;
       })
       .join('\n');
+  }
+
+  private async criarServidor(entrada: Record<string, unknown>): Promise<string> {
+    const tipo = entrada['tipo'] === 'tomcat' ? 'tomcat' : entrada['tipo'] === 'wildfly' ? 'wildfly' : undefined;
+    const p = await this.servidor.criarPerfil({
+      instalacao: str(entrada, 'instalacao'),
+      nome: opc(entrada, 'nome') ?? undefined,
+      tipo,
+      portaHttp: num(entrada['portaHttp']) ?? undefined,
+      contexto: opc(entrada, 'contexto') ?? undefined,
+    });
+    return `servidor "${p.nome}" (${p.tipo}) configurado: instalação ${p.instalacao}, porta ${p.portaHttp}, contexto ${p.contexto}, web ${p.pastaWeb}, classes ${p.pastaClasses}. Agora use servidor_iniciar (compile o projeto antes se ${p.pastaClasses} não existir).`;
+  }
+
+  /** Roda um comando de shell na raiz do projeto, depois que o usuário aprova. */
+  private async executarComando(comando: string, segundos: number | undefined, deixar: boolean): Promise<string> {
+    const raiz = this.projeto.raiz();
+    if (!raiz) throw new Error('nenhum projeto aberto');
+    const decisao = await this.escolha.escolherUm(
+      'A IA QUER RODAR UM COMANDO',
+      [
+        { rotulo: 'Rodar', detalhe: comando, valor: true },
+        { rotulo: 'Recusar', detalhe: 'o comando não roda e a IA é avisada', valor: false },
+      ],
+      `na pasta ${raiz}`,
+    );
+    if (!decisao) return 'o usuário recusou o comando; não rodou';
+    const espera = Math.max(5, Math.min(600, segundos ?? 120)) * 1000;
+    const id = `ia-cmd-${Date.now()}`;
+    const windows = /win/i.test(navigator.platform);
+    const argv = windows ? ['cmd.exe', '/C', comando] : ['sh', '-c', comando];
+    let saida: string[] = [];
+    let codigo: number | null | undefined;
+    await ponte.tarefa.iniciar(
+      id,
+      raiz,
+      argv,
+      (linhas) => (saida = [...saida, ...linhas].slice(-1500)),
+      (c) => (codigo = c),
+    );
+    const fim = Date.now() + espera;
+    while (codigo === undefined && Date.now() < fim) await new Promise((r) => setTimeout(r, 300));
+    if (codigo === undefined) {
+      if (!deixar) await ponte.tarefa.parar(id).catch(() => undefined);
+      return `${deixar ? 'ainda rodando em segundo plano' : 'passou do tempo e o comando foi encerrado'} depois de ${espera / 1000} s. Saída até agora:\n${cortar(saida.join('\n'))}`;
+    }
+    return `saiu com código ${codigo}.\n${cortar(saida.join('\n'))}`;
   }
 
   private async iniciarServidor(debug: boolean): Promise<string> {

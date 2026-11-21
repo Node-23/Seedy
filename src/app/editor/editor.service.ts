@@ -384,7 +384,7 @@ export class EditorService {
   buscarNoArquivo(): void {
     const instancia = this.instancia;
     if (!instancia || !this.bufferAtivo()) {
-      this.mensagens.mostrar('abra um arquivo para buscar nele (ctrl+p)');
+      this.mensagens.alerta('abra um arquivo para buscar nele (ctrl+p)');
       return;
     }
     instancia.focus();
