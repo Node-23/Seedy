@@ -59,10 +59,13 @@ type Parte = 'diagrama' | 'metodos';
                   <span class="docker-legenda"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--texto)" stroke-width="2" /></svg>chama</span>
                   <span class="docker-legenda"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--aviso)" stroke-width="2" stroke-dasharray="4 3" /></svg>entre domínios</span>
                   <span class="docker-legenda"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--rosa)" stroke-width="2" /></svg>HTTP</span>
+                  <span class="espaco"></span>
+                  <span class="suave entender-zoom-dica">arraste · <kbd>+</kbd> <kbd>-</kbd> zoom {{ (zoom() * 100).toFixed(0) }}%</span>
                 </div>
                 @if (e.desenhoArquitetura(); as d) {
-                  <div #area class="entender-area" tabindex="0" (focus)="parte.set('diagrama')">
-                    <div class="entender-conteudo" [style.width.px]="d.largura" [style.height.px]="d.altura">
+                  <div #area class="entender-area" tabindex="0" (focus)="parte.set('diagrama')" (pointerdown)="arrastarArea($event)" (wheel)="rolarArea($event)">
+                   <div class="entender-zoom" [style.width.px]="d.largura * zoom()" [style.height.px]="d.altura * zoom()">
+                    <div class="entender-conteudo" [style.width.px]="d.largura" [style.height.px]="d.altura" [style.transform]="'scale(' + zoom() + ')'">
                       @for (c of d.camadas; track c.chave) { <span class="entender-coluna" [style.left.px]="c.x + 6">{{ c.rotulo }}</span> }
                       @for (dm of d.dominios; track dm.nome) {
                         <div class="entender-dominio" [style.top.px]="dm.y" [style.height.px]="dm.altura"><span>{{ dm.nome.toUpperCase() }}</span></div>
@@ -78,7 +81,7 @@ type Parte = 'diagrama' | 'metodos';
                           }
                         </defs>
                         @for (s of d.setas; track $index) {
-                          <path [attr.d]="s.d" fill="none" [attr.stroke]="cor(s.tipo)" stroke-width="1.8" [attr.stroke-dasharray]="traco(s.tipo)" [attr.marker-end]="'url(#arq-' + s.tipo + ')'" />
+                          <path [attr.d]="s.d" fill="none" [attr.stroke]="cor(s.tipo)" stroke-width="1.8" [attr.stroke-dasharray]="traco(s.tipo)" [attr.marker-end]="'url(#arq-' + s.tipo + ')'" [attr.opacity]="opacidade(s.de, s.para)" />
                           @if (s.rotulo) { <text [attr.x]="s.rx" [attr.y]="s.ry" [attr.fill]="cor(s.tipo)" [attr.text-anchor]="s.ancora ?? 'middle'" class="docker-rotulo">{{ s.rotulo }}</text> }
                         }
                       </svg>
@@ -89,6 +92,7 @@ type Parte = 'diagrama' | 'metodos';
                         </div>
                       }
                     </div>
+                   </div>
                   </div>
                 }
               </section>
@@ -216,7 +220,7 @@ type Parte = 'diagrama' | 'metodos';
                   <span class="docker-legenda"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--erro)" stroke-width="2" stroke-dasharray="4 3" /></svg>desvia / barra</span>
                 </div>
                 @if (e.desenhoCaminho(); as d) {
-                  <div #area class="entender-area" tabindex="0">
+                  <div #area class="entender-area" tabindex="0" (pointerdown)="arrastarArea($event)">
                     <div class="entender-conteudo" [style.width.px]="d.largura" [style.height.px]="d.altura">
                       @for (c of d.colunas; track c.x) { <span class="entender-coluna" [style.left.px]="c.x">{{ c.rotulo }}</span> }
                       <svg class="docker-setas" [attr.width]="d.largura" [attr.height]="d.altura" aria-hidden="true">
@@ -292,6 +296,57 @@ export class TelaEntenderComponent {
   private readonly elFiltro = viewChild<ElementRef<HTMLInputElement>>('filtro');
 
   protected readonly tipos = ['chama', 'dominio', 'http', 'desvio'] as const;
+  /** Zoom do diagrama de arquitetura (ctrl + roda, + e -). */
+  protected readonly zoom = signal(1);
+
+  /** Com um bloco selecionado, só as setas dele ficam fortes: o resto vira pano de fundo. */
+  protected opacidade(de: string, para: string): number {
+    const sel = this.e.selecionado();
+    return !sel ? 0.55 : de === sel || para === sel ? 1 : 0.1;
+  }
+
+  /** Arrastar o fundo do diagrama anda por ele (como num mapa). */
+  protected arrastarArea(inicio: PointerEvent): void {
+    const area = inicio.currentTarget as HTMLElement;
+    if (inicio.button !== 0 || (inicio.target as HTMLElement).closest('.entender-bloco')) return;
+    const x0 = inicio.clientX + area.scrollLeft;
+    const y0 = inicio.clientY + area.scrollTop;
+    area.classList.add('arrastando-mapa');
+    const mover = (m: PointerEvent) => {
+      area.scrollLeft = x0 - m.clientX;
+      area.scrollTop = y0 - m.clientY;
+    };
+    const soltar = () => {
+      area.classList.remove('arrastando-mapa');
+      window.removeEventListener('pointermove', mover);
+      window.removeEventListener('pointerup', soltar);
+    };
+    window.addEventListener('pointermove', mover);
+    window.addEventListener('pointerup', soltar);
+  }
+
+  /** ctrl + roda dá zoom no ponto do mouse; a roda sozinha rola (e shift + roda, para os lados). */
+  protected rolarArea(e: WheelEvent): void {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    this.mudarZoom(this.zoom() * (e.deltaY < 0 ? 1.1 : 1 / 1.1), e.currentTarget as HTMLElement, e.clientX, e.clientY);
+  }
+
+  private mudarZoom(novo: number, area: HTMLElement | undefined, cx?: number, cy?: number): void {
+    const antes = this.zoom();
+    const z = Math.max(0.3, Math.min(1.6, novo));
+    if (z === antes) return;
+    this.zoom.set(z);
+    if (!area) return;
+    const r = area.getBoundingClientRect();
+    const px = (cx ?? r.left + r.width / 2) - r.left;
+    const py = (cy ?? r.top + r.height / 2) - r.top;
+    const fator = z / antes;
+    queueMicrotask(() => {
+      area.scrollLeft = (area.scrollLeft + px) * fator - px;
+      area.scrollTop = (area.scrollTop + py) * fator - py;
+    });
+  }
   protected readonly parte = signal<Parte>('diagrama');
   protected readonly trecho = signal<{ n: number; marcada: boolean; partes: { texto: string; cor: string }[] }[]>([]);
   protected readonly trechoLido = signal(false);
@@ -517,6 +572,9 @@ export class TelaEntenderComponent {
     }
     const d = this.e.desenhoArquitetura();
     if (!d) return;
+    if (ev.key === '+' || ev.key === '=') return (feito(), this.mudarZoom(this.zoom() * 1.15, this.elArea()?.nativeElement));
+    if (ev.key === '-' || ev.key === '_') return (feito(), this.mudarZoom(this.zoom() / 1.15, this.elArea()?.nativeElement));
+    if (ev.key === '0') return (feito(), this.mudarZoom(1, this.elArea()?.nativeElement));
     const dir = direcao(ev.key);
     if (dir) {
       feito();

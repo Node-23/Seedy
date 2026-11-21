@@ -67,6 +67,13 @@ export function definirTemaMonaco(tema: Tema): void {
       'editorSuggestWidget.foreground': c.texto,
       'editorSuggestWidget.selectedBackground': c.selecao,
       'editorSuggestWidget.highlightForeground': c.destaque,
+      // Menu de contexto (botão direito) e menus de ações: sem isso ficam transparentes e apagados.
+      'menu.background': c.painelElevado,
+      'menu.foreground': c.texto,
+      'menu.selectionBackground': c.selecao,
+      'menu.selectionForeground': c.texto,
+      'menu.separatorBackground': c.borda,
+      'menu.border': c.borda,
       'editorHoverWidget.background': c.painelElevado,
       'editorHoverWidget.border': c.borda,
       'editorError.foreground': c.erro,

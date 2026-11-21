@@ -6,6 +6,7 @@
 //! e cada evento SSE da resposta volta para a interface por um `Channel`.
 
 use crate::tema::pasta_config;
+use std::collections::HashMap;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -74,9 +75,15 @@ pub fn ia_esquecer_chave() -> Result<(), String> {
 /// Envia um pedido à Messages API com `stream: true` e repassa cada evento (o JSON da
 /// linha `data:`) pelo canal. Termina quando o servidor fecha o stream.
 #[tauri::command]
-pub async fn ia_mensagem(mut corpo: serde_json::Value, eventos: Channel<String>, modo: Option<String>) -> Result<(), String> {
+pub async fn ia_mensagem(
+    mut corpo: serde_json::Value,
+    eventos: Channel<String>,
+    modo: Option<String>,
+    mcp: tauri::State<'_, crate::mcp::Mcp>,
+) -> Result<(), String> {
     if modo.as_deref() == Some("assinatura") {
-        return tauri::async_runtime::spawn_blocking(move || via_claude(&corpo, &eventos))
+        let config_mcp = mcp.arquivo_de_config_do_claude();
+        return tauri::async_runtime::spawn_blocking(move || via_claude(&corpo, &eventos, config_mcp))
             .await
             .map_err(|e| e.to_string())?;
     }
@@ -172,13 +179,17 @@ fn prompt_do_corpo(corpo: &serde_json::Value) -> String {
 
 /// Modo assinatura: roda o `claude -p` (login do próprio Claude Code, sem ferramentas) e repassa
 /// os eventos de stream, que já vêm no formato da Messages API dentro de `stream_event`.
-fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>) -> Result<(), String> {
+fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: Option<PathBuf>) -> Result<(), String> {
     use std::io::Write;
     let mut args: Vec<String> = ["-p", "--output-format", "stream-json", "--include-partial-messages", "--verbose", "--tools", ""]
         .map(String::from)
         .to_vec();
     if let Some(m) = corpo["model"].as_str().filter(|m| m.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.' || c == '[' || c == ']')) {
         args.extend(["--model".into(), m.into()]);
+    }
+    // As ferramentas da IDE (MCP do Seedy), e só elas: nada dos conectores da conta do usuário.
+    if let Some(arquivo) = config_mcp {
+        args.extend(["--mcp-config".into(), arquivo.to_string_lossy().into_owned(), "--strict-mcp-config".into(), "--allowedTools".into(), "mcp__seedy".into()]);
     }
     let mut c = crate::web::comando_do_node("claude", &args);
     c.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -197,6 +208,7 @@ fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>) -> Result<()
         }
         t
     });
+    let mut tradutor = Tradutor::default();
     let mut recebeu = false;
     let mut falha: Option<String> = None;
     for linha in BufReader::new(filho.stdout.take().ok_or("sem saída do claude")?).lines() {
@@ -205,13 +217,25 @@ fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>) -> Result<()
         match v["type"].as_str() {
             Some("stream_event") => {
                 recebeu = true;
-                if eventos.send(v["event"].to_string()).is_err() {
+                let mut parar = false;
+                for e in tradutor.traduzir(&v["event"]) {
+                    if eventos.send(e.to_string()).is_err() {
+                        parar = true;
+                        break;
+                    }
+                }
+                if parar {
                     let _ = filho.kill();
                     break;
                 }
             }
             Some("result") if v["is_error"] == true => falha = v["result"].as_str().map(str::to_string),
             _ => {}
+        }
+    }
+    if recebeu {
+        for e in tradutor.fim() {
+            let _ = eventos.send(e.to_string());
         }
     }
     let estado = filho.wait().map_err(|e| e.to_string())?;
@@ -224,6 +248,73 @@ fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>) -> Result<()
         return Err(format!("o Claude Code falhou: {}{dica}", erros.trim()));
     }
     Ok(())
+}
+
+/// O Claude Code roda as ferramentas sozinho, em vários turnos. A interface só quer o texto, como
+/// uma mensagem única: aqui os blocos de texto seguem (reindexados), cada chamada de ferramenta
+/// vira uma linha "⚙ nome" e o resto (thinking, fim de turno) some.
+#[derive(Default)]
+struct Tradutor {
+    proximo: u64,
+    /// Índice do bloco no turno atual → índice na mensagem única (só blocos de texto).
+    mapa: HashMap<u64, u64>,
+    comecou: bool,
+}
+
+impl Tradutor {
+    fn linha_de_texto(&mut self, texto: &str) -> Vec<serde_json::Value> {
+        let i = self.proximo;
+        self.proximo += 1;
+        vec![
+            serde_json::json!({"type": "content_block_start", "index": i, "content_block": {"type": "text", "text": ""}}),
+            serde_json::json!({"type": "content_block_delta", "index": i, "delta": {"type": "text_delta", "text": texto}}),
+            serde_json::json!({"type": "content_block_stop", "index": i}),
+        ]
+    }
+
+    fn traduzir(&mut self, ev: &serde_json::Value) -> Vec<serde_json::Value> {
+        let mut saida = Vec::new();
+        if !self.comecou {
+            self.comecou = true;
+            saida.push(serde_json::json!({"type": "message_start", "message": {"role": "assistant", "content": []}}));
+        }
+        let origem = ev["index"].as_u64().unwrap_or(0);
+        match ev["type"].as_str() {
+            Some("message_start") => self.mapa.clear(),
+            Some("content_block_start") => match ev["content_block"]["type"].as_str() {
+                Some("text") => {
+                    self.mapa.insert(origem, self.proximo);
+                    saida.push(serde_json::json!({"type": "content_block_start", "index": self.proximo, "content_block": {"type": "text", "text": ""}}));
+                    self.proximo += 1;
+                }
+                Some("tool_use") => {
+                    let nome = ev["content_block"]["name"].as_str().unwrap_or("ferramenta");
+                    let nome = nome.strip_prefix("mcp__seedy__").unwrap_or(nome);
+                    saida.extend(self.linha_de_texto(&format!("⚙ {nome}\n\n")));
+                }
+                _ => {}
+            },
+            Some("content_block_delta") => {
+                if let (Some(&i), Some(t)) = (self.mapa.get(&origem), ev["delta"]["text"].as_str()) {
+                    saida.push(serde_json::json!({"type": "content_block_delta", "index": i, "delta": {"type": "text_delta", "text": t}}));
+                }
+            }
+            Some("content_block_stop") => {
+                if let Some(i) = self.mapa.remove(&origem) {
+                    saida.push(serde_json::json!({"type": "content_block_stop", "index": i}));
+                }
+            }
+            _ => {}
+        }
+        saida
+    }
+
+    fn fim(&mut self) -> Vec<serde_json::Value> {
+        vec![
+            serde_json::json!({"type": "message_delta", "delta": {"stop_reason": "end_turn"}}),
+            serde_json::json!({"type": "message_stop"}),
+        ]
+    }
 }
 
 /// Conteúdo de uma linha `data: ...` do SSE (as linhas `event:` e vazias são ignoradas).
@@ -275,6 +366,35 @@ Assistente: olá
 Usuário: ok
 
 ");
+    }
+
+    #[test]
+    fn tradutor_junta_os_turnos_numa_mensagem_so() {
+        let mut t = Tradutor::default();
+        let mut saida = Vec::new();
+        for ev in [
+            serde_json::json!({"type": "message_start"}),
+            serde_json::json!({"type": "content_block_start", "index": 0, "content_block": {"type": "text"}}),
+            serde_json::json!({"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Vou subir."}}),
+            serde_json::json!({"type": "content_block_stop", "index": 0}),
+            serde_json::json!({"type": "content_block_start", "index": 1, "content_block": {"type": "tool_use", "name": "mcp__seedy__subir_servidor"}}),
+            serde_json::json!({"type": "content_block_delta", "index": 1, "delta": {"type": "input_json_delta", "partial_json": "{}"}}),
+            serde_json::json!({"type": "message_stop"}),
+            serde_json::json!({"type": "message_start"}),
+            serde_json::json!({"type": "content_block_start", "index": 0, "content_block": {"type": "text"}}),
+            serde_json::json!({"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Subiu."}}),
+            serde_json::json!({"type": "content_block_stop", "index": 0}),
+        ] {
+            saida.extend(t.traduzir(&ev));
+        }
+        saida.extend(t.fim());
+        let tipos: Vec<&str> = saida.iter().map(|e| e["type"].as_str().unwrap()).collect();
+        assert_eq!(tipos.iter().filter(|t| **t == "message_start").count(), 1);
+        assert!(!saida.iter().any(|e| e["content_block"]["type"] == "tool_use" || e["delta"]["type"] == "input_json_delta"));
+        assert!(saida.iter().any(|e| e["delta"]["text"].as_str().is_some_and(|x| x.contains("⚙ subir_servidor"))));
+        let inicios: Vec<u64> = saida.iter().filter(|e| e["type"] == "content_block_start").map(|e| e["index"].as_u64().unwrap()).collect();
+        assert_eq!(inicios, vec![0, 1, 2]);
+        assert_eq!(saida.last().unwrap()["type"], "message_stop");
     }
 
     #[test]

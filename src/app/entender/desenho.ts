@@ -170,7 +170,7 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
   const ng = visiveis.some((c) => c.papel === 'tela' && c.linguagem === 'ts');
   const rotuloTelas = jsp && ng ? 'TELAS' : jsp ? 'TELAS · JSP' : 'TELAS · NG';
   const usadas = CAMADAS.filter((_, i) => visiveis.some((c) => camadaDe(c) === i) || (CAMADAS[i].chave === 'banco' && visiveis.some((c) => c.externo || (c.papel === 'repositorio' && c.tabela))));
-  const PASSO = 172;
+  const PASSO = 300;
   const camadas: Camada[] = usadas.map((c, i) => ({ chave: c.chave, rotulo: c.chave === 'tela' ? rotuloTelas : c.rotulo, x: 44 + i * PASSO }));
   const xDa = (chave: Camada['chave']) => camadas.find((c) => c.chave === chave)?.x ?? 44;
 
@@ -193,7 +193,7 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
     const tabelasSoltas = [...new Set(lista.filter((c) => c.papel === 'repositorio' && !c.entidade && c.tabela).map((c) => c.tabela!))];
     const banco = (celulas.get('banco')?.length ?? 0) + externos.length + tabelasSoltas.length;
     const linhas = Math.max(1, banco, ...[...celulas.entries()].filter(([k]) => k !== 'banco').map(([, v]) => v.length));
-    const altura = linhas * (ALTURA + 14) + 10;
+    const altura = linhas * (ALTURA + 40) + 10;
     dominios.push({ nome, y, altura });
     for (const [k, comps] of celulas) {
       comps.sort((p, q) => p.nome.localeCompare(q.nome));
@@ -205,7 +205,7 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
           sub: r.sub,
           subCor: r.cor,
           x: xDa(k),
-          y: y + 10 + i * (ALTURA + 14),
+          y: y + 10 + i * (ALTURA + 40),
           largura: LARGURA,
           altura: ALTURA,
           estilo: c.papel === 'entidade' ? 'db' : undefined,
@@ -224,7 +224,7 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
         sub: 'tabela',
         subCor: 'suave',
         x: xDa('banco'),
-        y: y + 10 + (usadosNoBanco + externos.length + i) * (ALTURA + 14),
+        y: y + 10 + (usadosNoBanco + externos.length + i) * (ALTURA + 40),
         largura: LARGURA,
         altura: ALTURA,
         estilo: 'db',
@@ -239,14 +239,14 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
         sub: 'HTTP externa',
         subCor: 'suave',
         x: xDa('banco'),
-        y: y + 10 + (usadosNoBanco + i) * (ALTURA + 14),
+        y: y + 10 + (usadosNoBanco + i) * (ALTURA + 40),
         largura: LARGURA,
         altura: ALTURA,
         estilo: 'ext',
         coluna: camadas.findIndex((x) => x.chave === 'banco'),
       });
     });
-    y += altura + 14;
+    y += altura + 40;
   }
 
   // Setas: injeção/chamadas, HTTP do front para a API, repositório → tabela, cliente → externo.

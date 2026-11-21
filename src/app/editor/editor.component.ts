@@ -13,6 +13,7 @@ import {
 import { monaco } from './monaco';
 import { initVimMode, VimMode } from '../../vendor/monaco-vim';
 import { EditorService, ModoVim } from './editor.service';
+import { BookmarksService } from './bookmarks.service';
 import { TemaService } from '../tema/tema';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { AtalhosService } from '../teclado/atalhos.service';
@@ -103,6 +104,7 @@ export class EditorComponent {
   protected readonly projeto = inject(ProjetoService);
   private readonly tema = inject(TemaService);
   private readonly atalhos = inject(AtalhosService);
+  private readonly bookmarks = inject(BookmarksService);
   private readonly layout = inject(LayoutService);
   private readonly merge = inject(MergeService);
   private readonly hospedeiro = viewChild.required<ElementRef<HTMLDivElement>>('hospedeiro');
@@ -151,6 +153,8 @@ export class EditorComponent {
       const instancia = monaco.editor.create(this.hospedeiro().nativeElement, {
         model: null,
         theme: 'seedy',
+        // Fora do shadow DOM: o menu de contexto e os widgets pegam o CSS do tema (senão ficam transparentes).
+        useShadowDOM: false,
         automaticLayout: true,
         minimap: { enabled: false },
         lineNumbers: 'relative',
@@ -368,6 +372,8 @@ export class EditorComponent {
     ligar(M.CtrlCmd | M.Alt | K.KeyL, 'editor.action.formatDocument');
     ligar(M.CtrlCmd | M.Alt | K.KeyO, 'editor.action.organizeImports');
     ligar(M.CtrlCmd | K.F12, 'editor.action.quickOutline');
+    // Bookmark na linha do cursor (␣ M); ␣ B lista as marcas.
+    instancia.addCommand(M.CtrlCmd | K.F2, () => void this.bookmarks.alternar());
     // Gerar... (getters/setters, construtor, toString, equals/hashCode, sobrescrever).
     ligar(M.Alt | K.Insert, 'editor.action.sourceAction');
   }

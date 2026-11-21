@@ -719,7 +719,7 @@ sd-raiz > .seedy {
 
 /* ---------- Git (mockup 04) ---------- */
 
-.git-tela { flex: 1; min-width: 0; display: flex; gap: var(--espaco); }
+.git-tela { flex: 1; min-width: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr) 430px; gap: var(--espaco); }
 .git-tela > .painel { outline: none; }
 .git-tela > .painel.focado .painel-faixa .rotulo { color: var(--destaque); }
 .git-branches { flex: 0 0 250px; }
@@ -1575,7 +1575,12 @@ sd-scripts { flex: 1; min-width: 0; display: flex; }
 .entender-grade.caminho { grid-template-columns: minmax(0, 1fr) 330px; }
 .entender-grade > .painel { min-height: 0; }
 .entender-area { position: relative; flex: 1; min-height: 0; overflow: auto; outline: none; }
-.entender-conteudo { position: relative; min-width: 100%; }
+.entender-zoom { position: relative; min-width: 100%; }
+.entender-conteudo { position: relative; transform-origin: 0 0; }
+.entender-area { cursor: grab; }
+.entender-area.arrastando-mapa { cursor: grabbing; user-select: none; }
+.entender-area .entender-bloco { cursor: pointer; }
+.entender-zoom-dica { font-size: 11px; white-space: nowrap; }
 .entender-coluna { position: absolute; top: 10px; font-size: 10.5px; letter-spacing: 0.14em; color: var(--texto-suave); white-space: nowrap; }
 .entender-dominio { position: absolute; left: 10px; right: 10px; border-radius: 12px; background: var(--painel-elevado); }
 .entender-dominio span {
@@ -1769,3 +1774,26 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .config-modelo input { width: 300px; color: var(--texto); font-family: inherit; }
 .config-resultado { font-size: 12px; }
 .link { border: 0; background: transparent; color: var(--destaque); font-family: inherit; cursor: pointer; padding: 0; }
+
+/* Menu de contexto do Monaco (botão direito): fundo sólido, borda e sombra do tema. */
+.context-view .monaco-menu,
+.monaco-menu .monaco-action-bar.vertical {
+  background: var(--painel-elevado) !important;
+  color: var(--texto) !important;
+  opacity: 1 !important;
+  font-family: var(--fonte-interface) !important;
+}
+.context-view .monaco-menu {
+  border: var(--espessura-borda) solid var(--borda) !important;
+  border-radius: var(--raio-pequeno) !important;
+  box-shadow: 3px 3px 0 var(--sombra) !important;
+}
+.monaco-menu .action-item.focused > .action-menu-item,
+.monaco-menu .action-item:hover > .action-menu-item { background: var(--selecao) !important; color: var(--texto) !important; }
+.monaco-menu .action-label.separator { border-bottom-color: var(--borda) !important; }
+.monaco-menu .keybinding, .monaco-menu .action-item.disabled .action-label { color: var(--texto-suave) !important; }
+.entender-area > .entender-conteudo { min-width: 100%; }
+
+/* Bookmarks (␣ M): barra rosa na margem e a linha levemente tingida. */
+.monaco-editor .bookmark-margem { border-left: 4px solid var(--rosa); margin-left: 2px; }
+.monaco-editor .bookmark-linha { background: color-mix(in srgb, var(--rosa) 12%, transparent); }

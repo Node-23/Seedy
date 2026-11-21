@@ -218,6 +218,22 @@ pub struct InfoMcp {
     pub comando: Option<String>,
 }
 
+impl Mcp {
+    /// Configuração (`--mcp-config`) para o `claude -p` usar as ferramentas do Seedy, ou None
+    /// se o servidor MCP não subiu. Vai num arquivo na pasta de configuração (o token já mora lá).
+    pub fn arquivo_de_config_do_claude(&self) -> Option<std::path::PathBuf> {
+        let porta = (*travar(&self.porta))?;
+        let config = json!({"mcpServers": {"seedy": {
+            "type": "http",
+            "url": format!("http://127.0.0.1:{porta}/mcp"),
+            "headers": {"Authorization": format!("Bearer {}", self.token)}
+        }}});
+        let caminho = pasta_config().join("mcp-claude.json");
+        fs::write(&caminho, config.to_string()).ok()?;
+        Some(caminho)
+    }
+}
+
 #[tauri::command]
 pub fn mcp_info(estado: State<'_, Mcp>) -> InfoMcp {
     let porta = *travar(&estado.porta);

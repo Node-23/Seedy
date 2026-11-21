@@ -49,6 +49,8 @@ import { WebLspService } from './web/web-lsp.service';
 import { TelaContainersComponent } from './containers/tela-containers.component';
 import { ContainersPainelComponent } from './containers/containers-painel.component';
 import { TelaConfiguracoesComponent } from './config/tela-configuracoes.component';
+import { BookmarksService } from './editor/bookmarks.service';
+import { DivisoresService } from './layout/divisores.service';
 import { TelaEntenderComponent } from './entender/tela-entender.component';
 import { EntenderService } from './entender/entender.service';
 import { BarraIconesComponent } from './todo/barra-icones.component';
@@ -180,6 +182,8 @@ export class App {
     inject(McpService); // o Claude Code (MCP) usa as ferramentas do Seedy
     inject(ExecucaoService); // RUN/DEBUG: acha as classes main quando o jdtls fica pronto
     inject(WebLspService); // projeto web: TypeScript, Angular, ESLint e Prettier
+    inject(BookmarksService); // bookmarks no código (␣ M, ␣ B)
+    inject(DivisoresService); // arrastar o vão entre painéis em qualquer tela cheia
     inject(EntenderService); // Fase 9: arquitetura, regras e o "acompanhar método" (ctrl+.)
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
