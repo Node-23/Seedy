@@ -96,6 +96,8 @@ export class AtalhosService {
     { tecla: 'd', rotulo: 'conexões (banco)', disponivel: true, executar: () => this.layout.alternar('conexoes') },
     { tecla: 'j', rotulo: 'servidor (painel)', disponivel: true, executar: () => this.layout.alternar('servidor') },
     { tecla: 'p', rotulo: 'scripts do package.json', disponivel: true, executar: () => this.layout.alternar('scripts') },
+    { tecla: 'h', rotulo: 'containers (painel)', disponivel: true, executar: () => this.layout.alternar('containers') },
+    { tecla: 'D', rotulo: 'containers e o mapa (Docker)', disponivel: true, executar: () => this.alternarContainers() },
     { tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
     { tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
     { tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
@@ -218,6 +220,11 @@ export class AtalhosService {
   }
 
   private esperandoJanela = false;
+
+  private alternarContainers(): void {
+    this.layout.tela.set(this.layout.tela() === 'containers' ? 'editor' : 'containers');
+    if (this.layout.tela() === 'editor') queueMicrotask(() => this.editor.focar());
+  }
 
   private alternarDebug(): void {
     this.layout.tela.set(this.layout.tela() === 'debug' ? 'editor' : 'debug');

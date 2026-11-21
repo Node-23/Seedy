@@ -79,7 +79,7 @@ export class PerfilBancoComponent {
       const ed = this.aberto();
       if (!ed) return;
       untracked(() => {
-        this.senha.set('');
+        this.senha.set(this.banco.editando()?.senha ?? '');
         this.focoAnterior = document.activeElement as HTMLElement | null;
         void ponte.banco.temSenha(ed.id).then((t) => this.temSenha.set(!ed.novo && t));
         queueMicrotask(() => this.primeiro()?.nativeElement.focus());

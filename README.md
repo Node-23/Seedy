@@ -89,6 +89,12 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Debug no navegador** (mockup 14): o DEBUG de um script sobe o servidor de desenvolvimento,
   abre o Edge/Chrome com o js-debug e para nos breakpoints do `.ts` (source maps), na mesma tela
   de debug do Java, com o console do navegador embaixo.
+- **Containers** (Fase 8, mockups 15 e 16): `␣ D` abre a tela do Docker com os containers do
+  projeto e os outros, um mapa de quem fala com quem (rede, `depends_on`, tráfego TCP medido
+  agora, variável de ambiente que aponta para outro container e portas no host), o detalhe e os
+  logs ao vivo. Inicia/para/reinicia, compose up/down, abre um shell dentro do container no
+  terminal integrado e transforma um Postgres/MySQL do Docker em conexão do painel de banco.
+  `␣ h` mostra a versão compacta embaixo do editor.
 - **Novo projeto** (mockup 12, `␣ N`): Spring Boot (com os iniciadores do start.spring.io), Java com
   Maven, Java web (WAR, pronto para o servidor do Seedy), Java simples e Angular (`ng new`). Escolhe
   o JDK entre os instalados, faz `git init` + primeiro commit, abre o projeto e deixa o RUN na `main`.
@@ -207,6 +213,7 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `␣ i` | copiar o comando que liga o Claude Code ao Seedy (MCP) |
 | `␣ j` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
 | `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | rodar / depurar a configuração escolhida / parar / redeploy do servidor (como no IntelliJ) |
+| `␣ D` · `␣ h` | containers (tela com o mapa · painel): `j`/`k`, `s` inicia/para, `R` reinicia, `l` logs, `t` terminal no container, `b` ligar ao banco, `u` compose up, `m` mapa (`h j k l` entre os nós, `+`/`−` zoom, `0` encaixa) |
 | `␣ p` | scripts do package.json: `j`/`k`, `⏎` roda, `x` para, `o` abre no navegador, `d` debug, `i` npm install, `c` limpa |
 | `␣ r` · `␣ x` | escolher o que o RUN/DEBUG roda · tela de debug (`p`/`b`/`v`/`c` focam pilha, breakpoints, variáveis e console; na lista de breakpoints `e` edita a condição e `d` apaga; `esc` volta) |
 | `ctrl+F8` · `F8` · `F7` · `shift+F8` · `F9` · `alt+F9` · `alt+F8` | breakpoint · passar · entrar · sair · continuar · até o cursor · avaliar |

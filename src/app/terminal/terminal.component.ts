@@ -16,6 +16,7 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { TemaService, Tema } from '../tema/tema';
 import { LayoutService } from '../layout/layout.service';
 import { MensagensService } from '../nucleo/mensagens.service';
+import { TerminalService } from './terminal.service';
 
 interface Aba {
   chave: number;
@@ -24,6 +25,8 @@ interface Aba {
   terminal: Terminal;
   ajuste: FitAddon;
   montado: boolean;
+  /** Programa da aba no lugar do shell (ex.: docker exec num container). */
+  comando?: string[];
 }
 
 let proximaChave = 1;
@@ -62,6 +65,7 @@ export class TerminalComponent {
   private readonly projeto = inject(ProjetoService);
   private readonly tema = inject(TemaService);
   private readonly mensagens = inject(MensagensService);
+  private readonly terminais = inject(TerminalService);
   private readonly hospedeiros = viewChildren<ElementRef<HTMLDivElement>>('hospedeiro');
 
   protected readonly abas = signal<Aba[]>([]);
@@ -102,13 +106,23 @@ export class TerminalComponent {
       if (pedido?.id === 'terminal') queueMicrotask(() => this.focarAtiva());
     });
 
+    // Outros módulos pedem uma aba rodando um comando (ex.: shell num container).
+    effect(() => {
+      const pedido = this.terminais.pedido();
+      if (!pedido) return;
+      untracked(() => {
+        void this.novo(pedido.comando, pedido.titulo);
+        this.layout.mostrar('terminal');
+      });
+    });
+
     inject(DestroyRef).onDestroy(() => {
       this.observador?.disconnect();
       for (const aba of this.abas()) this.descartar(aba);
     });
   }
 
-  protected async novo(): Promise<void> {
+  protected async novo(comando?: string[], titulo?: string): Promise<void> {
     const terminal = new Terminal({
       cursorBlink: true,
       allowProposedApi: false,
@@ -119,7 +133,7 @@ export class TerminalComponent {
     terminal.loadAddon(ajuste);
     this.aplicarTema(terminal, this.tema.tema());
     const chave = proximaChave++;
-    const aba: Aba = { chave, titulo: `shell ${chave}`, idPty: null, terminal, ajuste, montado: false };
+    const aba: Aba = { chave, titulo: titulo ?? `shell ${chave}`, idPty: null, terminal, ajuste, montado: false, comando };
     this.abas.update((l) => [...l, aba]);
     this.ativa.set(chave);
   }
@@ -159,6 +173,7 @@ export class TerminalComponent {
         aba.terminal.rows,
         (texto) => aba.terminal.write(texto),
         () => aba.terminal.writeln('\r\n[processo encerrado]'),
+        aba.comando ?? null,
       );
       aba.terminal.onData((dados) => {
         if (aba.idPty !== null) void ponte.terminal.escrever(aba.idPty, dados);
@@ -167,6 +182,7 @@ export class TerminalComponent {
         if (aba.idPty !== null) void ponte.terminal.redimensionar(aba.idPty, cols, rows);
       });
       aba.terminal.onTitleChange((titulo) => {
+        if (aba.comando) return; // aba de comando (ex.: container) mantém o nome dado
         aba.titulo = titulo.length > 24 ? '…' + titulo.slice(-23) : titulo || aba.titulo;
         this.abas.update((l) => [...l]);
       });

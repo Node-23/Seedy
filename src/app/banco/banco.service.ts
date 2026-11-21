@@ -49,7 +49,8 @@ export class BancoService {
   readonly associacoes = signal(new Map<string, string>(this.lerAssociacoes()));
   readonly resultados = signal(new Map<string, EstadoDoResultado>());
   /** Perfil em edição no formulário (null = fechado). */
-  readonly editando = signal<{ perfil: PerfilBanco; novo: boolean } | null>(null);
+  /** Perfil aberto no editor; `senha` vem preenchida quando o perfil nasce de um container (Fase 8). */
+  readonly editando = signal<{ perfil: PerfilBanco; novo: boolean; senha?: string } | null>(null);
 
   /** O arquivo ativo é .sql? */
   readonly ehSql = computed(() => {

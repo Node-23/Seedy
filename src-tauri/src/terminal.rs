@@ -47,6 +47,22 @@ fn comando_shell() -> CommandBuilder {
     }
 }
 
+/// Programa pedido para a aba. No Windows passa pelo PowerShell: rodar um console
+/// como o docker.exe direto no ConPTY deixa a aba muda.
+fn comando_na_aba(partes: &[String]) -> CommandBuilder {
+    if cfg!(windows) {
+        let citado: Vec<String> = partes.iter().map(|p| format!("'{}'", p.replace('\'', "''"))).collect();
+        let mut c = CommandBuilder::new("powershell.exe");
+        c.args(["-NoLogo", "-NoProfile", "-Command", &format!("& {}", citado.join(" "))]);
+        c
+    } else {
+        let mut c = CommandBuilder::new(&partes[0]);
+        c.args(&partes[1..]);
+        c.env("TERM", "xterm-256color");
+        c
+    }
+}
+
 /// Abre um terminal novo e devolve o id dele.
 #[tauri::command]
 pub fn terminal_abrir(
@@ -56,12 +72,17 @@ pub fn terminal_abrir(
     linhas: u16,
     saida: Channel<String>,
     fim: Channel<()>,
+    comando: Option<Vec<String>>,
 ) -> Result<u32, String> {
     let par = native_pty_system()
         .openpty(tamanho(colunas, linhas))
         .map_err(|e| format!("não consegui abrir o PTY: {e}"))?;
 
-    let mut cmd = comando_shell();
+    // Com `comando` (ex.: `docker exec -it api sh`), a aba roda ele no lugar do shell.
+    let mut cmd = match comando.as_deref() {
+        Some(partes @ [_, ..]) => comando_na_aba(partes),
+        _ => comando_shell(),
+    };
     if let Some(p) = pasta.filter(|p| std::path::Path::new(p).is_dir()) {
         cmd.cwd(p);
     }

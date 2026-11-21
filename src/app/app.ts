@@ -45,6 +45,8 @@ import { NovoProjetoService } from './novo-projeto/novo-projeto.service';
 import { ExecucaoService } from './execucao/execucao.service';
 import { ScriptsComponent } from './web/scripts.component';
 import { WebLspService } from './web/web-lsp.service';
+import { TelaContainersComponent } from './containers/tela-containers.component';
+import { ContainersPainelComponent } from './containers/containers-painel.component';
 
 @Component({
   selector: 'sd-raiz',
@@ -52,7 +54,7 @@ import { WebLspService } from './web/web-lsp.service';
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent,
   ],
   template: `
     <div class="seedy">
@@ -84,6 +86,7 @@ import { WebLspService } from './web/web-lsp.service';
             <sd-terminal [class.oculto]="!layout.disposicao().visiveis.terminal" />
             @if (layout.disposicao().visiveis.servidor) { <sd-servidor /> }
             @if (layout.disposicao().visiveis.scripts) { <sd-scripts /> }
+            @if (layout.disposicao().visiveis.containers) { <sd-containers-painel /> }
           </div>
         </div>
 
@@ -100,6 +103,7 @@ import { WebLspService } from './web/web-lsp.service';
       @if (layout.tela() === 'git') { <sd-git class="tela-cheia" /> }
       @if (layout.tela() === 'merge') { <sd-merge class="tela-cheia" /> }
       @if (layout.tela() === 'debug') { <sd-tela-debug class="tela-cheia" /> }
+      @if (layout.tela() === 'containers') { <sd-tela-containers class="tela-cheia" /> }
       <sd-diff />
       <sd-busca />
       <sd-busca-projeto />
@@ -139,7 +143,7 @@ export class App {
 
   protected inferiorVisivel(): boolean {
     const v = this.layout.disposicao().visiveis;
-    return v.terminal || v.servidor || v.scripts;
+    return v.terminal || v.servidor || v.scripts || v.containers;
   }
 
   constructor() {

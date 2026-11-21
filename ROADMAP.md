@@ -126,9 +126,18 @@ o resto entra como módulos internos (mockups 13 e 14):
 4. ✅ Chat da IA no merge de conflitos (mockup 10, `␣ a`): Claude lê o código e o histórico,
    propõe a resolução como prévia no resultado e o usuário aplica ou recusa
 
-## Fase 8 — Painel de containers
+## ✅ Fase 8 — Containers (Docker)
 
-_A detalhar._
+Mockups 15 e 16. Tudo pelo CLI do Docker (Docker Desktop no Windows, docker no Linux):
+
+- ✅ Tela de containers (`␣ D`): lista por compose, mapa das conexões, detalhe e logs ao vivo;
+  painel compacto embaixo do editor (`␣ h`)
+- ✅ Conexões no mapa: redes Docker, `depends_on` do compose, tráfego TCP medido agora (lido de
+  /proc/net/tcp dentro de cada container), dependência pela configuração (variável de ambiente
+  que aponta para outro container, ex.: `DATABASE_URL=...@db:5432`) e portas publicadas no host
+- ✅ Iniciar/parar/reiniciar, compose up/down, terminal dentro do container (`docker exec`) e
+  "ligar ao banco" (Postgres/MySQL viram conexão no painel de banco, já preenchida)
+- Falta testar no Linux; imagens sem `cat` (distroless) ficam sem tráfego medido
 
 ## Fase 9 — Painel de arquitetura
 

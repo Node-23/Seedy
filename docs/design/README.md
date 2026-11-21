@@ -18,6 +18,8 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Novo projeto (Spring Boot, Maven, WAR, Java simples, Angular), `␣ N` | [12-novo-projeto.png](12-novo-projeto.png) | ✅ |
 | Projeto web: TS/Angular (LSP), ESLint, Prettier e painel de scripts do package.json | [13-web.png](13-web.png) | 6 ✅ |
 | Debug no navegador (Edge/Chrome via CDP, source maps do .ts) | [14-debug-web.png](14-debug-web.png) | 6 ✅ |
+| Containers em tela cheia: lista, mapa das conexões, detalhe e logs, `␣ D` | [15-containers.png](15-containers.png) | 8 ✅ |
+| Painel de containers no editor (lista e logs), `␣ h` | [16-containers-painel.png](16-containers-painel.png) | 8 ✅ |
 
 As telas 07 a 09 não têm mockup próprio: foram feitas na linguagem visual dos outros e
 capturadas do app. Servem de referência do mesmo jeito.

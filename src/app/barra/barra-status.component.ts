@@ -12,6 +12,7 @@ import { ServidorService } from '../servidor/servidor.service';
 import { DepuradorService } from '../servidor/depurador.service';
 import { WebLspService } from '../web/web-lsp.service';
 import { ScriptsService } from '../web/scripts.service';
+import { DockerService } from '../containers/docker.service';
 import { IaService } from '../ia/ia.service';
 import { RevisaoService } from '../ia/revisao.service';
 import { McpService } from '../ia/mcp.service';
@@ -50,6 +51,14 @@ const NOMES_MODO: Record<string, string> = {
           {{ merge.restantes() }} {{ merge.restantes() === 1 ? 'conflito restante' : 'conflitos restantes' }}
         </span>
         <span class="segmento com-divisa-esq suave">{{ merge.arquivoAtual() + 1 }} de {{ merge.totalDeArquivos() }} {{ merge.totalDeArquivos() === 1 ? 'arquivo' : 'arquivos' }}</span>
+      } @else if (layout.tela() === 'containers') {
+        <span class="segmento dicas-merge">
+          <span><span class="tecla">s</span> inicia/para</span> <span><span class="tecla">l</span> logs</span> <span><span class="tecla">t</span> terminal</span>
+          <span><span class="tecla">b</span> ligar ao banco</span> <span><span class="tecla">m</span> mapa</span> <span><span class="tecla">esc</span> editor</span>
+        </span>
+        <span class="espaco"></span>
+        @if (docker.versao()) { <span class="segmento com-divisa-esq git-mais">● {{ docker.rodando().length }} rodando</span> }
+        @if (docker.composeDoProjeto(); as c) { <span class="segmento com-divisa-esq suave">compose {{ c }}</span> }
       } @else if (layout.tela() === 'debug') {
         <span class="segmento dicas-merge">
           <span><span class="tecla">F9</span> continuar</span> <span><span class="tecla">F8</span> passar</span>
@@ -80,6 +89,9 @@ const NOMES_MODO: Record<string, string> = {
       <span class="espaco"></span>
       @if (jdtls.estado().fase !== 'inativo') {
         <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase" [title]="tituloJdtls()">{{ textoJdtls() }}</span>
+      }
+      @if (docker.visivel() && docker.versao()) {
+        <span class="segmento com-divisa-esq servidor-status" data-fase="rodando">● docker {{ docker.rodando().length }}</span>
       }
       @for (e of scripts.rodando(); track e.nome) {
         <span class="segmento com-divisa-esq servidor-status" data-fase="rodando">● npm {{ e.nome === '__install__' ? 'install' : e.nome }}{{ portaDe(e.url) }}</span>
@@ -133,6 +145,7 @@ export class BarraStatusComponent {
   protected readonly depurador = inject(DepuradorService);
   protected readonly web = inject(WebLspService);
   protected readonly scripts = inject(ScriptsService);
+  protected readonly docker = inject(DockerService);
   protected readonly iaGeral = inject(IaService);
   protected readonly revisao = inject(RevisaoService);
   protected readonly mcp = inject(McpService);
@@ -169,10 +182,10 @@ export class BarraStatusComponent {
   }
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
-    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.buscando() ? 'busca' : this.editor.modo(),
+    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.buscando() ? 'busca' : this.editor.modo(),
   );
   protected readonly rotuloDoModo = computed(() =>
-    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.buscando() ? 'BUSCA' : this.nomeModo(),
+    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.buscando() ? 'BUSCA' : this.nomeModo(),
   );
   protected readonly buscando = computed(() => this.busca.aberta() || this.buscaProjeto.aberta());
 

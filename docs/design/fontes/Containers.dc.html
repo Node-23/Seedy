@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Containers (Docker) — IDE Java</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Inky Mono','Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:34px;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px;box-shadow:3px 3px 0 #0B0B0C}
+.btn.dest{background:#9CD7BA;color:#16171C;font-weight:700}
+.suave{color:#A29D93}.dest{color:#9CD7BA}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.ct{display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;font-size:12px;white-space:nowrap}
+.ct .img{margin-left:auto;color:#A29D93;font-size:11px}
+.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.grupo{padding:10px 12px 4px;font-size:10.5px;letter-spacing:.14em;color:#A29D93}
+.no{position:absolute;width:168px;border:2px solid #0B0B0C;border-radius:11px;background:#222225;box-shadow:3px 3px 0 #0B0B0C;padding:8px 10px;font-size:11.5px;line-height:17px}
+.no b{font-size:12.5px}
+.no.sel{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#2A2A2D}
+.no.parado{opacity:.55}
+.rede{position:absolute;border:2px dashed #3F3F44;border-radius:16px}
+.rede span{position:absolute;top:-10px;left:14px;background:#2A2A2D;padding:0 6px;font-size:10.5px;letter-spacing:.1em;color:#A29D93}
+.kv{display:flex;gap:8px;font-size:11.5px;line-height:21px;white-space:nowrap}
+.kv .k{width:92px;color:#A29D93;flex-shrink:0}
+.log div{white-space:pre;padding:0 14px;line-height:19px;font-size:11px}
+.leg{display:flex;align-items:center;gap:7px;font-size:11px;color:#A29D93;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="tela">
+
+  <header style="display:flex;align-items:center;gap:10px;height:40px;flex-shrink:0">
+    <button style="width:40px;height:40px;border-radius:10px;border:2px solid #0B0B0C;background:#9CD7BA;color:#16171C;box-shadow:3px 3px 0 #0B0B0C;display:flex;align-items:center;justify-content:center;padding:0"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path fill="#16171C" fill-rule="evenodd" d="M59.85 58.86Q58.80 58.36 58.16 58.10Q57.52 57.84 56.64 57.55Q55.75 57.26 54.42 56.92Q53.08 56.59 52.21 56.44Q51.34 56.28 50.79 56.22Q50.24 56.16 49.42 56.09Q48.59 56.03 48.12 56.03Q47.65 56.03 46.90 56.11Q46.15 56.18 45.68 56.30Q45.21 56.41 44.83 56.56Q44.46 56.70 44.13 56.89Q43.81 57.08 43.59 57.26Q43.37 57.44 43.14 57.69Q42.92 57.94 42.75 58.23Q42.58 58.52 42.44 58.94Q42.30 59.36 42.26 59.73Q42.21 60.09 42.22 60.42Q42.22 60.74 42.28 61.16Q42.34 61.59 42.48 62.11Q42.62 62.64 42.80 63.16Q42.99 63.68 44.22 66.44Q45.46 69.19 45.82 70.12Q46.17 71.05 46.43 71.85Q46.69 72.65 46.96 73.76Q47.22 74.86 47.33 75.47Q47.43 76.09 47.55 77.32Q47.67 78.55 47.69 79.52Q47.70 80.49 47.63 81.42Q47.57 82.35 47.49 82.96Q47.42 83.58 47.21 84.71Q47.00 85.84 46.71 86.92Q46.42 87.99 46.01 89.18Q45.59 90.38 45.10 91.52Q44.62 92.65 44.07 93.70Q43.52 94.75 42.82 95.86Q42.12 96.98 41.67 97.59Q41.23 98.21 40.91 98.58Q40.60 98.96 40.58 99.02Q40.56 99.09 40.60 99.14Q40.65 99.19 41.26 99.20Q41.88 99.20 43.20 99.04Q44.53 98.88 46.03 98.55Q47.53 98.23 48.59 97.94Q49.65 97.65 50.74 97.30Q51.83 96.96 53.30 96.39Q54.77 95.83 56.15 95.20Q57.53 94.56 58.59 94.00Q59.64 93.45 60.57 92.90Q61.50 92.35 62.46 91.72Q63.41 91.09 64.33 90.39Q65.25 89.70 66.11 88.95Q66.97 88.19 67.48 87.69Q67.99 87.19 68.48 86.64Q68.97 86.10 69.55 85.36Q70.13 84.63 70.70 83.73Q71.27 82.84 71.56 82.26Q71.84 81.69 72.09 81.04Q72.35 80.39 72.52 79.79Q72.69 79.18 72.81 78.27Q72.94 77.36 72.94 76.65Q72.94 75.94 72.80 74.97Q72.65 73.99 72.45 73.24Q72.25 72.49 71.89 71.55Q71.53 70.61 71.09 69.75Q70.65 68.89 70.13 68.04Q69.61 67.20 68.99 66.37Q68.37 65.54 67.73 64.82Q67.08 64.10 66.28 63.33Q65.49 62.56 64.61 61.86Q63.74 61.17 63.02 60.68Q62.29 60.20 61.60 59.78Q60.90 59.36 59.85 58.86ZM86.41 1.93Q86.26 1.81 85.82 1.63Q85.38 1.46 84.64 1.30Q83.90 1.15 82.74 1.03Q81.57 0.91 80.62 0.90Q79.68 0.89 78.54 0.95Q77.40 1.02 76.64 1.10Q75.88 1.18 74.58 1.38Q73.28 1.59 72.26 1.80Q71.25 2.01 70.46 2.21Q69.68 2.41 68.51 2.77Q67.34 3.12 66.81 3.32Q66.28 3.51 65.19 3.96Q64.09 4.42 63.14 4.89Q62.19 5.36 61.31 5.87Q60.43 6.39 59.61 6.94Q58.80 7.50 58.13 8.02Q57.47 8.54 56.85 9.09Q56.23 9.64 55.71 10.17Q55.19 10.69 54.64 11.31Q54.10 11.93 53.62 12.54Q53.14 13.15 52.52 14.07Q51.91 14.99 51.52 15.68Q51.12 16.38 50.77 17.09Q50.42 17.81 50.12 18.51Q49.83 19.20 49.54 20.02Q49.26 20.84 49.00 21.74Q48.75 22.64 48.45 24.17Q48.15 25.69 48.08 26.27Q48.01 26.84 47.93 28.00Q47.85 29.17 47.86 31.37Q47.87 33.56 47.84 33.72Q47.80 33.87 47.77 33.85Q47.73 33.84 47.68 33.74Q47.63 33.65 47.08 32.04Q46.54 30.43 46.00 29.24Q45.46 28.04 44.75 26.74Q44.04 25.43 43.34 24.39Q42.64 23.34 41.81 22.34Q40.97 21.33 40.17 20.54Q39.36 19.76 38.39 18.98Q37.41 18.21 36.37 17.57Q35.32 16.93 34.17 16.39Q33.02 15.84 31.76 15.41Q30.50 14.97 29.02 14.64Q27.53 14.31 26.92 14.21Q26.30 14.12 25.40 14.04Q24.50 13.96 23.91 13.93Q23.32 13.90 21.93 13.93Q20.53 13.96 19.95 14.00Q19.36 14.04 18.32 14.17Q17.28 14.29 16.63 14.44Q15.98 14.58 15.59 14.72Q15.20 14.86 14.92 15.02Q14.65 15.17 14.49 15.35Q14.33 15.53 14.24 15.80Q14.14 16.06 14.16 16.30Q14.17 16.53 14.24 16.77Q14.31 17.00 15.13 18.69Q15.95 20.37 16.83 21.93Q17.72 23.48 18.40 24.46Q19.07 25.44 19.61 26.06Q20.15 26.69 20.65 27.22Q21.16 27.74 22.03 28.50Q22.89 29.25 23.70 29.82Q24.50 30.39 25.36 30.89Q26.22 31.39 26.97 31.74Q27.73 32.09 28.72 32.44Q29.70 32.79 30.47 32.99Q31.24 33.19 31.96 33.34Q32.67 33.48 33.43 33.58Q34.19 33.68 35.68 33.82Q37.16 33.96 38.18 34.10Q39.19 34.24 39.77 34.38Q40.35 34.51 40.94 34.73Q41.54 34.95 41.83 35.10Q42.13 35.25 42.36 35.41Q42.59 35.57 42.86 35.79Q43.12 36.02 43.29 36.20Q43.45 36.38 43.63 36.63Q43.81 36.89 43.93 37.13Q44.05 37.37 44.14 37.64Q44.22 37.92 44.27 38.17Q44.31 38.43 44.32 38.75Q44.34 39.07 44.28 39.60Q44.22 40.13 44.00 40.79Q43.78 41.45 43.56 41.90Q43.34 42.35 43.08 42.78Q42.81 43.21 42.50 43.65Q42.19 44.09 41.74 44.63Q41.28 45.17 40.17 46.27Q39.05 47.36 38.37 47.91Q37.70 48.46 36.46 49.33Q35.23 50.21 31.95 52.26Q28.67 54.31 27.65 54.99Q26.63 55.67 25.10 56.82Q23.58 57.96 22.99 58.45Q22.40 58.94 21.70 59.57Q21.00 60.21 20.29 60.92Q19.58 61.63 19.00 62.29Q18.43 62.95 17.94 63.56Q17.45 64.18 16.98 64.86Q16.50 65.54 16.13 66.16Q15.76 66.78 15.40 67.48Q15.03 68.17 14.56 69.36Q14.09 70.54 13.84 71.46Q13.59 72.37 13.49 72.95Q13.39 73.53 13.33 74.40Q13.28 75.28 13.29 75.85Q13.30 76.42 13.34 76.90Q13.39 77.38 13.54 78.25Q13.69 79.12 13.90 79.87Q14.11 80.61 14.41 81.46Q14.71 82.30 15.18 83.32Q15.65 84.33 16.14 85.18Q16.63 86.03 17.09 86.71Q17.55 87.40 18.26 88.31Q18.98 89.22 19.47 89.78Q19.97 90.34 21.01 91.34Q22.06 92.35 22.68 92.87Q23.30 93.39 23.83 93.80Q24.35 94.20 25.31 94.86Q26.27 95.52 27.38 96.16Q28.50 96.81 29.64 97.33Q30.78 97.86 31.71 98.19Q32.65 98.52 33.09 98.63Q33.53 98.74 34.02 98.81Q34.50 98.89 34.74 98.89Q34.98 98.89 35.28 98.84Q35.59 98.78 35.83 98.70Q36.08 98.61 36.33 98.47Q36.59 98.33 36.82 98.15Q37.06 97.96 37.43 97.60Q37.80 97.23 38.31 96.56Q38.82 95.89 39.50 94.68Q40.19 93.47 40.66 92.38Q41.13 91.30 41.49 90.29Q41.85 89.28 42.12 88.30Q42.38 87.31 42.57 86.35Q42.75 85.38 42.86 84.64Q42.96 83.89 43.03 82.87Q43.09 81.85 43.08 81.01Q43.08 80.17 42.93 78.78Q42.78 77.40 42.63 76.64Q42.49 75.88 42.09 74.39Q41.69 72.89 40.46 69.34Q39.24 65.79 38.96 64.68Q38.68 63.58 38.54 62.74Q38.40 61.91 38.37 60.96Q38.34 60.01 38.43 59.33Q38.51 58.65 38.69 57.93Q38.87 57.21 39.04 56.75Q39.21 56.28 39.38 55.95Q39.54 55.61 39.92 55.01Q40.30 54.40 40.75 53.84Q41.20 53.28 42.87 51.57Q44.54 49.86 45.13 49.20Q45.73 48.54 46.27 47.90Q46.82 47.26 47.52 46.31Q48.22 45.36 48.74 44.46Q49.27 43.56 49.65 42.77Q50.03 41.97 50.31 41.17Q50.59 40.38 51.02 38.89Q51.46 37.41 51.62 37.00Q51.78 36.59 52.20 35.84Q52.62 35.10 52.96 34.68Q53.30 34.26 53.70 33.83Q54.11 33.40 54.48 33.07Q54.85 32.74 55.30 32.41Q55.74 32.08 56.41 31.67Q57.07 31.25 57.70 30.91Q58.33 30.58 59.35 30.11Q60.36 29.64 62.60 28.77Q64.84 27.89 65.87 27.46Q66.91 27.03 67.45 26.78Q67.99 26.53 69.06 25.97Q70.13 25.42 71.23 24.72Q72.33 24.02 73.12 23.42Q73.92 22.82 74.79 22.04Q75.65 21.26 76.23 20.64Q76.82 20.01 77.64 18.96Q78.47 17.92 78.92 17.27Q79.38 16.62 79.77 15.98Q80.16 15.34 80.65 14.47Q81.13 13.61 81.73 12.42Q82.33 11.24 83.06 9.63Q83.80 8.02 84.28 7.07Q84.76 6.12 85.16 5.43Q85.57 4.75 86.07 4.00Q86.57 3.25 86.67 3.03Q86.76 2.81 86.76 2.62Q86.76 2.42 86.66 2.23Q86.56 2.05 86.41 1.93Z"/></svg></button>
+    <div style="display:flex;align-items:center;gap:10px;height:40px;box-sizing:border-box;padding:0 14px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C"><span style="font-weight:700">feirinha-verde</span><span class="suave">develop</span></div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn">▲ compose up <kbd>u</kbd></button>
+      <button class="btn">▼ down</button>
+      <button class="btn">↻ <kbd>r</kbd></button>
+    </div>
+    <div style="display:flex;gap:4px;margin-left:8px"><span class="suave" style="width:28px;text-align:center">–</span><span class="suave" style="width:28px;text-align:center">□</span><span class="suave" style="width:28px;text-align:center">×</span></div>
+  </header>
+
+  <div style="display:flex;align-items:center;gap:14px;height:54px;flex-shrink:0;box-sizing:border-box;padding:0 16px;border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;white-space:nowrap">
+    <span style="font-weight:700">Docker</span><span class="suave" style="font-size:12px">28.3</span>
+    <span class="ok" style="font-size:12px">● 5 rodando</span><span class="suave" style="font-size:12px">○ 1 parado · 2 redes · compose <span style="color:#E9E2D3">feira</span></span>
+    <span style="flex:1"></span>
+    <span class="leg"><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#E9E2D3" stroke-width="2"/></svg>depends_on</span>
+    <span class="leg"><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#9CD7BA" stroke-width="2.5" stroke-dasharray="6 4"/></svg>tráfego agora</span>
+    <span class="leg"><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#E8C979" stroke-width="2" stroke-dasharray="2 4"/></svg>pela configuração</span>
+    <span class="leg"><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#E3A9CC" stroke-width="2"/></svg>porta no host</span>
+  </div>
+
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr) 340px;grid-template-rows:minmax(0,1fr) 190px;gap:12px">
+
+    <!-- lista -->
+    <section class="janela" style="grid-row:1 / 3">
+      <div class="faixa"><span class="rotulo">CONTAINERS</span><span style="flex:1"></span><kbd>␣ D</kbd></div>
+      <div style="padding:2px 0">
+        <div class="grupo">COMPOSE · FEIRA</div>
+        <div class="ct sel"><span class="ok">●</span><b>api</b><span class="img">feira-api · :8080</span></div>
+        <div class="ct"><span class="ok">●</span>postgres<span class="img">postgres:17 · :5432</span></div>
+        <div class="ct"><span class="ok">●</span>redis<span class="img">redis:7</span></div>
+        <div class="ct"><span class="ok">●</span>worker<span class="img">feira-worker</span></div>
+        <div class="ct"><span class="suave">○</span><span class="suave">rabbitmq</span><span class="img">parado · 2 h</span></div>
+        <div class="grupo">SOLTOS</div>
+        <div class="ct"><span class="ok">●</span>seedy-mysql<span class="img">mysql:8 · :3306</span></div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="suave" style="padding:10px 12px;font-size:11px;line-height:17px;border-top:2px solid #0B0B0C">
+        j k · <span class="dest">⏎</span> detalhe · <span class="dest">s</span> inicia/para · <span class="dest">R</span> reinicia<br>
+        <span class="dest">l</span> logs · <span class="dest">t</span> terminal · <span class="dest">b</span> ligar ao banco
+      </div>
+    </section>
+
+    <!-- mapa -->
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">MAPA</span><span class="suave">conexões entre os containers</span><span style="flex:1"></span><span class="suave">tráfego medido há 2 s</span><kbd>m</kbd></div>
+      <div style="position:relative;flex:1;overflow:hidden">
+        <!-- redes -->
+        <div class="rede" style="left:168px;top:16px;width:560px;height:290px"><span>REDE FEIRA_DEFAULT</span></div>
+        <div class="rede" style="left:168px;top:326px;width:200px;height:96px"><span>REDE BRIDGE</span></div>
+
+        <!-- host -->
+        <div class="no" style="left:12px;top:130px;width:122px;border-style:dashed;background:#19191B;box-shadow:none">
+          <b class="rosa">host</b><br><span class="suave">localhost</span><br><span class="rosa" style="font-size:10.5px">:8080 :5432 :3306</span><br><span class="suave" style="font-size:10.5px">Seedy usa :5432</span>
+        </div>
+
+        <svg width="100%" height="100%" style="position:absolute;inset:0;overflow:visible" aria-hidden="true">
+          <defs>
+            <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#E9E2D3"/></marker>
+            <marker id="setaV" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#9CD7BA"/></marker>
+            <marker id="setaA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#E8C979"/></marker>
+            <marker id="setaR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#E3A9CC"/></marker>
+          </defs>
+          <!-- portas no host -->
+          <path d="M136 150 C160 150 168 76 196 76" fill="none" stroke="#E3A9CC" stroke-width="2" marker-end="url(#setaR)"/>
+          <path d="M136 196 C160 230 160 372 196 372" fill="none" stroke="#E3A9CC" stroke-width="2" marker-end="url(#setaR)"/>
+          <!-- api → redis: pela configuração (REDIS_HOST) -->
+          <path d="M350 62 C366 62 372 56 386 56" fill="none" stroke="#E8C979" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#setaA)"/>
+          <text x="318" y="28" fill="#E8C979" font-size="10" font-family="Martian Mono, monospace">REDIS_HOST</text>
+          <!-- api → postgres: depends_on + tráfego -->
+          <path d="M350 80 C470 80 470 150 566 150" fill="none" stroke="#E9E2D3" stroke-width="2" marker-end="url(#seta)"/>
+          <path d="M350 94 C460 98 462 164 566 164" fill="none" stroke="#9CD7BA" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#setaV)"/>
+          <text x="440" y="134" fill="#9CD7BA" font-size="10.5" font-family="Martian Mono, monospace">8 conexões</text>
+          <!-- worker → postgres (tráfego) e worker → rabbitmq (depends_on) -->
+          <path d="M350 214 C460 214 470 178 566 178" fill="none" stroke="#9CD7BA" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#setaV)"/>
+          <text x="470" y="206" fill="#9CD7BA" font-size="10.5" font-family="Martian Mono, monospace">2</text>
+          <path d="M350 234 C370 234 372 258 390 258" fill="none" stroke="#E9E2D3" stroke-width="2" marker-end="url(#seta)" opacity=".6"/>
+        </svg>
+
+        <div class="no sel" style="left:196px;top:46px;width:150px"><b>api</b> <span class="ok">●</span><br><span class="suave">feira-api:dev</span><br><span class="rosa" style="font-size:10.5px">host :8080</span></div>
+        <div class="no" style="left:390px;top:34px;width:130px"><b>redis</b> <span class="ok">●</span><br><span class="suave">redis:7</span></div>
+        <div class="no" style="left:570px;top:128px;width:146px"><b>postgres</b> <span class="ok">●</span><br><span class="suave">postgres:17</span><br><span class="rosa" style="font-size:10.5px">host :5432</span> <span class="dest" style="font-size:10.5px">◆ Homolog</span></div>
+        <div class="no" style="left:196px;top:194px;width:150px"><b>worker</b> <span class="ok">●</span><br><span class="suave">feira-worker:dev</span></div>
+        <div class="no parado" style="left:394px;top:234px;width:120px"><b>rabbitmq</b><br><span class="suave">○ parado</span></div>
+        <div class="no" style="left:196px;top:346px;width:150px"><b>seedy-mysql</b> <span class="ok">●</span><br><span class="rosa" style="font-size:10.5px">host :3306</span></div>
+
+        <div class="suave" style="position:absolute;right:14px;bottom:10px;font-size:11px">h j k l move · ⏎ abre · <span class="dest">+</span>/<span class="dest">−</span> zoom · <span class="dest">0</span> encaixa</div>
+      </div>
+    </section>
+
+    <!-- detalhe -->
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">API</span><span class="ok">● rodando há 2 h</span><span style="flex:1"></span><kbd>⏎</kbd></div>
+      <div style="padding:10px 14px;flex:1;overflow:hidden">
+        <div class="kv"><span class="k">imagem</span><span>feira-api:dev</span></div>
+        <div class="kv"><span class="k">portas</span><span class="rosa">8080 → 8080</span></div>
+        <div class="kv"><span class="k">redes</span><span>feira_default</span></div>
+        <div class="kv"><span class="k">depende de</span><span>postgres <span class="suave">(depends_on)</span></span></div>
+        <div class="kv"><span class="k">fala com</span><span><span class="dest">postgres:5432</span> <span class="suave">· 8</span></span></div>
+        <div class="kv"><span class="k">configurado</span><span><span class="aviso">redis</span> <span class="suave">(REDIS_HOST)</span></span></div>
+        <div class="kv" style="white-space:normal;line-height:17px;margin:2px 0"><span class="k">ambiente</span><span class="suave" style="word-break:break-all">SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/feira · DB_PASSWORD=••••</span></div>
+        <div class="kv"><span class="k">uso</span><span>3% · 412 MB</span></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 14px">
+        <button class="btn">■ parar <kbd>s</kbd></button>
+        <button class="btn">↻ reiniciar <kbd>R</kbd></button>
+        <button class="btn">&gt;_ terminal <kbd>t</kbd></button>
+        <button class="btn">↗ abrir :8080</button>
+      </div>
+    </section>
+
+    <!-- logs -->
+    <section class="janela" style="grid-column:2 / 4">
+      <div class="faixa"><span class="rotulo">LOGS</span><span class="suave">api · seguindo</span><span style="flex:1"></span>
+        <span style="padding:0 7px;border-radius:6px;background:#3A2A2B;color:#EE8C84;font-size:11px">ERROR 1</span>
+        <span style="padding:0 7px;border-radius:6px;border:1px solid #0B0B0C;color:#A29D93;font-size:11px">WARN 0</span>
+        <span class="suave" style="font-size:11px">/ filtrar</span><kbd>l</kbd></div>
+      <div class="log" style="padding:6px 0">
+        <div><span class="suave">14:02:11 </span><span class="dest">INFO  </span>HikariPool-1 - Start completed.</div>
+        <div><span class="suave">14:02:12 </span><span class="dest">INFO  </span>Tomcat started on port 8080 (http) with context path '/'</div>
+        <div><span class="suave">14:02:12 </span><span class="dest">INFO  </span>Started FeiraApiApplication in 4.82 seconds</div>
+        <div><span class="suave">14:06:40 </span><span class="erro">ERROR </span>Redis connection refused: redis:6379 <span class="suave">— RedisConnectionFactory</span></div>
+        <div><span class="suave">14:06:41 </span><span class="dest">INFO  </span>GET /api/feiras/3/bancas 200 18ms</div>
+      </div>
+    </section>
+  </div>
+
+  <footer style="display:flex;align-items:stretch;height:30px;flex-shrink:0;box-sizing:border-box;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C;overflow:hidden;font-size:12px">
+    <span style="display:flex;align-items:center;padding:0 14px;background:#E3A9CC;color:#16171C;font-weight:700;letter-spacing:.08em">DOCKER</span>
+    <span style="display:flex;align-items:center;gap:14px;padding:0 14px;color:#A29D93">
+      <span><span class="dest">s</span> inicia/para</span><span><span class="dest">l</span> logs</span><span><span class="dest">t</span> terminal</span><span><span class="dest">b</span> ligar ao banco</span><span><span class="dest">m</span> mapa</span><span><span class="dest">esc</span> editor</span>
+    </span>
+    <span style="flex:1"></span>
+    <span style="display:flex;align-items:center;padding:0 12px;border-left:2px solid #0B0B0C" class="ok">● 5 rodando</span>
+    <span style="display:flex;align-items:center;padding:0 12px;border-left:2px solid #0B0B0C;color:#A29D93">compose feira</span>
+  </footer>
+  <div style="height:20px;flex-shrink:0"></div>
+</div>
+</body>
+</html>

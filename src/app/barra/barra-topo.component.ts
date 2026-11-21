@@ -10,6 +10,7 @@ import { MergeService } from '../git/merge.service';
 import { CommitService } from '../git/commit.service';
 import { ExecucaoService } from '../execucao/execucao.service';
 import { CAMINHO_DO_LOGO } from '../marca/logo';
+import { DockerService } from '../containers/docker.service';
 
 /** Barra de cima: menu, projeto, buffers abertos, ferramentas e controles da janela. */
 @Component({
@@ -72,6 +73,13 @@ import { CAMINHO_DO_LOGO } from '../marca/logo';
       </div>
 
       }
+      @if (layout.tela() === 'containers') {
+        <div class="ferramentas git-acoes">
+          <button class="botao" title="docker compose up -d (u)" (click)="docker.compose('up')">▲ compose up <kbd>u</kbd></button>
+          <button class="botao" title="docker compose down" (click)="docker.composeDown()">▼ down</button>
+          <button class="botao" title="atualizar (r)" (click)="docker.atualizar(true)">↻ <kbd>r</kbd></button>
+        </div>
+      }
       @if (layout.tela() === 'editor' || layout.tela() === 'debug') {
         <!-- Configuração de execução + RUN / DEBUG / parar (mockup 11). -->
         <div class="ferramentas execucao">
@@ -116,6 +124,7 @@ export class BarraTopoComponent {
   protected readonly commit = inject(CommitService);
   protected readonly janela = ponte.janela;
   protected readonly logo = CAMINHO_DO_LOGO;
+  protected readonly docker = inject(DockerService);
   protected readonly exec = inject(ExecucaoService);
 
   /** DEBUG: já depurando, só mostra a tela de debug; senão, sobe em debug. */

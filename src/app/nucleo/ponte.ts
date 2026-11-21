@@ -197,6 +197,32 @@ export interface EstadoWeb {
 
 export type TipoServidorWeb = 'ts' | 'angular' | 'eslint';
 
+/** Container do Docker já inspecionado (Fase 8). */
+export interface ContainerDocker {
+  id: string;
+  nome: string;
+  imagem: string;
+  estado: string;
+  status: string;
+  criado: string;
+  iniciado: string;
+  portas: { container: number; host: number | null; protocolo: string }[];
+  redes: { nome: string; ip: string; apelidos: string[] }[];
+  ambiente: string[];
+  composeProjeto: string | null;
+  composeServico: string | null;
+  composePasta: string | null;
+  dependeDe: string[];
+}
+
+/** Conexões TCP abertas de um container para outro (medidas agora). */
+export interface TrafegoDocker {
+  de: string;
+  para: string;
+  porta: number;
+  conexoes: number;
+}
+
 /** Pedido da janela de novo projeto (␣ N). */
 export interface PedidoDeProjeto {
   modelo: 'spring' | 'maven' | 'war' | 'simples' | 'angular';
@@ -446,6 +472,15 @@ export const ponte = {
     jsdebug: (reiniciar = false) => invoke<number>('jsdebug_iniciar', { reiniciar }),
   },
 
+  /** Fase 8 — Containers: o CLI do Docker (listar, tráfego entre containers, uso, ações). */
+  docker: {
+    versao: () => invoke<string>('docker_versao'),
+    listar: async (): Promise<ContainerDocker[]> => (noApp() ? invoke<ContainerDocker[]>('docker_listar') : []),
+    trafego: async (): Promise<TrafegoDocker[]> => (noApp() ? invoke<TrafegoDocker[]>('docker_trafego') : []),
+    uso: async (): Promise<{ nome: string; cpu: string; memoria: string }[]> => (noApp() ? invoke('docker_uso') : []),
+    acao: (nome: string, acao: 'start' | 'stop' | 'restart') => invoke<void>('docker_acao', { nome, acao }),
+  },
+
   /** Comandos do projeto (scripts do package.json, npm install) com a saída em lotes de linhas. */
   tarefa: {
     async iniciar(id: string, raiz: string, comando: string[], aoLer: (linhas: string[]) => void, aoTerminar: (codigo: number | null) => void): Promise<number> {
@@ -512,12 +547,13 @@ export const ponte = {
       linhas: number,
       aoReceber: (texto: string) => void,
       aoEncerrar: () => void,
+      comando: string[] | null = null,
     ): Promise<number> {
       const saida = new Channel<string>();
       saida.onmessage = aoReceber;
       const fim = new Channel<null>();
       fim.onmessage = aoEncerrar;
-      return invoke<number>('terminal_abrir', { pasta, colunas, linhas, saida, fim });
+      return invoke<number>('terminal_abrir', { pasta, colunas, linhas, saida, fim, comando });
     },
     escrever: (id: number, dados: string) => invoke('terminal_escrever', { id, dados }),
     redimensionar: (id: number, colunas: number, linhas: number) =>

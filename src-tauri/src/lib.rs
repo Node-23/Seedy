@@ -7,6 +7,7 @@
 mod arquivos;
 mod banco;
 mod busca;
+mod containers;
 mod depurador;
 mod git;
 mod ia;
@@ -100,6 +101,11 @@ pub fn run() {
             web::tarefa_parar,
             web::jsdebug_iniciar,
             web::web_navegadores,
+            containers::docker_versao,
+            containers::docker_listar,
+            containers::docker_trafego,
+            containers::docker_uso,
+            containers::docker_acao,
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,
