@@ -19,7 +19,7 @@ import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
 import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
-import { DepuradorService } from '../servidor/depurador.service';
+import { aceitaBreakpoint, DepuradorService } from '../servidor/depurador.service';
 
 /** API interna do vim (do CodeMirror), que o monaco-vim expõe sem tipos. */
 interface ApiVim {
@@ -177,7 +177,7 @@ export class EditorComponent {
         if (ev.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
         const b = this.buffer();
         const linha = ev.target.position?.lineNumber;
-        if (b && linha && !b.somenteLeitura && /\.java$/i.test(b.caminho)) this.depurador.alternar(b.caminho, linha);
+        if (b && linha && !b.somenteLeitura && aceitaBreakpoint(b.caminho)) this.depurador.alternar(b.caminho, linha);
       });
       this.instancia.set(instancia);
       instancia.setModel(this.buffer()?.modelo ?? null);

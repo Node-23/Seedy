@@ -20,7 +20,7 @@ import { McpService } from '../ia/mcp.service';
 import { ExecucaoService } from '../execucao/execucao.service';
 import { NovoProjetoService } from '../novo-projeto/novo-projeto.service';
 import { ServidorService } from '../servidor/servidor.service';
-import { DepuradorService } from '../servidor/depurador.service';
+import { aceitaBreakpoint, DepuradorService } from '../servidor/depurador.service';
 import { BlameService } from '../git/blame.service';
 
 export interface AcaoLider {
@@ -95,6 +95,7 @@ export class AtalhosService {
     { tecla: 'n', rotulo: 'anotar (blame)', disponivel: true, executar: () => void this.blame.alternar() },
     { tecla: 'd', rotulo: 'conexões (banco)', disponivel: true, executar: () => this.layout.alternar('conexoes') },
     { tecla: 'j', rotulo: 'servidor (painel)', disponivel: true, executar: () => this.layout.alternar('servidor') },
+    { tecla: 'p', rotulo: 'scripts do package.json', disponivel: true, executar: () => this.layout.alternar('scripts') },
     { tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
     { tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
     { tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
@@ -373,8 +374,8 @@ export class AtalhosService {
       case 'F8':
         if (so(true, false, false)) {
           const c = this.cursor();
-          if (c && /\.java$/i.test(c.caminho)) this.depurador.alternar(c.caminho, c.linha);
-          else if (c) this.mensagens.mostrar('breakpoints só em arquivos .java');
+          if (c && aceitaBreakpoint(c.caminho)) this.depurador.alternar(c.caminho, c.linha);
+          else if (c) this.mensagens.mostrar('breakpoints só em arquivos .java, .ts e .js');
           return true;
         }
         if (so(false, false, false) && pausado) { this.depurador.passar(); return true; }

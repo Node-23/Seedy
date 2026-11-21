@@ -222,6 +222,10 @@ sd-raiz > .seedy {
 .arvore-item:hover { background: var(--selecao); }
 .arvore-item .seta { color: var(--texto-suave); width: 10px; }
 .arvore-item .nome { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.arvore-item .tipo-arquivo { font-size: 10.5px; font-weight: 700; min-width: 16px; color: var(--texto-suave); }
+.arvore-item .tipo-arquivo[data-tipo="TS"] { color: var(--destaque); }
+.arvore-item .tipo-arquivo[data-tipo="JS"], .arvore-item .tipo-arquivo[data-tipo="{}"] { color: var(--aviso); }
+.arvore-item .tipo-arquivo[data-tipo="<>"] { color: var(--rosa); }
 .arvore-item .marca-sujo { color: var(--aviso); }
 .arvore-item.ativo { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
 .arvore-item.ativo .seta, .arvore-item.ativo .marca-sujo { color: inherit; }
@@ -1460,3 +1464,20 @@ input.novo-entrada:focus, .novo-entrada:focus-within { box-shadow: 0 0 0 1.5px v
 .novo-rodape { display: flex; align-items: center; gap: 16px; height: 54px; padding: 0 12px 0 16px; border-top: var(--espessura-borda) solid var(--borda); flex-shrink: 0; font-size: 12px; }
 .novo-rodape .botao:disabled { opacity: 0.5; cursor: default; }
 .novo-problema { font-size: 11px; }
+
+/* ---------- projeto web: painel de scripts e ESLint (mockup 13) ---------- */
+
+sd-scripts { flex: 1; min-width: 0; display: flex; }
+.scripts { min-height: 0; }
+.scripts .servidor-faixa .botao { height: 30px; padding: 0 10px; font-size: 12px; }
+.scripts-corpo { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr); }
+.scripts-lista { border-right: var(--espessura-borda) solid var(--borda); padding: 6px 0; overflow: auto; outline: none; font-size: 12px; }
+.script-item { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; white-space: nowrap; cursor: pointer; }
+.script-item.selecionado { background: var(--selecao); box-shadow: inset 3px 0 0 var(--destaque); }
+.scripts-lista:focus .script-item.selecionado { outline: 1px solid var(--destaque); outline-offset: -1px; }
+.script-comando { margin-left: auto; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+.script-vazio, .script-dica { padding: 8px 12px; font-size: 11px; }
+.scripts-saida { white-space: normal; }
+.scripts-saida .log-linha { white-space: pre-wrap; word-break: break-word; }
+.scripts-saida .log-linha[data-nivel="aviso"] { color: var(--aviso); }
+.monaco-editor .dica-eslint { color: var(--aviso) !important; font-style: italic; opacity: 0.85; }

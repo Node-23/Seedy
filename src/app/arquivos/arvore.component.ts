@@ -54,6 +54,7 @@ interface No {
             @if (no.entrada.pasta) {
               <span class="seta">{{ no.aberto ? '▾' : '▸' }}</span>
             }
+            @if (!no.entrada.pasta && tipoWeb(no.entrada.nome); as t) { <span class="tipo-arquivo" [attr.data-tipo]="t">{{ t }}</span> }
             <span class="nome">{{ no.entrada.nome }}</span>
             @if (letraGit(no.entrada.caminho); as l) {
               <span class="marca-git" [attr.data-letra]="l" [title]="tituloDaLetra(l)">{{ l === '?' ? 'U' : l }}</span>
@@ -192,5 +193,11 @@ export class ArvoreComponent {
       this.mensagens.erro(String(e));
       return [];
     }
+  }
+
+  /** Marca do tipo nos arquivos web (mockup 13): TS, JS, <>, #, {}. */
+  protected tipoWeb(nome: string): string | null {
+    const ext = nome.slice(nome.lastIndexOf('.') + 1).toLowerCase();
+    return ({ ts: 'TS', tsx: 'TS', mts: 'TS', js: 'JS', jsx: 'JS', mjs: 'JS', cjs: 'JS', html: '<>', css: '#', scss: '#', less: '#', json: '{}' } as Record<string, string>)[ext] ?? null;
   }
 }

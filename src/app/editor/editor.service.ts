@@ -245,6 +245,13 @@ export class EditorService {
 
   private readonly ouvintesDeSalvar: ((b: Buffer) => void)[] = [];
 
+  /** Roda antes de gravar (ex.: o Prettier formata o arquivo do projeto web). */
+  antesDeSalvar(fn: (b: Buffer) => Promise<void>): void {
+    this.preparadoresDeSalvar.push(fn);
+  }
+
+  private readonly preparadoresDeSalvar: ((b: Buffer) => Promise<void>)[] = [];
+
   /** Avisos de buffer recarregado por mudança feita fora do editor (antes, depois). */
   aoRecarregar(fn: (b: Buffer, antes: string, depois: string) => void): void {
     this.ouvintesDeRecarregar.push(fn);
@@ -323,6 +330,7 @@ export class EditorService {
       if (avisar) this.mensagens.mostrar(`"${b.nome}" é somente leitura`);
       return false;
     }
+    for (const fn of this.preparadoresDeSalvar) await fn(b).catch((e) => this.mensagens.erro(String(e)));
     try {
       await ponte.gravarArquivo(b.caminho, b.modelo.getValue());
       b.versaoSalva = b.modelo.getAlternativeVersionId();

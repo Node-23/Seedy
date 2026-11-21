@@ -16,6 +16,8 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Merge com chat de IA (conversar sobre o conflito, prévia no resultado) | [10-merge-ia.png](10-merge-ia.png) | 7 ✅ |
 | Depurador em tela cheia + RUN/DEBUG e configuração de execução na barra | [11-debug.png](11-debug.png) | ✅ |
 | Novo projeto (Spring Boot, Maven, WAR, Java simples, Angular), `␣ N` | [12-novo-projeto.png](12-novo-projeto.png) | ✅ |
+| Projeto web: TS/Angular (LSP), ESLint, Prettier e painel de scripts do package.json | [13-web.png](13-web.png) | 6 ✅ |
+| Debug no navegador (Edge/Chrome via CDP, source maps do .ts) | [14-debug-web.png](14-debug-web.png) | 6 ✅ |
 
 As telas 07 a 09 não têm mockup próprio: foram feitas na linguagem visual dos outros e
 capturadas do app. Servem de referência do mesmo jeito.

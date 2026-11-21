@@ -7,11 +7,21 @@ import { LayoutService } from '../layout/layout.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { DepuradorService } from '../servidor/depurador.service';
 import { lerLinha, LinhaDeLog } from '../servidor/log';
+import { ScriptsService } from '../web/scripts.service';
+import { ponte } from '../nucleo/ponte';
 
-/** O que o RUN/DEBUG roda: um servidor de aplicação do projeto ou uma classe com `main`. */
+/** O que o RUN/DEBUG roda: servidor de aplicação, classe com `main` ou script do package.json. */
 export type ConfigDeExecucao =
   | { id: string; tipo: 'servidor'; nome: string; perfilId: string }
-  | { id: string; tipo: 'main'; nome: string; mainClass: string; projectName: string; caminho: string | null };
+  | { id: string; tipo: 'main'; nome: string; mainClass: string; projectName: string; caminho: string | null }
+  | { id: string; tipo: 'script'; nome: string; script: string };
+
+/** O console do navegador depurado (mockup 14). */
+export interface ConsoleDoNavegador {
+  linhas: LinhaDeLog[];
+  erros: number;
+  avisos: number;
+}
 
 /** Um processo `main` rodando (ou que já terminou): a saída fica no painel de execução. */
 export interface ExecucaoDeMain {
@@ -42,6 +52,10 @@ export class ExecucaoService {
   private readonly layout = inject(LayoutService);
   private readonly servidor = inject(ServidorService);
   private readonly depurador = inject(DepuradorService);
+  private readonly scripts = inject(ScriptsService);
+  readonly navegador = signal<ConsoleDoNavegador | null>(null);
+  /** Navegador do debug web: Edge ou Chrome (o que estiver instalado). */
+  readonly navegadorEscolhido = signal<'edge' | 'chrome'>('edge');
 
   /** Classes com `main` do projeto (vêm do jdtls). */
   readonly mains = signal<Extract<ConfigDeExecucao, { tipo: 'main' }>[]>([]);
@@ -54,6 +68,7 @@ export class ExecucaoService {
   readonly configs = computed<ConfigDeExecucao[]>(() => [
     ...this.servidor.doProjeto().map((p) => ({ id: `servidor:${p.id}`, tipo: 'servidor' as const, nome: p.nome, perfilId: p.id })),
     ...this.mains(),
+    ...this.scripts.scripts().map((sc) => ({ id: `script:${sc.nome}`, tipo: 'script' as const, nome: sc.nome === 'start' ? 'npm start' : `npm run ${sc.nome}`, script: sc.nome })),
   ]);
   readonly atual = computed(() => {
     const lista = this.configs();
@@ -64,6 +79,7 @@ export class ExecucaoService {
     const c = this.atual();
     if (!c) return false;
     if (c.tipo === 'servidor') return (this.servidor.execucoes().get(c.perfilId)?.fase ?? 'parado') !== 'parado';
+    if (c.tipo === 'script') return this.scripts.execucoes().get(c.script)?.fase === 'rodando';
     const m = this.main();
     return !!m && m.config.id === c.id && m.fase !== 'parado';
   });
@@ -71,14 +87,18 @@ export class ExecucaoService {
     const c = this.atual();
     const s = this.depurador.sessao();
     if (!c || !s || s.semDebug) return false;
-    return c.tipo === 'servidor' ? s.perfilId === c.perfilId : s.tipo === 'main';
+    return c.tipo === 'servidor' ? s.perfilId === c.perfilId : c.tipo === 'script' ? s.tipo === 'navegador' : s.tipo === 'main';
   });
 
   private contador = 0;
   private resto = { stdout: '', stderr: '' };
 
   constructor() {
-    this.depurador.aoSaida = (texto, categoria) => this.registrarSaida(texto, categoria);
+    this.depurador.aoSaida = (texto, categoria) =>
+      this.depurador.sessao()?.tipo === 'navegador' ? this.registrarNoNavegador(texto, categoria) : this.registrarSaida(texto, categoria);
+    void ponte.web.navegadores().then((l) => {
+      if (l.length && !l.includes(this.navegadorEscolhido())) this.navegadorEscolhido.set(l[0] as 'edge' | 'chrome');
+    });
     this.depurador.aoTerminar = (codigo) => this.aoTerminar(codigo);
     // Projeto novo (ou trocado): lembra a escolha dele e procura as mains quando o jdtls ficar pronto.
     effect(() => {
@@ -143,7 +163,7 @@ export class ExecucaoService {
     const id = await this.escolha.escolherUm('RODAR / DEBUG', [
       ...lista.map((c) => ({
         rotulo: `${c.id === atual ? '● ' : ''}${c.nome}`,
-        detalhe: c.tipo === 'servidor' ? 'servidor de aplicação' : c.mainClass,
+        detalhe: c.tipo === 'servidor' ? 'servidor de aplicação' : c.tipo === 'script' ? (this.scripts.scripts().find((x) => x.nome === c.script)?.comando ?? 'package.json') : c.mainClass,
         valor: c.id,
       })),
       { rotulo: '+ novo servidor', detalhe: 'WildFly/JBoss ou Tomcat', valor: '+servidor' },
@@ -160,6 +180,11 @@ export class ExecucaoService {
     const c = this.atual();
     if (!c) {
       this.mensagens.mostrar(this.jdtls.pronto() ? 'nenhuma classe com main nem servidor no projeto (␣ r)' : 'o jdtls ainda está carregando o projeto');
+      return;
+    }
+    if (c.tipo === 'script') {
+      if (debug) await this.depurarScript(c.script);
+      else await this.scripts.rodar(c.script);
       return;
     }
     if (c.tipo === 'servidor') {
@@ -195,7 +220,47 @@ export class ExecucaoService {
   async parar(): Promise<void> {
     const c = this.atual();
     if (c?.tipo === 'servidor') return this.servidor.parar(c.perfilId);
+    if (c?.tipo === 'script') {
+      if (this.depurador.sessao()?.tipo === 'navegador') await this.depurador.desanexar(true);
+      return this.scripts.parar(c.script);
+    }
     if (this.main()?.fase !== 'parado' && this.depurador.sessao()?.tipo === 'main') await this.depurador.desanexar(true);
+  }
+
+  /**
+   * DEBUG de um script (mockup 14): sobe o servidor de desenvolvimento se preciso, espera
+   * o endereço e abre o navegador com o depurador (breakpoints no .ts pelos source maps).
+   */
+  async depurarScript(nome: string): Promise<void> {
+    const raiz = this.projeto.raiz();
+    if (!raiz) return;
+    if (this.scripts.execucoes().get(nome)?.fase !== 'rodando') await this.scripts.rodar(nome);
+    this.layout.tela.set('debug');
+    this.navegador.set({ linhas: [], erros: 0, avisos: 0 });
+    this.registrarNoNavegador(`esperando ${nome} anunciar o endereço…`, 'seedy');
+    const url = await this.scripts.esperarUrl(nome);
+    if (!url) {
+      this.mensagens.erro(`${nome} não anunciou um endereço (veja o painel de scripts, ␣ p)`);
+      return;
+    }
+    const navegador = this.navegadorEscolhido();
+    this.registrarNoNavegador(`abrindo ${navegador === 'edge' ? 'Edge' : 'Chrome'} em ${url} com o depurador…`, 'seedy');
+    await this.depurador.lancarNavegador({ nome: `npm ${nome} · ${navegador === 'edge' ? 'Edge' : 'Chrome'}`, url, webRoot: raiz, navegador });
+  }
+
+  private registrarNoNavegador(texto: string, categoria: string): void {
+    const atual = this.navegador() ?? { linhas: [], erros: 0, avisos: 0 };
+    const novas: LinhaDeLog[] = [];
+    let { erros, avisos } = atual;
+    for (const t of texto.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n')) {
+      if (!t.trim()) continue;
+      const seedy = categoria === 'seedy' || categoria === 'console';
+      const nivel: LinhaDeLog['nivel'] = categoria === 'stderr' ? (/warn/i.test(t) ? 'aviso' : 'erro') : 'info';
+      if (nivel === 'erro') erros++;
+      if (nivel === 'aviso') avisos++;
+      novas.push({ n: ++this.contador, texto: t, nivel, hora: new Date().toTimeString().slice(0, 8), mensagem: t, frame: null, pilha: false, seedy });
+    }
+    this.navegador.set({ linhas: [...atual.linhas, ...novas].slice(-LIMITE_DE_LINHAS), erros, avisos });
   }
 
   limparSaida(): void {

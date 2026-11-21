@@ -102,13 +102,18 @@ Um adaptador comum, com uma implementação para cada servidor:
 - Testado com WildFly 42 e Tomcat 11 no Windows; falta testar no Linux e com JBoss EAP
 - Depois: comando de build próprio (Ant/Maven) como alternativa ao deploy montado pelo Seedy
 
-## Fase 6 — Web: JS / TS / HTML / CSS / Angular
+## ✅ Fase 6 — Web: JS / TS / HTML / CSS / Angular
 
 Decisão: **na mesma IDE**, não numa "gêmea". O Monaco já traz JS/TS/HTML/CSS;
-o resto entra como módulos internos:
+o resto entra como módulos internos (mockups 13 e 14):
 
-- typescript-language-server e Angular Language Service via LSP
-- ESLint/Prettier, rodar scripts do `package.json`, debug no navegador (CDP)
+- ✅ typescript-language-server e Angular Language Service via LSP (completar, hover, definição,
+  usos, renomear, ações rápidas, erros de template); instalados com o npm na primeira vez
+- ✅ ESLint (avisos no editor e correções nas ações rápidas) e Prettier (formatar e, com
+  configuração no projeto, ao salvar)
+- ✅ Scripts do `package.json` (`␣ p`) e no RUN/DEBUG; debug no navegador (Edge/Chrome via
+  js-debug, breakpoints no .ts pelos source maps)
+- Falta testar no Linux e num projeto Angular rodando `ng serve` (o Node daqui é antigo para o CLI)
 
 ## ✅ Fase 7 — IA
 

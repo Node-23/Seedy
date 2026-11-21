@@ -10,6 +10,8 @@ import { MergeService } from '../git/merge.service';
 import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { DepuradorService } from '../servidor/depurador.service';
+import { WebLspService } from '../web/web-lsp.service';
+import { ScriptsService } from '../web/scripts.service';
 import { IaService } from '../ia/ia.service';
 import { RevisaoService } from '../ia/revisao.service';
 import { McpService } from '../ia/mcp.service';
@@ -79,6 +81,13 @@ const NOMES_MODO: Record<string, string> = {
       @if (jdtls.estado().fase !== 'inativo') {
         <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase" [title]="tituloJdtls()">{{ textoJdtls() }}</span>
       }
+      @for (e of scripts.rodando(); track e.nome) {
+        <span class="segmento com-divisa-esq servidor-status" data-fase="rodando">● npm {{ e.nome === '__install__' ? 'install' : e.nome }}{{ portaDe(e.url) }}</span>
+      }
+      @if (web.ativo() && web.fase() !== 'inativo') {
+        <span class="segmento com-divisa-esq" [title]="web.detalhe()">{{ textoWeb() }}</span>
+        @if (web.web()?.prettier) { <span class="segmento com-divisa-esq suave">prettier ao salvar</span> }
+      }
       @for (e of servidor.rodando(); track e.perfilId) {
         <span class="segmento com-divisa-esq servidor-status" [attr.data-fase]="e.fase">● {{ servidor.perfil(e.perfilId)?.tipo === 'tomcat' ? 'tomcat' : 'jboss' }} :{{ servidor.perfil(e.perfilId)?.portaHttp }}</span>
         @if (e.info?.portaDebug) {
@@ -122,6 +131,8 @@ export class BarraStatusComponent {
   protected readonly banco = inject(BancoService);
   protected readonly servidor = inject(ServidorService);
   protected readonly depurador = inject(DepuradorService);
+  protected readonly web = inject(WebLspService);
+  protected readonly scripts = inject(ScriptsService);
   protected readonly iaGeral = inject(IaService);
   protected readonly revisao = inject(RevisaoService);
   protected readonly mcp = inject(McpService);
@@ -133,6 +144,24 @@ export class BarraStatusComponent {
     const m = this.mcp.ultima();
     if (m && Date.now() - m.quando < 60_000) return `✦ Claude Code: ${m.rotulo}`;
     return null;
+  }
+
+  /** "ts ✓ · angular ✓ · eslint 1" (mockup 13). */
+  protected textoWeb(): string {
+    const f = this.web.fase();
+    if (f === 'sem-node') return 'web: sem Node';
+    if (f === 'instalando') return 'web: instalando…';
+    if (f === 'erro') return 'web: erro';
+    const s = this.web.servidores();
+    const partes = [`ts ${s.ts?.pronto ? '✓' : '…'}`];
+    if (this.web.web()?.angular) partes.push(`angular ${s.angular?.pronto ? '✓' : '…'}`);
+    if (this.web.web()?.eslint) partes.push(`eslint ${s.eslint?.pronto ? (this.web.avisosEslint() || '✓') : '…'}`);
+    return partes.join(' · ');
+  }
+
+  protected portaDe(url: string | null): string {
+    const m = url ? /:(\d+)/.exec(url.replace(/^https?:\/\//, '')) : null;
+    return m ? ` :${m[1]}` : '';
   }
 
   protected nomeDoAmbiente(a: string): string {

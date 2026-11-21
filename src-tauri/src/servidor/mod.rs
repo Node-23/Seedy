@@ -4,7 +4,7 @@
 
 mod adaptador;
 pub mod implantar;
-mod processo;
+pub(crate) mod processo;
 
 use crate::tema::pasta_config;
 use implantar::{Fonte, Sincronizador};

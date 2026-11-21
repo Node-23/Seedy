@@ -16,6 +16,7 @@ mod novo_projeto;
 mod observador;
 mod servidor;
 mod terminal;
+mod web;
 mod tema;
 
 pub fn run() {
@@ -29,6 +30,8 @@ pub fn run() {
         .manage(servidor::Execucoes::default())
         .manage(depurador::SessoesDap::default())
         .manage(mcp::Mcp::default())
+        .manage(web::Tarefas::default())
+        .manage(web::JsDebug::default())
         .setup(|app| {
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
@@ -89,6 +92,14 @@ pub fn run() {
             mcp::mcp_responder,
             novo_projeto::projeto_criar,
             novo_projeto::spring_metadados,
+            web::web_estado,
+            web::web_instalar,
+            web::lsp_web_iniciar,
+            web::web_formatar,
+            web::tarefa_iniciar,
+            web::tarefa_parar,
+            web::jsdebug_iniciar,
+            web::web_navegadores,
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,
@@ -111,6 +122,8 @@ pub fn run() {
             if let tauri::RunEvent::Exit = evento {
                 use tauri::Manager;
                 app.state::<servidor::Execucoes>().encerrar_todos();
+                app.state::<web::Tarefas>().encerrar_todas();
+                app.state::<web::JsDebug>().encerrar();
             }
         });
 }

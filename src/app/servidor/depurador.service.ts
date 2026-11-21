@@ -37,7 +37,7 @@ export interface NoDeVariavel {
 
 /** Sessão de debug: anexada a um servidor (JDWP) ou um processo `main` lançado pelo java-debug. */
 export interface SessaoDebug {
-  tipo: 'servidor' | 'main';
+  tipo: 'servidor' | 'main' | 'navegador';
   nome: string;
   perfilId: string | null;
   porta: number | null;
@@ -53,6 +53,19 @@ export interface AlvoMain {
 }
 
 export type ParadaEmExcecoes = 'nenhuma' | 'naoTratadas' | 'todas';
+
+/** O que o debug no navegador precisa (mockup 14). */
+export interface AlvoNavegador {
+  nome: string;
+  url: string;
+  webRoot: string;
+  navegador: 'edge' | 'chrome';
+}
+
+/** Arquivos em que dá para pôr breakpoint: Java e JS/TS (debug no navegador). */
+export function aceitaBreakpoint(caminho: string): boolean {
+  return /\.(java|[cm]?[jt]sx?)$/i.test(caminho);
+}
 
 interface Mensagem {
   type: 'request' | 'response' | 'event';
@@ -118,6 +131,11 @@ export class DepuradorService {
   telaDebug: { cursor(): { caminho: string; linha: number } | null; focarAvaliar(): void } | null = null;
 
   private conexao: number | null = null;
+  /** No debug do navegador, a sessão "pai" do js-debug (a que lançou o navegador). */
+  private conexaoPai: number | null = null;
+  private portaJsDebug: number | null = null;
+  /** Conexões que já receberam os breakpoints (o js-debug manda "initialized" de novo e um reenvio os apagaria). */
+  private readonly configuradas = new Set<number>();
   private seq = 0;
   private codigoDeSaida: number | null = null;
   private ateOCursor: { caminho: string; linha: number } | null = null;
@@ -157,8 +175,8 @@ export class DepuradorService {
     const b = this.editor.bufferAtivo();
     const pos = this.editor.instancia?.getPosition();
     if (!b || b.somenteLeitura || !pos) return;
-    if (!/\.java$/i.test(b.caminho)) {
-      this.mensagens.mostrar('breakpoints só em arquivos .java');
+    if (!aceitaBreakpoint(b.caminho)) {
+      this.mensagens.mostrar('breakpoints só em arquivos .java, .ts e .js');
       return;
     }
     this.alternar(b.caminho, pos.lineNumber);
@@ -303,6 +321,69 @@ export class DepuradorService {
     );
   }
 
+  /**
+   * Debug no navegador (mockup 14): o js-debug abre o Edge/Chrome no endereço e pede uma
+   * sessão filha (startDebugging) para a aba — é nela que ficam breakpoints e pausas.
+   */
+  async lancarNavegador(alvo: AlvoNavegador): Promise<boolean> {
+    if (this.sessao()) await this.desanexar(this.sessao()!.tipo !== 'servidor');
+    try {
+      const porta = await ponte.web.jsdebug(true);
+      this.portaJsDebug = porta;
+      let id = -1;
+      id = await ponte.dap.conectar(
+        porta,
+        (m) => this.receber(m, id),
+        () => this.aoFecharConexao(id),
+      );
+      this.conexao = id;
+      this.conexaoPai = id;
+      this.sessao.set({ tipo: 'navegador', nome: alvo.nome, perfilId: null, porta: null, semDebug: false });
+      await this.pedir('initialize', { ...INICIALIZAR, adapterID: 'pwa-chrome', supportsStartDebuggingRequest: true });
+      void this.pedirEm(id, 'launch', {
+        type: alvo.navegador === 'edge' ? 'pwa-msedge' : 'pwa-chrome',
+        request: 'launch',
+        name: alvo.nome,
+        url: alvo.url,
+        webRoot: alvo.webRoot,
+        sourceMaps: true,
+        smartStep: true,
+        pauseForSourceMap: true,
+        skipFiles: ['<node_internals>/**', '**/node_modules/**'],
+        userDataDir: true,
+        cleanUp: 'wholeBrowser',
+      }).catch((e) => {
+        this.mensagens.erro(`debug no navegador: ${e.message}`);
+        void this.desanexar(true);
+      });
+      return true;
+    } catch (e) {
+      this.mensagens.erro(`debug no navegador: ${(e as Error).message ?? e}`);
+      await this.desanexar();
+      return false;
+    }
+  }
+
+  /** O js-debug pediu uma sessão filha (a aba do navegador): conecta e a assume. */
+  private async abrirFilha(args: { request: string; configuration: unknown }): Promise<void> {
+    if (this.portaJsDebug === null) return;
+    let id = -1;
+    id = await ponte.dap.conectar(
+      this.portaJsDebug,
+      (m) => this.receber(m, id),
+      () => this.aoFecharConexao(id),
+    );
+    this.conexao = id;
+    await this.pedir('initialize', { ...INICIALIZAR, adapterID: 'pwa-chrome', supportsStartDebuggingRequest: true });
+    void this.pedir(args.request === 'attach' ? 'attach' : 'launch', args.configuration).catch((e) => this.mensagens.erro(`debug no navegador: ${e.message}`));
+  }
+
+  /** Uma conexão caiu: no navegador, fechar a aba (filha) ou o js-debug (pai) encerra tudo. */
+  private aoFecharConexao(id: number): void {
+    if (this.sessao()?.tipo === 'navegador' && (id === this.conexao || id === this.conexaoPai)) void this.desanexar(true);
+    else if (id === this.conexao) this.aoFechar();
+  }
+
   private async abrirSessao(s: SessaoDebug, iniciar: () => Promise<unknown>): Promise<boolean> {
     if (this.sessao()) await this.desanexar(this.sessao()!.tipo === 'main');
     try {
@@ -310,23 +391,15 @@ export class DepuradorService {
       await this.jdtls
         .executar('vscode.java.updateDebugSettings', JSON.stringify({ hotCodeReplace: 'auto', showStaticVariables: false, showQualifiedNames: false, showHex: false, showToString: true, maxStringLength: 0 }))
         .catch(() => undefined);
-      this.conexao = await ponte.dap.conectar(
+      let id = -1;
+      id = await ponte.dap.conectar(
         portaDap,
-        (m) => this.receber(m),
-        () => this.aoFechar(),
+        (m) => this.receber(m, id),
+        () => this.aoFecharConexao(id),
       );
+      this.conexao = id;
       this.sessao.set(s);
-      await this.pedir('initialize', {
-        clientID: 'seedy',
-        clientName: 'Seedy',
-        adapterID: 'java',
-        pathFormat: 'path',
-        linesStartAt1: true,
-        columnsStartAt1: true,
-        supportsVariableType: true,
-        supportsRunInTerminalRequest: false,
-        locale: 'pt-BR',
-      });
+      await this.pedir('initialize', { ...INICIALIZAR, adapterID: 'java' });
       // A resposta do attach/launch só chega depois do configurationDone (feito no evento "initialized").
       void iniciar().catch((e) => {
         this.mensagens.erro(`${s.semDebug ? 'rodar' : 'debug'}: ${e.message}`);
@@ -342,9 +415,12 @@ export class DepuradorService {
 
   /** Solta o depurador; com `encerrar`, mata o processo depurado (o `main`). */
   async desanexar(encerrar = false): Promise<void> {
-    if (this.conexao !== null) {
-      await this.pedir('disconnect', { restart: false, terminateDebuggee: encerrar }).catch(() => undefined);
-      await ponte.dap.fechar(this.conexao).catch(() => undefined);
+    const conexoes = [...new Set([this.conexao, this.conexaoPai].filter((c): c is number => c !== null))];
+    this.conexao = null;
+    this.conexaoPai = null;
+    for (const c of conexoes) {
+      await this.pedirEm(c, 'disconnect', { restart: false, terminateDebuggee: encerrar }).catch(() => undefined);
+      await ponte.dap.fechar(c).catch(() => undefined);
     }
     this.aoFechar();
   }
@@ -352,6 +428,9 @@ export class DepuradorService {
   private aoFechar(): void {
     const s = this.sessao();
     this.conexao = null;
+    this.conexaoPai = null;
+    this.portaJsDebug = null;
+    this.configuradas.clear();
     for (const p of this.pendentes.values()) p.erro(new Error('sessão de debug encerrada'));
     this.pendentes.clear();
     this.sessao.set(null);
@@ -466,19 +545,23 @@ export class DepuradorService {
 
   private pedir(command: string, args: unknown): Promise<any> {
     if (this.conexao === null) return Promise.reject(new Error('sem sessão de debug'));
+    return this.pedirEm(this.conexao, command, args);
+  }
+
+  private pedirEm(conexao: number, command: string, args: unknown): Promise<any> {
     const seq = ++this.seq;
     const msg = JSON.stringify({ type: 'request', seq, command, arguments: args });
     return new Promise((ok, erro) => {
       this.pendentes.set(seq, { ok, erro });
-      ponte.dap.enviar(this.conexao!, msg).catch((e) => {
+      ponte.dap.enviar(conexao, msg).catch((e) => {
         this.pendentes.delete(seq);
         erro(new Error(String(e)));
       });
     });
   }
 
-  private receber(texto: string): void {
-    let m: Mensagem;
+  private receber(texto: string, origem: number): void {
+    let m: Mensagem & { arguments?: any };
     try {
       m = JSON.parse(texto);
     } catch {
@@ -489,7 +572,21 @@ export class DepuradorService {
       this.pendentes.delete(m.request_seq);
       if (m.success) p?.ok(m.body);
       else p?.erro(new Error(m.message ?? 'falhou'));
+    } else if (m.type === 'request') {
+      // Pedidos do adaptador para o cliente (o js-debug pede as sessões filhas assim).
+      const sucesso = m.command === 'startDebugging';
+      void ponte.dap
+        .enviar(origem, JSON.stringify({ type: 'response', seq: ++this.seq, request_seq: m.seq, command: m.command, success: sucesso, message: sucesso ? undefined : 'não suportado' }))
+        .catch(() => undefined);
+      if (sucesso) void this.abrirFilha(m.arguments ?? {});
     } else if (m.type === 'event') {
+      // A sessão pai do navegador só precisa do configurationDone; o resto é da filha.
+      if (this.sessao()?.tipo === 'navegador' && origem === this.conexaoPai && origem !== this.conexao) {
+        if (m.event === 'initialized') void this.pedirEm(origem, 'configurationDone', {}).catch(() => undefined);
+        else if (m.event === 'terminated') void this.desanexar(true);
+        else if (m.event === 'output') void this.aoEvento('output', m.body ?? {});
+        return;
+      }
       void this.aoEvento(m.event ?? '', m.body ?? {});
     }
   }
@@ -497,7 +594,10 @@ export class DepuradorService {
   private async aoEvento(evento: string, corpo: any): Promise<void> {
     switch (evento) {
       case 'initialized': {
-        if (!this.sessao()?.semDebug) {
+        const conexao = this.conexao;
+        const primeira = conexao !== null && !this.configuradas.has(conexao);
+        if (conexao !== null) this.configuradas.add(conexao);
+        if (primeira && !this.sessao()?.semDebug) {
           await this.enviarTodos();
           await this.enviarExcecoes();
         }
@@ -538,7 +638,7 @@ export class DepuradorService {
         }
         break;
       case 'output':
-        if (this.sessao()?.tipo === 'main' && corpo.category !== 'telemetry') this.aoSaida?.(corpo.output ?? '', corpo.category ?? 'console');
+        if ((this.sessao()?.tipo === 'main' || this.sessao()?.tipo === 'navegador') && corpo.category !== 'telemetry') this.aoSaida?.(corpo.output ?? '', corpo.category ?? 'console');
         else if (corpo.category === 'stderr' && corpo.output?.trim()) this.mensagens.erro(`debug: ${corpo.output.trim()}`);
         break;
     }
@@ -568,7 +668,9 @@ export class DepuradorService {
 
   private async carregarVariaveis(frameId: number): Promise<void> {
     this.filhos.clear();
-    const escopos = ((await this.pedir('scopes', { frameId }).catch(() => null))?.scopes ?? []) as { name: string; variablesReference: number }[];
+    const todos = ((await this.pedir('scopes', { frameId }).catch(() => null))?.scopes ?? []) as { name: string; variablesReference: number; expensive?: boolean }[];
+    // O escopo global do navegador (window inteira) fica de fora: é caro e enterra as locais.
+    const escopos = todos.filter((e) => !e.expensive && !/^global$/i.test(e.name));
     const nos: NoDeVariavel[] = [];
     for (const e of escopos) {
       const vars = ((await this.pedir('variables', { variablesReference: e.variablesReference }).catch(() => null))?.variables ?? []) as VariavelDap[];
@@ -617,6 +719,17 @@ export class DepuradorService {
     this.valoresDasVigias.set(new Map());
   }
 }
+
+const INICIALIZAR = {
+  clientID: 'seedy',
+  clientName: 'Seedy',
+  pathFormat: 'path',
+  linesStartAt1: true,
+  columnsStartAt1: true,
+  supportsVariableType: true,
+  supportsRunInTerminalRequest: false,
+  locale: 'pt-BR',
+};
 
 export function motivoLegivel(m: string): string {
   return m === 'breakpoint' ? 'breakpoint' : m === 'step' ? 'passo' : m === 'exception' ? 'exceção' : m === 'pause' ? 'pausa' : m === 'entry' ? 'início' : m;

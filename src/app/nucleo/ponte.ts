@@ -189,6 +189,14 @@ export interface Jdk {
   maior: number;
 }
 
+/** Projeto web (Fase 6): Node no PATH e os servidores de linguagem já instalados. */
+export interface EstadoWeb {
+  node: string | null;
+  instalado: boolean;
+}
+
+export type TipoServidorWeb = 'ts' | 'angular' | 'eslint';
+
 /** Pedido da janela de novo projeto (␣ N). */
 export interface PedidoDeProjeto {
   modelo: 'spring' | 'maven' | 'war' | 'simples' | 'angular';
@@ -416,6 +424,38 @@ export const ponte = {
       if (!noApp()) return () => {};
       return listen<{ id: number; nome: string; argumentos: Record<string, unknown> }>('mcp-chamada', (e) => fn(e.payload));
     },
+  },
+
+  /** Fase 6 — Web: servidores de linguagem (TS, Angular, ESLint), Prettier e js-debug. */
+  web: {
+    estado: async (): Promise<EstadoWeb> => (noApp() ? invoke<EstadoWeb>('web_estado') : { node: null, instalado: false }),
+    async instalar(aoProgresso: (linha: string) => void): Promise<void> {
+      const progresso = new Channel<string>();
+      progresso.onmessage = aoProgresso;
+      return invoke<void>('web_instalar', { progresso });
+    },
+    async lspIniciar(tipo: TipoServidorWeb, raiz: string, aoReceber: (mensagem: string) => void, aoEncerrar: () => void): Promise<number> {
+      const mensagens = new Channel<string>();
+      mensagens.onmessage = aoReceber;
+      const fim = new Channel<null>();
+      fim.onmessage = aoEncerrar;
+      return invoke<number>('lsp_web_iniciar', { tipo, raiz, mensagens, fim });
+    },
+    formatar: (raiz: string, caminho: string, texto: string) => invoke<string>('web_formatar', { raiz, caminho, texto }),
+    navegadores: async (): Promise<string[]> => (noApp() ? invoke<string[]>('web_navegadores') : ['edge']),
+    jsdebug: (reiniciar = false) => invoke<number>('jsdebug_iniciar', { reiniciar }),
+  },
+
+  /** Comandos do projeto (scripts do package.json, npm install) com a saída em lotes de linhas. */
+  tarefa: {
+    async iniciar(id: string, raiz: string, comando: string[], aoLer: (linhas: string[]) => void, aoTerminar: (codigo: number | null) => void): Promise<number> {
+      const saida = new Channel<string[]>();
+      saida.onmessage = aoLer;
+      const fim = new Channel<number | null>();
+      fim.onmessage = aoTerminar;
+      return invoke<number>('tarefa_iniciar', { id, raiz, comando, saida, fim });
+    },
+    parar: (id: string) => invoke<void>('tarefa_parar', { id }),
   },
 
   /** Novo projeto (␣ N): modelos Java, Spring Boot (start.spring.io) e Angular (ng new). */

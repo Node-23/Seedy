@@ -76,7 +76,9 @@ import { CAMINHO_DO_LOGO } from '../marca/logo';
         <!-- Configuração de execução + RUN / DEBUG / parar (mockup 11). -->
         <div class="ferramentas execucao">
           <button class="botao execucao-config" title="o que o RUN/DEBUG roda (␣ r)" (click)="exec.escolherConfig()">
-            @if (exec.atual()?.tipo === 'main') {
+            @if (exec.atual()?.tipo === 'script') {
+              <span class="destaque-texto forte">{{ '{}' }}</span>
+            } @else if (exec.atual()?.tipo === 'main') {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"></path></svg>
             } @else {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"></rect><rect x="4" y="13" width="16" height="7" rx="2"></rect><path d="M8 7.5h.01M8 16.5h.01"></path></svg>

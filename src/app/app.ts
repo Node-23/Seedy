@@ -43,6 +43,8 @@ import { TelaDebugComponent } from './depuracao/tela-debug.component';
 import { NovoProjetoComponent } from './novo-projeto/novo-projeto.component';
 import { NovoProjetoService } from './novo-projeto/novo-projeto.service';
 import { ExecucaoService } from './execucao/execucao.service';
+import { ScriptsComponent } from './web/scripts.component';
+import { WebLspService } from './web/web-lsp.service';
 
 @Component({
   selector: 'sd-raiz',
@@ -50,7 +52,7 @@ import { ExecucaoService } from './execucao/execucao.service';
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent,
   ],
   template: `
     <div class="seedy">
@@ -81,6 +83,7 @@ import { ExecucaoService } from './execucao/execucao.service';
             <!-- O terminal fica vivo (só escondido) enquanto o painel do servidor aparece. -->
             <sd-terminal [class.oculto]="!layout.disposicao().visiveis.terminal" />
             @if (layout.disposicao().visiveis.servidor) { <sd-servidor /> }
+            @if (layout.disposicao().visiveis.scripts) { <sd-scripts /> }
           </div>
         </div>
 
@@ -136,7 +139,7 @@ export class App {
 
   protected inferiorVisivel(): boolean {
     const v = this.layout.disposicao().visiveis;
-    return v.terminal || v.servidor;
+    return v.terminal || v.servidor || v.scripts;
   }
 
   constructor() {
@@ -147,6 +150,7 @@ export class App {
     inject(DepuradorService); // breakpoints e o depurador anexa quando o servidor sobe em debug
     inject(McpService); // o Claude Code (MCP) usa as ferramentas do Seedy
     inject(ExecucaoService); // RUN/DEBUG: acha as classes main quando o jdtls fica pronto
+    inject(WebLspService); // projeto web: TypeScript, Angular, ESLint e Prettier
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
     void inject(ProjetoService).iniciar();

@@ -273,6 +273,8 @@ struct Servidor {
     entrada: ChildStdin,
     processo: Child,
     raiz: String,
+    /// "java", "ts", "angular", "eslint": um de cada por projeto.
+    tipo: String,
 }
 
 impl Servidor {
@@ -309,14 +311,7 @@ pub fn lsp_iniciar(
     fim: Channel<()>,
     jdk: Option<String>,
 ) -> Result<Iniciado, String> {
-    // Um jdtls por projeto: se a interface recarregou, o anterior fica órfão — encerra.
-    let orfaos: Vec<u32> = estado.lista.lock().unwrap().iter().filter(|(_, s)| s.raiz == raiz).map(|(id, _)| *id).collect();
-    for id in orfaos {
-        if let Some(s) = estado.lista.lock().unwrap().remove(&id) {
-            s.encerrar();
-        }
-    }
-
+    encerrar_orfaos(&estado, &raiz, "java");
     let jdk = achar_jdk(jdk.as_deref()).ok_or(format!("nenhum JDK {JAVA_MINIMO}+ encontrado (defina SEEDY_JAVA_HOME)"))?;
     let pasta = pasta_jdtls();
     let jar = lancador(&pasta).ok_or("o jdtls ainda não foi baixado")?;
@@ -358,19 +353,42 @@ pub fn lsp_iniciar(
         .arg("-data")
         .arg(&dados)
         .current_dir(&raiz)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
         .stderr(Stdio::from(log));
+    let id = registrar_lsp(&estado, "java", raiz, comando, mensagens, fim).map_err(|e| format!("não consegui iniciar o jdtls: {e}"))?;
+    Ok(Iniciado { id, pid: std::process::id(), preferencias: preferencias.to_string_lossy().into_owned() })
+}
+
+/// Um servidor de cada tipo por projeto: se a interface recarregou, o anterior fica órfão — encerra.
+pub(crate) fn encerrar_orfaos(estado: &Servidores, raiz: &str, tipo: &str) {
+    let orfaos: Vec<u32> =
+        estado.lista.lock().unwrap().iter().filter(|(_, s)| s.raiz == raiz && s.tipo == tipo).map(|(id, _)| *id).collect();
+    for id in orfaos {
+        if let Some(s) = estado.lista.lock().unwrap().remove(&id) {
+            s.encerrar();
+        }
+    }
+}
+
+/// Sobe um servidor LSP (stdio) e o registra: as mensagens dele vão para `mensagens`;
+/// `lsp_enviar`/`lsp_parar` valem para qualquer tipo.
+pub(crate) fn registrar_lsp(
+    estado: &Servidores,
+    tipo: &str,
+    raiz: String,
+    mut comando: Command,
+    mensagens: Channel<String>,
+    fim: Channel<()>,
+) -> Result<u32, String> {
+    comando.stdin(Stdio::piped()).stdout(Stdio::piped());
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
         const SEM_JANELA: u32 = 0x0800_0000; // CREATE_NO_WINDOW
         comando.creation_flags(SEM_JANELA);
     }
-
-    let mut processo = comando.spawn().map_err(|e| format!("não consegui iniciar o jdtls: {e}"))?;
-    let entrada = processo.stdin.take().ok_or("sem stdin do jdtls")?;
-    let saida = processo.stdout.take().ok_or("sem stdout do jdtls")?;
+    let mut processo = comando.spawn().map_err(|e| e.to_string())?;
+    let entrada = processo.stdin.take().ok_or("sem stdin do servidor")?;
+    let saida = processo.stdout.take().ok_or("sem stdout do servidor")?;
 
     std::thread::spawn(move || {
         let mut leitor = BufReader::new(saida);
@@ -383,15 +401,16 @@ pub fn lsp_iniciar(
     });
 
     let id = estado.proximo_id.fetch_add(1, Ordering::Relaxed);
-    estado.lista.lock().unwrap().insert(id, Servidor { entrada, processo, raiz });
-    Ok(Iniciado { id, pid: std::process::id(), preferencias: preferencias.to_string_lossy().into_owned() })
+    estado.lista.lock().unwrap().insert(id, Servidor { entrada, processo, raiz, tipo: tipo.to_string() });
+    Ok(id)
 }
 
 #[tauri::command]
 pub fn lsp_enviar(estado: State<'_, Servidores>, id: u32, mensagem: String) -> Result<(), String> {
     let mut lista = estado.lista.lock().unwrap();
-    let servidor = lista.get_mut(&id).ok_or("jdtls não está rodando")?;
-    escrever_mensagem(&mut servidor.entrada, &mensagem).map_err(|e| format!("jdtls não respondeu: {e}"))
+    let servidor = lista.get_mut(&id).ok_or("o servidor de linguagem não está rodando")?;
+    let tipo = servidor.tipo.clone();
+    escrever_mensagem(&mut servidor.entrada, &mensagem).map_err(|e| format!("{} não respondeu: {e}", if tipo == "java" { "jdtls" } else { &tipo }))
 }
 
 #[tauri::command]

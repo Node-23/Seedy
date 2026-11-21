@@ -4,7 +4,7 @@ import { EditorService } from '../editor/editor.service';
 import { TemaService } from '../tema/tema';
 import { LayoutService } from '../layout/layout.service';
 import { ProjetoService } from '../nucleo/projeto.service';
-import { DepuradorService, FrameDap, motivoLegivel } from '../servidor/depurador.service';
+import { aceitaBreakpoint, DepuradorService, FrameDap, motivoLegivel } from '../servidor/depurador.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { ExecucaoService } from '../execucao/execucao.service';
 import { deFramework } from '../servidor/log';
@@ -235,12 +235,12 @@ export class TelaDebugComponent {
       const frames = this.dep.frames();
       let i = 0;
       while (i < frames.length) {
-        if (frames[i].source?.path) {
+        if (doProjeto(frames[i])) {
           lista.push({ tipo: 'frame', f: frames[i++] });
           continue;
         }
         let j = i;
-        while (j < frames.length && !frames[j].source?.path) j++;
+        while (j < frames.length && !doProjeto(frames[j])) j++;
         const corrida = frames.slice(i, j);
         corrida.slice(0, 2).forEach((f) => lista.push({ tipo: 'frame', f }));
         if (corrida.length > 2) lista.push({ tipo: 'oculto', total: corrida.length - 2 });
@@ -263,6 +263,7 @@ export class TelaDebugComponent {
   /** Saída do processo depurado: o servidor da sessão, ou o main. */
   protected readonly console = computed(() => {
     const s = this.dep.sessao();
+    if (s?.tipo === 'navegador' || (!s && this.exec.atual()?.tipo === 'script')) return this.exec.navegador();
     if (s?.tipo === 'servidor' && s.perfilId) return this.servidor.execucoes().get(s.perfilId) ?? null;
     const c = this.exec.atual();
     if (c?.tipo === 'servidor') return this.servidor.execucoes().get(c.perfilId) ?? null;
@@ -320,7 +321,7 @@ export class TelaDebugComponent {
         if (ev.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
         const c = this.caminhoMostrado();
         const linha = ev.target.position?.lineNumber;
-        if (c && linha && /\.java$/i.test(c)) this.dep.alternar(c, linha);
+        if (c && linha && aceitaBreakpoint(c)) this.dep.alternar(c, linha);
       });
       this.instancia.set(ed);
       queueMicrotask(() => this.elPilha().nativeElement.focus());
@@ -521,9 +522,14 @@ export class TelaDebugComponent {
   /** Pasta do arquivo relativa ao projeto, em notação de pacote quando é código Java. */
   protected pasta(c: string): string {
     const raiz = (this.projeto.raiz() ?? '').replace(/\\/g, '/');
-    const rel = c.replace(/\\/g, '/').replace(raiz + '/', '').split('/').slice(0, -1).join('/');
-    const java = /(?:^|\/)src\/(?:main|test)\/java\/(.+)$/.exec(rel) ?? /(?:^|\/)src\/(.+)$/.exec(rel);
-    return java ? java[1].replace(/\//g, '.') : rel;
+    let rel = c.replace(/\\/g, '/');
+    // Windows: o js-debug manda "c:\..." e a raiz é "C:\..." — compara sem caixa.
+    if (raiz && rel.toLowerCase().startsWith(raiz.toLowerCase() + '/')) rel = rel.slice(raiz.length + 1);
+    rel = rel.split('/').slice(0, -1).join('/');
+    const java = /(?:^|\/)src\/(?:main|test)\/java\/(.+)$/.exec(rel);
+    if (java) return java[1].replace(/\//g, '.');
+    // Fora do Java (TS/JS), a pasta como está: src/app/bancas.
+    return /\.java$/i.test(c) ? (/(?:^|\/)src\/(.+)$/.exec(rel)?.[1].replace(/\//g, '.') ?? rel) : rel;
   }
 
   protected motivo(m: string): string {
@@ -593,6 +599,11 @@ function inicioDoMetodo(m: monaco.editor.ITextModel, linha: number): number {
     if (assinatura.test(t) && !/^\s*(?:return|new|else|if|for|while|switch|catch)\b/.test(t)) return l;
   }
   return Math.max(1, linha - 60);
+}
+
+/** Frame com código do projeto (não de biblioteca, do servidor ou do framework). */
+function doProjeto(f: FrameDap & { presentationHint?: string }): boolean {
+  return !!f.source?.path && !/[\\/]node_modules[\\/]/.test(f.source.path) && f.presentationHint !== 'subtle' && f.presentationHint !== 'deemphasize';
 }
 
 /** "Thread [http-nio-8080-exec-3]" → "http-nio-8080-exec-3". */

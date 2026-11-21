@@ -79,6 +79,16 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   os valores das variáveis ao lado, variáveis, expressões vigiadas, avaliar (`alt+F8`), até o cursor
   (`alt+F9`) e o console do processo. Hot code replace: a classe alterada entra no processo sem
   reiniciar.
+- **Projetos web** (Fase 6, mockup 13): TypeScript/JavaScript pelo typescript-language-server e
+  templates Angular pelo Angular Language Service (completar, hover, ir à definição, usos,
+  renomear, ações rápidas, erros de template); avisos do ESLint no editor; Prettier para formatar
+  (e ao salvar, quando o projeto tem configuração dele). Os servidores são instalados com o npm na
+  primeira vez (precisa do Node).
+- **Scripts do package.json** (`␣ p`): rodar, parar, ver a saída com os arquivos clicáveis e abrir
+  o endereço no navegador; os scripts também entram no RUN/DEBUG.
+- **Debug no navegador** (mockup 14): o DEBUG de um script sobe o servidor de desenvolvimento,
+  abre o Edge/Chrome com o js-debug e para nos breakpoints do `.ts` (source maps), na mesma tela
+  de debug do Java, com o console do navegador embaixo.
 - **Novo projeto** (mockup 12, `␣ N`): Spring Boot (com os iniciadores do start.spring.io), Java com
   Maven, Java web (WAR, pronto para o servidor do Seedy), Java simples e Angular (`ng new`). Escolhe
   o JDK entre os instalados, faz `git init` + primeiro commit, abre o projeto e deixa o RUN na `main`.
@@ -197,6 +207,7 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `␣ i` | copiar o comando que liga o Claude Code ao Seedy (MCP) |
 | `␣ j` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
 | `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | rodar / depurar a configuração escolhida / parar / redeploy do servidor (como no IntelliJ) |
+| `␣ p` | scripts do package.json: `j`/`k`, `⏎` roda, `x` para, `o` abre no navegador, `d` debug, `i` npm install, `c` limpa |
 | `␣ r` · `␣ x` | escolher o que o RUN/DEBUG roda · tela de debug (`p`/`b`/`v`/`c` focam pilha, breakpoints, variáveis e console; na lista de breakpoints `e` edita a condição e `d` apaga; `esc` volta) |
 | `ctrl+F8` · `F8` · `F7` · `shift+F8` · `F9` · `alt+F9` · `alt+F8` | breakpoint · passar · entrar · sair · continuar · até o cursor · avaliar |
 | `␣ d` | conexões (banco): `j`/`k`, `l`/`⏎` abre/conecta, `⏎` numa tabela consulta, `c` console, `n` nova, `e` editar, `x` desconectar, `r` recarregar, `del` apagar |
