@@ -81,6 +81,11 @@ export function nomeDeTela(nome: string): string {
     .toLowerCase();
 }
 
+/** Nome da tela: o arquivo da JSP, ou o componente Angular em kebab. */
+export function nomeDaTela(c: { nome: string; linguagem: string }): string {
+  return c.linguagem === 'jsp' ? c.nome : nomeDeTela(c.nome);
+}
+
 export function nomeCurto(id: string): string {
   return id.split('#').pop() ?? id;
 }
@@ -125,7 +130,9 @@ function resumo(c: ComponenteAnalise, regras: number): { sub: string; cor: CorTe
   const endpoints = c.metodos.filter((m) => m.http);
   switch (c.papel) {
     case 'tela': {
+      if (c.rota) return { sub: c.rota, cor: 'rosa' };
       const n = c.metodos.reduce((s, m) => s + m.gatilhos.length, 0);
+      if (c.linguagem === 'jsp') return { sub: n ? `${n} ${n === 1 ? 'envio' : 'envios'} · JSP` : 'JSP', cor: 'suave' };
       return { sub: n ? `${n} ${n === 1 ? 'ação' : 'ações'} na tela` : (c.seletor ?? 'tela'), cor: 'suave' };
     }
     case 'front': {
@@ -159,9 +166,12 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
   const visiveis = a.componentes.filter((c) => PAPEIS_NA_GRADE.has(c.papel));
   const camadaDe = (c: ComponenteAnalise) => CAMADAS.findIndex((x) => x.papeis.includes(c.papel));
   // Camadas sem nada somem (um projeto só de back não mostra as do Angular).
-  const usadas = CAMADAS.filter((_, i) => visiveis.some((c) => camadaDe(c) === i) || (CAMADAS[i].chave === 'banco' && visiveis.some((c) => c.externo)));
+  const jsp = visiveis.some((c) => c.linguagem === 'jsp');
+  const ng = visiveis.some((c) => c.papel === 'tela' && c.linguagem === 'ts');
+  const rotuloTelas = jsp && ng ? 'TELAS' : jsp ? 'TELAS · JSP' : 'TELAS · NG';
+  const usadas = CAMADAS.filter((_, i) => visiveis.some((c) => camadaDe(c) === i) || (CAMADAS[i].chave === 'banco' && visiveis.some((c) => c.externo || (c.papel === 'repositorio' && c.tabela))));
   const PASSO = 172;
-  const camadas: Camada[] = usadas.map((c, i) => ({ chave: c.chave, rotulo: c.rotulo, x: 44 + i * PASSO }));
+  const camadas: Camada[] = usadas.map((c, i) => ({ chave: c.chave, rotulo: c.chave === 'tela' ? rotuloTelas : c.rotulo, x: 44 + i * PASSO }));
   const xDa = (chave: Camada['chave']) => camadas.find((c) => c.chave === chave)?.x ?? 44;
 
   const porDominio = new Map<string, ComponenteAnalise[]>();
@@ -179,7 +189,9 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
       celulas.set(k, [...(celulas.get(k) ?? []), c]);
     }
     const externos = [...new Set(lista.filter((c) => c.externo).map((c) => c.externo!))];
-    const banco = (celulas.get('banco')?.length ?? 0) + externos.length;
+    // Tabelas de DAO sem entidade (JDBC): um bloco de banco para cada.
+    const tabelasSoltas = [...new Set(lista.filter((c) => c.papel === 'repositorio' && !c.entidade && c.tabela).map((c) => c.tabela!))];
+    const banco = (celulas.get('banco')?.length ?? 0) + externos.length + tabelasSoltas.length;
     const linhas = Math.max(1, banco, ...[...celulas.entries()].filter(([k]) => k !== 'banco').map(([, v]) => v.length));
     const altura = linhas * (ALTURA + 14) + 10;
     dominios.push({ nome, y, altura });
@@ -189,7 +201,7 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
         const r = resumo(c, regrasPorComp.get(c.id) ?? 0);
         blocos.push({
           id: c.id,
-          titulo: c.papel === 'tela' ? nomeDeTela(c.nome) : c.papel === 'entidade' ? (c.tabela ?? c.nome) : c.nome,
+          titulo: c.papel === 'tela' ? nomeDaTela(c) : c.papel === 'entidade' ? (c.tabela ?? c.nome) : c.nome,
           sub: r.sub,
           subCor: r.cor,
           x: xDa(k),
@@ -205,6 +217,20 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
       });
     }
     const usadosNoBanco = celulas.get('banco')?.length ?? 0;
+    tabelasSoltas.forEach((t, i) => {
+      blocos.push({
+        id: `tab:${t}`,
+        titulo: t,
+        sub: 'tabela',
+        subCor: 'suave',
+        x: xDa('banco'),
+        y: y + 10 + (usadosNoBanco + externos.length + i) * (ALTURA + 14),
+        largura: LARGURA,
+        altura: ALTURA,
+        estilo: 'db',
+        coluna: camadas.findIndex((x) => x.chave === 'banco'),
+      });
+    });
     externos.forEach((e, i) => {
       blocos.push({
         id: `ext:${e}`,
@@ -242,6 +268,7 @@ export function desenharArquitetura(a: AnaliseArquitetura, regrasPorComp: Map<st
       for (const h of m.httpSaida) if (h.alvo) ligarBlocos(c.id, h.alvo.alvo, 'http');
     }
     if (c.papel === 'repositorio' && c.entidade) ligarBlocos(c.id, c.entidade, 'chama');
+    else if (c.papel === 'repositorio' && c.tabela) ligarBlocos(c.id, `tab:${c.tabela}`, 'chama');
     if (c.externo) ligarBlocos(c.id, `ext:${c.externo}`, 'http');
     for (const u of c.usa) {
       const alvo = comp.get(u);
@@ -298,10 +325,12 @@ interface Ponta {
 const chaveDe = (comp: string, metodo: string) => `${comp}.${metodo}`;
 
 function operacao(metodo: string): string {
-  if (/^(find|get|read|query|search|exists|count|list|load|stream)/.test(metodo)) return 'SELECT';
-  if (/^(delete|remove)/.test(metodo)) return 'DELETE';
-  if (/^(persist|insert|create)/.test(metodo)) return 'INSERT';
-  if (/^(save|merge|update)/.test(metodo)) return 'INSERT/UPDATE';
+  const m = metodo.toLowerCase();
+  if (/^(find|get|read|query|search|exists|count|list|load|stream|select|buscar|busca|listar|lista|obter|consultar|pesquisar|carregar|ler|contar|existe|verificar)/.test(m)) return 'SELECT';
+  if (/^(delete|remove|excluir|remover|apagar|deletar)/.test(m)) return 'DELETE';
+  if (/^(persist|insert|create|inserir|incluir|criar|cadastrar)/.test(m)) return 'INSERT';
+  if (/^(update|alterar|atualizar)/.test(m)) return 'UPDATE';
+  if (/^(save|merge|salvar|gravar)/.test(m)) return 'INSERT/UPDATE';
   return 'SQL';
 }
 
@@ -353,7 +382,7 @@ export function desenharCaminho(
   const blocoDoMetodo = (c: ComponenteAnalise, nome: string, chave: string): No['bloco'] => {
     const m = metodoDe(c, nome);
     const http = m?.http ? `${m.http.verbo} ${m.http.rota}` : null;
-    const titulo = c.papel === 'tela' ? nomeDeTela(c.nome) : c.nome;
+    const titulo = c.papel === 'tela' ? nomeDaTela(c) : c.nome;
     let sub = `.${nome}`;
     let subCor: CorTexto = 'suave';
     const g = c.papel === 'tela' ? m?.gatilhos[0] : undefined;
@@ -441,6 +470,19 @@ export function desenharCaminho(
       }
       descer(alvo, ch.metodo, k, nivel + 1);
     }
+    // Para que tela leva (forward do Struts para a JSP, router.navigate do Angular).
+    for (const n of m.navega) {
+      const alvo = n.alvo ? comps.get(n.alvo) : null;
+      const k = `nav:${n.alvo ?? n.rota}`;
+      if (nos.has(k)) continue;
+      nos.set(k, {
+        chave: k,
+        coluna: nivel,
+        ordem: ordem++,
+        bloco: { id: k, titulo: alvo ? nomeDaTela(alvo) : n.rota, tituloCor: 'rosa', sub: alvo?.rota ?? (c.papel === 'tela' ? `vai para ${n.rota}` : 'mostra a tela'), subCor: 'suave', comp: alvo?.id, caminho: alvo?.caminho, linha: alvo?.linha },
+      });
+      ligacoes.push({ de: chave, para: k, tipo: 'chama' });
+    }
     // Do front para a API.
     for (const h of m.httpSaida) {
       const alvo = h.alvo ? comps.get(h.alvo.alvo) : null;
@@ -501,9 +543,9 @@ export function desenharCaminho(
     const regras = regrasDe(focal.id, foco.metodo, d);
     return {
       id: `desvio:${i}`,
-      titulo: d.status ? `${d.status} ${nomeDoStatus(d.status)}`.trim() : (d.excecao ?? 'desvio'),
+      titulo: d.status ? `${d.status} ${nomeDoStatus(d.status)}`.trim() : (d.excecao ?? (d.acao === 'erro na tela' ? 'erro na tela' : 'volta à tela')),
       tituloCor: 'erro',
-      sub: d.status && d.excecao ? `${d.excecao}${regras.length ? ` · ${regras.join(' ')}` : ''}` : d.acao,
+      sub: d.status && d.excecao ? `${d.excecao}${regras.length ? ` · ${regras.join(' ')}` : ''}` : !d.status && !d.excecao ? (d.mensagem ?? d.acao.replace(/^return /, '')) : d.acao,
       subCor: 'suave',
       x: Math.round(inicioX + i * (LARGURA_DESVIO + 14)),
       y: fundo,
@@ -572,6 +614,12 @@ export function desenharCaminho(
   pFoco.desvios = desvios.map((d) => ({ texto: `${d.condicao ? encurtar(d.condicao.replace(/ vazio$/, ' não acha'), 30) : 'sempre'} → ${d.status ?? d.excecao ?? ''}`, regra: regrasDe(focal.id, foco.metodo, d)[0] }));
   passos.push(pFoco);
   for (const n of [...nos.values()].filter((x) => x.coluna > 0 && x.bloco.estilo !== 'db').sort((x, y) => x.ordem - y.ordem)) passos.push(passo(n.bloco, comps, metodoDe));
+  const telaDeEntrada = principal?.bloco.comp ? comps.get(principal.bloco.comp) : undefined;
+  const depois = telaDeEntrada && principal?.bloco.metodo ? metodoDe(telaDeEntrada, principal.bloco.metodo)?.navega.find((x) => x.alvo) : undefined;
+  if (depois) {
+    const alvo = comps.get(depois.alvo!);
+    passos.push({ bloco: principal!.chave, partes: [{ texto: 'depois, a tela vai para ' }, { texto: depois.rota, cor: 'rosa' }, ...(alvo ? [{ texto: `  ${nomeDaTela(alvo)}`, cor: 'suave' as const }] : [])], desvios: [] });
+  }
   for (const n of entradas) {
     if (n === principal || cadeia.includes(n)) continue;
     const c = n.bloco.comp ? comps.get(n.bloco.comp) : null;
@@ -606,14 +654,21 @@ function passo(b: Omit<Bloco, 'x' | 'y' | 'largura' | 'altura' | 'coluna'>, comp
   const m = c && b.metodo ? metodoDe(c, b.metodo) : undefined;
   const nome = c && b.metodo ? `${c.nome}.${b.metodo}` : b.titulo;
   if (b.id.startsWith('tela:') || (c?.papel === 'tela' && m?.gatilhos.length)) {
-    const texto = b.sub.replace(/^botão /, '');
-    return { bloco: b.id, partes: [{ texto: b.sub.startsWith('botão') ? 'Clique em ' : 'Na tela: ' }, { texto: texto.replace(/"/g, ''), forte: true }, { texto: `  ${b.titulo}.html:${b.linha}`, cor: 'suave' }], desvios: [] };
+    const texto = b.sub.replace(/^(botão|envio) /, '');
+    const arquivo = c?.linguagem === 'jsp' ? `${b.titulo}:${b.linha}` : `${b.titulo}.html:${b.linha}`;
+    const verbo = b.sub.startsWith('botão') ? 'Clique em ' : b.sub.startsWith('envio') ? 'Envia o formulário: ' : 'Na tela: ';
+    return { bloco: b.id, partes: [{ texto: verbo }, { texto: texto.replace(/"/g, ''), forte: true }, { texto: `  ${arquivo}`, cor: 'suave' }], desvios: [] };
   }
   if (b.estilo === 'db') return { bloco: b.id, partes: [{ texto: b.sub === 'SELECT' ? 'lê ' : b.sub === 'DELETE' ? 'apaga em ' : 'grava em ' }, { texto: b.titulo, cor: 'destaque' }], desvios: [] };
+  if (b.id.startsWith('nav:')) return { bloco: b.id, partes: [{ texto: b.sub === 'mostra a tela' ? 'mostra ' : 'vai para ' }, { texto: b.titulo, cor: 'rosa' }], desvios: [] };
   if (b.estilo === 'ext') return { bloco: b.id, partes: [{ texto: 'chama por HTTP ' }, { texto: b.titulo, cor: 'rosa' }], desvios: [] };
   if (c?.papel === 'front' && m?.httpSaida[0]) return { bloco: b.id, partes: [{ texto: nome, forte: true }, { texto: ' faz ' }, { texto: `${m.httpSaida[0].verbo} ${rotaCurta(m.httpSaida[0].url)}`, cor: 'rosa' }], desvios: [] };
   if (m?.http) return { bloco: b.id, partes: [{ texto: nome, forte: true }, { texto: ' recebe ' }, { texto: `${m.http.verbo} ${m.http.rota}`, cor: 'rosa' }], desvios: [] };
   if (m?.agendado) return { bloco: b.id, partes: [{ texto: nome, forte: true }, { texto: ` roda sozinho ${resumoAgenda(m.agendado)}`, cor: 'suave' }], desvios: [] };
-  if (c?.papel === 'repositorio' && c.tabela) return { bloco: b.id, partes: [{ texto: nome, forte: true }, { texto: ` ${operacao(b.metodo ?? '') === 'SELECT' ? 'lê' : 'grava'} ` }, { texto: c.tabela, cor: 'destaque' }], desvios: [] };
+  if (c?.papel === 'repositorio' && c.tabela) {
+    const op = operacao(b.metodo ?? '');
+    const verbo = op === 'SELECT' ? 'lê' : op === 'DELETE' ? 'apaga em' : op === 'SQL' ? 'usa' : 'grava em';
+    return { bloco: b.id, partes: [{ texto: nome, forte: true }, { texto: ` ${verbo} ` }, { texto: c.tabela, cor: 'destaque' }], desvios: [] };
+  }
   return { bloco: b.id, partes: [{ texto: nome, forte: true }], desvios: [] };
 }

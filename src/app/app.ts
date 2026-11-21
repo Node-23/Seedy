@@ -54,6 +54,7 @@ import { BarraIconesComponent } from './todo/barra-icones.component';
 import { TodoPainelComponent } from './todo/todo-painel.component';
 import { TodoService } from './todo/todo.service';
 import { ConfigService } from './config/config.service';
+import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
 @Component({
   selector: 'sd-raiz',
@@ -61,13 +62,13 @@ import { ConfigService } from './config/config.service';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, BarraIconesComponent, TodoPainelComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
   ],
   template: `
     <div class="seedy">
       <sd-barra-topo />
 
-      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta() || novoProjeto.aberta()">
+      <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta() || novoProjeto.aberta() || !!execucao.editandoOpcoes()">
       <sd-barra-icones />
       <!-- Painel de cada região (o terminal fica vivo, só escondido, na região dele). -->
       <ng-template #painel let-regiao>
@@ -131,6 +132,7 @@ import { ConfigService } from './config/config.service';
       <sd-github-form />
       <sd-perfil-banco />
       <sd-perfil-servidor />
+      <sd-opcoes-execucao />
       <sd-revisao />
       <sd-novo-projeto />
       <sd-escolha />
@@ -162,6 +164,7 @@ export class App {
   protected readonly revisao = inject(RevisaoService);
   protected readonly novoProjeto = inject(NovoProjetoService);
   protected readonly todo = inject(TodoService);
+  protected readonly execucao = inject(ExecucaoService);
 
   private readonly area = viewChild.required<ElementRef<HTMLElement>>('area');
   protected readonly arrastandoPainel = signal<{ id: IdPainel; titulo: string; alvo: Regiao | null } | null>(null);

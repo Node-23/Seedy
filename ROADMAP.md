@@ -154,7 +154,12 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 - ✅ Caminho do método (ctrl+. "acompanhar método", ou `c` num método): de onde vem até o botão da
   tela, para onde vai até a tabela, as condições que desviam (com o status e a regra) e o passo a
   passo; a IA explica o caminho
-- Falta: projetos com Struts/JSP, rotas do Angular (qual tela abre qual), e a IA testada com a chave
+- ✅ Struts 1/2 e JSP: ações do struts-config.xml/struts.xml (e @Action), formulários e links das JSPs
+  ligados às ações, forwards para as JSPs, desvios de volta ao formulário (errors.add, getInputForward),
+  validation.xml e tabelas tiradas do SQL dos DAOs em JDBC
+- ✅ Rotas do Angular: qual rota abre qual tela (children, loadComponent) e para onde cada tela vai
+  (router.navigate, routerLink); o Caminho termina em "depois, a tela vai para…"
+- Falta: a IA testada com a chave
 
 ## Depois
 
@@ -173,4 +178,5 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
   ou o servidor de aplicação escolhido (`␣ r`), com a tela de debug em tela cheia (`␣ x`)
 - ✅ Criar novo projeto (mockup 12, `␣ N`): Spring Boot (start.spring.io), Maven, WAR, Java simples e
   Angular (`ng new`); falta testar o Angular com um Node atual
-- Argumentos do programa, variáveis de ambiente e opções da JVM por configuração de execução
+- ✅ Argumentos do programa, variáveis de ambiente e opções da JVM por configuração de execução
+  (␣ r → ⚙), em `.seedy/execucao.json`; o servidor usa as do perfil dele

@@ -50,6 +50,11 @@ export interface AlvoMain {
   nome: string;
   mainClass: string;
   projectName: string;
+  /** Da configuração de execução (␣ r → argumentos, ambiente e JVM). */
+  /** Texto: o java-debug separa por espaço e respeita aspas duplas. */
+  argumentos?: string;
+  jvm?: string;
+  ambiente?: Record<string, string>;
 }
 
 export type ParadaEmExcecoes = 'nenhuma' | 'naoTratadas' | 'todas';
@@ -310,9 +315,10 @@ export class DepuradorService {
         modulePaths: caminhos?.[0] ?? [],
         classPaths: caminhos?.[1] ?? [],
         javaExec: java,
-        args: '',
+        args: alvo.argumentos ?? '',
         // A saída chega em UTF-8 (sem isso, acentos quebram no console do Windows).
-        vmArgs: '-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dfile.encoding=UTF-8',
+        vmArgs: `-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dfile.encoding=UTF-8${alvo.jvm ? ` ${alvo.jvm}` : ''}`,
+        env: alvo.ambiente ?? {},
         encoding: 'UTF-8',
         console: 'internalConsole',
         noDebug: !debug,

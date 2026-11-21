@@ -178,7 +178,11 @@ export function textoDoCodigo(r: RegraAnalise): { titulo: string; descricao: str
     case 'desvio': {
       const cond = r.condicao ? (r.condicao.endsWith(' vazio') ? `\`${r.condicao.slice(0, -6)}\` não encontra nada` : `\`${r.condicao}\``) : null;
       const titulo = r.mensagem ? maiuscula(r.mensagem) : cond ? `${r.metodo}: recusa quando ${r.condicao}` : `${r.metodo} recusa`;
-      const acao = r.excecao ? `\`${metodo(r)}\` lança \`${r.excecao}\`${r.mensagem ? ` com "${r.mensagem}"` : ''}` : `\`${metodo(r)}\` responde ${r.status ?? ''}`;
+      const acao = r.excecao
+        ? `\`${metodo(r)}\` lança \`${r.excecao}\`${r.mensagem ? ` com "${r.mensagem}"` : ''}`
+        : r.status
+          ? `\`${metodo(r)}\` responde ${r.status}`
+          : `\`${metodo(r)}\` volta para a tela${r.mensagem ? ` com "${r.mensagem}"` : ' com o erro'}`;
       return { titulo, descricao: `${cond ? `Quando ${cond}, ` : 'Sempre: '}${acao}${r.excecao ? status : ''}.` };
     }
     case 'validacao': {

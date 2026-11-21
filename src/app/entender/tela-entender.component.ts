@@ -1,13 +1,13 @@
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { EntenderService, AbaEntender, RegraVisivel } from './entender.service';
-import { Bloco, CorTexto, nomeCurto, TipoSeta } from './desenho';
+import { Bloco, CorTexto, nomeCurto, nomeDaTela, TipoSeta } from './desenho';
 import { trechosDoTexto } from './regras';
 import { LayoutService } from '../layout/layout.service';
 import { ComponenteAnalise, ponte } from '../nucleo/ponte';
 
 const COR: Record<TipoSeta, string> = { chama: 'var(--texto)', dominio: 'var(--aviso)', http: 'var(--rosa)', desvio: 'var(--erro)' };
 const TRACO: Record<TipoSeta, string | null> = { chama: null, dominio: '4 3', http: null, desvio: '4 3' };
-const CAMADA: Record<string, string> = { tela: 'tela · front', front: 'serviço do front', entrada: 'entrada (API)', job: 'rotina agendada', servico: 'serviço', repositorio: 'repositório', entidade: 'entidade · tabela' };
+const CAMADA: Record<string, string> = { tela: 'tela', front: 'serviço do front', entrada: 'entrada (API)', job: 'rotina agendada', servico: 'serviço', repositorio: 'repositório', entidade: 'entidade · tabela' };
 const PALAVRAS = 'public|private|protected|static|final|if|else|throw|new|return|for|while|class|void|const|let|async|await|try|catch';
 const SEPARAR_PALAVRAS = new RegExp(`(\\b(?:${PALAVRAS})\\b)`);
 const EH_PALAVRA = new RegExp(`^(?:${PALAVRAS})$`);
@@ -104,6 +104,7 @@ type Parte = 'diagrama' | 'metodos';
                     @if (c.externo) { <div><span class="k">chama</span><span class="rosa-texto">{{ c.externo }} (HTTP)</span></div> }
                     @if (usa(c); as l) { @if (l.length) { <div><span class="k">usa</span><span>@for (u of l; track u.id) {<span [class.aviso-texto]="u.outro">{{ u.nome }}</span>{{ $last ? '' : ', ' }}}</span></div> } }
                     @if (usadoPor(c); as l) { @if (l.length) { <div><span class="k">usado por</span><span>@for (u of l; track u.id) {<span [class.aviso-texto]="u.outro">{{ u.nome }}</span>{{ $last ? '' : ', ' }}}</span></div> } }
+                    @if (abre(c); as l) { @if (l.length) { <div><span class="k">abre</span><span class="rosa-texto">{{ l.join(', ') }}</span></div> } }
                     @if (e.regrasPorComp().get(c.id); as n) { <div><span class="k">regras</span><span class="aviso-texto entender-link" (click)="regrasDe(c)">⚑ {{ n }} → aba Regras (2)</span></div> }
                   </div>
                   @if (e.metodosDe(c); as ms) {
@@ -412,6 +413,13 @@ export class TelaEntenderComponent {
   protected usa(c: ComponenteAnalise) {
     const comps = this.e.componentes();
     return c.usa.map((u) => comps.get(u)).filter((x): x is ComponenteAnalise => !!x && x.papel !== 'entidade').map((x) => ({ id: x.id, nome: x.nome, outro: x.dominio !== c.dominio }));
+  }
+
+  /** Telas que esta abre (links do template e navegações dos métodos). */
+  protected abre(c: ComponenteAnalise): string[] {
+    const comps = this.e.componentes();
+    const todas = [...c.navega, ...c.metodos.flatMap((m) => m.navega)];
+    return [...new Set(todas.map((n) => (n.alvo && comps.get(n.alvo) ? nomeDaTela(comps.get(n.alvo)!) : n.rota)))];
   }
 
   protected usadoPor(c: ComponenteAnalise) {

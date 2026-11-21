@@ -58,7 +58,7 @@ sd-raiz > .seedy {
 
 .area-principal { position: relative; flex: 1; min-height: 0; min-width: 0; display: flex; }
 .regiao-principal { position: relative; flex: 1; min-height: 0; display: flex; }
-.regiao-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto):not(sd-escolha):not(sd-commit):not(sd-github-form):not(sd-perfil-banco):not(sd-perfil-servidor):not(sd-revisao):not(sd-novo-projeto) { opacity: 0.35; pointer-events: none; }
+.regiao-principal.esmaecida > :not(sd-busca):not(sd-busca-projeto):not(sd-escolha):not(sd-commit):not(sd-github-form):not(sd-perfil-banco):not(sd-perfil-servidor):not(sd-revisao):not(sd-novo-projeto):not(sd-opcoes-execucao) { opacity: 0.35; pointer-events: none; }
 .tela-cheia { flex: 1; min-width: 0; display: flex; }
 .regiao-esquerda { flex-shrink: 0; display: flex; min-width: 0; }
 .regiao-esquerda > * { flex: 1; min-width: 0; display: flex; }

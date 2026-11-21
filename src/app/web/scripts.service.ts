@@ -77,7 +77,7 @@ export class ScriptsService {
     }
   }
 
-  async rodar(nome: string): Promise<void> {
+  async rodar(nome: string, extras: { argumentos?: string[]; ambiente?: Record<string, string> } = {}): Promise<void> {
     const raiz = this.projeto.raiz();
     if (!raiz) return;
     if (this.execucoes().get(nome)?.fase === 'rodando') {
@@ -86,7 +86,8 @@ export class ScriptsService {
     }
     this.selecionado.set(nome);
     this.layout.mostrar('scripts');
-    const comando = nome === ID_INSTALAR ? ['npm', 'install'] : ['npm', 'run', nome];
+    const args = extras.argumentos?.length ? ['--', ...extras.argumentos] : [];
+    const comando = nome === ID_INSTALAR ? ['npm', 'install'] : ['npm', 'run', nome, ...args];
     this.atualizar(nome, { nome, fase: 'rodando', inicio: Date.now(), fim: null, codigo: null, linhas: [], erros: 0, avisos: 0, url: null });
     this.registrar(nome, [comando.join(' ')], true);
     try {
@@ -96,6 +97,7 @@ export class ScriptsService {
         comando,
         (linhas) => this.registrar(nome, linhas),
         (codigo) => this.aoTerminar(nome, codigo),
+        extras.ambiente && Object.keys(extras.ambiente).length ? extras.ambiente : null,
       );
     } catch (e) {
       this.registrar(nome, [String(e)], true, 'erro');

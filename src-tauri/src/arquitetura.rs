@@ -8,6 +8,8 @@
 //! É uma leitura do texto, sem compilar: nada de jdtls nem tsserver, então funciona logo ao
 //! abrir o projeto, e o front e o back entram no mesmo grafo.
 
+mod telas;
+
 use crate::busca::{percorrer, relativo};
 use regex::Regex;
 use serde::Serialize;
@@ -43,7 +45,7 @@ pub struct Componente {
     pub relativo: String,
     pub linha: u32,
     pub pacote: String,
-    /// "java" ou "ts".
+    /// "java", "ts" ou "jsp".
     pub linguagem: &'static str,
     /// tela, front, entrada, job, servico, repositorio, entidade, excecao, tratador, teste, outro.
     pub papel: &'static str,
@@ -66,6 +68,19 @@ pub struct Componente {
     pub seletor: Option<String>,
     pub template: Option<String>,
     pub metodos: Vec<Metodo>,
+    /// Tela: links do template para outras telas (`routerLink`, `<a href="x.jsp">`).
+    pub navega: Vec<Navegacao>,
+}
+
+/// Ida de uma tela para outra (rota do Angular, forward do Struts para a JSP).
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Navegacao {
+    pub rota: String,
+    /// Id da tela que atende (o componente da rota, a JSP).
+    pub alvo: Option<String>,
+    pub linha: u32,
+    pub texto: String,
 }
 
 #[derive(Serialize, Clone, Default)]
@@ -88,6 +103,8 @@ pub struct Metodo {
     pub gatilhos: Vec<Gatilho>,
     /// O corpo usa um cliente HTTP (vai para o sistema externo do componente).
     pub usa_externo: bool,
+    /// Para que tela o método leva (`router.navigate`, forward/result do Struts).
+    pub navega: Vec<Navegacao>,
 }
 
 #[derive(Serialize, Clone)]
@@ -893,16 +910,42 @@ fn desvios(f: &Fonte, de: usize, ate: usize) -> Vec<Desvio> {
             fim += 1;
         }
         let expr = juntar_espacos(f.orig(pos + 6, fim));
-        let Some(status) = status_de(&expr) else { continue };
-        if status < 300 {
+        // Struts: voltar ao formulário (INPUT/ERROR, forward de erro) também é um desvio.
+        static VOLTA: OnceLock<Regex> = OnceLock::new();
+        let volta = re(&VOLTA, r#"^(INPUT|ERROR|LOGIN)$|getInputForward\s*\(|findForward\s*\(\s*"(erro|error|falha|input|invalido|login)"#).is_match(&expr);
+        let status = status_de(&expr);
+        if !volta && status.is_none_or(|s| s < 300) {
             continue;
         }
         let Some((condicao, _)) = condicao_de(f, de, pos) else { continue };
         let curta: String = expr.chars().take(70).collect();
-        lista.push(Desvio { linha: f.linha(pos), condicao: Some(condicao), acao: format!("return {curta}"), excecao: None, mensagem: primeira_string(&expr), status: Some(status) });
+        lista.push(Desvio { linha: f.linha(pos), condicao: Some(condicao), acao: format!("return {curta}"), excecao: None, mensagem: primeira_string(&expr).filter(|_| !volta), status: if volta { None } else { status } });
+    }
+    // Struts: mensagem de erro para a tela (addActionError, addFieldError, errors.add).
+    static ERRO_TELA: OnceLock<Regex> = OnceLock::new();
+    for c in re(&ERRO_TELA, r"\b(addActionError|addFieldError)\s*\(|\berrors\s*\.\s*add\s*\(").find_iter(&f.mascara[de..ate]) {
+        let pos = de + c.start();
+        let abre = de + c.end() - 1;
+        let args = f.orig(abre + 1, fechar(m, abre));
+        let Some((condicao, _)) = condicao_de(f, de, pos) else { continue };
+        static TODAS: OnceLock<Regex> = OnceLock::new();
+        let mensagem = re(&TODAS, r#""((?:[^"\\]|\\.)*)""#).captures_iter(args).last().map(|x| x[1].to_string());
+        lista.push(Desvio { linha: f.linha(pos), condicao: Some(condicao), acao: "erro na tela".into(), excecao: None, mensagem, status: None });
     }
     lista.sort_by_key(|d| d.linha);
-    lista
+    // Struts: `errors.add(...)` + `return mapping.getInputForward()` no mesmo if são um desvio só.
+    let mut unicos: Vec<Desvio> = Vec::new();
+    for d in lista {
+        let tela = d.excecao.is_none() && d.status.is_none();
+        if let Some(outro) = unicos.iter_mut().find(|o| tela && o.excecao.is_none() && o.status.is_none() && o.condicao == d.condicao) {
+            if outro.mensagem.is_none() {
+                outro.mensagem = d.mensagem;
+            }
+            continue;
+        }
+        unicos.push(d);
+    }
+    unicos
 }
 
 /// Chamadas do HttpClient no corpo: (verbo, expressão da URL, posição).
@@ -1011,7 +1054,15 @@ fn trechos(rota: &str) -> (Option<String>, Vec<String>) {
         .map(|t| if t.contains('{') || t.starts_with(':') || t == "*" { "*".to_string() } else { t.to_lowercase() })
         .collect::<Vec<_>>();
     // O `{}` do começo é a base da API (environment.api): fica de fora.
-    let lista = lista.into_iter().skip_while(|t| t == "*").collect();
+    let mut lista: Vec<String> = lista.into_iter().skip_while(|t| t == "*").collect();
+    // Struts: `/reserva.do` e `<html:form action="/reserva">` são a mesma ação.
+    if let Some(ultimo) = lista.last_mut() {
+        for ext in [".do", ".action"] {
+            if let Some(sem) = ultimo.strip_suffix(ext) {
+                *ultimo = sem.to_string();
+            }
+        }
+    }
     (host, lista)
 }
 
@@ -1074,7 +1125,9 @@ fn papel(c: &Classe, f: &Fonte, anots: &HashSet<&str>, metodos: &[MetodoBruto]) 
     if tem("ControllerAdvice") || tem("RestControllerAdvice") || cab.contains("ExceptionMapper") || tem("Provider") && cab.contains("Mapper") {
         return "tratador";
     }
-    if tem("RestController") || tem("Controller") || tem("WebServlet") || cab.contains("HttpServlet") || (tem("Path") && !tem("ApplicationPath")) {
+    static ACAO_STRUTS: OnceLock<Regex> = OnceLock::new();
+    let struts = re(&ACAO_STRUTS, r"\bextends\s+(?:[\w.]+\.)?(Action|DispatchAction|LookupDispatchAction|MappingDispatchAction|EventDispatchAction|ActionSupport)\b").is_match(cab);
+    if tem("RestController") || tem("Controller") || tem("WebServlet") || cab.contains("HttpServlet") || (tem("Path") && !tem("ApplicationPath")) || struts {
         return "entrada";
     }
     if tem("Entity") || tem("Embeddable") || tem("Document") || tem("Table") {
@@ -1094,7 +1147,7 @@ fn papel(c: &Classe, f: &Fonte, anots: &HashSet<&str>, metodos: &[MetodoBruto]) 
         return "outro";
     }
     if tem("Service") || tem("Stateless") || tem("Stateful") || tem("Singleton") || tem("ApplicationScoped") || tem("RequestScoped") || tem("Component") || tem("Named")
-        || ["Service", "ServiceImpl", "UseCase", "Facade", "Manager", "Bean", "Client", "Gateway"].iter().any(|s| nome.ends_with(s))
+        || ["Service", "ServiceImpl", "UseCase", "Facade", "Manager", "Bean", "Client", "Gateway", "BO", "Bo", "Business", "Negocio", "Regra", "Regras"].iter().any(|s| nome.ends_with(s))
     {
         return if nome.ends_with("Client") || nome.ends_with("Gateway") { "repositorio" } else { "servico" };
     }
@@ -1113,10 +1166,11 @@ const PALAVRAS_DE_CAMADA: &[&str] = &[
     "componentes", "features", "modules", "telas", "views", "client", "clients", "integration", "integracao",
     "security", "seguranca", "src", "main", "java", "ts", "environments", "http", "usecase", "usecases", "facade",
     "gateway", "gateways", "listener", "listeners", "data", "store", "state", "interceptors", "guards", "pipes",
+    "webapp", "web-inf", "webcontent", "webroot", "jsp", "jsps", "view", "templates", "html", "action", "actions", "form", "forms",
 ];
 
 const SUFIXOS: &[&str] = &[
-    "ServiceImpl", "Controller", "Resource", "Service", "Repository", "Component", "Endpoint", "Servlet", "Exception",
+    "ServiceImpl", "Controller", "Resource", "Action", "BO", "Business", "Service", "Repository", "Component", "Endpoint", "Servlet", "Exception",
     "Handler", "Webhook", "UseCase", "Facade", "Client", "Gateway", "Listener", "Consumer", "Mapper", "Api", "Dao",
     "DAO", "Job", "Impl", "Request", "Response", "Dto", "DTO", "Form", "Page", "Entity",
 ];
@@ -1209,6 +1263,8 @@ fn analisar(raiz: &Path) -> Analise {
     let mut fontes: Vec<Fonte> = Vec::new();
     let mut extras: Vec<(String, String)> = Vec::new();
     let mut htmls: HashMap<String, (String, String)> = HashMap::new();
+    let mut jsps: Vec<(String, String, String)> = Vec::new();
+    let mut xmls: Vec<(String, String, String)> = Vec::new();
     for entrada in percorrer(raiz, None) {
         if fontes.len() >= LIMITE_ARQUIVOS {
             break;
@@ -1220,7 +1276,8 @@ fn analisar(raiz: &Path) -> Analise {
         }
         let nome = rel.rsplit('/').next().unwrap_or("").to_string();
         let ext = caminho.extension().and_then(|e| e.to_str()).unwrap_or("");
-        let interessa = matches!(ext, "java" | "ts" | "html") || nome == "pom.xml" || nome.starts_with("build.gradle") || nome == "package.json";
+        let xml_struts = ext == "xml" && (nome.starts_with("struts") || nome.starts_with("validation"));
+        let interessa = matches!(ext, "java" | "ts" | "html" | "jsp") || xml_struts || nome == "pom.xml" || nome.starts_with("build.gradle") || nome == "package.json";
         if !interessa || nome.ends_with(".d.ts") || entrada.metadata().map(|m| m.len() > TAMANHO_MAXIMO).unwrap_or(true) {
             continue;
         }
@@ -1231,16 +1288,48 @@ fn analisar(raiz: &Path) -> Analise {
             "html" => {
                 htmls.insert(rel.clone(), (absoluto, texto));
             }
+            "jsp" => jsps.push((absoluto, rel, texto)),
+            "xml" if xml_struts => xmls.push((absoluto, rel, texto)),
             _ => extras.push((rel, texto)),
         }
     }
-    let mut analise = montar(fontes, &htmls);
-    analise.tecnologias = tecnologias(&extras);
+    let mut tecs = tecnologias(&extras);
+    if xmls.iter().any(|(_, r, t)| r.contains("struts-config") || t.contains("<action-mappings")) {
+        tecs.push("Struts 1".into());
+    } else if xmls.iter().any(|(_, r, _)| r.ends_with("struts.xml")) {
+        tecs.push("Struts 2".into());
+    }
+    if !jsps.is_empty() {
+        tecs.push("JSP".into());
+    }
+    let mut analise = montar_com(fontes, &htmls, &jsps, &xmls);
+    analise.tecnologias = tecs;
     analise
 }
 
+#[cfg(test)]
 fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Analise {
+    montar_com(fontes, htmls, &[], &[])
+}
+
+/// Id de cada JSP: o nome do arquivo, ou o caminho quando dois têm o mesmo nome.
+fn ids_de_jsp(jsps: &[(String, String, String)]) -> Vec<String> {
+    let nome = |rel: &str| rel.rsplit('/').next().unwrap_or(rel).to_string();
+    jsps.iter()
+        .map(|(_, rel, _)| if jsps.iter().filter(|(_, r, _)| nome(r) == nome(rel)).count() > 1 { rel.clone() } else { nome(rel) })
+        .collect()
+}
+
+/// (absoluto, relativo, texto) das JSPs e dos XMLs do Struts entram aqui.
+fn montar_com(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>, jsps: &[(String, String, String)], xmls: &[(String, String, String)]) -> Analise {
     static PACOTE: OnceLock<Regex> = OnceLock::new();
+    let mapeamentos: Vec<telas::MapeamentoStruts> = xmls.iter().filter(|(_, r, _)| !r.rsplit('/').next().unwrap_or("").starts_with("validation")).flat_map(|(_, _, t)| telas::struts(t)).collect();
+    let jsp_ids = ids_de_jsp(jsps);
+    // Forward/result do Struts ("/WEB-INF/jsp/reserva/ok.jsp") → id da JSP.
+    let jsp_de = |caminho: &str| -> Option<String> {
+        let alvo = caminho.trim().trim_start_matches('/').to_lowercase();
+        jsps.iter().position(|(_, rel, _)| rel.to_lowercase().ends_with(&alvo)).map(|i| jsp_ids[i].clone())
+    };
     let mut brutos: Vec<Bruto> = Vec::new();
     for (fi, f) in fontes.iter().enumerate() {
         let pacote = if f.ts {
@@ -1306,6 +1395,12 @@ fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Anal
                 comp.tabela = Some(snake(&c.nome));
             }
             brutos.push(Bruto { comp, fonte: fi, classe_abre: c.abre, classe_fecha: c.fecha, campos, metodos, anots: c.anotacoes, cabecalho: c.cabecalho });
+        }
+    }
+
+    for b in &mut brutos {
+        if b.comp.papel != "teste" && mapeamentos.iter().any(|m| m.classe == b.comp.nome) {
+            b.comp.papel = "entrada";
         }
     }
 
@@ -1456,8 +1551,37 @@ fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Anal
                     _ => verbo,
                 };
             }
+            let mut rota_fixa: Option<String> = None;
+            let tem_execute = b.metodos.iter().any(|x| x.nome == "execute");
+            for mp in mapeamentos.iter().filter(|mp| mp.classe == b.comp.nome) {
+                let eh = match &mp.metodo {
+                    Some(nome) => *nome == m.nome,
+                    None if tem_execute => m.nome == "execute",
+                    // DispatchAction: cada método com ActionMapping é uma ação.
+                    None => m.params.iter().any(|(_, t)| t.contains("ActionMapping")),
+                };
+                if eh && rota_fixa.is_none() {
+                    verbo = Some("POST");
+                    rota_fixa = Some(mp.rota.clone());
+                    for r in &mp.resultados {
+                        met.navega.push(Navegacao { rota: r.clone(), alvo: jsp_de(r), linha: mp.linha, texto: String::new() });
+                    }
+                }
+            }
+            if let Some(a) = m.anotacoes.iter().find(|a| a.nome == "Action" && !a.args.is_empty()) {
+                // Struts 2 (convention): @Action("/reservar") + @Namespace na classe.
+                let ns = b.anots.iter().find(|x| x.nome == "Namespace").and_then(|x| primeira_string(&x.args)).unwrap_or_default();
+                if let Some(v) = argumento(&a.args, "value").or_else(|| primeira_string(&a.args)) {
+                    verbo = Some("POST");
+                    rota_fixa = Some(juntar_rota(&ns, &format!("{}.action", v.trim_start_matches('/'))));
+                }
+                static LOCAL: OnceLock<Regex> = OnceLock::new();
+                for c in re(&LOCAL, r#"location\s*=\s*"([^"]+\.jsp)""#).captures_iter(&a.args) {
+                    met.navega.push(Navegacao { rota: c[1].to_string(), alvo: jsp_de(&c[1]), linha: met.linha, texto: String::new() });
+                }
+            }
             if let (Some(v), "entrada") = (verbo, b.comp.papel) {
-                let completa = juntar_rota(&base, rota.as_deref().unwrap_or(""));
+                let completa = rota_fixa.unwrap_or_else(|| juntar_rota(&base, rota.as_deref().unwrap_or("")));
                 endpoints.push((bi, m.nome.clone(), v.to_string(), trechos(&completa).1));
                 met.http = Some(Endpoint { verbo: v.into(), rota: completa });
             }
@@ -1467,7 +1591,7 @@ fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Anal
     }
 
     // Corpo dos métodos: chamadas resolvidas, desvios, HTTP do front.
-    let mut resultados: Vec<(Vec<String>, Option<String>, Vec<Metodo>)> = Vec::new();
+    let mut resultados: Vec<(Vec<String>, Option<String>, Vec<Metodo>, Vec<Navegacao>)> = Vec::new();
     for bi in 0..brutos.len() {
         let b = &brutos[bi];
         let f = &fontes[b.fonte];
@@ -1552,6 +1676,9 @@ fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Anal
                 b.campos.iter().any(|c| CLIENTES_HTTP.contains(&tipo_simples(&c.tipo).as_str()) && corpo.contains(&c.nome))
             };
             if ts {
+                for (rota, pos) in telas::navegacoes_ts(f.orig(abre, fecha)) {
+                    met.navega.push(Navegacao { rota, alvo: None, linha: f.linha(abre + pos), texto: String::new() });
+                }
                 for (verbo, expr, pos) in http_do_front(f, abre, fecha) {
                     let url = montar_url(&expr, &campos_texto, 0);
                     let (host, partes) = trechos(&url);
@@ -1570,10 +1697,14 @@ fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Anal
                 }
             }
         }
-        // Template do componente Angular: quem dispara cada método.
+        // Template do componente Angular: quem dispara cada método e os links (routerLink).
+        let mut links = Vec::new();
         if b.comp.papel == "tela" {
             let (caminho_html, texto_html, inicio) = template_de(f, b, htmls);
             if let Some(texto) = texto_html {
+                for (rota, linha, rotulo) in telas::links_template(&texto) {
+                    links.push(Navegacao { rota, alvo: None, linha: linha + inicio, texto: rotulo });
+                }
                 for (metodo, linha, evento, rotulo) in gatilhos(&texto) {
                     if let Some(met) = metodos_finais.iter_mut().find(|x| x.nome == metodo) {
                         met.gatilhos.push(Gatilho { caminho: caminho_html.clone(), linha: linha + inicio, evento, texto: rotulo });
@@ -1581,12 +1712,82 @@ fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Anal
                 }
             }
         }
-        resultados.push((usa.iter().map(|&j| brutos[j].comp.id.clone()).collect(), externo, metodos_finais));
+        resultados.push((usa.iter().map(|&j| brutos[j].comp.id.clone()).collect(), externo, metodos_finais, links));
     }
-    for (b, (usa, externo, metodos)) in brutos.iter_mut().zip(resultados) {
+    for (b, (usa, externo, metodos, links)) in brutos.iter_mut().zip(resultados) {
         b.comp.usa = usa;
         b.comp.externo = externo;
         b.comp.metodos = metodos;
+        b.comp.navega = links;
+    }
+
+    // Rotas do Angular: qual rota abre qual tela, e para onde cada navegação vai.
+    let rotas_ng: Vec<telas::RotaNg> = fontes.iter().filter(|f| f.ts && !f.teste).flat_map(|f| telas::rotas_angular(&f.texto, &f.mascara)).collect();
+    let tela_por_nome: HashMap<String, String> = brutos.iter().filter(|b| b.comp.papel == "tela").map(|b| (b.comp.nome.clone(), b.comp.id.clone())).collect();
+    for b in &mut brutos {
+        if b.comp.papel == "tela" && b.comp.rota.is_none() {
+            b.comp.rota = rotas_ng.iter().find(|r| r.componente == b.comp.nome).map(|r| r.caminho.clone());
+        }
+        if b.comp.linguagem != "ts" {
+            continue;
+        }
+        let resolver = |n: &mut Navegacao| n.alvo = rotas_ng.iter().filter_map(|r| telas::pontos_da_rota(&r.caminho, &n.rota).map(|p| (p, r))).max_by_key(|(p, _)| *p).map(|(_, r)| r).and_then(|r| tela_por_nome.get(&r.componente).cloned());
+        b.comp.navega.iter_mut().for_each(resolver);
+        b.comp.metodos.iter_mut().flat_map(|m| m.navega.iter_mut()).for_each(resolver);
+    }
+
+    // JSPs: cada formulário/link vira um "método" da tela, ligado à ação que atende.
+    let mut jsp_comps: Vec<Componente> = Vec::new();
+    for (k, (abs, rel, texto)) in jsps.iter().enumerate() {
+        let mut metodos: Vec<Metodo> = Vec::new();
+        let mut navega = Vec::new();
+        for a in telas::alvos_jsp(texto) {
+            let limpa = a.url.split(['?', '#']).next().unwrap_or("").to_string();
+            if limpa.ends_with(".jsp") {
+                navega.push(Navegacao { rota: a.url.clone(), alvo: jsp_de(&limpa), linha: a.linha, texto: a.texto.clone() });
+                continue;
+            }
+            let (host, partes) = trechos(&a.url);
+            let alvo = if host.is_some() {
+                None
+            } else {
+                endpoints
+                    .iter()
+                    .map(|e| (casamento(&partes, &e.3), e))
+                    .filter(|(n, _)| *n > 0)
+                    .max_by_key(|(n, _)| *n)
+                    .map(|(_, (j, metodo, _, _))| Chamada { alvo: brutos[*j].comp.id.clone(), metodo: metodo.clone(), linha: 0 })
+            };
+            let base = partes.last().cloned().unwrap_or_else(|| "envio".into());
+            let mut nome = base.clone();
+            let mut n = 2;
+            while metodos.iter().any(|m| m.nome == nome) {
+                nome = format!("{base}{n}");
+                n += 1;
+            }
+            metodos.push(Metodo {
+                nome,
+                linha: a.linha,
+                linha_fim: a.linha,
+                http_saida: vec![HttpSaida { verbo: a.verbo.to_string(), url: a.url.clone(), linha: a.linha, alvo }],
+                gatilhos: vec![Gatilho { caminho: abs.clone(), linha: a.linha, evento: a.evento.to_string(), texto: a.texto.clone() }],
+                ..Default::default()
+            });
+        }
+        let nome = rel.rsplit('/').next().unwrap_or(rel).to_string();
+        jsp_comps.push(Componente {
+            id: jsp_ids[k].clone(),
+            nome,
+            caminho: abs.clone(),
+            relativo: rel.clone(),
+            linha: 1,
+            pacote: rel.rsplit_once('/').map(|(p, _)| p.to_string()).unwrap_or_default(),
+            linguagem: "jsp",
+            papel: "tela",
+            metodos,
+            navega,
+            ..Default::default()
+        });
     }
 
     // Repositório → tabela da entidade.
@@ -1610,11 +1811,63 @@ fn montar(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>) -> Anal
             b.comp.entidade = Some(id.clone());
             b.comp.tabela = Some(tabela.clone());
         }
+        // DAO de JDBC (sem entidade): a tabela vem do SQL nas strings.
+        if b.comp.tabela.is_none() {
+            static SQL: OnceLock<Regex> = OnceLock::new();
+            let f = &fontes[b.fonte];
+            let corpo = f.orig(b.classe_abre, b.classe_fecha);
+            b.comp.tabela = re(&SQL, r#"(?i)"\s*(?:select\b[^"]*?\bfrom|insert\s+into|update|delete\s+from)\s+([a-z_][\w.]*)"#).captures(corpo).map(|c| c[1].to_lowercase());
+        }
     }
 
     definir_dominios(&mut brutos);
-    let regras = regras(&fontes, &brutos, &status_da);
-    Analise { tecnologias: vec![], componentes: brutos.into_iter().map(|b| b.comp).collect(), regras, arquivos: fontes.len() }
+    let dominios: HashSet<String> = brutos.iter().map(|b| b.comp.dominio.clone()).collect();
+    let normalizar = |d: String| -> String {
+        if dominios.contains(&d) {
+            d
+        } else if let Some(s) = d.strip_suffix('s').filter(|s| dominios.contains(*s)) {
+            s.to_string()
+        } else if dominios.contains(&format!("{d}s")) {
+            format!("{d}s")
+        } else {
+            d
+        }
+    };
+    for c in &mut jsp_comps {
+        let pastas: Vec<&str> = c.relativo.split('/').collect();
+        let da_pasta = pastas[..pastas.len().saturating_sub(1)].iter().rev().find(|t| !PALAVRAS_DE_CAMADA.contains(&t.to_lowercase().as_str())).map(|t| primeira_palavra(t));
+        let stem = c.nome.trim_end_matches(".jsp");
+        c.dominio = normalizar(da_pasta.filter(|d| !d.is_empty()).unwrap_or_else(|| primeira_palavra(stem)));
+    }
+    let mut regras = regras(&fontes, &brutos, &status_da);
+    // validation.xml do Struts: uma regra por campo.
+    for (abs, rel, texto) in xmls.iter().filter(|(_, r, _)| r.rsplit('/').next().unwrap_or("").starts_with("validation")) {
+        let _ = rel;
+        for (form, campo, deps, linha) in telas::validacoes_xml(texto) {
+            let dominio = normalizar(primeira_palavra(&form));
+            let detalhe = deps.replace(',', ", ");
+            regras.push(Regra {
+                chave: format!("validacao:{form}.-:{}", fnv(&format!("{campo}|{detalhe}"))),
+                tipo: "validacao",
+                componente: form.clone(),
+                metodo: None,
+                dominio,
+                caminho: abs.clone(),
+                linha,
+                linha_fim: linha,
+                condicao: Some(campo),
+                mensagem: None,
+                excecao: None,
+                status: None,
+                detalhe,
+                aparece_em: vec![],
+                teste: None,
+            });
+        }
+    }
+    let mut componentes: Vec<Componente> = brutos.into_iter().map(|b| b.comp).collect();
+    componentes.extend(jsp_comps);
+    Analise { tecnologias: vec![], componentes, regras, arquivos: fontes.len() + jsps.len() }
 }
 
 fn nome_externo(f: &Fonte, b: &Bruto) -> String {
@@ -2267,6 +2520,78 @@ public class PedidoExceptionMapper implements ExceptionMapper<PedidoException> {
         for n in ["PedidoResource", "PedidoBean", "PedidoDao", "Pedido"] {
             assert_eq!(comp(&a, n).dominio, "pedido", "{n}");
         }
+    }
+
+    #[test]
+    fn struts_e_jsp_de_ponta_a_ponta() {
+        let acao = r#"package br.gov.feira.reserva;
+public class ReservaAction extends Action {
+    private ReservaBO bo = new ReservaBO();
+    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest req, HttpServletResponse resp) {
+        ReservaForm f = (ReservaForm) form;
+        if (f.getNumero() == null) {
+            errors.add("numero", new ActionMessage("Informe o número"));
+            return mapping.getInputForward();
+        }
+        bo.reservar(f.getNumero());
+        return mapping.findForward("sucesso");
+    }
+}
+"#;
+        let bo = "package br.gov.feira.reserva;\npublic class ReservaBO {\n  public void reservar(String n) { }\n}\n";
+        let xml = r#"<struts-config><action-mappings>
+<action path="/reserva" type="br.gov.feira.reserva.ReservaAction" name="reservaForm" input="/WEB-INF/jsp/reserva/form.jsp">
+  <forward name="sucesso" path="/WEB-INF/jsp/reserva/ok.jsp"/>
+</action></action-mappings></struts-config>"#;
+        let validacao = r#"<form-validation><formset><form name="reservaForm"><field property="numero" depends="required,maxlength"/></form></formset></form-validation>"#;
+        let form_jsp = "<html:form action=\"/reserva\">\n<html:submit>Reservar</html:submit>\n</html:form>\n";
+        let jsps = vec![
+            ("/p/WebContent/WEB-INF/jsp/reserva/form.jsp".to_string(), "WebContent/WEB-INF/jsp/reserva/form.jsp".to_string(), form_jsp.to_string()),
+            ("/p/WebContent/WEB-INF/jsp/reserva/ok.jsp".to_string(), "WebContent/WEB-INF/jsp/reserva/ok.jsp".to_string(), "<p>ok</p>".to_string()),
+        ];
+        let xmls = vec![
+            ("/p/WEB-INF/struts-config.xml".to_string(), "WebContent/WEB-INF/struts-config.xml".to_string(), xml.to_string()),
+            ("/p/WEB-INF/validation.xml".to_string(), "WebContent/WEB-INF/validation.xml".to_string(), validacao.to_string()),
+        ];
+        let a = montar_com(
+            vec![fonte("src/br/gov/feira/reserva/ReservaAction.java", acao), fonte("src/br/gov/feira/reserva/ReservaBO.java", bo)],
+            &HashMap::new(),
+            &jsps,
+            &xmls,
+        );
+        let action = comp(&a, "ReservaAction");
+        assert_eq!(action.papel, "entrada");
+        let exec = action.metodos.iter().find(|m| m.nome == "execute").unwrap();
+        assert_eq!(exec.http.as_ref().unwrap().rota, "/reserva.do");
+        assert!(exec.chamadas.iter().any(|c| c.alvo == "ReservaBO" && c.metodo == "reservar"));
+        assert!(exec.navega.iter().any(|n| n.alvo.as_deref() == Some("ok.jsp")));
+        // errors.add + return getInputForward no mesmo if: um desvio só, com a mensagem.
+        assert_eq!(exec.desvios.len(), 1);
+        assert_eq!(exec.desvios[0].condicao.as_deref(), Some("f.getNumero() == null"));
+        assert_eq!(exec.desvios[0].mensagem.as_deref(), Some("Informe o número"));
+        let form = comp(&a, "form.jsp");
+        assert_eq!((form.papel, form.linguagem, form.dominio.as_str()), ("tela", "jsp", "reserva"));
+        let envio = &form.metodos[0];
+        assert_eq!(envio.gatilhos[0].texto, "Reservar");
+        assert_eq!(envio.http_saida[0].alvo.as_ref().map(|c| c.alvo.as_str()), Some("ReservaAction"));
+        assert!(a.regras.iter().any(|r| r.tipo == "validacao" && r.componente == "reservaForm" && r.condicao.as_deref() == Some("numero")));
+    }
+
+    #[test]
+    fn rotas_do_angular_resolvidas() {
+        let rotas = "export const routes: Routes = [ { path: 'reservas/:id', component: ReservaDetalheComponent } ];\n";
+        let detalhe = "@Component({ selector: 'app-d', template: `<a routerLink=\"/feiras\">Feiras</a>` })\nexport class ReservaDetalheComponent {}\n";
+        let a = montar(
+            vec![
+                fonte("front/src/app/app.routes.ts", rotas),
+                fonte("front/src/app/reserva/reserva-detalhe.component.ts", detalhe),
+                fonte("front/src/app/reserva/reserva-form/reserva-form.component.ts", FORM_TS),
+            ],
+            &HashMap::new(),
+        );
+        assert_eq!(comp(&a, "ReservaDetalheComponent").rota.as_deref(), Some("/reservas/:id"));
+        assert_eq!(comp(&a, "ReservaDetalheComponent").navega[0].rota, "/feiras");
+        let _ = &a;
     }
 
     /// `SEEDY_ANALISAR=<pasta> cargo test --lib analisar_pasta -- --ignored --nocapture`

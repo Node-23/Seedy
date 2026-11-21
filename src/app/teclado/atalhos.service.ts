@@ -179,7 +179,7 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta();
+    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {

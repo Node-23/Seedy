@@ -219,6 +219,7 @@ pub fn tarefa_iniciar(
     comando: Vec<String>,
     saida: Channel<Vec<String>>,
     fim: Channel<Option<i32>>,
+    ambiente: Option<HashMap<String, String>>,
 ) -> Result<u32, String> {
     let (programa, args) = comando.split_first().ok_or("comando vazio")?;
     // Mesmo id ainda rodando (a interface recarregou e perdeu o controle dele): encerra o anterior.
@@ -229,6 +230,10 @@ pub fn tarefa_iniciar(
     let mut c = comando_do_node(programa, args);
     // Sem cores nem navegador abrindo sozinho: a saída vai para o painel.
     c.current_dir(&raiz).env("FORCE_COLOR", "0").env("NO_COLOR", "1").env("BROWSER", "none").env("NG_CLI_ANALYTICS", "false");
+    // Variáveis da configuração de execução (␣ r → argumentos, ambiente e JVM).
+    if let Some(vars) = ambiente {
+        c.envs(vars);
+    }
     let p = Processo::iniciar(c, move |linhas| {
         let _ = saida.send(linhas);
     })?;

@@ -102,7 +102,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   (domínios × camadas, da tela do Angular até a tabela), as regras de negócio achadas no código
   (guardadas em `.seedy/regras.md`, reescritas pela IA) e o caminho de um método — `ctrl+.` →
   "acompanhar método" mostra de onde a chamada vem (até o botão da tela), para onde vai (até o
-  banco) e onde ela pode ser barrada. Spring Boot, Java EE/Jakarta e Angular.
+  banco) e onde ela pode ser barrada. Spring Boot, Java EE/Jakarta, Struts 1/2 com JSP e Angular
+  (com as rotas: qual rota abre qual tela e para onde cada tela vai).
+- **Configuração de execução** (`␣ r` → ⚙): argumentos do programa, variáveis de ambiente e opções
+  da JVM da classe `main` ou do script escolhido, em `.seedy/execucao.json`.
 - **Containers** (Fase 8, mockups 15 e 16): `␣ D` abre a tela do Docker com os containers do
   projeto e os outros, um mapa de quem fala com quem (rede, `depends_on`, tráfego TCP medido
   agora, variável de ambiente que aponta para outro container e portas no host), o detalhe e os

@@ -302,6 +302,15 @@ export interface MetodoAnalise {
   httpSaida: { verbo: string; url: string; linha: number; alvo: ChamadaAnalise | null }[];
   gatilhos: { caminho: string; linha: number; evento: string; texto: string }[];
   usaExterno: boolean;
+  /** Para que tela o método leva (router.navigate, forward do Struts). */
+  navega: NavegacaoAnalise[];
+}
+
+export interface NavegacaoAnalise {
+  rota: string;
+  alvo: string | null;
+  linha: number;
+  texto: string;
 }
 
 export interface ComponenteAnalise {
@@ -311,7 +320,7 @@ export interface ComponenteAnalise {
   relativo: string;
   linha: number;
   pacote: string;
-  linguagem: 'java' | 'ts';
+  linguagem: 'java' | 'ts' | 'jsp';
   papel: PapelComponente;
   dominio: string;
   anotacoes: string[];
@@ -325,6 +334,8 @@ export interface ComponenteAnalise {
   seletor: string | null;
   template: string | null;
   metodos: MetodoAnalise[];
+  /** Tela: links do template para outras telas (routerLink, href de JSP). */
+  navega: NavegacaoAnalise[];
 }
 
 export interface LugarAnalise {
@@ -591,12 +602,19 @@ export const ponte = {
 
   /** Comandos do projeto (scripts do package.json, npm install) com a saída em lotes de linhas. */
   tarefa: {
-    async iniciar(id: string, raiz: string, comando: string[], aoLer: (linhas: string[]) => void, aoTerminar: (codigo: number | null) => void): Promise<number> {
+    async iniciar(
+      id: string,
+      raiz: string,
+      comando: string[],
+      aoLer: (linhas: string[]) => void,
+      aoTerminar: (codigo: number | null) => void,
+      ambiente: Record<string, string> | null = null,
+    ): Promise<number> {
       const saida = new Channel<string[]>();
       saida.onmessage = aoLer;
       const fim = new Channel<number | null>();
       fim.onmessage = aoTerminar;
-      return invoke<number>('tarefa_iniciar', { id, raiz, comando, saida, fim });
+      return invoke<number>('tarefa_iniciar', { id, raiz, comando, saida, fim, ambiente });
     },
     parar: (id: string) => invoke<void>('tarefa_parar', { id }),
   },

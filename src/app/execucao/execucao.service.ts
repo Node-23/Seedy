@@ -16,6 +16,27 @@ export type ConfigDeExecucao =
   | { id: string; tipo: 'main'; nome: string; mainClass: string; projectName: string; caminho: string | null }
   | { id: string; tipo: 'script'; nome: string; script: string };
 
+/** Argumentos, ambiente e JVM de uma configuração (guardados em .seedy/execucao.json). */
+export interface OpcoesDeExecucao {
+  argumentos: string;
+  /** Uma por linha: NOME=valor. */
+  ambiente: Record<string, string>;
+  /** Só classe main. */
+  jvm: string;
+}
+
+export const OPCOES_VAZIAS: OpcoesDeExecucao = { argumentos: '', ambiente: {}, jvm: '' };
+
+/** "a b 'c d'" → ["a", "b", "c d"] (aspas simples ou duplas juntam). */
+export function separarArgumentos(texto: string): string[] {
+  return [...texto.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+}
+
+/** Para o java-debug: ele separa por espaço e só entende aspas duplas. */
+export function comAspasDuplas(args: string[]): string {
+  return args.map((a) => (/[\s"]/.test(a) || !a ? `"${a.replace(/"/g, '\\"')}"` : a)).join(' ');
+}
+
 /** O console do navegador depurado (mockup 14). */
 export interface ConsoleDoNavegador {
   linhas: LinhaDeLog[];
@@ -94,6 +115,11 @@ export class ExecucaoService {
   private resto = { stdout: '', stderr: '' };
 
   constructor() {
+    // Opções de execução do projeto (.seedy/execucao.json).
+    effect(() => {
+      this.projeto.raiz();
+      untracked(() => void this.carregarOpcoes());
+    });
     this.depurador.aoSaida = (texto, categoria) =>
       this.depurador.sessao()?.tipo === 'navegador' ? this.registrarNoNavegador(texto, categoria) : this.registrarSaida(texto, categoria);
     void ponte.web.navegadores().then((l) => {
@@ -166,10 +192,64 @@ export class ExecucaoService {
         detalhe: c.tipo === 'servidor' ? 'servidor de aplicação' : c.tipo === 'script' ? (this.scripts.scripts().find((x) => x.nome === c.script)?.comando ?? 'package.json') : c.mainClass,
         valor: c.id,
       })),
+      ...(this.atual() ? [{ rotulo: `⚙ argumentos, ambiente e JVM de ${this.atual()!.nome}`, detalhe: this.resumoDasOpcoes(this.atual()!.id), valor: '+opcoes' }] : []),
       { rotulo: '+ novo servidor', detalhe: 'WildFly/JBoss ou Tomcat', valor: '+servidor' },
     ]);
     if (id === '+servidor') await this.servidor.novo();
+    else if (id === '+opcoes') this.editarOpcoes();
     else if (id) this.escolher(id);
+  }
+
+  // ---------- argumentos, ambiente e JVM ----------
+
+  /** Por id da configuração (main:..., script:...). */
+  readonly opcoes = signal<Record<string, OpcoesDeExecucao>>({});
+  /** Configuração com o diálogo de opções aberto. */
+  readonly editandoOpcoes = signal<ConfigDeExecucao | null>(null);
+
+  opcoesDe(id: string): OpcoesDeExecucao {
+    return { ...OPCOES_VAZIAS, ...(this.opcoes()[id] ?? {}) };
+  }
+
+  private resumoDasOpcoes(id: string): string {
+    const o = this.opcoesDe(id);
+    const partes = [o.argumentos && `args: ${o.argumentos}`, Object.keys(o.ambiente).length && `${Object.keys(o.ambiente).length} variáveis`, o.jvm && `JVM: ${o.jvm}`].filter(Boolean);
+    return partes.join(' · ') || 'nada definido';
+  }
+
+  /** Servidor: as opções ficam no perfil dele; main e script: o diálogo de opções. */
+  editarOpcoes(c: ConfigDeExecucao | null = this.atual()): void {
+    if (!c) return;
+    if (c.tipo === 'servidor') this.servidor.editar(c.perfilId);
+    else this.editandoOpcoes.set(c);
+  }
+
+  private arquivoDeOpcoes(): string | null {
+    const raiz = this.projeto.raiz();
+    if (!raiz) return null;
+    const sep = raiz.includes('\\') ? '\\' : '/';
+    return `${raiz.replace(/[\\/]+$/, '')}${sep}.seedy${sep}execucao.json`;
+  }
+
+  private async carregarOpcoes(): Promise<void> {
+    const caminho = this.arquivoDeOpcoes();
+    const texto = caminho ? await ponte.lerArquivo(caminho).catch(() => null) : null;
+    try {
+      this.opcoes.set(texto ? JSON.parse(texto) : {});
+    } catch {
+      this.opcoes.set({});
+      this.mensagens.erro('.seedy/execucao.json inválido');
+    }
+  }
+
+  async salvarOpcoes(id: string, o: OpcoesDeExecucao): Promise<void> {
+    const vazias = !o.argumentos.trim() && !o.jvm.trim() && !Object.keys(o.ambiente).length;
+    const todas = { ...this.opcoes() };
+    if (vazias) delete todas[id];
+    else todas[id] = { argumentos: o.argumentos.trim(), ambiente: o.ambiente, jvm: o.jvm.trim() };
+    this.opcoes.set(todas);
+    const caminho = this.arquivoDeOpcoes();
+    if (caminho) await ponte.gravarArquivo(caminho, JSON.stringify(todas, null, 2) + '\n').catch((e) => this.mensagens.erro(String(e)));
   }
 
   /** RUN (shift+F10) e DEBUG (shift+F9). */
@@ -183,8 +263,9 @@ export class ExecucaoService {
       return;
     }
     if (c.tipo === 'script') {
+      const o = this.opcoesDe(c.id);
       if (debug) await this.depurarScript(c.script);
-      else await this.scripts.rodar(c.script);
+      else await this.scripts.rodar(c.script, { argumentos: separarArgumentos(o.argumentos), ambiente: o.ambiente });
       return;
     }
     if (c.tipo === 'servidor') {
@@ -208,7 +289,8 @@ export class ExecucaoService {
     this.registrarSeedy(`${debug ? 'depurando' : 'rodando'} ${c.mainClass}…`);
     this.layout.mostrar('servidor');
     if (debug) this.layout.tela.set('debug');
-    const ok = await this.depurador.lancar({ nome: c.nome, mainClass: c.mainClass, projectName: c.projectName }, debug);
+    const o = this.opcoesDe(c.id);
+    const ok = await this.depurador.lancar({ nome: c.nome, mainClass: c.mainClass, projectName: c.projectName, argumentos: comAspasDuplas(separarArgumentos(o.argumentos)), jvm: o.jvm, ambiente: o.ambiente }, debug);
     if (ok) this.mudar((m) => ({ ...m, fase: 'rodando' }));
     else {
       this.mudar((m) => ({ ...m, fase: 'parado' }));
@@ -234,7 +316,8 @@ export class ExecucaoService {
   async depurarScript(nome: string): Promise<void> {
     const raiz = this.projeto.raiz();
     if (!raiz) return;
-    if (this.scripts.execucoes().get(nome)?.fase !== 'rodando') await this.scripts.rodar(nome);
+    const o = this.opcoesDe(`script:${nome}`);
+    if (this.scripts.execucoes().get(nome)?.fase !== 'rodando') await this.scripts.rodar(nome, { argumentos: separarArgumentos(o.argumentos), ambiente: o.ambiente });
     this.layout.tela.set('debug');
     this.navegador.set({ linhas: [], erros: 0, avisos: 0 });
     this.registrarNoNavegador(`esperando ${nome} anunciar o endereço…`, 'seedy');
