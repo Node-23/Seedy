@@ -47,6 +47,8 @@ import { ScriptsComponent } from './web/scripts.component';
 import { WebLspService } from './web/web-lsp.service';
 import { TelaContainersComponent } from './containers/tela-containers.component';
 import { ContainersPainelComponent } from './containers/containers-painel.component';
+import { TelaEntenderComponent } from './entender/tela-entender.component';
+import { EntenderService } from './entender/entender.service';
 
 @Component({
   selector: 'sd-raiz',
@@ -54,7 +56,7 @@ import { ContainersPainelComponent } from './containers/containers-painel.compon
     BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent,
   ],
   template: `
     <div class="seedy">
@@ -104,6 +106,7 @@ import { ContainersPainelComponent } from './containers/containers-painel.compon
       @if (layout.tela() === 'merge') { <sd-merge class="tela-cheia" /> }
       @if (layout.tela() === 'debug') { <sd-tela-debug class="tela-cheia" /> }
       @if (layout.tela() === 'containers') { <sd-tela-containers class="tela-cheia" /> }
+      @if (layout.tela() === 'entender') { <sd-tela-entender class="tela-cheia" /> }
       <sd-diff />
       <sd-busca />
       <sd-busca-projeto />
@@ -155,6 +158,7 @@ export class App {
     inject(McpService); // o Claude Code (MCP) usa as ferramentas do Seedy
     inject(ExecucaoService); // RUN/DEBUG: acha as classes main quando o jdtls fica pronto
     inject(WebLspService); // projeto web: TypeScript, Angular, ESLint e Prettier
+    inject(EntenderService); // Fase 9: arquitetura, regras e o "acompanhar método" (ctrl+.)
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
     void inject(ProjetoService).iniciar();

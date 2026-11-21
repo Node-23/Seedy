@@ -3,7 +3,7 @@
  * Serve para trabalhar no visual com dados parecidos com os dos mockups.
  * Nada aqui roda dentro do app.
  */
-import type { ColunaDeTabela, Entrada, Indice, InfoConexao, MetadadosSpring, Ocorrencia, PedidoDeProjeto, PerfilBanco, ProjetoCriado, ResultadoSql, SchemaBanco, Simbolo } from './ponte';
+import type { AnaliseArquitetura, ColunaDeTabela, Entrada, Indice, InfoConexao, MetadadosSpring, Ocorrencia, PedidoDeProjeto, PerfilBanco, ProjetoCriado, ResultadoSql, SchemaBanco, Simbolo } from './ponte';
 import { expressaoDeBusca, OpcoesTexto, passaNaMascara, trechosEncontrados } from '../busca/texto';
 
 export const RAIZ_EXEMPLO = '/exemplo/feirinha-verde';
@@ -193,6 +193,11 @@ const PERFIS_EXEMPLO: PerfilBanco[] = [
 const relativos = () => Object.keys(ARQUIVOS).sort();
 
 export const exemplo = {
+  /** Fase 9: a análise de um projeto Spring Boot + Angular de feiras (carregada só quando pedida). */
+  async analiseArquitetura(): Promise<AnaliseArquitetura> {
+    return (await import('./exemplo-arquitetura.json')).default as unknown as AnaliseArquitetura;
+  },
+
   springMetadados(): MetadadosSpring {
     const deps = (nomes: [string, string][]) => nomes.map(([id, name]) => ({ id, name }));
     return {

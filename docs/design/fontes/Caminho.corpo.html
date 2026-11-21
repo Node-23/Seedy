@@ -1,0 +1,106 @@
+<!--CABECALHO-->
+  <div class="abas">
+    <span class="aba">▦ Arquitetura <kbd>1</kbd></span>
+    <span class="aba">⚑ Regras de negócio <kbd>2</kbd></span>
+    <span class="aba on">⇢ Caminho <kbd>3</kbd></span>
+    <span style="margin-left:14px;font-size:12.5px"><span class="dest">⇢</span> <b>ReservaService.reservar</b><span class="suave">(feiraId, numero)</span></span>
+    <span style="flex:1"></span>
+    <span class="suave" style="font-size:12px">2 entradas · 2 condições</span>
+    <span class="btn" style="margin-left:10px">níveis <kbd>−</kbd> 3 <kbd>+</kbd></span>
+  </div>
+
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px">
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">CAMINHO</span><span class="suave">de onde vem → para onde vai</span><span style="flex:1"></span>
+        <span class="suave" style="display:flex;align-items:center;gap:6px"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#E9E2D3" stroke-width="2"/></svg>chama</span>
+        <span class="suave" style="display:flex;align-items:center;gap:6px;margin-left:8px"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#E3A9CC" stroke-width="2"/></svg>HTTP</span>
+        <span class="suave" style="display:flex;align-items:center;gap:6px;margin-left:8px"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#EE8C84" stroke-width="2" stroke-dasharray="4 3"/></svg>desvia / barra</span>
+      </div>
+      <div style="position:relative;flex:1;overflow:hidden">
+        <div class="cols">
+          <span style="left:26px">ENTRADA · TELA</span>
+          <span style="left:214px">FRONT</span>
+          <span style="left:392px">API</span>
+          <span style="left:572px">O MÉTODO</span>
+          <span style="left:770px">PARA ONDE VAI</span>
+          <span style="left:948px">BANCO</span>
+        </div>
+
+        <svg width="100%" height="100%" style="position:absolute;inset:0" aria-hidden="true">
+          <defs>
+            <marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E9E2D3"/></marker>
+            <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E3A9CC"/></marker>
+            <marker id="e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#EE8C84"/></marker>
+          </defs>
+          <g stroke="#E9E2D3" stroke-width="1.8" fill="none" marker-end="url(#s)">
+            <path d="M170 226 H196"/>
+            <path d="M530 226 H556"/>
+            <path d="M530 102 C548 102 540 200 556 212"/>
+            <path d="M726 212 C748 212 740 112 762 112"/>
+            <path d="M726 226 H762"/>
+            <path d="M726 240 C748 240 740 340 762 340"/>
+            <path d="M918 112 H944"/>
+            <path d="M918 340 H944"/>
+          </g>
+          <g stroke="#E3A9CC" stroke-width="1.8" fill="none" marker-end="url(#r)">
+            <path d="M350 226 H376"/>
+          </g>
+          <text x="352" y="216" fill="#E3A9CC" font-size="10" font-family="Martian Mono, monospace">POST</text>
+          <!-- condições -->
+          <g stroke="#EE8C84" stroke-width="1.8" fill="none" stroke-dasharray="4 3" marker-end="url(#e)">
+            <path d="M620 262 C620 330 600 400 560 430"/>
+            <path d="M680 262 C690 360 700 400 704 430"/>
+            <path d="M735 504 C735 548 300 548 180 490"/>
+          </g>
+          <text x="440" y="352" fill="#EE8C84" font-size="10" font-family="Martian Mono, monospace">feirante.inadimplente()</text>
+          <text x="636" y="300" fill="#EE8C84" font-size="10" font-family="Martian Mono, monospace">bancas ≥ 120 · R1</text>
+          <text x="330" y="560" fill="#EE8C84" font-size="10" font-family="Martian Mono, monospace">409 · a tela mostra "Feira lotada"</text>
+        </svg>
+
+        <!-- entrada (tela) -->
+        <div class="bl" style="left:20px;top:190px"><b class="rosa">reserva-form</b><br><span class="suave">botão "Reservar"</span></div>
+        <!-- front -->
+        <div class="bl" style="left:198px;top:190px"><b>ReservaApi.criar</b><br><span class="rosa">POST /reservas</span></div>
+        <!-- API: duas entradas -->
+        <div class="bl" style="left:378px;top:66px"><b>ReservaLoteJob</b><br><span class="suave">@Scheduled 02:00</span></div>
+        <div class="bl" style="left:378px;top:190px"><b>ReservaController</b><br><span class="suave">.criar · @Valid</span></div>
+        <!-- o método -->
+        <div class="bl on" style="left:558px;top:190px;width:168px"><b>ReservaService</b><br><span class="dest">.reservar</span> <span class="aviso">⚑ R1 R4</span></div>
+        <!-- saídas -->
+        <div class="bl" style="left:764px;top:76px;width:154px"><b>FeiraRepository</b><br><span class="suave">.findById</span></div>
+        <div class="bl" style="left:764px;top:190px;width:154px"><b>Usuario</b><br><span class="suave">.feirante()</span></div>
+        <div class="bl" style="left:764px;top:304px;width:154px"><b>ReservaRepository</b><br><span class="suave">.save</span></div>
+        <!-- banco -->
+        <div class="bl db" style="left:946px;top:76px;width:100px"><b>feira</b><br><span class="suave">SELECT</span></div>
+        <div class="bl db" style="left:946px;top:304px;width:100px"><b>reserva</b><br><span class="suave">INSERT</span></div>
+        <!-- desvios -->
+        <div class="bl err" style="left:476px;top:430px;width:150px"><b class="erro">403 Forbidden</b><br><span class="suave">inadimplente</span></div>
+        <div class="bl err" style="left:650px;top:430px;width:170px"><b class="erro">RegraNegocio</b><br><span class="suave">Handler → 409</span></div>
+        <div class="bl" style="left:20px;top:430px;width:158px;border-style:dashed;background:#19191B"><b class="rosa">reserva-form</b><br><span class="suave">mostra o erro</span></div>
+
+        <div class="suave" style="position:absolute;right:14px;bottom:10px;font-size:11px">h l anda no caminho · j k entre ramos · ⏎ abre · <span class="dest">+</span>/<span class="dest">−</span> níveis</div>
+      </div>
+    </section>
+
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">PASSO A PASSO</span><span style="flex:1"></span><kbd>j k</kbd></div>
+      <div style="padding:8px 0;font-size:11.5px;line-height:17px">
+        <div class="passo"><span class="num">1</span><div>Clique em <b>Reservar</b> <span class="suave">reserva-form.html:12</span></div></div>
+        <div class="passo"><span class="num">2</span><div><b>ReservaApi.criar</b> faz <span class="rosa">POST /reservas</span></div></div>
+        <div class="passo"><span class="num">3</span><div><b>ReservaController.criar</b> valida o corpo <span class="aviso">R2</span></div></div>
+        <div class="passo sel"><span class="num">4</span><div><b>ReservaService.reservar</b><br><span class="erro">↳ inadimplente → 403</span> <span class="aviso">R4</span><br><span class="erro">↳ feira lotada → 409</span> <span class="aviso">R1</span></div></div>
+        <div class="passo"><span class="num">5</span><div><b>FeiraRepository.findById</b> lê <span class="dest">feira</span></div></div>
+        <div class="passo"><span class="num">6</span><div><b>ReservaRepository.save</b> grava <span class="dest">reserva</span></div></div>
+        <div class="passo"><span class="num">7</span><div><span class="ok">201 Created</span> → a tela vai para <span class="suave">/reservas/{id}</span></div></div>
+      </div>
+      <div class="grupo" style="border-top:2px solid #0B0B0C">OUTRA ENTRADA</div>
+      <div class="item"><span class="dest">⇢</span> ReservaLoteJob.executar <span class="suave">· todo dia 02:00</span></div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:8px;padding:12px 14px">
+        <span class="btn">abrir <kbd>⏎</kbd></span>
+        <span class="btn"><span class="dest">✦</span> explicar <kbd>a</kbd></span>
+      </div>
+    </section>
+  </div>
+
+<!--RODAPE:CAMINHO:h l anda|j k ramos|⏎ abre|+ mais níveis|a IA explica|esc editor-->

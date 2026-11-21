@@ -1,0 +1,119 @@
+<!--CABECALHO-->
+  <div class="abas">
+    <span class="aba on">▦ Arquitetura <kbd>1</kbd></span>
+    <span class="aba">⚑ Regras de negócio <kbd>2</kbd></span>
+    <span class="aba">⇢ Caminho <kbd>3</kbd></span>
+    <span style="flex:1"></span>
+    <span class="suave" style="font-size:12px">Spring Boot 3 · Angular 19 · 4 domínios · 52 classes · 18 endpoints</span>
+    <span class="btn" style="margin-left:10px">↻ reanalisar <kbd>r</kbd></span>
+  </div>
+
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px">
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">ARQUITETURA</span><span class="suave">domínios × camadas · da tela até o banco</span><span style="flex:1"></span>
+        <span class="suave" style="display:flex;align-items:center;gap:6px"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#E9E2D3" stroke-width="2"/></svg>chama</span>
+        <span class="suave" style="display:flex;align-items:center;gap:6px;margin-left:8px"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#E8C979" stroke-width="2" stroke-dasharray="4 3"/></svg>entre domínios</span>
+        <span class="suave" style="display:flex;align-items:center;gap:6px;margin-left:8px"><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#E3A9CC" stroke-width="2"/></svg>HTTP</span>
+      </div>
+      <div style="position:relative;flex:1;overflow:hidden">
+        <!-- cabeçalhos das camadas -->
+        <div class="cols">
+          <span style="left:70px">TELAS · NG</span>
+          <span style="left:242px">SERVIÇOS DO FRONT</span>
+          <span style="left:430px">CONTROLLERS</span>
+          <span style="left:600px">SERVIÇOS</span>
+          <span style="left:764px">REPOSITÓRIOS</span>
+          <span style="left:904px">BANCO · EXTERNO</span>
+        </div>
+        <!-- linhas dos domínios -->
+        <div class="dom" style="top:46px"><span>FEIRA</span></div>
+        <div class="dom" style="top:168px"><span>BANCA</span></div>
+        <div class="dom" style="top:290px"><span>RESERVA</span></div>
+        <div class="dom" style="top:412px"><span>PAGAMENTO</span></div>
+        <div style="position:absolute;left:218px;top:30px;bottom:20px;border-left:2px dashed #3F3F44"></div>
+        <div style="position:absolute;left:390px;top:30px;bottom:20px;border-left:2px dashed #3F3F44"></div>
+        <span class="suave" style="position:absolute;left:226px;bottom:6px;font-size:10.5px">front · Angular</span>
+        <span class="suave" style="position:absolute;left:398px;bottom:6px;font-size:10.5px">API · Spring Boot</span>
+
+        <svg width="100%" height="100%" style="position:absolute;inset:0" aria-hidden="true">
+          <defs>
+            <marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E9E2D3"/></marker>
+            <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E8C979"/></marker>
+            <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E3A9CC"/></marker>
+          </defs>
+          <!-- linhas: tela → svc front → (HTTP) controller → service → repo → banco -->
+          <g stroke="#E9E2D3" stroke-width="1.8" fill="none" marker-end="url(#s)">
+            <path d="M198 92 H230"/><path d="M716 92 H738"/><path d="M888 92 H902"/><path d="M550 92 H566"/>
+            <path d="M198 214 H230"/><path d="M716 214 H738"/><path d="M888 214 H902"/><path d="M550 214 H566"/>
+            <path d="M198 336 H230"/><path d="M716 336 H738"/><path d="M888 336 H902"/><path d="M550 336 H566"/>
+            <path d="M198 458 H230"/><path d="M550 458 H566"/>
+          </g>
+          <g stroke="#E3A9CC" stroke-width="1.8" fill="none" marker-end="url(#r)">
+            <path d="M380 92 H398"/><path d="M380 214 H398"/><path d="M380 336 H398"/><path d="M380 458 H398"/>
+            <path d="M716 470 C760 470 840 470 902 470"/>
+          </g>
+          <!-- entre domínios -->
+          <g stroke="#E8C979" stroke-width="1.8" fill="none" stroke-dasharray="4 3" marker-end="url(#a)">
+            <path d="M712 320 C726 260 724 140 738 108"/>
+            <path d="M712 328 C728 290 726 250 738 228"/>
+            <path d="M650 422 C650 404 650 390 650 376"/>
+          </g>
+          <text x="660" y="402" fill="#E8C979" font-size="10" font-family="Martian Mono, monospace">confirma reserva</text>
+        </svg>
+
+        <!-- blocos -->
+        <div class="bl" style="left:48px;top:56px"><b>feira-lista</b><br><span class="suave">feira-detalhe · 2</span></div>
+        <div class="bl" style="left:230px;top:56px"><b>FeiraApi</b><br><span class="suave">3 chamadas HTTP</span></div>
+        <div class="bl" style="left:400px;top:56px"><b>FeiraController</b><br><span class="suave">4 endpoints</span></div>
+        <div class="bl" style="left:566px;top:56px"><b>FeiraService</b><br><span class="suave">6 métodos</span></div>
+        <div class="bl" style="left:738px;top:56px"><b>FeiraRepository</b><br><span class="suave">JPA</span></div>
+        <div class="bl db" style="left:902px;top:56px"><b>feira</b><br><span class="suave">tabela · Homolog</span></div>
+
+        <div class="bl" style="left:48px;top:178px"><b>banca</b><br><span class="suave">1 tela</span></div>
+        <div class="bl" style="left:230px;top:178px"><b>BancaApi</b><br><span class="suave">2 chamadas</span></div>
+        <div class="bl" style="left:400px;top:178px"><b>BancaController</b><br><span class="suave">3 endpoints</span></div>
+        <div class="bl" style="left:566px;top:178px"><b>BancaService</b><br><span class="suave">4 métodos</span></div>
+        <div class="bl" style="left:738px;top:178px"><b>BancaRepository</b><br><span class="suave">JPA</span></div>
+        <div class="bl db" style="left:902px;top:178px"><b>banca</b><br><span class="suave">tabela</span></div>
+
+        <div class="bl" style="left:48px;top:300px"><b>reserva-form</b><br><span class="suave">1 tela</span></div>
+        <div class="bl" style="left:230px;top:300px"><b>ReservaApi</b><br><span class="suave">2 chamadas</span></div>
+        <div class="bl" style="left:400px;top:300px"><b>ReservaController</b><br><span class="suave">2 endpoints</span></div>
+        <div class="bl on" style="left:566px;top:300px"><b>ReservaService</b><br><span class="aviso">⚑ 4 regras</span></div>
+        <div class="bl" style="left:738px;top:300px"><b>ReservaRepository</b><br><span class="suave">JPA</span></div>
+        <div class="bl db" style="left:902px;top:300px"><b>reserva</b><br><span class="suave">tabela</span></div>
+
+        <div class="bl" style="left:48px;top:422px"><b>pagamento</b><br><span class="suave">1 tela</span></div>
+        <div class="bl" style="left:230px;top:422px"><b>PagamentoApi</b><br><span class="suave">1 chamada</span></div>
+        <div class="bl" style="left:400px;top:422px"><b>PixWebhook</b><br><span class="suave">POST /pix/retorno</span></div>
+        <div class="bl" style="left:566px;top:422px"><b>PagamentoService</b><br><span class="aviso">⚑ 2 regras</span></div>
+        <div class="bl ext" style="left:902px;top:422px"><b class="rosa">API Pix</b><br><span class="suave">HTTP externa</span></div>
+      </div>
+    </section>
+
+    <section class="janela">
+      <div class="faixa"><span class="rotulo">RESERVASERVICE</span><span class="suave">@Service</span><span style="flex:1"></span><kbd>⏎</kbd></div>
+      <div style="padding:10px 14px" class="detalhe">
+        <div class="kv"><span class="k">pacote</span><span>br.com.feira.reserva</span></div>
+        <div class="kv"><span class="k">camada</span><span>serviço · domínio reserva</span></div>
+        <div class="kv"><span class="k">usa</span><span>ReservaRepository, <span class="aviso">FeiraRepository</span>,<br><span class="aviso">BancaRepository</span></span></div>
+        <div class="kv" style="margin-top:4px"><span class="k">usado por</span><span>ReservaController,<br><span class="aviso">PagamentoService</span>, JobExpiracao</span></div>
+        <div class="kv" style="margin-top:4px"><span class="k">regras</span><span class="aviso">⚑ 4 → aba Regras (2)</span></div>
+      </div>
+      <div class="grupo" style="border-top:2px solid #0B0B0C">MÉTODOS</div>
+      <div style="padding:2px 0">
+        <div class="item sel"><span class="dest">reservar</span><span class="suave">(feiraId, numero)</span><span style="margin-left:auto" class="dest">⇢</span></div>
+        <div class="item"><span>confirmar</span><span class="suave">(txid)</span></div>
+        <div class="item"><span>cancelar</span><span class="suave">(id)</span></div>
+        <div class="item"><span>expirarPendentes</span><span class="suave">()</span></div>
+        <div class="item"><span>listarDoFeirante</span><span class="suave">(id)</span></div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:8px;padding:12px 14px">
+        <span class="btn">⇢ acompanhar <kbd>c</kbd></span>
+        <span class="btn">abrir <kbd>⏎</kbd></span>
+      </div>
+    </section>
+  </div>
+
+<!--RODAPE:ARQUITETURA:h j k l blocos|⏎ abre|c caminho do método|2 regras|esc editor-->

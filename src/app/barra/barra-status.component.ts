@@ -17,6 +17,7 @@ import { IaService } from '../ia/ia.service';
 import { RevisaoService } from '../ia/revisao.service';
 import { McpService } from '../ia/mcp.service';
 import { IaMergeService } from '../ia/ia-merge.service';
+import { EntenderService } from '../entender/entender.service';
 
 const NOMES_MODO: Record<string, string> = {
   normal: 'NORMAL',
@@ -51,6 +52,25 @@ const NOMES_MODO: Record<string, string> = {
           {{ merge.restantes() }} {{ merge.restantes() === 1 ? 'conflito restante' : 'conflitos restantes' }}
         </span>
         <span class="segmento com-divisa-esq suave">{{ merge.arquivoAtual() + 1 }} de {{ merge.totalDeArquivos() }} {{ merge.totalDeArquivos() === 1 ? 'arquivo' : 'arquivos' }}</span>
+      } @else if (layout.tela() === 'entender') {
+        <span class="segmento dicas-merge">
+          @switch (entender.aba()) {
+            @case ('arquitetura') {
+              <span><span class="tecla">h j k l</span> blocos</span> <span><span class="tecla">tab</span> métodos</span> <span><span class="tecla">⏎</span> abre</span>
+              <span><span class="tecla">c</span> caminho do método</span> <span><span class="tecla">2</span> regras</span> <span><span class="tecla">esc</span> editor</span>
+            }
+            @case ('regras') {
+              <span><span class="tecla">j k</span> regras</span> <span><span class="tecla">⏎</span> abre o código</span> <span><span class="tecla">e</span> edita</span> <span><span class="tecla">v</span> revisada</span>
+              <span><span class="tecla">c</span> caminho</span> <span><span class="tecla">a</span> atualiza com IA</span> <span><span class="tecla">esc</span> editor</span>
+            }
+            @case ('caminho') {
+              <span><span class="tecla">h l</span> anda</span> <span><span class="tecla">j k</span> ramos</span> <span><span class="tecla">⏎</span> abre</span>
+              <span><span class="tecla">+</span> mais níveis</span> <span><span class="tecla">a</span> IA explica</span> <span><span class="tecla">esc</span> editor</span>
+            }
+          }
+        </span>
+        <span class="espaco"></span>
+        @if (entender.analisadaEm(); as em) { <span class="segmento com-divisa-esq suave">análise de {{ hhmm(em) }}</span> }
       } @else if (layout.tela() === 'containers') {
         <span class="segmento dicas-merge">
           <span><span class="tecla">s</span> inicia/para</span> <span><span class="tecla">l</span> logs</span> <span><span class="tecla">t</span> terminal</span>
@@ -146,6 +166,11 @@ export class BarraStatusComponent {
   protected readonly web = inject(WebLspService);
   protected readonly scripts = inject(ScriptsService);
   protected readonly docker = inject(DockerService);
+  protected readonly entender = inject(EntenderService);
+
+  protected hhmm(d: Date): string {
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
   protected readonly iaGeral = inject(IaService);
   protected readonly revisao = inject(RevisaoService);
   protected readonly mcp = inject(McpService);
@@ -182,10 +207,10 @@ export class BarraStatusComponent {
   }
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
-    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.buscando() ? 'busca' : this.editor.modo(),
+    this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.buscando() ? 'busca' : this.editor.modo(),
   );
   protected readonly rotuloDoModo = computed(() =>
-    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.buscando() ? 'BUSCA' : this.nomeModo(),
+    this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.layout.tela() === 'entender' ? this.entender.aba().toUpperCase() : this.buscando() ? 'BUSCA' : this.nomeModo(),
   );
   protected readonly buscando = computed(() => this.busca.aberta() || this.buscaProjeto.aberta());
 

@@ -20,6 +20,9 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Debug no navegador (Edge/Chrome via CDP, source maps do .ts) | [14-debug-web.png](14-debug-web.png) | 6 ✅ |
 | Containers em tela cheia: lista, mapa das conexões, detalhe e logs, `␣ D` | [15-containers.png](15-containers.png) | 8 ✅ |
 | Painel de containers no editor (lista e logs), `␣ h` | [16-containers-painel.png](16-containers-painel.png) | 8 ✅ |
+| Arquitetura em blocos (domínios × camadas, da tela ao banco), `␣ A` | [17-arquitetura.png](17-arquitetura.png) | 9 ✅ |
+| Regras de negócio por domínio (IA + código, em .seedy/regras.md) | [18-regras.png](18-regras.png) | 9 ✅ |
+| Caminho do método (ctrl+. "acompanhar método"): de onde vem, para onde vai, condições | [19-caminho.png](19-caminho.png) | 9 ✅ |
 
 As telas 07 a 09 não têm mockup próprio: foram feitas na linguagem visual dos outros e
 capturadas do app. Servem de referência do mesmo jeito.
@@ -55,6 +58,6 @@ estão nos `style` de cada elemento. Abra no navegador para inspecionar.
 | `#9CD7BA` (os mockups 01 a 12 ainda mostram o lavanda antigo `#92A9E1`) | `--destaque` |
 | `#16171C` | `--texto-sobre-destaque` |
 | `#B7D39C` / `#2E3A2B` | `--sucesso` / `--sucesso-fundo` |
-| `#E8C979` | `--aviso` |
+| `#E8C979` / `#3A3527` | `--aviso` / `--aviso-fundo` |
 | `#EE8C84` / `#3A2A2B` | `--erro` / `--erro-fundo` |
 | `#E3A9CC` | `--rosa` |

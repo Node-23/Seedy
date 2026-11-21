@@ -139,11 +139,22 @@ Mockups 15 e 16. Tudo pelo CLI do Docker (Docker Desktop no Windows, docker no L
   "ligar ao banco" (Postgres/MySQL viram conexão no painel de banco, já preenchida)
 - Falta testar no Linux; imagens sem `cat` (distroless) ficam sem tráfego medido
 
-## Fase 9 — Painel de arquitetura
+## ✅ Fase 9 — Entender o sistema
 
-_A detalhar._
+Mockups 17, 18 e 19, em tela cheia (`␣ A`) com três abas. Lê o código direto (sem compilar),
+então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 
-- Observação: incluir um painel de caminho da função
+- ✅ Arquitetura em blocos: domínios × camadas (telas e serviços do Angular, controllers/recursos
+  JAX-RS/servlets e jobs, serviços/EJBs, repositórios/DAOs/clientes HTTP, tabelas e sistemas
+  externos), com as injeções, o HTTP do front ligado ao endpoint pela URL e as chamadas entre domínios
+- ✅ Regras de negócio: candidatas tiradas do código (exceções de negócio com a condição e o status
+  HTTP, `if ... return` com status, Bean Validation e Validators do Angular, `@Scheduled`/`@Schedule`,
+  `@PreAuthorize`/`@RolesAllowed`), com onde mais a mensagem aparece e o teste que cobre. Ficam em
+  `.seedy/regras.md` (vai para o git, edita à mão); a IA reescreve em linguagem de negócio
+- ✅ Caminho do método (ctrl+. "acompanhar método", ou `c` num método): de onde vem até o botão da
+  tela, para onde vai até a tabela, as condições que desviam (com o status e a regra) e o passo a
+  passo; a IA explica o caminho
+- Falta: projetos com Struts/JSP, rotas do Angular (qual tela abre qual), e a IA testada com a chave
 
 ## Depois
 

@@ -269,6 +269,98 @@ export interface ArquivoTema {
   conteudo: string;
 }
 
+// ---------- Fase 9: entender o sistema (arquitetura, regras e caminho dos métodos) ----------
+
+/** tela, front, entrada, job, servico, repositorio, entidade, excecao, tratador, teste, outro. */
+export type PapelComponente = 'tela' | 'front' | 'entrada' | 'job' | 'servico' | 'repositorio' | 'entidade' | 'excecao' | 'tratador' | 'teste' | 'outro';
+
+export interface ChamadaAnalise {
+  alvo: string;
+  metodo: string;
+  linha: number;
+}
+
+export interface DesvioAnalise {
+  linha: number;
+  condicao: string | null;
+  acao: string;
+  excecao: string | null;
+  mensagem: string | null;
+  status: number | null;
+}
+
+export interface MetodoAnalise {
+  nome: string;
+  linha: number;
+  linhaFim: number;
+  params: string[];
+  anotacoes: string[];
+  http: { verbo: string; rota: string } | null;
+  agendado: string | null;
+  chamadas: ChamadaAnalise[];
+  desvios: DesvioAnalise[];
+  httpSaida: { verbo: string; url: string; linha: number; alvo: ChamadaAnalise | null }[];
+  gatilhos: { caminho: string; linha: number; evento: string; texto: string }[];
+  usaExterno: boolean;
+}
+
+export interface ComponenteAnalise {
+  id: string;
+  nome: string;
+  caminho: string;
+  relativo: string;
+  linha: number;
+  pacote: string;
+  linguagem: 'java' | 'ts';
+  papel: PapelComponente;
+  dominio: string;
+  anotacoes: string[];
+  usa: string[];
+  estende: string | null;
+  implementa: string[];
+  rota: string | null;
+  tabela: string | null;
+  entidade: string | null;
+  externo: string | null;
+  seletor: string | null;
+  template: string | null;
+  metodos: MetodoAnalise[];
+}
+
+export interface LugarAnalise {
+  caminho: string;
+  relativo: string;
+  linha: number;
+  detalhe: string;
+}
+
+export type TipoRegra = 'excecao' | 'desvio' | 'validacao' | 'agendada' | 'permissao';
+
+export interface RegraAnalise {
+  chave: string;
+  tipo: TipoRegra;
+  componente: string;
+  metodo: string | null;
+  dominio: string;
+  caminho: string;
+  linha: number;
+  linhaFim: number;
+  condicao: string | null;
+  mensagem: string | null;
+  excecao: string | null;
+  status: number | null;
+  detalhe: string;
+  apareceEm: LugarAnalise[];
+  teste: LugarAnalise | null;
+}
+
+export interface AnaliseArquitetura {
+  tecnologias: string[];
+  componentes: ComponenteAnalise[];
+  regras: RegraAnalise[];
+  arquivos: number;
+}
+
 export const ponte = {
   async pastaInicial(): Promise<string | null> {
     return noApp() ? invoke<string | null>('pasta_inicial') : RAIZ_EXEMPLO;
@@ -479,6 +571,12 @@ export const ponte = {
     trafego: async (): Promise<TrafegoDocker[]> => (noApp() ? invoke<TrafegoDocker[]>('docker_trafego') : []),
     uso: async (): Promise<{ nome: string; cpu: string; memoria: string }[]> => (noApp() ? invoke('docker_uso') : []),
     acao: (nome: string, acao: 'start' | 'stop' | 'restart') => invoke<void>('docker_acao', { nome, acao }),
+  },
+
+  /** Fase 9 — Entender o sistema: lê o código (Spring, Jakarta, Angular) e devolve componentes, chamadas e regras. */
+  arquitetura: {
+    analisar: async (raiz: string): Promise<AnaliseArquitetura> =>
+      noApp() ? invoke<AnaliseArquitetura>('arquitetura_analisar', { raiz }) : exemplo.analiseArquitetura(),
   },
 
   /** Comandos do projeto (scripts do package.json, npm install) com a saída em lotes de linhas. */

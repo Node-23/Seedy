@@ -173,7 +173,7 @@ export class IaService {
     };
   }
 
-  private async garantirChave(): Promise<boolean> {
+  async garantirChave(): Promise<boolean> {
     if (await ponte.ia.temChave()) return true;
     const chave = await this.escolha.perguntar('CHAVE DA API DA ANTHROPIC', {
       placeholder: 'sk-ant-…',

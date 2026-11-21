@@ -9,7 +9,7 @@ import { Injectable, signal } from '@angular/core';
  */
 export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor' | 'scripts' | 'containers' | 'ia';
 /** Tela que ocupa a área principal: o editor (com árvore e terminal), o Git ou o merge. */
-export type Tela = 'editor' | 'git' | 'merge' | 'debug' | 'containers';
+export type Tela = 'editor' | 'git' | 'merge' | 'debug' | 'containers' | 'entender';
 export type Regiao = 'esquerda' | 'inferior' | 'direita';
 
 export interface Painel {

@@ -1,0 +1,41 @@
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Inky Mono','Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:34px;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px;box-shadow:3px 3px 0 #0B0B0C}
+.suave{color:#A29D93}.dest{color:#9CD7BA}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.abas{display:flex;align-items:center;gap:6px;height:54px;flex-shrink:0;box-sizing:border-box;padding:0 10px 0 16px;border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;white-space:nowrap}
+.aba{height:36px;padding:0 14px;border-radius:9px;border:2px solid #0B0B0C;display:flex;align-items:center;gap:8px;font-size:12px;background:#2A2A2D}
+.aba.on{background:#9CD7BA;color:#16171C;font-weight:700;box-shadow:3px 3px 0 #0B0B0C}
+.aba.on kbd{background:transparent;color:#16171C;border-color:#16171C}
+.item{display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;font-size:12px;white-space:nowrap}
+.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.grupo{padding:10px 12px 4px;font-size:10.5px;letter-spacing:.14em;color:#A29D93}
+.kv{display:flex;gap:8px;font-size:11.5px;line-height:21px;white-space:nowrap}
+.kv .k{width:92px;color:#A29D93;flex-shrink:0}
+.l{display:block;white-space:pre;font-size:11.5px;line-height:21px}
+.l .n{display:inline-block;width:38px;text-align:right;padding-right:12px;color:#A29D93}
+.cols span{position:absolute;top:10px;font-size:10.5px;letter-spacing:.14em;color:#A29D93;white-space:nowrap}
+.dom{position:absolute;left:10px;right:10px;height:96px;border-radius:12px;background:#252528}
+.dom span{position:absolute;left:6px;top:50%;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;font-size:10px;letter-spacing:.16em;color:#A29D93}
+.bl{position:absolute;width:150px;height:72px;box-sizing:border-box;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;box-shadow:3px 3px 0 #0B0B0C;padding:9px 10px;font-size:11.5px;line-height:18px;white-space:nowrap;overflow:hidden}
+.bl.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#333337}
+.bl.db{background:#19191B}
+.bl.ext{border-style:dashed;background:#19191B}
+.detalhe .kv{white-space:normal}
+.btn{white-space:nowrap}
+.regra{border:2px solid #0B0B0C;border-radius:11px;background:#222225;box-shadow:3px 3px 0 #0B0B0C;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.regra.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#2D2D30}
+.rt{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.rt .id{font-size:11px;padding:1px 7px;border-radius:6px;background:#19191B;border:1px solid #0B0B0C;color:#E8C979}
+.tag{margin-left:auto;font-size:10.5px;padding:1px 7px;border-radius:6px;border:1px solid currentColor}
+.rd{font-size:11.5px;line-height:18px;color:#E9E2D3}
+.ro{display:flex;gap:8px;font-size:11px;white-space:nowrap}
+.bl.err{border-color:#EE8C84;background:#3A2A2B;box-shadow:3px 3px 0 #0B0B0C}
+.passo{display:flex;gap:10px;padding:6px 14px}
+.passo .num{width:20px;height:20px;flex-shrink:0;border-radius:6px;background:#19191B;border:1px solid #0B0B0C;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#A29D93}
+.passo.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.passo.sel .num{background:#9CD7BA;color:#16171C;font-weight:700}

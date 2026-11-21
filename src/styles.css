@@ -4,7 +4,7 @@
  * As cores, fontes e medidas vêm do tema (tema.json) como variáveis CSS:
  *   --fundo, --painel, --painel-elevado, --selecao, --borda, --sombra,
  *   --texto, --texto-suave, --destaque, --texto-sobre-destaque,
- *   --sucesso, --sucesso-fundo, --aviso, --erro, --erro-fundo, --rosa,
+ *   --sucesso, --sucesso-fundo, --aviso, --aviso-fundo, --erro, --erro-fundo, --rosa,
  *   --raio, --raio-pequeno, --espessura-borda, --deslocamento-sombra, --espaco,
  *   --fonte-interface, --fonte-codigo, --tamanho-interface.
  * Para mudar o visual sem mexer no código, edite o tema (␣ c dentro do Seedy).
@@ -1537,3 +1537,101 @@ sd-scripts { flex: 1; min-width: 0; display: flex; }
 .docker-filtro input { width: 120px; border: 0; outline: none; background: transparent; color: var(--texto); font: inherit; }
 .docker-painel-corpo { grid-template-columns: 340px minmax(0, 1fr); }
 .docker-painel-corpo .script-comando { max-width: 200px; }
+
+/* ---------- Fase 9: entender o sistema (␣ A, mockups 17 a 19) ---------- */
+.barra-status .modo[data-modo="entender"] { background: var(--destaque); }
+.entender-tela { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: var(--espaco); }
+.entender-abas {
+  display: flex; align-items: center; gap: 6px; height: 54px; flex-shrink: 0; box-sizing: border-box; padding: 0 10px 0 16px; white-space: nowrap;
+  border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio); background: var(--painel);
+  box-shadow: var(--deslocamento-sombra) var(--deslocamento-sombra) 0 var(--sombra);
+}
+.entender-aba {
+  height: 36px; padding: 0 14px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+  border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--painel);
+  color: var(--texto); font-family: inherit; font-size: 12px;
+}
+.entender-aba.ativa { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; box-shadow: 3px 3px 0 var(--sombra); }
+.entender-aba.ativa kbd { background: transparent; color: var(--texto-sobre-destaque); border-color: var(--texto-sobre-destaque); }
+.entender-abas .botao { height: 34px; margin-left: 10px; font-size: 12px; white-space: nowrap; }
+.entender-resumo { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.entender-foco { margin-left: 14px; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+.entender-niveis { cursor: default; }
+.entender-niveis kbd { cursor: pointer; }
+.entender-vazio { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 12.5px; }
+.entender-grade { flex: 1; min-height: 0; display: grid; gap: var(--espaco); }
+.entender-grade.arquitetura { grid-template-columns: minmax(0, 1fr) 340px; }
+.entender-grade.regras { grid-template-columns: 230px minmax(0, 1fr) 420px; }
+.entender-grade.caminho { grid-template-columns: minmax(0, 1fr) 330px; }
+.entender-grade > .painel { min-height: 0; }
+.entender-area { position: relative; flex: 1; min-height: 0; overflow: auto; outline: none; }
+.entender-conteudo { position: relative; min-width: 100%; }
+.entender-coluna { position: absolute; top: 10px; font-size: 10.5px; letter-spacing: 0.14em; color: var(--texto-suave); white-space: nowrap; }
+.entender-dominio { position: absolute; left: 10px; right: 10px; border-radius: 12px; background: var(--painel-elevado); }
+.entender-dominio span {
+  position: absolute; left: 6px; top: 50%; transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl;
+  font-size: 10px; letter-spacing: 0.16em; color: var(--texto-suave); white-space: nowrap;
+}
+.entender-divisa { position: absolute; top: 30px; bottom: 22px; border-left: 2px dashed var(--selecao); }
+.entender-divisa-rotulo { position: absolute; bottom: 4px; font-size: 10.5px; white-space: nowrap; }
+.entender-bloco {
+  position: absolute; height: 72px; box-sizing: border-box; padding: 9px 10px; overflow: hidden; cursor: pointer;
+  border: var(--espessura-borda) solid var(--borda); border-radius: 10px; background: var(--painel);
+  box-shadow: 3px 3px 0 var(--sombra); font-size: 11.5px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis;
+}
+.entender-bloco b { font-size: 11.5px; }
+.entender-bloco.db { background: var(--fundo); }
+.entender-bloco.ext, .entender-bloco.tela-erro { border-style: dashed; background: var(--fundo); }
+.entender-bloco.erro { border-color: var(--erro); background: var(--erro-fundo); }
+.entender-bloco.foco, .entender-bloco.selecionado { background: var(--selecao); box-shadow: 0 0 0 2px var(--destaque), 3px 3px 0 var(--sombra); }
+.entender-area:focus .entender-bloco.selecionado { box-shadow: 0 0 0 2px var(--destaque), 0 0 0 4px var(--selecao), 3px 3px 0 var(--sombra); }
+.entender-dica { padding: 6px 14px 10px; font-size: 11px; text-align: right; white-space: nowrap; flex-shrink: 0; }
+.entender-sem-foco { padding: 24px; font-size: 12.5px; line-height: 20px; }
+.entender-detalhe { min-height: 0; }
+.entender-kv { flex: none; max-height: 45%; }
+.entender-kv > div > span:last-child { white-space: normal; }
+.entender-grupo { padding: 10px 12px 4px; font-size: 10.5px; letter-spacing: 0.14em; color: var(--texto-suave); border-top: var(--espessura-borda) solid var(--borda); flex-shrink: 0; }
+.entender-metodos, .entender-lista { min-height: 0; overflow: auto; outline: none; padding: 2px 0; }
+.entender-lista { flex: 1; padding: 6px 0; }
+.entender-item { display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 0 12px; font-size: 12px; white-space: nowrap; cursor: pointer; overflow: hidden; }
+.entender-item.selecionado { background: var(--selecao); box-shadow: inset 3px 0 0 var(--destaque); }
+.entender-metodos:focus .entender-item.selecionado { outline: 1px solid var(--destaque); outline-offset: -1px; }
+.entender-mini { font-size: 10.5px; }
+.entender-direita { margin-left: auto; }
+.entender-link { cursor: pointer; }
+.entender-link:hover { text-decoration: underline; }
+.espaco-v { flex: 1; min-height: 0; }
+.entender-acoes { padding: 12px 14px; flex-shrink: 0; flex-wrap: nowrap; }
+.entender-acoes .botao { padding: 0 9px; gap: 6px; white-space: nowrap; }
+.entender-nota { padding: 12px; font-size: 11px; line-height: 17px; border-top: var(--espessura-borda) solid var(--borda); flex-shrink: 0; }
+.texto-normal { color: var(--texto); }
+.entender-cartoes { flex: 1; min-height: 0; overflow: auto; outline: none; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.entender-regra {
+  flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; cursor: pointer;
+  border: var(--espessura-borda) solid var(--borda); border-radius: 11px; background: var(--painel-elevado); box-shadow: 3px 3px 0 var(--sombra);
+}
+.entender-regra.selecionada { background: var(--painel); box-shadow: 0 0 0 2px var(--destaque), 3px 3px 0 var(--sombra); }
+.entender-cartoes:focus .entender-regra.selecionada { box-shadow: 0 0 0 2px var(--destaque), 0 0 0 4px var(--selecao), 3px 3px 0 var(--sombra); }
+.entender-regra .rt { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+.entender-regra .rt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entender-regra .id { font-size: 11px; padding: 1px 7px; border-radius: 6px; background: var(--fundo); border: 1px solid var(--borda); color: var(--aviso); flex-shrink: 0; }
+.entender-regra .tag { margin-left: auto; font-size: 10.5px; padding: 1px 7px; border-radius: 6px; border: 1px solid currentColor; flex-shrink: 0; }
+.entender-regra .rd { font-size: 11.5px; line-height: 18px; color: var(--texto); }
+.entender-regra .ro { display: flex; gap: 8px; font-size: 11px; white-space: nowrap; overflow: hidden; }
+.entender-regra .ro > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.entender-regra .ro > .entender-direita { flex-shrink: 0; padding-left: 8px; }
+.entender-codigo { padding: 8px 0; overflow: auto; flex-shrink: 0; max-height: 50%; font-family: var(--fonte-codigo); }
+.entender-linha { display: block; white-space: pre; font-size: 11.5px; line-height: 21px; }
+.entender-linha .n { display: inline-block; width: 38px; text-align: right; padding-right: 12px; color: var(--texto-suave); }
+.entender-linha.marcada { background: var(--aviso-fundo); box-shadow: inset 3px 0 0 var(--aviso); }
+.entender-linha.marcada .n { color: var(--aviso); }
+.entender-passos { flex: 1; min-height: 0; overflow: auto; padding: 8px 0; font-size: 11.5px; line-height: 17px; }
+.entender-passo { display: flex; gap: 10px; padding: 6px 14px; cursor: pointer; }
+.entender-passo .num {
+  width: 20px; height: 20px; flex-shrink: 0; border-radius: 6px; background: var(--fundo); border: 1px solid var(--borda);
+  display: flex; align-items: center; justify-content: center; font-size: 10.5px; color: var(--texto-suave);
+}
+.entender-passo.selecionado { background: var(--selecao); box-shadow: inset 3px 0 0 var(--destaque); }
+.entender-passo.selecionado .num { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
+.entender-explicacao { padding: 6px 14px 10px; font-size: 11.5px; line-height: 18px; white-space: pre-wrap; }
+.entender-regra-id { margin-left: 6px; }

@@ -86,7 +86,7 @@ pub async fn busca_texto(
         .map_err(|e| e.to_string())?
 }
 
-fn percorrer(raiz: &Path, mascara: Option<Override>) -> impl Iterator<Item = DirEntry> {
+pub(crate) fn percorrer(raiz: &Path, mascara: Option<Override>) -> impl Iterator<Item = DirEntry> {
     let mut construtor = WalkBuilder::new(raiz);
     if let Some(m) = mascara {
         construtor.overrides(m);
@@ -103,7 +103,7 @@ fn percorrer(raiz: &Path, mascara: Option<Override>) -> impl Iterator<Item = Dir
         .filter(|e| e.file_type().is_some_and(|t| t.is_file()))
 }
 
-fn relativo(raiz: &Path, caminho: &Path) -> String {
+pub(crate) fn relativo(raiz: &Path, caminho: &Path) -> String {
     let rel = caminho.strip_prefix(raiz).unwrap_or(caminho);
     // Sempre com "/" na interface, em qualquer sistema.
     rel.components()

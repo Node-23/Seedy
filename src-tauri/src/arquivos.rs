@@ -59,6 +59,12 @@ pub fn ler_arquivo(caminho: String) -> Result<String, String> {
 
 #[tauri::command]
 pub fn gravar_arquivo(caminho: String, conteudo: String) -> Result<(), String> {
+    // A pasta pode não existir ainda (ex.: `.seedy/regras.md` na primeira vez).
+    if let Some(pai) = std::path::Path::new(&caminho).parent() {
+        if !pai.as_os_str().is_empty() && !pai.exists() {
+            fs::create_dir_all(pai).map_err(|e| format!("não consegui criar {}: {e}", pai.display()))?;
+        }
+    }
     fs::write(&caminho, conteudo).map_err(|e| format!("não consegui gravar {caminho}: {e}"))
 }
 

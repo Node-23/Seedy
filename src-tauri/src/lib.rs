@@ -5,6 +5,7 @@
 //! de acesso ao sistema (arquivos, busca, processos, PTY, Git, banco, servidores) mora aqui.
 
 mod arquivos;
+mod arquitetura;
 mod banco;
 mod busca;
 mod containers;
@@ -47,6 +48,7 @@ pub fn run() {
             arquivos::ler_pasta,
             arquivos::ler_arquivo,
             arquivos::gravar_arquivo,
+            arquitetura::arquitetura_analisar,
             busca::busca_indexar,
             busca::busca_texto,
             git::branch_atual,
