@@ -405,6 +405,12 @@ export interface AnaliseArquitetura {
 }
 
 export const ponte = {
+  /** Abre um link (http, https, mailto) no navegador do sistema. */
+  async abrirLink(url: string): Promise<void> {
+    if (noApp()) return invoke<void>('abrir_link', { url });
+    window.open(url, '_blank', 'noopener');
+  },
+
   async pastaInicial(): Promise<string | null> {
     return noApp() ? invoke<string | null>('pasta_inicial') : RAIZ_EXEMPLO;
   },
@@ -551,6 +557,8 @@ export const ponte = {
     temChave: async (): Promise<boolean> => (ponte.ia.modo === 'assinatura' ? (await ponte.ia.claudeEstado()) !== null : ponte.ia.temChaveDaApi()),
     definirChave: (chave: string) => invoke<void>('ia_definir_chave', { chave }),
     esquecerChave: () => invoke<void>('ia_esquecer_chave'),
+    /** O uso da assinatura lido da conta (login do Claude Code): 5 horas e semana, com a porcentagem. */
+    uso: async (): Promise<{ tipo: string; utilizacao: number | null; reiniciaEm: number | null; estado: string | null }[]> => (noApp() ? invoke('ia_uso') : []),
     /** Limites de uso da assinatura que o Claude Code informa (janela de 5 horas e semana). */
     async aoLimites(fn: (l: { tipo: string; utilizacao: number | null; reiniciaEm: number | null; estado: string | null }) => void): Promise<UnlistenFn> {
       if (!noApp()) return () => {};

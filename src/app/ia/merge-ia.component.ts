@@ -1,4 +1,5 @@
 import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { MarkdownComponent } from './markdown.component';
 import { IaMergeService, ItemDoChat } from './ia-merge.service';
 import { MergeService } from '../git/merge.service';
 import { diffDeLinhas } from '../git/diff';
@@ -14,6 +15,7 @@ interface LinhaDaProposta {
  */
 @Component({
   selector: 'sd-merge-ia',
+  imports: [MarkdownComponent],
   template: `
     <section class="painel merge-ia" aria-label="Conversar com a IA sobre o conflito">
       <div class="painel-faixa">
@@ -27,7 +29,7 @@ interface LinhaDaProposta {
         @for (item of ia.itens(); track $index) {
           @switch (item.tipo) {
             @case ('usuario') { <div class="ia-usuario">{{ item.texto }}</div> }
-            @case ('texto') { @if (item.texto) { <div class="ia-texto">{{ item.texto }}</div> } }
+            @case ('texto') { @if (item.texto) { <div class="ia-texto"><sd-markdown [texto]="item.texto" /></div> } }
             @case ('ferramentas') {
               <div class="ia-ferramentas">
                 @for (p of item.passos; track $index) {

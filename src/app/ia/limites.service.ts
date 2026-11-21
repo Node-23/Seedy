@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, isDevMode, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
 import { ConfigService } from '../config/config.service';
 import { ponte } from '../nucleo/ponte';
 
@@ -57,9 +57,42 @@ export class LimitesService {
       /* sem histórico */
     }
     void ponte.ia.aoLimites((l) => this.receber(l));
+    // O Claude Code só avisa a janela de 5 horas perto do limite: o uso (com a porcentagem) vem da conta.
+    effect(() => {
+      if (this.config.atual().ia.modo === 'assinatura') untracked(() => void this.atualizar());
+    });
+    setInterval(() => {
+      if (this.config.atual().ia.modo === 'assinatura') void this.atualizar();
+    }, 5 * 60_000);
+    // Ao abrir o painel, o número é o de agora.
+    effect(() => {
+      if (this.aberto()) untracked(() => void this.atualizar());
+    });
     // Para o "renova em…" e a janela que já renovou: reavalia a cada minuto.
     setInterval(() => this.agora.set(Date.now()), 60_000);
     if (isDevMode()) Object.assign(window, { seedyLimites: this });
+  }
+
+  /** Por que o uso da conta não pôde ser lido (o painel mostra). */
+  readonly erroDeUso = signal<string | null>(null);
+  private lendo = false;
+  private ultimaLeitura = 0;
+
+  /** Lê o uso da conta pelo login do Claude Code (só no app, só no modo assinatura). */
+  async atualizar(forcar = false): Promise<void> {
+    if (this.lendo || (!forcar && Date.now() - this.ultimaLeitura < 20_000)) return;
+    this.lendo = true;
+    try {
+      const lista = await ponte.ia.uso();
+      this.ultimaLeitura = Date.now();
+      this.erroDeUso.set(null);
+      for (const l of lista) this.receber(l);
+    } catch (e) {
+      this.ultimaLeitura = Date.now();
+      this.erroDeUso.set(String(e));
+    } finally {
+      this.lendo = false;
+    }
   }
 
   receber(l: LimiteDeUso): void {

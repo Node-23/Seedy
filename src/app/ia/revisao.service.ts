@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { nomeBase, ponte } from '../nucleo/ponte';
 import { EditorService } from '../editor/editor.service';
 import { MensagensService } from '../nucleo/mensagens.service';
+import { AutomaticoService } from './automatico.service';
 import { DiffService } from '../git/diff.service';
 
 export type OrigemDaAlteracao = 'ia' | 'claude-code' | 'disco';
@@ -40,6 +41,7 @@ export class RevisaoService {
   private readonly editor = inject(EditorService);
   private readonly mensagens = inject(MensagensService);
   private readonly diff = inject(DiffService);
+  private readonly automatico = inject(AutomaticoService);
 
   readonly alteracoes = signal<Alteracao[]>([]);
   readonly aberta = signal(false);
@@ -75,6 +77,14 @@ export class RevisaoService {
     const antes = await this.conteudoAtual(caminho);
     if (antes === depois) return { aceita: true, comentario: 'o arquivo já estava com esse conteúdo' };
     const a = this.adicionar({ caminho, antes, depois, origem, motivo, estado: 'pendente' });
+    // Modo automático: grava na hora (continua na lista de revisão, onde dá para desfazer).
+    if (this.automatico.ligado()) {
+      await this.aceitar(a.id);
+      const feita = this.alteracoes().find((x) => x.id === a.id);
+      return feita?.estado === 'aceita'
+        ? { aceita: true, comentario: 'aplicada automaticamente (modo automático); o usuário revisa depois' }
+        : { aceita: false, comentario: 'não consegui gravar o arquivo' };
+    }
     // Do painel de IA: o cartão aparece na conversa; do Claude Code: abre a janela de revisão.
     if (origem === 'ia' && this.aoProporDaIa) {
       this.aoProporDaIa(a.id);

@@ -17,6 +17,7 @@
   },
   "ia": {
     "modelo": "claude-opus-5-5",
-    "modo": "chave"
+    "modo": "chave",
+    "automatico": false
   }
 }

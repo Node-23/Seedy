@@ -1,6 +1,8 @@
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { IaService } from './ia.service';
 import { RevisaoService } from './revisao.service';
+import { MarkdownComponent } from './markdown.component';
+import { AutomaticoService } from './automatico.service';
 import { McpService } from './mcp.service';
 import { trechos } from './trechos';
 import { EditorService } from '../editor/editor.service';
@@ -16,11 +18,15 @@ import { nomeBase } from '../nucleo/ponte';
  */
 @Component({
   selector: 'sd-ia',
+  imports: [MarkdownComponent],
   template: `
     <section class="painel ia-painel" aria-label="Assistente de IA">
       <div class="painel-faixa">
         <span class="rotulo destaque-texto">✦ IA</span>
         <span class="espaco"></span>
+        <label class="ia-automatico" [class.ligado]="auto.ligado()" title="Modo automático: a IA aplica edições e roda comandos sem pedir confirmação (␣ Y). O que ela muda fica em ␣ y para revisar.">
+          <input type="checkbox" [checked]="auto.ligado()" (change)="auto.definir($any($event.target).checked)" /> automático
+        </label>
         <button class="botao-icone ia-mcp" title="copiar o comando que liga o Claude Code (terminal) às ferramentas do Seedy" (click)="mcp.copiarComandoDoClaudeCode()">MCP</button>
         <kbd>␣ a</kbd>
       </div>
@@ -29,7 +35,7 @@ import { nomeBase } from '../nucleo/ponte';
         @for (item of ia.itens(); track $index) {
           @switch (item.tipo) {
             @case ('usuario') { <div class="ia-usuario">{{ item.texto }}</div> }
-            @case ('texto') { @if (item.texto) { <div class="ia-texto">{{ item.texto }}</div> } }
+            @case ('texto') { @if (item.texto) { <div class="ia-texto"><sd-markdown [texto]="item.texto" /></div> } }
             @case ('ferramentas') {
               <div class="ia-ferramentas">
                 @for (p of item.passos; track $index) {
@@ -98,6 +104,7 @@ export class IaComponent {
   protected readonly ia = inject(IaService);
   protected readonly revisao = inject(RevisaoService);
   protected readonly mcp = inject(McpService);
+  protected readonly auto = inject(AutomaticoService);
   private readonly editor = inject(EditorService);
   private readonly servidor = inject(ServidorService);
   private readonly banco = inject(BancoService);

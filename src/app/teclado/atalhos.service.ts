@@ -25,6 +25,7 @@ import { BlameService } from '../git/blame.service';
 import { EntenderService } from '../entender/entender.service';
 import { TodoService } from '../todo/todo.service';
 import { ConfigService } from '../config/config.service';
+import { AutomaticoService } from '../ia/automatico.service';
 import { TestesService } from '../testes/testes.service';
 import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
@@ -64,6 +65,7 @@ export class AtalhosService {
   private readonly configuracoes = inject(ConfiguracoesService);
   private readonly bookmarks = inject(BookmarksService);
   private readonly testes = inject(TestesService);
+  private readonly automatico = inject(AutomaticoService);
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
   private readonly jdtls = inject(JdtlsService);
@@ -126,6 +128,7 @@ export class AtalhosService {
     { id: 'pull-request', tecla: 'P', rotulo: 'criar pull request', disponivel: true, executar: () => void this.githubForm.abrir('pr') },
     { id: 'issue', tecla: 'I', rotulo: 'criar issue', disponivel: true, executar: () => void this.githubForm.abrir('issue') },
     { id: 'ia', tecla: 'a', rotulo: 'IA (painel; no merge, o chat do conflito)', disponivel: true, executar: () => this.alternarIA() },
+    { id: 'ia-automatico', tecla: 'Y', rotulo: 'IA: modo automático (sem confirmar) liga/desliga', disponivel: true, executar: () => void this.automatico.alternar() },
     { id: 'revisar-ia', tecla: 'y', rotulo: 'revisar alterações da IA', disponivel: true, executar: () => this.revisao.aberta.set(true) },
     { id: 'layout', tecla: 'L', rotulo: 'layout: mover painel, disposições', disponivel: true, executar: () => void this.menuLayout() },
     { id: 'config', tecla: ',', rotulo: 'configurações (atalhos, IA, editor)', disponivel: true, executar: () => this.abrirConfig() },

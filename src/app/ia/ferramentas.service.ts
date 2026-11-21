@@ -8,6 +8,7 @@ import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
 import { escreve, instrucoes } from '../banco/sql';
 import { monaco } from '../editor/monaco';
 import { OrigemDaAlteracao, RevisaoService } from './revisao.service';
+import { AutomaticoService } from './automatico.service';
 import { EscolhaService } from '../escolha/escolha.service';
 
 /** Definição de ferramenta no formato da Messages API (o MCP usa `inputSchema`). */
@@ -166,6 +167,7 @@ export class FerramentasService {
   private readonly banco = inject(BancoService);
   private readonly revisao = inject(RevisaoService);
   private readonly escolha = inject(EscolhaService);
+  private readonly automatico = inject(AutomaticoService);
 
   rotulo(nome: string): string {
     return FERRAMENTAS.find((f) => f.name === nome)?.rotulo ?? nome;
@@ -333,14 +335,14 @@ export class FerramentasService {
   private async executarComando(comando: string, segundos: number | undefined, deixar: boolean): Promise<string> {
     const raiz = this.projeto.raiz();
     if (!raiz) throw new Error('nenhum projeto aberto');
-    const decisao = await this.escolha.escolherUm(
+    const decisao = this.automatico.ligado() || (await this.escolha.escolherUm(
       'A IA QUER RODAR UM COMANDO',
       [
         { rotulo: 'Rodar', detalhe: comando, valor: true },
         { rotulo: 'Recusar', detalhe: 'o comando não roda e a IA é avisada', valor: false },
       ],
       `na pasta ${raiz}`,
-    );
+    ));
     if (!decisao) return 'o usuário recusou o comando; não rodou';
     const espera = Math.max(5, Math.min(600, segundos ?? 120)) * 1000;
     const id = `ia-cmd-${Date.now()}`;

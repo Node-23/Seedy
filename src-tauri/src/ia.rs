@@ -125,6 +125,130 @@ pub async fn ia_mensagem(
     .map_err(|e| e.to_string())?
 }
 
+/// "2025-11-21T19:00:00.123456+00:00" → segundos desde 1970 (sem depender de uma biblioteca de datas).
+pub fn iso_para_epoch(s: &str) -> Option<i64> {
+    let (data, resto) = s.split_once('T')?;
+    let mut d = data.split('-');
+    let (ano, mes, dia): (i64, i64, i64) = (d.next()?.parse().ok()?, d.next()?.parse().ok()?, d.next()?.parse().ok()?);
+    // Hora, minuto e segundo; depois a fração e o fuso (Z, +HH:MM ou -HH:MM).
+    let (hora, fuso) = match resto.find(['Z', '+', '-']) {
+        Some(i) => (&resto[..i], &resto[i..]),
+        None => (resto, "Z"),
+    };
+    let mut h = hora.split(':');
+    let (hh, mm): (i64, i64) = (h.next()?.parse().ok()?, h.next()?.parse().ok()?);
+    let ss: i64 = h.next().map(|x| x.split('.').next().unwrap_or("0").parse().unwrap_or(0)).unwrap_or(0);
+    // Dias desde 1970 (algoritmo de datas civis).
+    let a = if mes <= 2 { ano - 1 } else { ano };
+    let era = a.div_euclid(400);
+    let yoe = a - era * 400;
+    let doy = (153 * (if mes > 2 { mes - 3 } else { mes + 9 }) + 2) / 5 + dia - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let dias = era * 146097 + doe - 719468;
+    let desloca = match fuso.chars().next() {
+        Some('+') | Some('-') => {
+            let sinal = if fuso.starts_with('-') { -1 } else { 1 };
+            let (fh, fm) = fuso[1..].split_once(':').unwrap_or((&fuso[1..], "0"));
+            sinal * (fh.parse::<i64>().ok()? * 3600 + fm.parse::<i64>().ok()? * 60)
+        }
+        _ => 0,
+    };
+    Some(dias * 86400 + hh * 3600 + mm * 60 + ss - desloca)
+}
+
+/// A resposta do endpoint de uso: `{"five_hour": {"utilization": 15.0, "resets_at": "..."}, "seven_day": {...}}`.
+pub fn limites_do_uso(v: &serde_json::Value) -> Vec<Limite> {
+    let Some(mapa) = v.as_object() else { return vec![] };
+    mapa.iter()
+        .filter_map(|(tipo, j)| {
+            let utilizacao = j.get("utilization")?.as_f64()?;
+            let reinicia_em = j.get("resets_at").and_then(|x| x.as_str()).and_then(iso_para_epoch);
+            Some(Limite { tipo: tipo.clone(), utilizacao: Some(utilizacao), reinicia_em, estado: None })
+        })
+        .collect()
+}
+
+/// O token de acesso que o Claude Code guardou no login (`.credentials.json`). Só é lido para pedir
+/// o uso da conta; não é guardado, mostrado nem registrado em lugar nenhum.
+pub fn token_do_json(texto: &str, agora_ms: i64) -> Result<String, String> {
+    let v: serde_json::Value = serde_json::from_str(texto).map_err(|_| "o login do Claude Code está num formato que não conheço".to_string())?;
+    let oauth = v.get("claudeAiOauth").ok_or("o Claude Code não está logado com a assinatura (rode `claude` e use /login)")?;
+    let token = oauth.get("accessToken").and_then(|t| t.as_str()).filter(|t| !t.is_empty()).ok_or("não achei o token do Claude Code")?;
+    if oauth.get("expiresAt").and_then(|e| e.as_i64()).is_some_and(|e| e < agora_ms) {
+        return Err("o login do Claude Code expirou: rode `claude` uma vez para renovar".into());
+    }
+    Ok(token.to_string())
+}
+
+fn ler_token_do_claude_code() -> Result<String, String> {
+    let pasta = std::env::var("CLAUDE_CONFIG_DIR").ok().map(PathBuf::from).or_else(|| dirs::home_dir().map(|h| h.join(".claude"))).ok_or("não achei a pasta do Claude Code")?;
+    let texto = fs::read_to_string(pasta.join(".credentials.json")).map_err(|_| "não achei o login do Claude Code (.credentials.json): rode `claude` e use /login. No macOS o login fica no Keychain, que o Seedy não lê".to_string())?;
+    let agora = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0);
+    token_do_json(&texto, agora)
+}
+
+/// O uso da assinatura (janela de 5 horas e semana), o mesmo que o `/usage` do Claude Code mostra.
+/// Pede à Anthropic com o login do Claude Code; só leitura, nenhuma chamada de IA.
+#[tauri::command]
+pub async fn ia_uso() -> Result<Vec<Limite>, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let token = ler_token_do_claude_code()?;
+        let resposta = ureq::get(&format!("{}/api/oauth/usage", endereco_base()))
+            .set("Authorization", &format!("Bearer {token}"))
+            .set("anthropic-beta", "oauth-2025-04-20")
+            .set("Accept", "application/json")
+            .timeout(Duration::from_secs(10))
+            .call();
+        match resposta {
+            Ok(r) => {
+                let v: serde_json::Value = serde_json::from_str(&r.into_string().unwrap_or_default()).map_err(|_| "a resposta do uso veio num formato que não conheço".to_string())?;
+                let l = limites_do_uso(&v);
+                if l.is_empty() { Err("a Anthropic não devolveu os limites de uso".into()) } else { Ok(l) }
+            }
+            Err(ureq::Error::Status(c, _)) => Err(format!("a Anthropic respondeu {c} ao pedir o uso (o login do Claude Code pode ter expirado: rode `claude` uma vez)")),
+            Err(_) => Err("sem conexão para ler o uso".into()),
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Só http, https e mailto, sem espaço, aspas nem caractere de controle (o link vem do texto da IA).
+pub fn link_valido(url: &str) -> bool {
+    let u = url.to_ascii_lowercase();
+    (u.starts_with("http://") || u.starts_with("https://") || u.starts_with("mailto:"))
+        && url.len() <= 2000
+        && !url.chars().any(|c| c.is_whitespace() || c.is_control() || c == '"' || c == '<' || c == '>')
+}
+
+/// Abre um link do chat da IA no navegador do sistema (o usuário clicou nele).
+#[tauri::command]
+pub fn abrir_link(url: String) -> Result<(), String> {
+    if !link_valido(&url) {
+        return Err("só abro links http, https e mailto".into());
+    }
+    #[cfg(windows)]
+    let mut c = {
+        use std::os::windows::process::CommandExt;
+        let mut c = std::process::Command::new("rundll32");
+        c.args(["url.dll,FileProtocolHandler", &url]).creation_flags(0x0800_0000);
+        c
+    };
+    #[cfg(target_os = "macos")]
+    let mut c = {
+        let mut c = std::process::Command::new("open");
+        c.arg(&url);
+        c
+    };
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    let mut c = {
+        let mut c = std::process::Command::new("xdg-open");
+        c.arg(&url);
+        c
+    };
+    c.spawn().map(|_| ()).map_err(|e| format!("não consegui abrir o navegador: {e}"))
+}
+
 /// Versão do Claude Code instalado (`claude --version`), se houver. É ele que usa a assinatura.
 #[tauri::command]
 pub async fn ia_claude_estado() -> Option<String> {
@@ -452,6 +576,45 @@ Usuário: ok
         let l = limite_do_evento(&so_tipo).unwrap();
         assert_eq!((l.utilizacao, l.reinicia_em), (Some(34.0), Some(1730000000)));
         assert!(limite_do_evento(&serde_json::json!({"type": "rate_limit_event"})).is_none());
+    }
+
+    #[test]
+    fn le_o_uso_da_conta() {
+        let v = serde_json::json!({"five_hour": {"utilization": 15.0, "resets_at": "2025-11-21T19:00:00.123456+00:00"}, "seven_day": {"utilization": 34.0, "resets_at": "2025-11-24T12:00:00Z"}, "extra": null});
+        let l = limites_do_uso(&v);
+        let cinco = l.iter().find(|x| x.tipo == "five_hour").unwrap();
+        assert_eq!(cinco.utilizacao, Some(15.0));
+        assert_eq!(cinco.reinicia_em, Some(1763751600)); // 2025-11-21 19:00 UTC
+        assert_eq!(l.iter().find(|x| x.tipo == "seven_day").unwrap().reinicia_em, Some(1763985600));
+        assert_eq!(l.len(), 2);
+    }
+
+    #[test]
+    fn datas_com_fuso() {
+        assert_eq!(iso_para_epoch("1970-01-01T00:00:00Z"), Some(0));
+        assert_eq!(iso_para_epoch("1970-01-01T03:00:00+03:00"), Some(0));
+        assert_eq!(iso_para_epoch("2000-03-01T00:00:00-02:00"), Some(951_868_800 + 7200));
+        assert_eq!(iso_para_epoch("lixo"), None);
+    }
+
+    #[test]
+    fn token_do_login_do_claude_code() {
+        let ok = r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat01-abc","refreshToken":"r","expiresAt":2000}}"#;
+        assert_eq!(token_do_json(ok, 1000).unwrap(), "sk-ant-oat01-abc");
+        assert!(token_do_json(ok, 3000).unwrap_err().contains("expirou"));
+        assert!(token_do_json("{}", 0).unwrap_err().contains("assinatura"));
+        // O token nunca aparece nas mensagens de erro.
+        assert!(!token_do_json(ok, 3000).unwrap_err().contains("sk-ant"));
+    }
+
+    #[test]
+    fn so_abre_links_seguros() {
+        assert!(link_valido("https://exemplo.com/a?b=1&c=2"));
+        assert!(link_valido("mailto:eu@exemplo.com"));
+        assert!(!link_valido("file:///etc/passwd"));
+        assert!(!link_valido("javascript:alert(1)"));
+        assert!(!link_valido("https://exemplo.com/a b"));
+        assert!(!link_valido("https://exemplo.com/\"x"));
     }
 
     #[test]

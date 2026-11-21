@@ -30,7 +30,8 @@ import { LimitesService } from './limites.service';
               <div class="suave limite-sub">o Claude Code ainda não informou esta janela</div>
             }
           }
-          <div class="suave limite-nota">Lido do Claude Code depois de cada resposta da IA (visto às {{ visto() }}). O que ele manda vai para <b>limites-eventos.log</b> na pasta de configuração do Seedy. Com chave da API não há limite por janela, então o indicador só aparece no modo assinatura.</div>
+          @if (l.erroDeUso(); as erro) { <div class="limite-erro erro-texto">não consegui ler o uso da conta: {{ erro }}</div> }
+          <div class="suave limite-nota">Lido da sua conta pelo login do Claude Code (a cada 5 minutos e ao abrir este painel; visto às {{ visto() }}) e do aviso que ele manda depois de cada resposta. O Seedy só lê o token para pedir o uso: não guarda nem mostra. Com chave da API não há limite por janela, então o indicador só aparece no modo assinatura.</div>
         </div>
       }
     }
