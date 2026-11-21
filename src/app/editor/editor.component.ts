@@ -19,6 +19,7 @@ import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
 import { BancoService, NOME_DO_AMBIENTE } from '../banco/banco.service';
+import { ConfigService } from '../config/config.service';
 import { aceitaBreakpoint, DepuradorService } from '../servidor/depurador.service';
 
 /** API interna do vim (do CodeMirror), que o monaco-vim expõe sem tipos. */
@@ -97,6 +98,7 @@ let exDefinidos = false;
   `,
 })
 export class EditorComponent {
+  private readonly config = inject(ConfigService);
   protected readonly editor = inject(EditorService);
   protected readonly projeto = inject(ProjetoService);
   private readonly tema = inject(TemaService);
@@ -252,6 +254,16 @@ export class EditorComponent {
     effect(() => {
       const focado = this.focado();
       if (this.instancia() && this.barraVim) this.barraVim.hidden = !focado;
+    });
+
+    // Opções do editor vêm do seedy.json (editor.*).
+    effect(() => {
+      const c = this.config.atual().editor;
+      const instancia = this.instancia();
+      if (!instancia) return;
+      instancia.updateOptions({ wordWrap: c.quebraDeLinha ? 'on' : 'off', lineNumbers: c.numerosRelativos ? 'relative' : 'on', minimap: { enabled: c.minimapa } });
+      const modelo = this.buffer()?.modelo;
+      if (modelo && c.tabulacao) modelo.updateOptions({ tabSize: c.tabulacao, indentSize: c.tabulacao, insertSpaces: c.espacos });
     });
 
     // Fonte do código vem do tema.

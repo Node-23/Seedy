@@ -116,6 +116,8 @@ pub fn run() {
             java::lsp_enviar,
             java::lsp_parar,
             tema::tema_carregar,
+            tema::config_carregar,
+            tema::config_padrao,
             tema::tema_padrao,
             tema::fonte_bytes,
             terminal::terminal_abrir,

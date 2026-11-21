@@ -274,10 +274,10 @@ export class BuscaComponent {
         const c = casar(q, acao.rotulo);
         if (!c || (f === 'tudo' && !q)) continue;
         itens.push({
-          id: `a:${acao.tecla}`,
+          id: `a:${acao.id}`,
           tipo: 'acao',
           pedacos: marcar(acao.rotulo, c.posicoes),
-          detalhe: `␣ ${acao.tecla}`,
+          detalhe: acao.tecla ? `␣ ${acao.tecla}` : '',
           pontos: c.pontos + PESO.acao,
           executar: () => this.atalhos.executar(acao),
         });

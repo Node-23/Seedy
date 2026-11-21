@@ -73,6 +73,7 @@ pub fn terminal_abrir(
     saida: Channel<String>,
     fim: Channel<()>,
     comando: Option<Vec<String>>,
+    shell: Option<Vec<String>>,
 ) -> Result<u32, String> {
     let par = native_pty_system()
         .openpty(tamanho(colunas, linhas))
@@ -81,7 +82,17 @@ pub fn terminal_abrir(
     // Com `comando` (ex.: `docker exec -it api sh`), a aba roda ele no lugar do shell.
     let mut cmd = match comando.as_deref() {
         Some(partes @ [_, ..]) => comando_na_aba(partes),
-        _ => comando_shell(),
+        // Shell escolhido no seedy.json (terminal.shell + argumentos).
+        _ => match shell.as_deref() {
+            Some([programa, args @ ..]) => {
+                let mut c = CommandBuilder::new(programa);
+                c.args(args);
+                c.env("TERM", "xterm-256color");
+                c.env("COLORTERM", "truecolor");
+                c
+            }
+            _ => comando_shell(),
+        },
     };
     if let Some(p) = pasta.filter(|p| std::path::Path::new(p).is_dir()) {
         cmd.cwd(p);

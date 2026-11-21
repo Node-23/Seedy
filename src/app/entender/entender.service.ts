@@ -9,6 +9,7 @@ import { caminhoDaUri } from '../java/conversao';
 import { IaService } from '../ia/ia.service';
 import { pedirComStream } from '../ia/stream';
 import { desenharArquitetura, desenharCaminho, PAPEIS_NA_GRADE } from './desenho';
+import { ConfigService } from '../config/config.service';
 import { agora, ARQUIVO_VAZIO, ArquivoRegras, escreverRegras, lerRegras, linhaDaRegra, proximoId, RegraEscrita, textoDoCodigo } from './regras';
 
 export type AbaEntender = 'arquitetura' | 'regras' | 'caminho';
@@ -20,7 +21,6 @@ export interface RegraVisivel extends RegraEscrita {
   noArquivo: boolean;
 }
 
-const MODELO = 'claude-opus-5-5';
 const CMD_ACOMPANHAR = 'seedy.acompanharMetodo';
 
 /**
@@ -30,6 +30,7 @@ const CMD_ACOMPANHAR = 'seedy.acompanharMetodo';
  */
 @Injectable({ providedIn: 'root' })
 export class EntenderService {
+  private readonly config = inject(ConfigService);
   private readonly layout = inject(LayoutService);
   private readonly projeto = inject(ProjetoService);
   private readonly editor = inject(EditorService);
@@ -263,7 +264,7 @@ export class EntenderService {
       const pergunta = `Método: ${c.nome}.${m.nome} (${c.relativo}:${m.linha})\n\nCaminho que o Seedy montou lendo o código:\n${passos}${outras ? `\n\nOutras entradas:\n${outras}` : ''}\n\nCódigo do método:\n\`\`\`\n${linhas}\n\`\`\``;
       await pedirComStream(
         {
-          model: MODELO,
+          model: this.config.atual().ia.modelo,
           max_tokens: 1500,
           stream: true,
           system:
@@ -360,7 +361,7 @@ export class EntenderService {
       let saida = '';
       await pedirComStream(
         {
-          model: MODELO,
+          model: this.config.atual().ia.modelo,
           max_tokens: 12000,
           stream: true,
           system:

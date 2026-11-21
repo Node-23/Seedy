@@ -17,6 +17,8 @@ use tauri::{AppHandle, Emitter};
 
 const TEMA_PADRAO: &str = include_str!("../../src/app/tema/tema-padrao.json");
 const ARQUIVO_TEMA: &str = "tema.json";
+const CONFIG_PADRAO: &str = include_str!("../../src/app/config/config-padrao.json");
+const ARQUIVO_CONFIG: &str = "seedy.json";
 
 #[derive(Serialize, Clone)]
 pub struct Tema {
@@ -41,7 +43,29 @@ pub fn garantir_tema_padrao() -> std::io::Result<()> {
     if !caminho.exists() {
         fs::write(caminho, TEMA_PADRAO)?;
     }
+    let config = pasta_config().join(ARQUIVO_CONFIG);
+    if !config.exists() {
+        fs::write(config, CONFIG_PADRAO)?;
+    }
     Ok(())
+}
+
+fn ler_config() -> Result<Tema, String> {
+    let caminho = pasta_config().join(ARQUIVO_CONFIG);
+    let conteudo = fs::read_to_string(&caminho).map_err(|e| format!("não consegui ler o seedy.json: {e}"))?;
+    Ok(Tema { caminho: caminho.to_string_lossy().into_owned(), conteudo })
+}
+
+/// Configurações do Seedy (`seedy.json`, na mesma pasta do tema). Mesmo formato do tema:
+/// caminho + conteúdo; a interface lê o JSON e completa com o padrão.
+#[tauri::command]
+pub fn config_carregar() -> Result<Tema, String> {
+    ler_config()
+}
+
+#[tauri::command]
+pub fn config_padrao() -> String {
+    CONFIG_PADRAO.to_string()
 }
 
 fn ler_tema() -> Result<Tema, String> {
@@ -96,19 +120,28 @@ pub fn observar(app: AppHandle) {
         }
         while let Ok(resultado) = rx.recv() {
             let Ok(evento) = resultado else { continue };
-            let tocou_tema = evento
-                .paths
-                .iter()
-                .any(|p| p.file_name().is_some_and(|n| n == ARQUIVO_TEMA));
+            let tocou = |nome: &str| evento.paths.iter().any(|p| p.file_name().is_some_and(|n| n == nome));
+            let (tema, config) = (tocou(ARQUIVO_TEMA), tocou(ARQUIVO_CONFIG));
             let alterou = matches!(evento.kind, EventKind::Modify(_) | EventKind::Create(_));
-            if !(tocou_tema && alterou) {
+            if !alterou || !(tema || config) {
                 continue;
             }
             // Editores gravam em várias etapas: espera assentar e descarta o resto da rajada.
             std::thread::sleep(Duration::from_millis(120));
-            while rx.try_recv().is_ok() {}
-            if let Ok(tema) = ler_tema() {
-                let _ = app.emit("tema-alterado", tema);
+            let (mut tema, mut config) = (tema, config);
+            while let Ok(Ok(outro)) = rx.try_recv() {
+                tema |= outro.paths.iter().any(|p| p.file_name().is_some_and(|n| n == ARQUIVO_TEMA));
+                config |= outro.paths.iter().any(|p| p.file_name().is_some_and(|n| n == ARQUIVO_CONFIG));
+            }
+            if tema {
+                if let Ok(t) = ler_tema() {
+                    let _ = app.emit("tema-alterado", t);
+                }
+            }
+            if config {
+                if let Ok(c) = ler_config() {
+                    let _ = app.emit("config-alterada", c);
+                }
             }
         }
     });

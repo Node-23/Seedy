@@ -423,6 +423,16 @@ export const ponte = {
     return noApp() ? invoke<ArquivoTema>('tema_carregar') : null;
   },
 
+  /** seedy.json global (configurações); fora do app não existe. */
+  async configCarregar(): Promise<ArquivoTema | null> {
+    return noApp() ? invoke<ArquivoTema>('config_carregar') : null;
+  },
+
+  async aoAlterarConfig(fn: (config: ArquivoTema) => void): Promise<UnlistenFn> {
+    if (!noApp()) return () => {};
+    return listen<ArquivoTema>('config-alterada', (e) => fn(e.payload));
+  },
+
   async temaPadrao(): Promise<string | null> {
     return noApp() ? invoke<string>('tema_padrao') : null;
   },
@@ -646,12 +656,13 @@ export const ponte = {
       aoReceber: (texto: string) => void,
       aoEncerrar: () => void,
       comando: string[] | null = null,
+      shell: string[] | null = null,
     ): Promise<number> {
       const saida = new Channel<string>();
       saida.onmessage = aoReceber;
       const fim = new Channel<null>();
       fim.onmessage = aoEncerrar;
-      return invoke<number>('terminal_abrir', { pasta, colunas, linhas, saida, fim, comando });
+      return invoke<number>('terminal_abrir', { pasta, colunas, linhas, saida, fim, comando, shell });
     },
     escrever: (id: number, dados: string) => invoke('terminal_escrever', { id, dados }),
     redimensionar: (id: number, colunas: number, linhas: number) =>

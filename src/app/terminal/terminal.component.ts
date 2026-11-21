@@ -16,6 +16,7 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { TemaService, Tema } from '../tema/tema';
 import { LayoutService } from '../layout/layout.service';
 import { MensagensService } from '../nucleo/mensagens.service';
+import { ConfigService } from '../config/config.service';
 import { TerminalService } from './terminal.service';
 
 interface Aba {
@@ -61,6 +62,7 @@ let proximaChave = 1;
   `,
 })
 export class TerminalComponent {
+  private readonly config = inject(ConfigService);
   protected readonly layout = inject(LayoutService);
   private readonly projeto = inject(ProjetoService);
   private readonly tema = inject(TemaService);
@@ -174,6 +176,7 @@ export class TerminalComponent {
         (texto) => aba.terminal.write(texto),
         () => aba.terminal.writeln('\r\n[processo encerrado]'),
         aba.comando ?? null,
+        this.config.atual().terminal.shell ? [this.config.atual().terminal.shell!, ...this.config.atual().terminal.argumentos] : null,
       );
       aba.terminal.onData((dados) => {
         if (aba.idPty !== null) void ponte.terminal.escrever(aba.idPty, dados);

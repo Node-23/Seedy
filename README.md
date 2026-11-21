@@ -89,6 +89,11 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Debug no navegador** (mockup 14): o DEBUG de um script sobe o servidor de desenvolvimento,
   abre o Edge/Chrome com o js-debug e para nos breakpoints do `.ts` (source maps), na mesma tela
   de debug do Java, com o console do navegador embaixo.
+- **Barra de ícones à esquerda**: arquivos, busca, git, TODO, terminal, servidor, scripts, banco,
+  containers, debug, entender o sistema e IA (a barra de cima ficou com o projeto, os buffers e o
+  RUN/DEBUG).
+- **seedy.json** (`␣ ,`) e **layout editável** (`␣ L`, ou arrastar a faixa de um painel): ver a
+  seção [seedy.json](#seedyjson).
 - **TODO** (mockup 20, `␣ T` ou o botão na barra de ícones à esquerda): um painel por cima das
   telas com cards ligados a linhas de código, regras, caminhos, blocos da arquitetura, containers
   e conexões de banco. `l` liga ao card o que está aberto embaixo; a linha ligada ganha a marca
@@ -278,6 +283,44 @@ Sem arquivo, o Seedy usa a família instalada no sistema e, se não achar, a `re
 
 O tema vira variáveis CSS (`--fundo`, `--destaque`, `--raio`...) usadas em
 `src/styles.css`, e o tema do Monaco e do terminal é gerado a partir do mesmo arquivo.
+
+## seedy.json
+
+Configurações em arquivo, ao lado do `tema.json` (`%APPDATA%\seedy\seedy.json` no Windows,
+`~/.config/seedy/seedy.json` no Linux). Abra com `␣ ,`; salvou, vale na hora. Um
+`.seedy/seedy.json` no projeto sobrepõe o global (bom para o time combinar a tabulação, por
+exemplo).
+
+```json
+{
+  "editor": {
+    "tabulacao": null,          // null = detecta pelo arquivo
+    "espacos": true,
+    "quebraDeLinha": false,
+    "numerosRelativos": true,
+    "minimapa": false,
+    "formatarAoSalvar": true    // Prettier ao salvar, nos projetos que usam
+  },
+  "terminal": { "shell": null, "argumentos": [] },   // ex.: "C:\\Program Files\\Git\\bin\\bash.exe", ["--login"]
+  "atalhos": { "lider": { "todo": "t" } },           // id da ação → tecla do líder
+  "ia": { "modelo": "claude-opus-5-5" },
+  "layout": { ... }                                  // gravado pelo Seedy (␣ L)
+}
+```
+
+Ids das ações do líder: `buscar-tudo`, `buscar-arquivo`, `buscar-no-projeto`, `substituir`,
+`simbolos`, `arquivos`, `terminal`, `abrir-projeto`, `novo-projeto`, `salvar`, `fechar-buffer`,
+`tema`, `reiniciar-jdtls`, `jdk`, `execucao`, `debug`, `git`, `commit`, `branch`, `blame`,
+`banco`, `servidor`, `scripts`, `containers-painel`, `containers`, `todo`, `entender`, `merge`,
+`github`, `prateleira`, `pull-request`, `issue`, `ia`, `revisar-ia`, `layout`, `config`, `mcp`.
+A ação que perde a tecla para outra fica sem atalho (continua na busca, `␣ ␣`).
+
+### Layout
+
+Cada painel (arquivos, terminal, servidor, scripts, containers, banco, IA) mora numa região:
+à esquerda, embaixo ou à direita, um por região. Arraste a faixa de título de um painel para
+outra região, ou use `␣ L` → mover. Os divisores mudam o tamanho (de cada painel). `␣ L` também
+salva a disposição atual com um nome e troca entre as salvas; tudo fica no `seedy.json`.
 
 ## Estrutura
 

@@ -4,7 +4,6 @@ import { ProjetoService } from '../nucleo/projeto.service';
 import { AtalhosService } from '../teclado/atalhos.service';
 import { LayoutService } from '../layout/layout.service';
 import { ponte } from '../nucleo/ponte';
-import { BuscaService } from '../busca/busca.service';
 import { GitService } from '../git/git.service';
 import { MergeService } from '../git/merge.service';
 import { CommitService } from '../git/commit.service';
@@ -12,7 +11,10 @@ import { ExecucaoService } from '../execucao/execucao.service';
 import { CAMINHO_DO_LOGO } from '../marca/logo';
 import { DockerService } from '../containers/docker.service';
 
-/** Barra de cima: menu, projeto, buffers abertos, ferramentas e controles da janela. */
+/**
+ * Barra de cima: menu, projeto, buffers abertos, RUN/DEBUG, ações da tela atual e controles
+ * da janela. Os botões que abrem janelas e painéis ficam na barra de ícones à esquerda.
+ */
 @Component({
   selector: 'sd-barra-topo',
   template: `
@@ -50,28 +52,6 @@ import { DockerService } from '../containers/docker.service';
                   [disabled]="!!git.ocupado()" (click)="git.push()">↑ push@if (git.estado()?.aFrente) { {{ git.estado()!.aFrente }}}</button>
           <button class="botao" title="Commit (ctrl+k)" (click)="commit.abrir()">commit <kbd>^k</kbd></button>
         </div>
-      } @else if (layout.tela() === 'editor') {
-      <div class="ferramentas">
-        <button class="botao-quadrado" [class.ligado]="busca.aberta()" aria-label="Buscar arquivo" title="Buscar arquivo (ctrl+p) · no projeto: ctrl+shift+f" (click)="busca.abrir('arquivos')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-        </button>
-        <button class="botao-quadrado" [class.ligado]="layout.tela() === 'git'" aria-label="Git" title="Git (␣ g)" (click)="layout.tela.set('git')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="5" r="2.5"></circle><circle cx="6" cy="19" r="2.5"></circle><circle cx="18" cy="8" r="2.5"></circle><path d="M6 7.5v9M18 10.5v1a4 4 0 0 1-4 4H8.5"></path></svg>
-        </button>
-        <button class="botao-quadrado" [class.ligado]="layout.disposicao().visiveis.conexoes" aria-label="Banco de dados" title="Banco de dados (␣ d)" (click)="layout.alternar('conexoes')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"></ellipse><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"></path></svg>
-        </button>
-        <button class="botao-quadrado" [class.ligado]="layout.disposicao().visiveis.servidor" aria-label="Servidor" title="Servidor (␣ j)" (click)="layout.alternar('servidor')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"></rect><rect x="4" y="13" width="16" height="7" rx="2"></rect><path d="M8 7.5h.01M8 16.5h.01"></path></svg>
-        </button>
-        <button class="botao-quadrado" [class.ligado]="layout.disposicao().visiveis.terminal" aria-label="Terminal" title="Terminal (alt f12)" (click)="layout.alternar('terminal')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7l5 5-5 5M12 18h7"></path></svg>
-        </button>
-        <button class="botao-quadrado destaque-texto" [class.ligado]="layout.disposicao().visiveis.ia" aria-label="IA" title="IA (␣ a)" (click)="layout.alternar('ia')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"></path></svg>
-        </button>
-      </div>
-
       }
       @if (layout.tela() === 'containers') {
         <div class="ferramentas git-acoes">
@@ -118,7 +98,6 @@ export class BarraTopoComponent {
   protected readonly projeto = inject(ProjetoService);
   protected readonly atalhos = inject(AtalhosService);
   protected readonly layout = inject(LayoutService);
-  protected readonly busca = inject(BuscaService);
   protected readonly git = inject(GitService);
   protected readonly merge = inject(MergeService);
   protected readonly commit = inject(CommitService);

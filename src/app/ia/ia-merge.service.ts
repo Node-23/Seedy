@@ -3,6 +3,7 @@ import { ponte } from '../nucleo/ponte';
 import { GitService } from '../git/git.service';
 import { ContextoDoMerge, MergeService } from '../git/merge.service';
 import { EscolhaService } from '../escolha/escolha.service';
+import { ConfigService } from '../config/config.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 
 /** Bloco de conteúdo da Messages API (texto, thinking, tool_use, tool_result...), guardado como veio. */
@@ -25,7 +26,6 @@ export type ItemDoChat =
   | { tipo: 'proposta'; conflito: number; linhas: string[]; antes: string[]; estado: 'pendente' | 'aplicada' | 'recusada' }
   | { tipo: 'erro'; texto: string };
 
-const MODELO = 'claude-opus-5-5';
 const MAX_VOLTAS = 12;
 const LIMITE_DE_ARQUIVO = 200_000;
 
@@ -83,6 +83,7 @@ const FERRAMENTAS = [
  */
 @Injectable({ providedIn: 'root' })
 export class IaMergeService {
+  private readonly config = inject(ConfigService);
   private readonly merge = inject(MergeService);
   private readonly git = inject(GitService);
   private readonly escolha = inject(EscolhaService);
@@ -312,7 +313,7 @@ export class IaMergeService {
 
   private corpo(): unknown {
     return {
-      model: MODELO,
+      model: this.config.atual().ia.modelo,
       max_tokens: 64000,
       thinking: { type: 'adaptive' },
       output_config: { effort: 'medium' },

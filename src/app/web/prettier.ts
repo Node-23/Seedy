@@ -22,7 +22,7 @@ async function formatado(raiz: string, modelo: monaco.editor.ITextModel, caminho
   return novo === texto ? null : novo;
 }
 
-export function registrarPrettier(web: WebLspService, editor: EditorService, raiz: () => string | null): void {
+export function registrarPrettier(web: WebLspService, editor: EditorService, raiz: () => string | null, formatarAoSalvar: () => boolean = () => true): void {
   for (const L of LINGUAGENS) {
     monaco.languages.registerDocumentFormattingEditProvider(L, {
       displayName: 'Prettier',
@@ -40,7 +40,7 @@ export function registrarPrettier(web: WebLspService, editor: EditorService, rai
   // Ao salvar, só quando o projeto usa Prettier (tem .prettierrc ou "prettier" no package.json).
   editor.antesDeSalvar(async (b: Buffer) => {
     const r = raiz();
-    if (!r || !web.web()?.prettier || !suportadoPeloPrettier(b.caminho)) return;
+    if (!r || !formatarAoSalvar() || !web.web()?.prettier || !suportadoPeloPrettier(b.caminho)) return;
     const novo = await formatado(r, b.modelo, b.caminho);
     if (novo === null) return;
     const instancia = editor.instancia;

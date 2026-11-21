@@ -1683,3 +1683,26 @@ sd-scripts { flex: 1; min-width: 0; display: flex; }
 .todo-dica { padding: 10px 14px; flex-shrink: 0; border-top: var(--espessura-borda) solid var(--borda); font-size: 11px; white-space: nowrap; overflow: hidden; }
 .monaco-editor .todo-marca { color: var(--aviso) !important; font-style: normal; }
 .monaco-editor .todo-margem { border-left: 3px solid var(--aviso); margin-left: 3px; }
+.icone-divisa { width: 24px; height: 0; border-top: 2px solid var(--selecao); margin: 2px 0; flex-shrink: 0; }
+.icone-texto { font-size: 12px; font-weight: 700; color: inherit; }
+.icone-lateral.ia:not(.ativo) { color: var(--destaque); }
+.icone-contador.ok { background: var(--sucesso); }
+.barra-icones { padding-bottom: 2px; }
+.barra-icones .icone-lateral { flex-shrink: 0; }
+sd-barra-icones { display: flex; flex-shrink: 0; }
+
+/* ---------- Layout editável: arrastar um painel pela faixa de título ---------- */
+.regiao-direita { width: auto; }
+.regiao-direita > * { flex: 1; min-width: 0; display: flex; }
+body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; user-select: none; }
+.layout-alvos { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
+.layout-alvo {
+  position: absolute; display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  border: 2px dashed var(--texto-suave); border-radius: var(--raio); background: color-mix(in srgb, var(--fundo) 70%, transparent);
+  font-size: 12px; letter-spacing: 0.08em; color: var(--texto-suave);
+}
+.layout-alvo.esquerda { left: 0; top: 0; bottom: 0; width: 22%; }
+.layout-alvo.direita { right: 0; top: 0; bottom: 0; width: 22%; }
+.layout-alvo.inferior { left: calc(22% + var(--espaco)); right: calc(22% + var(--espaco)); bottom: 0; height: 38%; }
+.layout-alvo.sobre { border-color: var(--destaque); color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, var(--fundo)); box-shadow: 0 0 0 2px var(--destaque); }
+.regiao-esquerda .painel-faixa, .regiao-inferior .painel-faixa, .regiao-direita .painel-faixa { cursor: grab; }

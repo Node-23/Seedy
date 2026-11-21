@@ -1,0 +1,21 @@
+{
+  "_ajuda": "Configurações do Seedy (␣ ,). Salvou, vale na hora. Um .seedy/seedy.json no projeto sobrepõe este arquivo. Detalhes no README, seção seedy.json.",
+  "editor": {
+    "tabulacao": null,
+    "espacos": true,
+    "quebraDeLinha": false,
+    "numerosRelativos": true,
+    "minimapa": false,
+    "formatarAoSalvar": true
+  },
+  "terminal": {
+    "shell": null,
+    "argumentos": []
+  },
+  "atalhos": {
+    "lider": {}
+  },
+  "ia": {
+    "modelo": "claude-opus-5-5"
+  }
+}

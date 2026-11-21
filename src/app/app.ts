@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { BarraTopoComponent } from './barra/barra-topo.component';
 import { BarraStatusComponent } from './barra/barra-status.component';
 import { MenuLiderComponent } from './barra/menu-lider.component';
@@ -21,7 +22,7 @@ import { MargemGitService } from './git/margem.service';
 import { GithubService } from './git/github.service';
 import { CommitService } from './git/commit.service';
 import { EscolhaService } from './escolha/escolha.service';
-import { LayoutService, Regiao } from './layout/layout.service';
+import { IdPainel, LayoutService, NOME_DA_REGIAO, PAINEIS, Regiao } from './layout/layout.service';
 import { MensagensService } from './nucleo/mensagens.service';
 import { ProjetoService } from './nucleo/projeto.service';
 import { TemaService } from './tema/tema';
@@ -52,11 +53,12 @@ import { EntenderService } from './entender/entender.service';
 import { BarraIconesComponent } from './todo/barra-icones.component';
 import { TodoPainelComponent } from './todo/todo-painel.component';
 import { TodoService } from './todo/todo.service';
+import { ConfigService } from './config/config.service';
 
 @Component({
   selector: 'sd-raiz',
   imports: [
-    BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
+    NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
     ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, BarraIconesComponent, TodoPainelComponent,
@@ -67,13 +69,24 @@ import { TodoService } from './todo/todo.service';
 
       <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta() || novoProjeto.aberta()">
       <sd-barra-icones />
-      <div class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
-        @if (layout.disposicao().visiveis.arquivos) {
-          <div class="regiao-esquerda" [style.width.px]="layout.disposicao().larguraEsquerda">
-            <sd-arvore />
-          </div>
-          <div class="divisor vertical" role="separator" aria-orientation="vertical" (pointerdown)="arrastar($event, 'esquerda')"></div>
+      <!-- Painel de cada região (o terminal fica vivo, só escondido, na região dele). -->
+      <ng-template #painel let-regiao>
+        @if (layout.terminalEm(regiao)) { <sd-terminal [class.oculto]="!layout.disposicao().visiveis.terminal" /> }
+        @switch (layout.ativoEm(regiao)) {
+          @case ('arquivos') { <sd-arvore /> }
+          @case ('conexoes') { <sd-conexoes /> }
+          @case ('servidor') { <sd-servidor /> }
+          @case ('scripts') { <sd-scripts /> }
+          @case ('containers') { <sd-containers-painel /> }
+          @case ('ia') { <sd-ia /> }
         }
+      </ng-template>
+
+      <div #area class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
+        <div class="regiao-esquerda" [class.oculto]="!layout.ativos().esquerda" [style.width.px]="layout.tamanho('esquerda')" (pointerdown)="pegarPainel($event, 'esquerda')">
+          <ng-container *ngTemplateOutlet="painel; context: { $implicit: 'esquerda' }" />
+        </div>
+        <div class="divisor vertical" role="separator" aria-orientation="vertical" [class.oculto]="!layout.ativos().esquerda" (pointerdown)="arrastar($event, 'esquerda')"></div>
 
         <div class="coluna-central">
           <div class="regiao-editor">
@@ -85,25 +98,25 @@ import { TodoService } from './todo/todo.service';
           </div>
           @if (banco.ehSql()) { <sd-resultado-sql /> }
           <div class="divisor horizontal" role="separator" aria-orientation="horizontal"
-               [class.oculto]="!inferiorVisivel()" (pointerdown)="arrastar($event, 'inferior')"></div>
-          <div class="regiao-inferior" [class.oculto]="!inferiorVisivel()"
-               [style.height.px]="layout.disposicao().alturaInferior">
-            <!-- O terminal fica vivo (só escondido) enquanto o painel do servidor aparece. -->
-            <sd-terminal [class.oculto]="!layout.disposicao().visiveis.terminal" />
-            @if (layout.disposicao().visiveis.servidor) { <sd-servidor /> }
-            @if (layout.disposicao().visiveis.scripts) { <sd-scripts /> }
-            @if (layout.disposicao().visiveis.containers) { <sd-containers-painel /> }
+               [class.oculto]="!layout.ativos().inferior" (pointerdown)="arrastar($event, 'inferior')"></div>
+          <div class="regiao-inferior" [class.oculto]="!layout.ativos().inferior" [style.height.px]="layout.tamanho('inferior')" (pointerdown)="pegarPainel($event, 'inferior')">
+            <ng-container *ngTemplateOutlet="painel; context: { $implicit: 'inferior' }" />
           </div>
         </div>
 
-        @if (layout.disposicao().visiveis.conexoes) {
-          <div class="divisor vertical fixo" aria-hidden="true"></div>
-          <div class="regiao-direita estreita"><sd-conexoes /></div>
-        } @else if (layout.disposicao().visiveis.ia) {
-          <div class="divisor vertical fixo" aria-hidden="true"></div>
-          <div class="regiao-direita"><sd-ia /></div>
-        }
+        <div class="divisor vertical" role="separator" aria-orientation="vertical" [class.oculto]="!layout.ativos().direita" (pointerdown)="arrastar($event, 'direita')"></div>
+        <div class="regiao-direita" [class.oculto]="!layout.ativos().direita" [style.width.px]="layout.tamanho('direita')" (pointerdown)="pegarPainel($event, 'direita')">
+          <ng-container *ngTemplateOutlet="painel; context: { $implicit: 'direita' }" />
+        </div>
 
+        @if (arrastandoPainel(); as a) {
+          <!-- Arrastando um painel pela faixa: solte numa das três regiões. -->
+          <div class="layout-alvos" aria-hidden="true">
+            <div class="layout-alvo esquerda" [class.sobre]="a.alvo === 'esquerda'"><span>{{ a.titulo }} à esquerda</span></div>
+            <div class="layout-alvo inferior" [class.sobre]="a.alvo === 'inferior'"><span>{{ a.titulo }} embaixo</span></div>
+            <div class="layout-alvo direita" [class.sobre]="a.alvo === 'direita'"><span>{{ a.titulo }} à direita</span></div>
+          </div>
+        }
       </div>
 
       @if (layout.tela() === 'git') { <sd-git class="tela-cheia" /> }
@@ -150,10 +163,8 @@ export class App {
   protected readonly novoProjeto = inject(NovoProjetoService);
   protected readonly todo = inject(TodoService);
 
-  protected inferiorVisivel(): boolean {
-    const v = this.layout.disposicao().visiveis;
-    return v.terminal || v.servidor || v.scripts || v.containers;
-  }
+  private readonly area = viewChild.required<ElementRef<HTMLElement>>('area');
+  protected readonly arrastandoPainel = signal<{ id: IdPainel; titulo: string; alvo: Regiao | null } | null>(null);
 
   constructor() {
     inject(AtalhosService).iniciar();
@@ -167,18 +178,56 @@ export class App {
     inject(EntenderService); // Fase 9: arquitetura, regras e o "acompanhar método" (ctrl+.)
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
+    void inject(ConfigService).iniciar();
     void inject(ProjetoService).iniciar();
   }
 
-  /** Arrastar o divisor redimensiona a região (largura dos arquivos / altura do terminal). */
+  /**
+   * Arrastar a faixa de título de um painel: depois de uns pixels aparecem as três regiões;
+   * soltar numa delas muda o painel de lugar (␣ L faz o mesmo pelo teclado).
+   */
+  protected pegarPainel(inicio: PointerEvent, regiao: Regiao): void {
+    const alvo = inicio.target as HTMLElement;
+    if (inicio.button !== 0 || !alvo.closest('.painel-faixa') || alvo.closest('button, input, textarea, select, a, kbd, [role="tab"], .aba-terminal')) return;
+    const id = this.layout.ativos()[regiao];
+    if (!id) return;
+    const titulo = PAINEIS.find((p) => p.id === id)!.titulo;
+    let comecou = false;
+    const mover = (e: PointerEvent) => {
+      if (!comecou && Math.hypot(e.clientX - inicio.clientX, e.clientY - inicio.clientY) < 8) return;
+      if (!comecou) {
+        comecou = true;
+        document.body.classList.add('arrastando-painel');
+      }
+      const r = this.area().nativeElement.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width;
+      const y = (e.clientY - r.top) / r.height;
+      const sobre: Regiao | null = x < 0.22 ? 'esquerda' : x > 0.78 ? 'direita' : y > 0.62 ? 'inferior' : null;
+      this.arrastandoPainel.set({ id, titulo, alvo: sobre });
+    };
+    const soltar = () => {
+      window.removeEventListener('pointermove', mover);
+      window.removeEventListener('pointerup', soltar);
+      document.body.classList.remove('arrastando-painel');
+      const a = this.arrastandoPainel();
+      this.arrastandoPainel.set(null);
+      if (a?.alvo && a.alvo !== regiao) {
+        this.layout.mover(a.id, a.alvo);
+        this.mensagens.mostrar(`${a.titulo} ${NOME_DA_REGIAO[a.alvo]}`);
+      }
+    };
+    window.addEventListener('pointermove', mover);
+    window.addEventListener('pointerup', soltar);
+  }
+
+  /** Arrastar o divisor redimensiona o painel da região. */
   protected arrastar(inicio: PointerEvent, regiao: Regiao): void {
     inicio.preventDefault();
-    const d = this.layout.disposicao();
-    const base = regiao === 'esquerda' ? d.larguraEsquerda : d.alturaInferior;
+    const base = this.layout.tamanho(regiao);
     const mover = (e: PointerEvent) =>
       this.layout.redimensionar(
         regiao,
-        regiao === 'esquerda' ? base + (e.clientX - inicio.clientX) : base - (e.clientY - inicio.clientY),
+        regiao === 'esquerda' ? base + (e.clientX - inicio.clientX) : regiao === 'direita' ? base - (e.clientX - inicio.clientX) : base - (e.clientY - inicio.clientY),
       );
     const soltar = () => {
       window.removeEventListener('pointermove', mover);

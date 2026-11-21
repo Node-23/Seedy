@@ -161,12 +161,14 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 - ✅ TODO por cima das telas (mockup 20, `␣ T`): barra de ícones à esquerda, cards em
   `.seedy/todo.md` ligados a código, regras, caminhos, blocos, containers e bancos
 
-- Layout editável (arrastar painéis, salvar disposições) — a base já existe em
-  `src/app/layout/layout.service.ts`
+- ✅ Layout editável (`␣ L`): arrastar a faixa de um painel para outra região, tamanho por
+  painel e disposições salvas com nome no `seedy.json`
+- ✅ Barra de ícones à esquerda com todos os botões que abrem janelas e painéis
 - ✅ Watcher de arquivos: árvore, busca e jdtls se atualizam com mudanças feitas fora do
   editor (git checkout, build); buffers sem edição recarregam sozinhos
 - ✅ Voltar/avançar nos arquivos vistos (alt+← / alt+→), com cursor e rolagem guardados por arquivo
-- Configurações em arquivo (`seedy.json`): atalhos, shell do terminal, etc.
+- ✅ Configurações em arquivo (`seedy.json`, `␣ ,`): editor, shell do terminal, teclas do líder,
+  modelo da IA e o layout; `.seedy/seedy.json` no projeto sobrepõe o global
 - ✅ Botões RUN e DEBUG na barra de cima (mockup 11): rodam/depuram a classe `main` (pelo java-debug)
   ou o servidor de aplicação escolhido (`␣ r`), com a tela de debug em tela cheia (`␣ x`)
 - ✅ Criar novo projeto (mockup 12, `␣ N`): Spring Boot (start.spring.io), Maven, WAR, Java simples e

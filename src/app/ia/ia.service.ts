@@ -7,6 +7,7 @@ import { MensagensService } from '../nucleo/mensagens.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { FERRAMENTAS, FerramentasService } from './ferramentas.service';
 import { RevisaoService } from './revisao.service';
+import { ConfigService } from '../config/config.service';
 import { BlocoDaApi, MensagemDaApi, pedirComStream, resultadoDeFerramenta } from './stream';
 
 export interface PassoDaIa {
@@ -22,7 +23,6 @@ export type ItemDaIa =
   | { tipo: 'proposta'; alteracao: number }
   | { tipo: 'erro'; texto: string };
 
-const MODELO = 'claude-opus-5-5';
 const MAX_VOLTAS = 25;
 
 const SISTEMA = `Você é a IA do Seedy, a IDE do usuário para projetos Java web (Struts/JSP, JBoss/WildFly, Tomcat, bancos PostgreSQL/MySQL/Oracle). Você opera a IDE pelas ferramentas: abre e lê código, vê os erros do jdtls, sobe e derruba o servidor de aplicação, lê o log, faz requisições HTTP à aplicação local e consulta os bancos configurados (só leitura).
@@ -34,6 +34,7 @@ Responda em português do Brasil, curto e direto, citando arquivo:linha. Diga o 
 /** Painel de IA do mockup 06 (␣ a fora do merge): conversa que opera a IDE. */
 @Injectable({ providedIn: 'root' })
 export class IaService {
+  private readonly config = inject(ConfigService);
   private readonly ferramentas = inject(FerramentasService);
   private readonly revisao = inject(RevisaoService);
   private readonly editor = inject(EditorService);
@@ -161,7 +162,7 @@ export class IaService {
 
   private corpo(): unknown {
     return {
-      model: MODELO,
+      model: this.config.atual().ia.modelo,
       max_tokens: 64000,
       thinking: { type: 'adaptive' },
       output_config: { effort: 'high' },

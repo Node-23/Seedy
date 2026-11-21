@@ -1,6 +1,6 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { Injectable, Injector, effect, inject, signal, untracked } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
-import { LayoutService } from '../layout/layout.service';
+import { LayoutService, NOME_DA_REGIAO, NOME_PADRAO, PAINEIS, Regiao } from '../layout/layout.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { TemaService } from '../tema/tema';
 import { MensagensService } from '../nucleo/mensagens.service';
@@ -24,9 +24,14 @@ import { aceitaBreakpoint, DepuradorService } from '../servidor/depurador.servic
 import { BlameService } from '../git/blame.service';
 import { EntenderService } from '../entender/entender.service';
 import { TodoService } from '../todo/todo.service';
+import { ConfigService } from '../config/config.service';
 
 export interface AcaoLider {
+  /** Nome da ação no seedy.json (atalhos.lider: { "todo": "T" }). */
+  id: string;
   tecla: string;
+  /** Tecla de fábrica (a do seedy.json pode trocar a `tecla`). */
+  padrao?: string;
   rotulo: string;
   /** false = aparece no menu, mas ainda não existe (fases seguintes). */
   disponivel: boolean;
@@ -73,48 +78,56 @@ export class AtalhosService {
   private readonly depurador = inject(DepuradorService);
   private readonly entender = inject(EntenderService);
   private readonly todo = inject(TodoService);
+  private readonly config = inject(ConfigService);
 
   readonly liderAberto = signal(false);
+  private readonly injetor = inject(Injector);
 
   readonly acoes: AcaoLider[] = [
-    { tecla: ' ', rotulo: 'buscar tudo', disponivel: true, busca: true, executar: () => this.busca.abrir('tudo') },
-    { tecla: 'f', rotulo: 'buscar arquivo', disponivel: true, busca: true, executar: () => this.busca.abrir('arquivos') },
-    { tecla: '/', rotulo: 'buscar no projeto', disponivel: true, busca: true, executar: () => this.buscaProjeto.abrir() },
-    { tecla: 'R', rotulo: 'substituir no projeto', disponivel: true, busca: true, executar: () => this.buscaProjeto.abrir('substituir') },
-    { tecla: 's', rotulo: 'símbolos', disponivel: true, busca: true, executar: () => this.busca.abrir('simbolos') },
-    { tecla: 'e', rotulo: 'árvore de arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
-    { tecla: 't', rotulo: 'terminal', disponivel: true, executar: () => this.layout.alternar('terminal') },
-    { tecla: 'o', rotulo: 'abrir projeto', disponivel: true, executar: () => void this.projeto.escolher() },
-    { tecla: 'N', rotulo: 'novo projeto', disponivel: true, executar: () => void this.novoProjeto.abrir() },
-    { tecla: 'w', rotulo: 'salvar', disponivel: true, executar: () => void this.editor.salvar() },
-    { tecla: 'q', rotulo: 'fechar buffer', disponivel: true, executar: () => this.editor.fechar() },
-    { tecla: 'c', rotulo: 'editar tema', disponivel: true, executar: () => this.abrirTema() },
-    { tecla: 'l', rotulo: 'reiniciar jdtls', disponivel: true, executar: () => void this.jdtls.reiniciar() },
-    { tecla: 'v', rotulo: 'JDK do jdtls', disponivel: true, executar: () => void this.jdtls.escolherJdk() },
-    { tecla: 'r', rotulo: 'o que o RUN/DEBUG roda', disponivel: true, executar: () => void this.execucao.escolherConfig() },
-    { tecla: 'x', rotulo: 'tela de debug', disponivel: true, executar: () => this.alternarDebug() },
-    { tecla: 'g', rotulo: 'git', disponivel: true, executar: () => this.alternarGit() },
-    { tecla: 'k', rotulo: 'commit', disponivel: true, executar: () => void this.commit.abrir() },
-    { tecla: 'b', rotulo: 'trocar de branch', disponivel: true, executar: () => void this.trocarDeBranch() },
-    { tecla: 'n', rotulo: 'anotar (blame)', disponivel: true, executar: () => void this.blame.alternar() },
-    { tecla: 'd', rotulo: 'conexões (banco)', disponivel: true, executar: () => this.layout.alternar('conexoes') },
-    { tecla: 'j', rotulo: 'servidor (painel)', disponivel: true, executar: () => this.layout.alternar('servidor') },
-    { tecla: 'p', rotulo: 'scripts do package.json', disponivel: true, executar: () => this.layout.alternar('scripts') },
-    { tecla: 'h', rotulo: 'containers (painel)', disponivel: true, executar: () => this.layout.alternar('containers') },
-    { tecla: 'D', rotulo: 'containers e o mapa (Docker)', disponivel: true, executar: () => this.alternarContainers() },
-    { tecla: 'T', rotulo: 'TODO (cards ligados ao código, regras e containers)', disponivel: true, executar: () => this.todo.alternar() },
-    { tecla: 'A', rotulo: 'entender o sistema (arquitetura, regras, caminho)', disponivel: true, executar: () => this.entender.alternar() },
-    { tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
-    { tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
-    { tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
-    { tecla: 'P', rotulo: 'criar pull request', disponivel: true, executar: () => void this.githubForm.abrir('pr') },
-    { tecla: 'I', rotulo: 'criar issue', disponivel: true, executar: () => void this.githubForm.abrir('issue') },
-    { tecla: 'a', rotulo: 'IA (painel; no merge, o chat do conflito)', disponivel: true, executar: () => this.alternarIA() },
-    { tecla: 'y', rotulo: 'revisar alterações da IA', disponivel: true, executar: () => this.revisao.aberta.set(true) },
-    { tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },
+    { id: 'buscar-tudo', tecla: ' ', rotulo: 'buscar tudo', disponivel: true, busca: true, executar: () => this.busca.abrir('tudo') },
+    { id: 'buscar-arquivo', tecla: 'f', rotulo: 'buscar arquivo', disponivel: true, busca: true, executar: () => this.busca.abrir('arquivos') },
+    { id: 'buscar-no-projeto', tecla: '/', rotulo: 'buscar no projeto', disponivel: true, busca: true, executar: () => this.buscaProjeto.abrir() },
+    { id: 'substituir', tecla: 'R', rotulo: 'substituir no projeto', disponivel: true, busca: true, executar: () => this.buscaProjeto.abrir('substituir') },
+    { id: 'simbolos', tecla: 's', rotulo: 'símbolos', disponivel: true, busca: true, executar: () => this.busca.abrir('simbolos') },
+    { id: 'arquivos', tecla: 'e', rotulo: 'árvore de arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
+    { id: 'terminal', tecla: 't', rotulo: 'terminal', disponivel: true, executar: () => this.layout.alternar('terminal') },
+    { id: 'abrir-projeto', tecla: 'o', rotulo: 'abrir projeto', disponivel: true, executar: () => void this.projeto.escolher() },
+    { id: 'novo-projeto', tecla: 'N', rotulo: 'novo projeto', disponivel: true, executar: () => void this.novoProjeto.abrir() },
+    { id: 'salvar', tecla: 'w', rotulo: 'salvar', disponivel: true, executar: () => void this.editor.salvar() },
+    { id: 'fechar-buffer', tecla: 'q', rotulo: 'fechar buffer', disponivel: true, executar: () => this.editor.fechar() },
+    { id: 'tema', tecla: 'c', rotulo: 'editar tema', disponivel: true, executar: () => this.abrirTema() },
+    { id: 'reiniciar-jdtls', tecla: 'l', rotulo: 'reiniciar jdtls', disponivel: true, executar: () => void this.jdtls.reiniciar() },
+    { id: 'jdk', tecla: 'v', rotulo: 'JDK do jdtls', disponivel: true, executar: () => void this.jdtls.escolherJdk() },
+    { id: 'execucao', tecla: 'r', rotulo: 'o que o RUN/DEBUG roda', disponivel: true, executar: () => void this.execucao.escolherConfig() },
+    { id: 'debug', tecla: 'x', rotulo: 'tela de debug', disponivel: true, executar: () => this.alternarDebug() },
+    { id: 'git', tecla: 'g', rotulo: 'git', disponivel: true, executar: () => this.alternarGit() },
+    { id: 'commit', tecla: 'k', rotulo: 'commit', disponivel: true, executar: () => void this.commit.abrir() },
+    { id: 'branch', tecla: 'b', rotulo: 'trocar de branch', disponivel: true, executar: () => void this.trocarDeBranch() },
+    { id: 'blame', tecla: 'n', rotulo: 'anotar (blame)', disponivel: true, executar: () => void this.blame.alternar() },
+    { id: 'banco', tecla: 'd', rotulo: 'conexões (banco)', disponivel: true, executar: () => this.layout.alternar('conexoes') },
+    { id: 'servidor', tecla: 'j', rotulo: 'servidor (painel)', disponivel: true, executar: () => this.layout.alternar('servidor') },
+    { id: 'scripts', tecla: 'p', rotulo: 'scripts do package.json', disponivel: true, executar: () => this.layout.alternar('scripts') },
+    { id: 'containers-painel', tecla: 'h', rotulo: 'containers (painel)', disponivel: true, executar: () => this.layout.alternar('containers') },
+    { id: 'containers', tecla: 'D', rotulo: 'containers e o mapa (Docker)', disponivel: true, executar: () => this.alternarContainers() },
+    { id: 'todo', tecla: 'T', rotulo: 'TODO (cards ligados ao código, regras e containers)', disponivel: true, executar: () => this.todo.alternar() },
+    { id: 'entender', tecla: 'A', rotulo: 'entender o sistema (arquitetura, regras, caminho)', disponivel: true, executar: () => this.entender.alternar() },
+    { id: 'merge', tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },
+    { id: 'github', tecla: 'G', rotulo: 'GitHub: conta, clonar, PR, issue', disponivel: true, executar: () => void this.menuGithub() },
+    { id: 'prateleira', tecla: 'S', rotulo: 'guardar na prateleira', disponivel: true, executar: () => void this.guardarNaPrateleira() },
+    { id: 'pull-request', tecla: 'P', rotulo: 'criar pull request', disponivel: true, executar: () => void this.githubForm.abrir('pr') },
+    { id: 'issue', tecla: 'I', rotulo: 'criar issue', disponivel: true, executar: () => void this.githubForm.abrir('issue') },
+    { id: 'ia', tecla: 'a', rotulo: 'IA (painel; no merge, o chat do conflito)', disponivel: true, executar: () => this.alternarIA() },
+    { id: 'revisar-ia', tecla: 'y', rotulo: 'revisar alterações da IA', disponivel: true, executar: () => this.revisao.aberta.set(true) },
+    { id: 'layout', tecla: 'L', rotulo: 'layout: mover painel, disposições', disponivel: true, executar: () => void this.menuLayout() },
+    { id: 'config', tecla: ',', rotulo: 'configurações (seedy.json)', disponivel: true, executar: () => this.abrirConfig() },
+    { id: 'mcp', tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },
   ];
 
   iniciar(): void {
+    effect(() => {
+      const trocas = this.config.atual().atalhos.lider ?? {};
+      untracked(() => this.aplicarTeclas(trocas));
+    }, { injector: this.injetor });
     // Fase de captura: o menu do líder pega a tecla antes do editor e do terminal.
     window.addEventListener('keydown', (e) => this.aoTeclar(e), { capture: true });
   }
@@ -142,7 +155,7 @@ export class AtalhosService {
       e.stopPropagation();
       if (e.key === 'Escape') return this.fecharLider();
       if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
-      const acao = this.acoes.find((a) => a.tecla === e.key);
+      const acao = this.acoes.find((a) => a.tecla && a.tecla === e.key);
       if (acao) this.executar(acao);
       else this.fecharLider();
       return;
@@ -421,6 +434,67 @@ export class AtalhosService {
     if (!el) return true;
     if (el.closest('.monaco-editor, .xterm')) return false;
     return !['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(el.tagName) && !el.isContentEditable;
+  }
+
+  /** ␣ L: o layout pelo teclado (mover painel de região e as disposições salvas). */
+  private async menuLayout(): Promise<void> {
+    const l = this.layout;
+    const salvas = Object.keys(l.salvas());
+    const op = await this.escolha.escolherUm(
+      'LAYOUT',
+      [
+        { rotulo: 'mover um painel…', valor: 'mover' },
+        { rotulo: 'trocar de disposição…', detalhe: `agora: ${l.nomeAtual()}`, valor: 'usar' },
+        { rotulo: 'salvar esta disposição como…', valor: 'salvar' },
+        ...(salvas.length ? [{ rotulo: 'apagar uma disposição…', valor: 'apagar' }] : []),
+      ],
+      'arrastar a faixa de título de um painel também muda ele de lugar · fica no seedy.json',
+    );
+    if (op === 'mover') {
+      const id = await this.escolha.escolherUm('MOVER QUAL PAINEL?', PAINEIS.map((p) => ({ rotulo: p.titulo, detalhe: NOME_DA_REGIAO[l.regiaoDe(p.id)], valor: p.id })));
+      if (!id) return;
+      const titulo = PAINEIS.find((p) => p.id === id)!.titulo;
+      const regioes: Regiao[] = ['esquerda', 'inferior', 'direita'];
+      const r = await this.escolha.escolherUm(`${titulo.toUpperCase()} VAI PARA`, regioes.filter((x) => x !== l.regiaoDe(id)).map((x) => ({ rotulo: NOME_DA_REGIAO[x], valor: x })));
+      if (!r) return;
+      this.layout.tela.set('editor');
+      l.mover(id, r);
+      this.mensagens.mostrar(`${titulo} ${NOME_DA_REGIAO[r]}`);
+    } else if (op === 'usar') {
+      const nome = await this.escolha.escolherUm('DISPOSIÇÃO', [NOME_PADRAO, ...salvas].map((n) => ({ rotulo: n, detalhe: n === l.nomeAtual() ? 'em uso' : '', valor: n })));
+      if (nome) {
+        this.layout.tela.set('editor');
+        l.usar(nome);
+      }
+    } else if (op === 'salvar') {
+      const nome = await this.escolha.perguntar('NOME DA DISPOSIÇÃO', { valor: l.nomeAtual() === NOME_PADRAO ? '' : l.nomeAtual(), placeholder: 'ex.: debug, banco, foco' });
+      if (nome && nome !== NOME_PADRAO) {
+        l.salvarComo(nome);
+        this.mensagens.mostrar(`disposição "${nome}" salva no seedy.json`);
+      }
+    } else if (op === 'apagar') {
+      const nome = await this.escolha.escolherUm('APAGAR QUAL DISPOSIÇÃO?', salvas.map((n) => ({ rotulo: n, valor: n })));
+      if (nome) l.apagar(nome);
+    }
+  }
+
+  private abrirConfig(): void {
+    const caminho = this.config.caminho();
+    if (caminho) void this.editor.abrir(caminho);
+    else this.mensagens.mostrar('o seedy.json só existe dentro do app');
+  }
+
+  /** Teclas do líder trocadas no seedy.json; a ação que perde a tecla fica sem atalho. */
+  private aplicarTeclas(trocas: Record<string, string>): void {
+    for (const a of this.acoes) a.tecla = a.padrao ?? a.tecla;
+    for (const a of this.acoes) a.padrao ??= a.tecla;
+    const novas = Object.entries(trocas).filter(([id, t]) => typeof t === 'string' && [...t].length === 1 && this.acoes.some((a) => a.id === id));
+    const usadas = new Set(novas.map(([, t]) => t));
+    for (const a of this.acoes) {
+      const troca = novas.find(([id]) => id === a.id);
+      if (troca) a.tecla = troca[1];
+      else if (usadas.has(a.tecla)) a.tecla = '';
+    }
   }
 
   private abrirTema(): void {

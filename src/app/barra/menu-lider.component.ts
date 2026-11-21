@@ -12,12 +12,14 @@ import { AtalhosService } from '../teclado/atalhos.service';
           <span class="suave">esc fecha</span>
         </div>
         <div class="menu-lider-grade">
-          @for (acao of atalhos.acoes; track acao.tecla) {
+          @for (acao of atalhos.acoes; track acao.id) {
+            @if (acao.tecla) {
             <button class="menu-lider-item" [class.indisponivel]="!acao.disponivel" (click)="atalhos.executar(acao)">
               <span class="tecla">{{ acao.tecla === ' ' ? '␣' : acao.tecla }}</span>
               <span>{{ acao.rotulo }}</span>
               @if (!acao.disponivel) { <span class="em-breve">em breve</span> }
             </button>
+            }
           }
         </div>
       </div>

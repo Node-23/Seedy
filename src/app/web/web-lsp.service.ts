@@ -7,6 +7,7 @@ import { Mudancas, nomeBase, noApp, ponte, TipoServidorWeb } from '../nucleo/pon
 import { ClienteLsp } from '../java/lsp';
 import { caminhoDaUri, DiagnosticoLsp, EdicaoDeWorkspaceLsp, edicoesPorArquivo, paraEdicao, paraMarcador } from '../java/conversao';
 import { registrarProvedoresWeb } from './provedores-web';
+import { ConfigService } from '../config/config.service';
 import { registrarPrettier } from './prettier';
 
 /** O que o projeto web tem (lido da raiz). */
@@ -53,6 +54,7 @@ export function idDeLinguagem(caminho: string): string | null {
  */
 @Injectable({ providedIn: 'root' })
 export class WebLspService {
+  private readonly config = inject(ConfigService);
   private readonly editor = inject(EditorService);
   private readonly projeto = inject(ProjetoService);
   private readonly mensagens = inject(MensagensService);
@@ -92,7 +94,7 @@ export class WebLspService {
       }
     });
     registrarProvedoresWeb(this, this.editor);
-    registrarPrettier(this, this.editor, () => this.projeto.raiz());
+    registrarPrettier(this, this.editor, () => this.projeto.raiz(), () => this.config.atual().editor.formatarAoSalvar);
     if (isDevMode()) Object.assign(window, { seedyWeb: this });
   }
 
