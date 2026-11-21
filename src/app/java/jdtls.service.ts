@@ -75,6 +75,8 @@ export class JdtlsService {
   private preferencias: string | null = null;
   /** JDKs instalados, um por versão, para os projetos compilarem contra a versão certa. */
   private runtimes: Runtime[] = [];
+  /** Projeto sem Maven/Gradle: onde estão os fontes (o jdtls sozinho não acha `src/`). */
+  private semBuild: ProjetoSemBuild | null = null;
   private geracao = 0;
 
   /** Projeto de Java? Decide pelo índice da busca (pom.xml, build.gradle ou .java). */
@@ -169,6 +171,31 @@ export class JdtlsService {
   }
 
   /** Comando do jdtls (`workspace/executeCommand`), ex.: classpath do projeto, sessão de debug. */
+  /**
+   * Projeto sem build: o jdtls guarda as pastas de fonte do primeiro import (e às vezes
+   * infere errado, ex.: src/br/com/x). Confere e corrige para as que o Seedy detectou.
+   */
+  private async ajustarFontes(): Promise<void> {
+    const sb = this.semBuild;
+    const raiz = this.servidor?.raiz;
+    if (!sb || !raiz) return;
+    try {
+      const r = await this.executar<{ data?: { path: string }[] }>('java.project.listSourcePaths');
+      const atuais = (r?.data ?? []).map((d) => d.path);
+      const sep = raiz.includes('\\') ? '\\' : '/';
+      const desejadas = sb.fontes.map((f) => `${raiz.replace(/[\\/]+$/, '')}${sep}${f.replace(/[\\/]+/g, sep)}`);
+      const norm = (c: string) => c.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+      const faltam = desejadas.filter((d) => !atuais.some((a) => norm(a) === norm(d)));
+      const sobram = atuais.filter((a) => !desejadas.some((d) => norm(a) === norm(d)));
+      if (!faltam.length && !sobram.length) return;
+      for (const c of sobram) await this.executar('java.project.removeFromSourcePath', monaco.Uri.file(c).toString()).catch(() => undefined);
+      for (const c of faltam) await this.executar('java.project.addToSourcePath', monaco.Uri.file(c).toString()).catch(() => undefined);
+      this.mensagens.mostrar(`fontes do projeto: ${sb.fontes.join(', ')}`);
+    } catch {
+      /* jdtls antigo sem esses comandos: fica com o que ele inferiu */
+    }
+  }
+
   async executar<T = unknown>(comando: string, ...argumentos: unknown[]): Promise<T> {
     const c = this.cliente();
     if (!c) throw new Error('o jdtls ainda não está pronto');
@@ -264,6 +291,7 @@ export class JdtlsService {
       this.estado.set({ fase: 'iniciando', detalhe: 'iniciando' });
       let cliente!: ClienteLsp;
       this.runtimes = runtimesDe(await ponte.java.jdks());
+      this.semBuild = await projetoSemBuild(raiz);
       const { id, pid, preferencias } = await ponte.java.iniciar(
         raiz,
         this.jdkEscolhido(),
@@ -281,13 +309,13 @@ export class JdtlsService {
         this.mensagens.erro(`java-debug: ${e}`);
         return null;
       });
-      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias, this.runtimes, debug ? [debug] : []));
+      const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias, this.runtimes, debug ? [debug] : [], this.semBuild));
       if (!atual()) return;
       const capacidades = resultado?.capabilities ?? {};
       this.legenda = capacidades.semanticTokensProvider?.legend ?? null;
       this.gatilhos = capacidades.completionProvider?.triggerCharacters ?? this.gatilhos;
       cliente.notificar('initialized', {});
-      cliente.notificar('workspace/didChangeConfiguration', { settings: configuracao(preferencias, this.runtimes) });
+      cliente.notificar('workspace/didChangeConfiguration', { settings: configuracao(preferencias, this.runtimes, this.semBuild) });
       this.estado.set({ fase: 'importando', detalhe: 'importando' });
       this.sincronizar(this.editor.buffers());
     } catch (e) {
@@ -342,7 +370,10 @@ export class JdtlsService {
     // Status do jdtls: "Starting", "ServiceReady", "Error"...
     cliente.aoNotificar('language/status', (p: { type: string; message: string }) => {
       if (!atual()) return;
-      if (p.type === 'ServiceReady' || p.type === 'Started') this.estado.set({ fase: 'pronto' });
+      if (p.type === 'ServiceReady' || p.type === 'Started') {
+        this.estado.set({ fase: 'pronto' });
+        if (p.type === 'ServiceReady') void this.ajustarFontes();
+      }
       else if (p.type === 'Error') {
         this.estado.set({ fase: 'erro', detalhe: 'erro' });
         this.mensagens.erro(`jdtls: ${p.message}`);
@@ -367,7 +398,7 @@ export class JdtlsService {
       return { applied: r.applied };
     });
     cliente.aoPedir('workspace/configuration', (p: { items: { section?: string }[] }) =>
-      p.items.map((i) => (i.section === 'java' || !i.section ? configuracao(this.preferencias, this.runtimes).java : null)),
+      p.items.map((i) => (i.section === 'java' || !i.section ? configuracao(this.preferencias, this.runtimes, this.semBuild).java : null)),
     );
     cliente.aoPedir('client/registerCapability', () => null);
     cliente.aoPedir('client/unregisterCapability', () => null);
@@ -502,9 +533,38 @@ function runtimesDe(jdks: Jdk[]): Runtime[] {
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(0)} MB`;
 
 /** Configurações do jdtls (as mesmas chaves `java.*` da extensão do VS Code). */
-function configuracao(preferencias: string | null, runtimes: Runtime[]) {
+/** Fontes de um projeto sem ferramenta de build (relativos à raiz). */
+export interface ProjetoSemBuild {
+  fontes: string[];
+  saida: string;
+}
+
+/**
+ * Projeto sem pom.xml/build.gradle (nem .project do Eclipse): diz ao jdtls onde estão os
+ * fontes. Vale o que o IntelliJ marcou no .iml; senão, `src/` (e `test/`) se existirem.
+ * Sem isso o jdtls toma a raiz como fonte e reclama do `package` de cada arquivo.
+ */
+export async function projetoSemBuild(raiz: string): Promise<ProjetoSemBuild | null> {
+  const nomes = (await ponte.lerPasta(raiz).catch(() => [])).map((e) => ({ nome: e.nome, pasta: e.pasta, caminho: e.caminho }));
+  if (nomes.some((e) => !e.pasta && /^(pom\.xml|build\.gradle(\.kts)?|settings\.gradle(\.kts)?|\.project)$/.test(e.nome))) return null;
+  const fontes = new Set<string>();
+  for (const iml of nomes.filter((e) => !e.pasta && e.nome.endsWith('.iml'))) {
+    const xml = await ponte.lerArquivo(iml.caminho).catch(() => '');
+    for (const m of xml.matchAll(/<sourceFolder\s[^>]*url="file:\/\/\$MODULE_DIR\$\/([^"]+)"[^>]*>/g)) {
+      if (!/type="java-(test-)?resource"/.test(m[0])) fontes.add(m[1]);
+    }
+  }
+  if (!fontes.size) {
+    for (const pasta of ['src', 'test']) if (nomes.some((e) => e.pasta && e.nome === pasta)) fontes.add(pasta);
+  }
+  return fontes.size ? { fontes: [...fontes], saida: 'bin' } : null;
+}
+
+function configuracao(preferencias: string | null, runtimes: Runtime[], semBuild: ProjetoSemBuild | null = null) {
   return {
     java: {
+      // Projeto sem build: fontes e saída das classes (bin/), e os jars de lib/.
+      project: semBuild ? { sourcePaths: semBuild.fontes, outputPath: semBuild.saida, referencedLibraries: ['lib/**/*.jar'] } : undefined,
       // Cada projeto compila contra o JDK da versão dele (release do pom.xml/build.gradle).
       configuration: { updateBuildConfiguration: 'automatic', runtimes },
       // Preferências do compilador (ex.: avisar import não usado), editáveis pelo usuário.
@@ -526,7 +586,7 @@ function configuracao(preferencias: string | null, runtimes: Runtime[]) {
   };
 }
 
-function parametrosDeInicio(raiz: string, pid: number, preferencias: string, runtimes: Runtime[], bundles: string[]) {
+function parametrosDeInicio(raiz: string, pid: number, preferencias: string, runtimes: Runtime[], bundles: string[], semBuild: ProjetoSemBuild | null) {
   const uri = monaco.Uri.file(raiz).toString();
   const formatos = ['markdown', 'plaintext'];
   return {
@@ -597,7 +657,7 @@ function parametrosDeInicio(raiz: string, pid: number, preferencias: string, run
     initializationOptions: {
       bundles,
       workspaceFolders: [uri],
-      settings: configuracao(preferencias, runtimes),
+      settings: configuracao(preferencias, runtimes, semBuild),
       extendedClientCapabilities: {
         progressReportProvider: true,
         classFileContentsSupport: true,

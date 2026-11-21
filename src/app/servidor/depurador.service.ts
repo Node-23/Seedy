@@ -268,6 +268,12 @@ export class DepuradorService {
     let caminhos: [string[], string[]];
     let java: string | undefined;
     try {
+      // Compila antes (incremental), como o VS Code: sem isso a classe pode ainda não estar no disco.
+      const build = await this.jdtls.executar<number>('java.workspace.compile', false).catch(() => null);
+      if (build === 1) {
+        this.mensagens.erro(`${alvo.nome}: o projeto tem erros de compilação`);
+        return false;
+      }
       caminhos = await this.jdtls.executar<[string[], string[]]>('vscode.java.resolveClasspath', alvo.mainClass, alvo.projectName);
       java = await this.jdtls.executar<string>('vscode.java.resolveJavaExecutable', alvo.mainClass, alvo.projectName).catch(() => undefined);
     } catch (e) {
