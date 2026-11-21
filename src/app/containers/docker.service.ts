@@ -319,6 +319,9 @@ export class DockerService {
         somenteLeitura: false,
         ssl: 'desligado',
         ssh: null,
+        sshPorta: 22,
+        sshUsuario: null,
+        sshChave: null,
       },
     });
     this.layout.tela.set('editor');

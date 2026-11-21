@@ -186,9 +186,9 @@ class ReservaBancaTest {
 const absoluto = (rel: string) => `${RAIZ_EXEMPLO}/${rel}`;
 
 const PERFIS_EXEMPLO: PerfilBanco[] = [
-  { id: 'local', nome: 'Local', ambiente: 'local', tipo: 'postgres', host: 'localhost', porta: 5432, banco: 'feira_db', usuario: 'postgres', somenteLeitura: false, ssl: 'desligado', ssh: null },
-  { id: 'homolog', nome: 'Homolog', ambiente: 'homolog', tipo: 'postgres', host: '10.0.0.12', porta: 5432, banco: 'feira_db', usuario: 'app', somenteLeitura: false, ssl: 'exigir', ssh: null },
-  { id: 'producao', nome: 'Produção', ambiente: 'producao', tipo: 'postgres', host: 'localhost', porta: 5432, banco: 'feira_db', usuario: 'leitura', somenteLeitura: true, ssl: 'desligado', ssh: 'vps' },
+  { id: 'local', nome: 'Local', ambiente: 'local', tipo: 'postgres', host: 'localhost', porta: 5432, banco: 'feira_db', usuario: 'postgres', somenteLeitura: false, ssl: 'desligado', ssh: null, sshPorta: 22, sshUsuario: null, sshChave: null },
+  { id: 'homolog', nome: 'Homolog', ambiente: 'homolog', tipo: 'postgres', host: '10.0.0.12', porta: 5432, banco: 'feira_db', usuario: 'app', somenteLeitura: false, ssl: 'exigir', ssh: null, sshPorta: 22, sshUsuario: null, sshChave: null },
+  { id: 'producao', nome: 'Produção', ambiente: 'producao', tipo: 'postgres', host: 'localhost', porta: 5432, banco: 'feira_db', usuario: 'leitura', somenteLeitura: true, ssl: 'desligado', ssh: 'vps', sshPorta: 22, sshUsuario: null, sshChave: null },
 ];
 const relativos = () => Object.keys(ARQUIVOS).sort();
 

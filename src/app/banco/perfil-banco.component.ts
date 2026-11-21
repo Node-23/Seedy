@@ -38,9 +38,32 @@ const PORTA_PADRAO: Record<TipoBanco, number> = { postgres: 5432, mysql: 3306, o
             <select [value]="p().ssl" (change)="mudar('ssl', $any(valor($event)))">
               <option value="desligado">desligado</option><option value="exigir">exigir (sem validar certificado)</option><option value="verificar">verificar certificado</option>
             </select></label>
-          <label class="campo larga"><span>túnel SSH</span>
-            <input type="text" spellcheck="false" [value]="p().ssh ?? ''" (input)="mudar('ssh', valor($event).trim() || null)" placeholder="Host do ~/.ssh/config ou usuario@servidor (vazio = sem túnel)" /></label>
-          @if (p().ssh) { <div class="perfil-dica suave larga">com túnel, host e porta são vistos de dentro do servidor SSH (ex.: localhost:5432)</div> }
+          <label class="commit-opcao larga" title="alt+t">
+            <input type="checkbox" [checked]="p().ssh !== null" (change)="alternarSsh()" />
+            conectar por um túnel SSH
+          </label>
+          @if (p().ssh !== null) {
+            <label class="campo larga"><span>servidor SSH</span>
+              <input type="text" spellcheck="false" [value]="p().ssh ?? ''" (input)="mudar('ssh', valor($event).trim())" placeholder="bastion.exemplo.com" /></label>
+            <label class="campo"><span>porta SSH</span>
+              <input type="number" [value]="p().sshPorta" (input)="mudar('sshPorta', +valor($event) || 22)" /></label>
+            <label class="campo"><span>usuário SSH</span>
+              <input type="text" spellcheck="false" [value]="p().sshUsuario ?? ''" (input)="mudar('sshUsuario', valor($event).trim() || null)" placeholder="deploy" /></label>
+            <label class="campo"><span>autenticação</span>
+              <select [value]="sshModo()" (change)="mudarModoSsh(valor($event))">
+                <option value="senha">senha</option><option value="chave">chave privada</option>
+              </select></label>
+            <label class="campo"><span>{{ sshModo() === 'chave' ? 'senha da chave' : 'senha SSH' }}</span>
+              <input type="password" [value]="senhaSsh()" (input)="senhaSsh.set(valor($event))" [placeholder]="temSenhaSsh() ? '•••• guardada (vazio mantém)' : sshModo() === 'chave' ? 'só se a chave tiver senha' : 'fica no cofre do sistema'" /></label>
+            @if (sshModo() === 'chave') {
+              <label class="campo larga"><span>arquivo da chave</span>
+                <input type="text" spellcheck="false" [value]="p().sshChave ?? ''" (input)="mudar('sshChave', valor($event).trim() || null)" placeholder="~/.ssh/id_ed25519" /></label>
+            }
+            <div class="perfil-dica suave larga">
+              host e porta do banco são vistos de dentro do servidor SSH (ex.: localhost:5432)
+              @if (!p().sshUsuario) { · sem usuário SSH, o Seedy usa o <code>ssh</code> do sistema (Host do ~/.ssh/config) }
+            </div>
+          }
           <label class="commit-opcao larga" title="alt+l">
             <input type="checkbox" [checked]="p().somenteLeitura" (change)="mudar('somenteLeitura', !p().somenteLeitura)" />
             somente leitura (o banco recusa qualquer alteração nesta conexão)
@@ -62,6 +85,9 @@ export class PerfilBancoComponent {
   private readonly primeiro = viewChild<ElementRef<HTMLInputElement>>('primeiro');
   protected readonly senha = signal('');
   protected readonly temSenha = signal(false);
+  protected readonly senhaSsh = signal('');
+  protected readonly temSenhaSsh = signal(false);
+  protected readonly sshModo = signal<'senha' | 'chave'>('senha');
   private focoAnterior: HTMLElement | null = null;
 
   protected p(): PerfilBanco {
@@ -82,6 +108,10 @@ export class PerfilBancoComponent {
         this.senha.set(this.banco.editando()?.senha ?? '');
         this.focoAnterior = document.activeElement as HTMLElement | null;
         void ponte.banco.temSenha(ed.id).then((t) => this.temSenha.set(!ed.novo && t));
+        this.senhaSsh.set('');
+        this.temSenhaSsh.set(false);
+        this.sshModo.set(this.banco.editando()?.perfil.sshChave ? 'chave' : 'senha');
+        void ponte.banco.temSenhaSsh(ed.id).then((t) => this.temSenhaSsh.set(!ed.novo && t));
         queueMicrotask(() => this.primeiro()?.nativeElement.focus());
       });
     });
@@ -102,6 +132,15 @@ export class PerfilBancoComponent {
     if (antigo.porta === PORTA_PADRAO[antigo.tipo]) this.mudar('porta', PORTA_PADRAO[tipo as TipoBanco]);
   }
 
+  protected alternarSsh(): void {
+    this.mudar('ssh', this.p().ssh === null ? '' : null);
+  }
+
+  protected mudarModoSsh(modo: string): void {
+    this.sshModo.set(modo === 'chave' ? 'chave' : 'senha');
+    if (modo !== 'chave') this.mudar('sshChave', null);
+  }
+
   protected mudarAmbiente(a: string): void {
     this.mudar('ambiente', a as AmbienteBanco);
     // Produção nasce somente leitura (dá para desligar).
@@ -114,8 +153,18 @@ export class PerfilBancoComponent {
       this.primeiro()?.nativeElement.focus();
       return;
     }
-    const perfil = { ...p, nome: p.nome.trim(), host: p.host.trim(), banco: p.banco.trim(), usuario: p.usuario.trim() };
-    const ok = await this.banco.salvar(perfil, this.senha() ? this.senha() : null, conectar);
+    const ssh = p.ssh === null ? null : p.ssh.trim() || null;
+    const perfil: PerfilBanco = {
+      ...p,
+      nome: p.nome.trim(),
+      host: p.host.trim(),
+      banco: p.banco.trim(),
+      usuario: p.usuario.trim(),
+      ssh,
+      sshUsuario: ssh ? p.sshUsuario?.trim() || null : null,
+      sshChave: ssh && this.sshModo() === 'chave' ? p.sshChave?.trim() || null : null,
+    };
+    const ok = await this.banco.salvar(perfil, this.senha() ? this.senha() : null, this.senhaSsh() ? this.senhaSsh() : null, conectar);
     if (ok) this.restaurarFoco();
   }
 
@@ -125,6 +174,7 @@ export class PerfilBancoComponent {
       this.restaurarFoco();
     } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void this.salvar(true);
     else if (e.altKey && e.code === 'KeyL') this.mudar('somenteLeitura', !this.p().somenteLeitura);
+    else if (e.altKey && e.code === 'KeyT') this.alternarSsh();
     else {
       e.stopPropagation(); // espaço e letras ficam no campo
       return;

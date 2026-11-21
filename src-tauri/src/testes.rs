@@ -117,7 +117,53 @@ pub async fn testes_relatorios(raiz: String) -> Result<Vec<ResultadoTeste>, Stri
 
 /// Como rodar: o comando para o tipo escolhido (Maven ou Gradle, com o wrapper quando existe).
 #[tauri::command]
-pub fn testes_comando(raiz: String, tipo: String, filtro: Option<String>) -> Result<Vec<String>, String> {
+pub async fn testes_comando(raiz: String, tipo: String, filtro: Option<String>) -> Result<Vec<String>, String> {
+    // Pode baixar o Maven na primeira vez: fora da thread principal.
+    tauri::async_runtime::spawn_blocking(move || montar_comando(raiz, tipo, filtro)).await.map_err(|e| e.to_string())?
+}
+
+const MAVEN_VERSAO: &str = "3.9.9";
+
+/// Há um executável com esse nome (com as extensões do Windows) em alguma pasta do PATH?
+fn no_path(nome: &str) -> bool {
+    let Some(caminhos) = std::env::var_os("PATH") else { return false };
+    let extensoes: &[&str] = if cfg!(windows) { &["", ".cmd", ".bat", ".exe"] } else { &[""] };
+    std::env::split_paths(&caminhos).any(|p| extensoes.iter().any(|e| p.join(format!("{nome}{e}")).is_file()))
+}
+
+/// O Maven do próprio Seedy (baixado do Maven Central na primeira vez), para quem não o tem
+/// instalado e o projeto não traz `mvnw`.
+fn maven_do_seedy() -> Result<String, String> {
+    use sha2::{Digest, Sha512};
+    use std::io::Read;
+    let pasta = crate::tema::pasta_config().join("maven");
+    let nome = format!("apache-maven-{MAVEN_VERSAO}");
+    let bin = pasta.join(&nome).join("bin").join(if cfg!(windows) { "mvn.cmd" } else { "mvn" });
+    if bin.exists() {
+        return Ok(bin.to_string_lossy().into_owned());
+    }
+    let url = format!("https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/{MAVEN_VERSAO}/{nome}-bin.tar.gz");
+    let baixar = |u: &str| ureq::get(u).call().map_err(|e| format!("não consegui baixar o Maven: {e}"));
+    let mut bytes = Vec::new();
+    baixar(&url)?.into_reader().read_to_end(&mut bytes).map_err(|e| format!("download do Maven interrompido: {e}"))?;
+    let esperado = baixar(&format!("{url}.sha512"))?.into_string().map_err(|e| e.to_string())?;
+    let obtido = format!("{:x}", Sha512::digest(&bytes));
+    if esperado.split_whitespace().next() != Some(obtido.as_str()) {
+        return Err("o Maven baixado não confere (sha512); tente de novo".into());
+    }
+    let extraindo = pasta.join("extraindo");
+    let _ = fs::remove_dir_all(&extraindo);
+    fs::create_dir_all(&extraindo).map_err(|e| e.to_string())?;
+    tar::Archive::new(flate2::read::GzDecoder::new(&bytes[..]))
+        .unpack(&extraindo)
+        .map_err(|e| format!("não consegui extrair o Maven: {e}"))?;
+    let _ = fs::remove_dir_all(pasta.join(&nome));
+    fs::rename(extraindo.join(&nome), pasta.join(&nome)).map_err(|e| e.to_string())?;
+    let _ = fs::remove_dir_all(&extraindo);
+    Ok(bin.to_string_lossy().into_owned())
+}
+
+fn montar_comando(raiz: String, tipo: String, filtro: Option<String>) -> Result<Vec<String>, String> {
     let raiz = PathBuf::from(raiz);
     let windows = cfg!(windows);
     let wrapper = |nome: &str, ext_win: &str| -> String {
@@ -130,7 +176,13 @@ pub fn testes_comando(raiz: String, tipo: String, filtro: Option<String>) -> Res
     };
     if raiz.join("pom.xml").exists() {
         let mvn = wrapper("mvnw", ".cmd");
-        let mvn = if mvn == "mvnw" { "mvn".to_string() } else { mvn };
+        let mvn = if mvn != "mvnw" {
+            mvn
+        } else if no_path("mvn") {
+            "mvn".to_string()
+        } else {
+            maven_do_seedy()?
+        };
         let mut c = vec![mvn];
         match (tipo.as_str(), filtro) {
             ("unitario", None) => c.push("test".into()),
@@ -186,5 +238,18 @@ mod testes {
         assert!(r[1].detalhe.as_deref().unwrap().contains("ReservaServiceTest.java:41"));
         assert!((r[1].segundos - 0.048).abs() < 1e-9);
         assert_eq!((r[2].metodo.as_str(), r[2].estado), ("estorna", "ignorado"));
+    }
+}
+
+#[cfg(test)]
+mod testes_maven {
+    /// Baixa o Maven de verdade (rede): `cargo test --lib maven_do_seedy -- --ignored`.
+    #[test]
+    #[ignore]
+    fn maven_do_seedy_baixa_e_roda() {
+        let mvn = super::maven_do_seedy().unwrap();
+        let saida = std::process::Command::new(&mvn).arg("-v").output().unwrap();
+        let texto = String::from_utf8_lossy(&saida.stdout);
+        assert!(texto.contains("Apache Maven 3.9.9"), "{texto}");
     }
 }

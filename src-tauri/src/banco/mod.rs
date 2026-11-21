@@ -44,6 +44,19 @@ pub struct Perfil {
     /// passam a ser vistos de dentro desse servidor.
     #[serde(default)]
     pub ssh: Option<String>,
+    /// Porta do servidor SSH (só vale com `ssh_usuario`).
+    #[serde(default = "ssh_porta_padrao")]
+    pub ssh_porta: u16,
+    /// Com usuário, o túnel usa o cliente SSH embutido (senha ou chave); sem, o `ssh` do sistema.
+    #[serde(default)]
+    pub ssh_usuario: Option<String>,
+    /// Arquivo da chave privada; vazio = entra com a senha. A senha (ou a frase da chave) fica no cofre.
+    #[serde(default)]
+    pub ssh_chave: Option<String>,
+}
+
+fn ssh_porta_padrao() -> u16 {
+    22
 }
 
 fn ssl_padrao() -> String {
@@ -144,6 +157,20 @@ fn senha_guardada(id: &str) -> Option<String> {
     cofre(id).ok()?.get_password().ok()
 }
 
+/// Senha do usuário SSH (ou frase da chave): outra entrada do cofre, ao lado da do banco.
+fn cofre_ssh(id: &str) -> Result<keyring::Entry, String> {
+    keyring::Entry::new("seedy-banco-ssh", id).map_err(|e| format!("cofre de senhas: {e}"))
+}
+
+fn senha_ssh_guardada(id: &str) -> Option<String> {
+    cofre_ssh(id).ok()?.get_password().ok()
+}
+
+#[tauri::command]
+pub fn banco_tem_senha_ssh(id: String) -> bool {
+    senha_ssh_guardada(&id).is_some()
+}
+
 #[tauri::command]
 pub fn banco_perfis() -> Vec<Perfil> {
     ler_perfis()
@@ -151,7 +178,7 @@ pub fn banco_perfis() -> Vec<Perfil> {
 
 /// Cria ou atualiza um perfil. `senha` = Some grava no cofre; Some("") apaga a guardada.
 #[tauri::command]
-pub fn banco_salvar_perfil(perfil: Perfil, senha: Option<String>) -> Result<(), String> {
+pub fn banco_salvar_perfil(perfil: Perfil, senha: Option<String>, senha_ssh: Option<String>) -> Result<(), String> {
     if perfil.id.trim().is_empty() || perfil.nome.trim().is_empty() {
         return Err("o perfil precisa de nome".into());
     }
@@ -171,6 +198,13 @@ pub fn banco_salvar_perfil(perfil: Perfil, senha: Option<String>) -> Result<(), 
         Some(s) => cofre(&perfil.id)?.set_password(s).map_err(|e| format!("cofre de senhas: {e}"))?,
         None => {}
     }
+    match senha_ssh.as_deref() {
+        Some("") => {
+            let _ = cofre_ssh(&perfil.id)?.delete_credential();
+        }
+        Some(s) => cofre_ssh(&perfil.id)?.set_password(s).map_err(|e| format!("cofre de senhas: {e}"))?,
+        None => {}
+    }
     Ok(())
 }
 
@@ -180,6 +214,9 @@ pub fn banco_apagar_perfil(estado: State<'_, Bancos>, id: String) -> Result<(), 
     let perfis: Vec<Perfil> = ler_perfis().into_iter().filter(|p| p.id != id).collect();
     gravar_perfis(&perfis)?;
     if let Ok(c) = cofre(&id) {
+        let _ = c.delete_credential();
+    }
+    if let Ok(c) = cofre_ssh(&id) {
         let _ = c.delete_credential();
     }
     let _ = fs::remove_file(arquivo_de_historico(&id));
@@ -217,9 +254,28 @@ pub async fn banco_conectar(estado: State<'_, Bancos>, id: String, senha: Option
 }
 
 fn abrir_sessao(perfil: Perfil, senha: &str) -> Result<(Sessao, InfoConexao), String> {
-    let tunel = match perfil.ssh.as_deref().filter(|s| !s.trim().is_empty()) {
-        Some(alvo) => Some(Tunel::abrir(alvo.trim(), &perfil.host, perfil.porta)?),
-        None => None,
+    let servidor = perfil.ssh.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    let usuario = perfil.ssh_usuario.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    let tunel = match (servidor, usuario) {
+        (Some(servidor), Some(usuario)) => {
+            let chave = perfil.ssh_chave.as_deref().map(str::trim).filter(|s| !s.is_empty()).map(String::from);
+            let segredo = senha_ssh_guardada(&perfil.id).unwrap_or_default();
+            if chave.is_none() && segredo.is_empty() {
+                return Err("informe a senha do SSH na conexão (editar → túnel SSH)".into());
+            }
+            let config = tunel::ConfigSsh {
+                servidor: servidor.into(),
+                porta: perfil.ssh_porta,
+                usuario: usuario.into(),
+                chave,
+                segredo,
+                arquivo_hosts: pasta_config().join("ssh_servidores.json"),
+            };
+            Some(Tunel::abrir_nativo(config, &perfil.host, perfil.porta)?)
+        }
+        // Sem usuário: o `ssh` do sistema (um Host do ~/.ssh/config ou usuario@servidor).
+        (Some(alvo), None) => Some(Tunel::abrir(alvo, &perfil.host, perfil.porta)?),
+        _ => None,
     };
     let (host, porta) = match &tunel {
         Some(t) => ("127.0.0.1".to_string(), t.porta_local),
@@ -527,6 +583,9 @@ mod testes {
             somente_leitura,
             ssl: "desligado".into(),
             ssh: None,
+            ssh_porta: 22,
+            ssh_usuario: None,
+            ssh_chave: None,
         }
     }
 

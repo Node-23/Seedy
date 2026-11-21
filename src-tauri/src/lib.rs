@@ -73,6 +73,7 @@ pub fn run() {
             banco::banco_salvar_perfil,
             banco::banco_apagar_perfil,
             banco::banco_tem_senha,
+            banco::banco_tem_senha_ssh,
             banco::banco_conectar,
             banco::banco_desconectar,
             banco::banco_conectados,

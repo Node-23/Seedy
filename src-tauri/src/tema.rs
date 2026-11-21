@@ -42,12 +42,27 @@ pub fn garantir_tema_padrao() -> std::io::Result<()> {
     let caminho = caminho_tema();
     if !caminho.exists() {
         fs::write(caminho, TEMA_PADRAO)?;
+    } else if let Ok(texto) = fs::read_to_string(&caminho) {
+        // Tema criado antes da identidade verde (v0.1.1): o destaque lavanda vira o verde.
+        if let Some(novo) = migrar_destaque_lavanda(&texto) {
+            fs::write(&caminho, novo)?;
+        }
     }
     let config = pasta_config().join(ARQUIVO_CONFIG);
     if !config.exists() {
         fs::write(config, CONFIG_PADRAO)?;
     }
     Ok(())
+}
+
+/// O destaque e a cor de definição da sintaxe que ainda estão no lavanda antigo (`#92A9E1`, o padrão
+/// até a v0.1.0) passam para o verde (`#9CD7BA`). Quem escolheu outra cor não é tocado, e o azul do
+/// ANSI do terminal (que usa o mesmo valor) fica como está. Devolve o texto novo se algo mudou.
+pub fn migrar_destaque_lavanda(texto: &str) -> Option<String> {
+    use regex::Regex;
+    let re = Regex::new(r#"(?i)("(?:destaque|definicao)"\s*:\s*")#92A9E1(")"#).ok()?;
+    let novo = re.replace_all(texto, "${1}#9CD7BA${2}").into_owned();
+    (novo != texto).then_some(novo)
 }
 
 fn ler_config() -> Result<Tema, String> {
@@ -145,4 +160,25 @@ pub fn observar(app: AppHandle) {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod testes {
+    use super::*;
+
+    #[test]
+    fn tema_antigo_ganha_o_destaque_verde() {
+        let antigo = r##"{ "cores": { "destaque": "#92A9E1", "rosa": "#E3A9CC" }, "sintaxe": { "definicao": "#92a9e1" }, "terminal": { "ansi": ["#19191B", "#92A9E1"] } }"##;
+        let novo = migrar_destaque_lavanda(antigo).unwrap();
+        assert!(novo.contains(r##""destaque": "#9CD7BA""##));
+        assert!(novo.contains(r##""definicao": "#9CD7BA""##));
+        // O azul do ANSI do terminal não é o destaque: continua.
+        assert!(novo.contains(r##""#92A9E1"]"##));
+    }
+
+    #[test]
+    fn cor_escolhida_pelo_usuario_nao_muda() {
+        assert!(migrar_destaque_lavanda(r##"{ "cores": { "destaque": "#FF8800" } }"##).is_none());
+        assert!(migrar_destaque_lavanda(r##"{ "cores": { "destaque": "#9CD7BA" } }"##).is_none());
+    }
 }

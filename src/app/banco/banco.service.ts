@@ -112,6 +112,9 @@ export class BancoService {
         somenteLeitura: false,
         ssl: 'desligado',
         ssh: null,
+        sshPorta: 22,
+        sshUsuario: null,
+        sshChave: null,
       },
     });
   }
@@ -122,9 +125,9 @@ export class BancoService {
   }
 
   /** Grava o perfil (senha: texto = guarda no cofre; null = não mexe) e, se pedido, conecta. */
-  async salvar(perfil: PerfilBanco, senha: string | null, conectar: boolean): Promise<boolean> {
+  async salvar(perfil: PerfilBanco, senha: string | null, senhaSsh: string | null, conectar: boolean): Promise<boolean> {
     try {
-      await ponte.banco.salvarPerfil(perfil, senha);
+      await ponte.banco.salvarPerfil(perfil, senha, senhaSsh);
     } catch (e) {
       this.mensagens.erro(String(e));
       return false;

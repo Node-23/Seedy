@@ -111,6 +111,12 @@ export interface PerfilBanco {
   ssl: 'desligado' | 'exigir' | 'verificar';
   /** Destino do túnel SSH (Host do ~/.ssh/config ou usuario@servidor). */
   ssh: string | null;
+  /** Porta do servidor SSH (vale com sshUsuario). */
+  sshPorta: number;
+  /** Com usuário: cliente SSH embutido (senha ou chave); sem: o ssh do sistema. */
+  sshUsuario: string | null;
+  /** Arquivo da chave privada; vazio = entra com a senha. */
+  sshChave: string | null;
 }
 
 export interface InfoTunel {
@@ -705,10 +711,11 @@ export const ponte = {
   /** Banco de dados (Fase 3): perfis, sessões, consultas. Fora do app, dados de exemplo. */
   banco: {
     perfis: async (): Promise<PerfilBanco[]> => (noApp() ? invoke<PerfilBanco[]>('banco_perfis') : exemplo.bancoPerfis()),
-    salvarPerfil: (perfil: PerfilBanco, senha: string | null) =>
-      noApp() ? invoke<void>('banco_salvar_perfil', { perfil, senha }) : Promise.resolve(exemplo.bancoSalvar(perfil)),
+    salvarPerfil: (perfil: PerfilBanco, senha: string | null, senhaSsh: string | null) =>
+      noApp() ? invoke<void>('banco_salvar_perfil', { perfil, senha, senhaSsh }) : Promise.resolve(exemplo.bancoSalvar(perfil)),
     apagarPerfil: (id: string) => (noApp() ? invoke<void>('banco_apagar_perfil', { id }) : Promise.resolve(exemplo.bancoApagar(id))),
     temSenha: async (id: string): Promise<boolean> => (noApp() ? invoke<boolean>('banco_tem_senha', { id }) : true),
+    temSenhaSsh: async (id: string): Promise<boolean> => (noApp() ? invoke<boolean>('banco_tem_senha_ssh', { id }) : false),
     /** Erro "SEM_SENHA" = não há senha guardada: pergunte e chame de novo com ela. */
     conectar: (id: string, senha: string | null, lembrar: boolean) =>
       noApp() ? invoke<InfoConexao>('banco_conectar', { id, senha, lembrar }) : Promise.resolve(exemplo.bancoConectar(id)),

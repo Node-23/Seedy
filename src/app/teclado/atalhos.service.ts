@@ -161,6 +161,25 @@ export class AtalhosService {
     acao.executar();
   }
 
+  /**
+   * Clicar numa área sem campo dentro de um popup tira o foco dele (vai para o body) e o Esc
+   * deixa de chegar ao popup. Nesse caso, devolve o foco ao popup aberto por cima e repete o Esc
+   * para ele, que fecha como sempre. Devolve true se tratou a tecla.
+   */
+  private devolverFocoAoPopup(e: KeyboardEvent): boolean {
+    const alvo = e.target as HTMLElement | null;
+    if (!e.isTrusted || (alvo !== document.body && alvo !== document.documentElement)) return false;
+    const popups = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"]')).filter((p) => p.getClientRects().length > 0);
+    const popup = popups.at(-1);
+    if (!popup) return false;
+    const campo = popup.querySelector<HTMLElement>('input:not([type="hidden"]), textarea, select, button, [tabindex]') ?? popup;
+    if (campo === popup && !popup.hasAttribute('tabindex')) popup.setAttribute('tabindex', '-1');
+    campo.focus();
+    this.engolir(e);
+    campo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }));
+    return true;
+  }
+
   private aoTeclar(e: KeyboardEvent): void {
     if (this.liderAberto()) {
       e.preventDefault();
@@ -172,6 +191,8 @@ export class AtalhosService {
       else this.fecharLider();
       return;
     }
+
+    if (e.key === 'Escape' && this.devolverFocoAoPopup(e)) return;
 
     // Ctrl+W e depois h/l/w/v/q/o: painéis do editor, como no vim.
     if (this.esperandoJanela) {

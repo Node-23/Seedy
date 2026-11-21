@@ -1,6 +1,6 @@
 [package]
 name = "seedy"
-version = "0.5.3"
+version = "0.5.4"
 description = "Seedy — IDE Java minimalista, guiada pelo teclado"
 authors = ["Matheus Vinicius Linhares"]
 license-file = "../LICENSE.md"
@@ -38,3 +38,5 @@ keyring = { version = "3.6.3", features = ["windows-native", "sync-secret-servic
 sha1 = "0.10"
 tiny_http = "0.12"
 rand = "0.8"
+russh = { version = "0.54", default-features = false, features = ["ring", "flate2", "rsa"] }
+tokio = { version = "1.53.3", features = ["rt-multi-thread", "net", "io-util", "time", "sync", "macros"] }
