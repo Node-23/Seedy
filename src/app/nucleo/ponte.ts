@@ -510,7 +510,13 @@ export const ponte = {
 
   /** IA (Claude): a chave fica no núcleo; aqui só vão o corpo do pedido e os eventos do stream. */
   ia: {
-    temChave: async (): Promise<boolean> => (noApp() ? invoke<boolean>('ia_tem_chave') : true),
+    /** 'assinatura' = fala com o `claude` (Claude Code) instalado, com o login da conta; 'chave' = API. */
+    modo: 'chave' as 'chave' | 'assinatura',
+    /** Versão do Claude Code instalado (ou null). */
+    claudeEstado: async (): Promise<string | null> => (noApp() ? invoke<string | null>('ia_claude_estado') : null),
+    temChaveDaApi: async (): Promise<boolean> => (noApp() ? invoke<boolean>('ia_tem_chave') : true),
+    /** Pode usar a IA agora? (chave da API ou Claude Code, conforme o modo) */
+    temChave: async (): Promise<boolean> => (ponte.ia.modo === 'assinatura' ? (await ponte.ia.claudeEstado()) !== null : ponte.ia.temChaveDaApi()),
     definirChave: (chave: string) => invoke<void>('ia_definir_chave', { chave }),
     esquecerChave: () => invoke<void>('ia_esquecer_chave'),
     /** Manda o pedido à Messages API (com stream) e entrega o JSON de cada evento SSE. */
@@ -518,7 +524,7 @@ export const ponte = {
       if (!noApp()) return exemplo.iaMensagem(corpo, aoEvento);
       const eventos = new Channel<string>();
       eventos.onmessage = aoEvento;
-      await invoke<void>('ia_mensagem', { corpo, eventos });
+      await invoke<void>('ia_mensagem', { corpo, eventos, modo: ponte.ia.modo });
     },
   },
 

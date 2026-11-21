@@ -9,6 +9,7 @@ use crate::tema::pasta_config;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use std::process::Stdio;
 use std::time::Duration;
 use tauri::ipc::Channel;
 
@@ -73,7 +74,12 @@ pub fn ia_esquecer_chave() -> Result<(), String> {
 /// Envia um pedido à Messages API com `stream: true` e repassa cada evento (o JSON da
 /// linha `data:`) pelo canal. Termina quando o servidor fecha o stream.
 #[tauri::command]
-pub async fn ia_mensagem(mut corpo: serde_json::Value, eventos: Channel<String>) -> Result<(), String> {
+pub async fn ia_mensagem(mut corpo: serde_json::Value, eventos: Channel<String>, modo: Option<String>) -> Result<(), String> {
+    if modo.as_deref() == Some("assinatura") {
+        return tauri::async_runtime::spawn_blocking(move || via_claude(&corpo, &eventos))
+            .await
+            .map_err(|e| e.to_string())?;
+    }
     let chave = chave().ok_or("configure a chave da API da Anthropic (␣ a)")?;
     corpo["stream"] = serde_json::Value::Bool(true);
     tauri::async_runtime::spawn_blocking(move || {
@@ -110,6 +116,116 @@ pub async fn ia_mensagem(mut corpo: serde_json::Value, eventos: Channel<String>)
     .map_err(|e| e.to_string())?
 }
 
+/// Versão do Claude Code instalado (`claude --version`), se houver. É ele que usa a assinatura.
+#[tauri::command]
+pub async fn ia_claude_estado() -> Option<String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let mut c = crate::web::comando_do_node("claude", &["--version".to_string()]);
+        c.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null());
+        crate::web::sem_janela(&mut c);
+        let saida = c.output().ok()?;
+        saida.status.success().then(|| String::from_utf8_lossy(&saida.stdout).trim().to_string())
+    })
+    .await
+    .ok()
+    .flatten()
+}
+
+/// Texto de um conteúdo da Messages API (string ou lista de blocos); só blocos de texto.
+fn texto_do_conteudo(c: &serde_json::Value) -> String {
+    match c {
+        serde_json::Value::String(s) => s.clone(),
+        serde_json::Value::Array(blocos) => blocos
+            .iter()
+            .filter_map(|b| match b["type"].as_str() {
+                Some("text") => b["text"].as_str().map(str::to_string),
+                Some("tool_result") => Some(texto_do_conteudo(&b["content"])),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+            .join("
+"),
+        _ => String::new(),
+    }
+}
+
+/// O pedido da Messages API virado em um texto só para o `claude -p` (sistema + conversa).
+fn prompt_do_corpo(corpo: &serde_json::Value) -> String {
+    let mut saida = String::new();
+    let sistema = texto_do_conteudo(&corpo["system"]);
+    if !sistema.is_empty() {
+        saida.push_str(&format!("{sistema}
+
+"));
+    }
+    for m in corpo["messages"].as_array().into_iter().flatten() {
+        let quem = if m["role"] == "assistant" { "Assistente" } else { "Usuário" };
+        let t = texto_do_conteudo(&m["content"]);
+        if !t.trim().is_empty() {
+            saida.push_str(&format!("{quem}: {t}
+
+"));
+        }
+    }
+    saida
+}
+
+/// Modo assinatura: roda o `claude -p` (login do próprio Claude Code, sem ferramentas) e repassa
+/// os eventos de stream, que já vêm no formato da Messages API dentro de `stream_event`.
+fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>) -> Result<(), String> {
+    use std::io::Write;
+    let mut args: Vec<String> = ["-p", "--output-format", "stream-json", "--include-partial-messages", "--verbose", "--tools", ""]
+        .map(String::from)
+        .to_vec();
+    if let Some(m) = corpo["model"].as_str().filter(|m| m.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.' || c == '[' || c == ']')) {
+        args.extend(["--model".into(), m.into()]);
+    }
+    let mut c = crate::web::comando_do_node("claude", &args);
+    c.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    crate::web::sem_janela(&mut c);
+    let mut filho = c.spawn().map_err(|e| format!("não achei o Claude Code (`claude`) no PATH: {e}"))?;
+    let mut entrada = filho.stdin.take().ok_or("sem stdin do claude")?;
+    let prompt = prompt_do_corpo(corpo);
+    std::thread::spawn(move || {
+        let _ = entrada.write_all(prompt.as_bytes());
+    });
+    let erros = filho.stderr.take();
+    let leitor_de_erros = std::thread::spawn(move || {
+        let mut t = String::new();
+        if let Some(mut e) = erros {
+            let _ = std::io::Read::read_to_string(&mut e, &mut t);
+        }
+        t
+    });
+    let mut recebeu = false;
+    let mut falha: Option<String> = None;
+    for linha in BufReader::new(filho.stdout.take().ok_or("sem saída do claude")?).lines() {
+        let linha = linha.map_err(|e| e.to_string())?;
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(&linha) else { continue };
+        match v["type"].as_str() {
+            Some("stream_event") => {
+                recebeu = true;
+                if eventos.send(v["event"].to_string()).is_err() {
+                    let _ = filho.kill();
+                    break;
+                }
+            }
+            Some("result") if v["is_error"] == true => falha = v["result"].as_str().map(str::to_string),
+            _ => {}
+        }
+    }
+    let estado = filho.wait().map_err(|e| e.to_string())?;
+    let erros = leitor_de_erros.join().unwrap_or_default();
+    if let Some(f) = falha {
+        return Err(format!("o Claude Code recusou: {f}"));
+    }
+    if !estado.success() && !recebeu {
+        let dica = if erros.to_lowercase().contains("login") { " (rode `claude` no terminal e faça /login)" } else { "" };
+        return Err(format!("o Claude Code falhou: {}{dica}", erros.trim()));
+    }
+    Ok(())
+}
+
 /// Conteúdo de uma linha `data: ...` do SSE (as linhas `event:` e vazias são ignoradas).
 fn dados_do_evento(linha: &str) -> Option<&str> {
     let dados = linha.strip_prefix("data:")?.trim_start();
@@ -138,6 +254,27 @@ mod testes {
         assert_eq!(dados_do_evento(""), None);
         assert_eq!(dados_do_evento(r#"data: {"type":"ping"}"#), Some(r#"{"type":"ping"}"#));
         assert_eq!(dados_do_evento(r#"data:{"a":1}"#), Some(r#"{"a":1}"#));
+    }
+
+    #[test]
+    fn prompt_junta_sistema_e_conversa() {
+        let corpo = serde_json::json!({
+            "system": [{"type": "text", "text": "Seja breve."}],
+            "messages": [
+                {"role": "user", "content": "oi"},
+                {"role": "assistant", "content": [{"type": "text", "text": "olá"}, {"type": "tool_use", "id": "x", "name": "n", "input": {}}]},
+                {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "x", "content": "ok"}]}
+            ]
+        });
+        assert_eq!(prompt_do_corpo(&corpo), "Seja breve.
+
+Usuário: oi
+
+Assistente: olá
+
+Usuário: ok
+
+");
     }
 
     #[test]

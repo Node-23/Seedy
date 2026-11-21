@@ -54,7 +54,13 @@ interface No {
             @if (no.entrada.pasta) {
               <span class="seta">{{ no.aberto ? '▾' : '▸' }}</span>
             }
-            @if (!no.entrada.pasta && tipoWeb(no.entrada.nome); as t) { <span class="tipo-arquivo" [attr.data-tipo]="t">{{ t }}</span> }
+            @if (!no.entrada.pasta && tipoDe(no.entrada.nome); as t) {
+              @if (t === 'java') {
+                <svg class="tipo-arquivo tipo-java" data-tipo="java" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h8v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z" /><path d="M11 8h1.2a1.6 1.6 0 0 1 0 3.2H11" /><path d="M5.5 2.5c-.8 1 .8 1.6 0 2.6M8.5 2.5c-.8 1 .8 1.6 0 2.6" /></svg>
+              } @else {
+                <span class="tipo-arquivo" [attr.data-tipo]="t">{{ t }}</span>
+              }
+            }
             <span class="nome">{{ no.entrada.nome }}</span>
             @if (letraGit(no.entrada.caminho); as l) {
               <span class="marca-git" [attr.data-letra]="l" [title]="tituloDaLetra(l)">{{ l === '?' ? 'U' : l }}</span>
@@ -195,9 +201,21 @@ export class ArvoreComponent {
     }
   }
 
-  /** Marca do tipo nos arquivos web (mockup 13): TS, JS, <>, #, {}. */
-  protected tipoWeb(nome: string): string | null {
-    const ext = nome.slice(nome.lastIndexOf('.') + 1).toLowerCase();
-    return ({ ts: 'TS', tsx: 'TS', mts: 'TS', js: 'JS', jsx: 'JS', mjs: 'JS', cjs: 'JS', html: '<>', css: '#', scss: '#', less: '#', json: '{}' } as Record<string, string>)[ext] ?? null;
+  /** Ícone do tipo do arquivo: xícara (java) ou marca curta (TS, JS, <>, #, {}, XML...). */
+  protected tipoDe(nome: string): string | null {
+    const i = nome.lastIndexOf('.');
+    if (i < 0) return nome.toLowerCase() === 'dockerfile' ? 'DK' : null;
+    const ext = nome.slice(i + 1).toLowerCase();
+    const mapa: Record<string, string> = {
+      java: 'java', jsp: 'JSP', class: 'CL', jar: 'JAR',
+      ts: 'TS', tsx: 'TS', mts: 'TS', js: 'JS', jsx: 'JS', mjs: 'JS', cjs: 'JS',
+      html: '<>', htm: '<>', css: '#', scss: '#', less: '#', json: '{}',
+      xml: 'XML', xsd: 'XML', properties: 'CFG', yml: 'YML', yaml: 'YML', toml: 'CFG',
+      md: 'MD', txt: 'TXT', sql: 'SQL', sh: 'SH', bat: 'SH', ps1: 'SH',
+      doc: 'DOC', docx: 'DOC', odt: 'DOC', rtf: 'DOC', xls: 'XLS', xlsx: 'XLS', ods: 'XLS', csv: 'XLS',
+      ppt: 'PPT', pptx: 'PPT', odp: 'PPT', pdf: 'PDF', zip: 'ZIP', rar: 'ZIP', '7z': 'ZIP', tar: 'ZIP', gz: 'ZIP',
+      rs: 'RS', gradle: 'GR', png: 'IMG', jpg: 'IMG', jpeg: 'IMG', gif: 'IMG', svg: 'IMG', ico: 'IMG',
+    };
+    return mapa[ext] ?? null;
   }
 }

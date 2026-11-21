@@ -225,7 +225,17 @@ sd-raiz > .seedy {
 .arvore-item .tipo-arquivo { font-size: 10.5px; font-weight: 700; min-width: 16px; color: var(--texto-suave); }
 .arvore-item .tipo-arquivo[data-tipo="TS"] { color: var(--destaque); }
 .arvore-item .tipo-arquivo[data-tipo="JS"], .arvore-item .tipo-arquivo[data-tipo="{}"] { color: var(--aviso); }
-.arvore-item .tipo-arquivo[data-tipo="<>"] { color: var(--rosa); }
+.arvore-item .tipo-arquivo[data-tipo="<>"], .arvore-item .tipo-arquivo[data-tipo="JSP"] { color: var(--rosa); }
+.arvore-item .tipo-arquivo[data-tipo="java"] { color: var(--erro); min-width: 16px; flex-shrink: 0; }
+.arvore-item .tipo-arquivo[data-tipo="#"], .arvore-item .tipo-arquivo[data-tipo="XML"], .arvore-item .tipo-arquivo[data-tipo="SQL"] { color: var(--destaque); }
+.arvore-item .tipo-arquivo[data-tipo="YML"], .arvore-item .tipo-arquivo[data-tipo="CFG"], .arvore-item .tipo-arquivo[data-tipo="GR"], .arvore-item .tipo-arquivo[data-tipo="RS"] { color: var(--aviso); }
+.arvore-item .tipo-arquivo[data-tipo="IMG"], .arvore-item .tipo-arquivo[data-tipo="SH"], .arvore-item .tipo-arquivo[data-tipo="DK"] { color: var(--sucesso); }
+.arvore-item .tipo-arquivo[data-tipo="DOC"] { color: var(--destaque); }
+.arvore-item .tipo-arquivo[data-tipo="XLS"] { color: var(--sucesso); }
+.arvore-item .tipo-arquivo[data-tipo="PPT"], .arvore-item .tipo-arquivo[data-tipo="PDF"] { color: var(--erro); }
+.arvore-item .tipo-arquivo[data-tipo="ZIP"] { color: var(--aviso); }
+.arvore-item .tipo-arquivo { font-size: 9px; letter-spacing: -.3px; }
+.arvore-item.ativo .tipo-arquivo { color: inherit !important; }
 .arvore-item .marca-sujo { color: var(--aviso); }
 .arvore-item.ativo { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
 .arvore-item.ativo .seta, .arvore-item.ativo .marca-sujo { color: inherit; }
@@ -1706,3 +1716,56 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .layout-alvo.inferior { left: calc(22% + var(--espaco)); right: calc(22% + var(--espaco)); bottom: 0; height: 38%; }
 .layout-alvo.sobre { border-color: var(--destaque); color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, var(--fundo)); box-shadow: 0 0 0 2px var(--destaque); }
 .regiao-esquerda .painel-faixa, .regiao-inferior .painel-faixa, .regiao-direita .painel-faixa { cursor: grab; }
+
+/* ---------- configurações (␣ ,, mockup 21) ---------- */
+
+.sucesso-texto { color: var(--sucesso); }
+.config-tela { flex: 1; min-width: 0; min-height: 0; display: flex; outline: none; }
+.janela-tela {
+  flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+  border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio); background: var(--painel);
+  box-shadow: var(--deslocamento-sombra) var(--deslocamento-sombra) 0 var(--sombra);
+}
+.config-corpo { flex: 1; min-height: 0; display: flex; }
+.config-nav { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; padding: 10px 0; border-right: var(--espessura-borda) solid var(--borda); font-size: 12px; }
+.config-nav button {
+  height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border: 0; background: transparent;
+  color: var(--texto); font-family: inherit; font-size: 12px; cursor: pointer; text-align: left;
+}
+.config-nav button kbd { margin-left: auto; }
+.config-nav button.ativa { background: var(--selecao); box-shadow: inset 3px 0 0 var(--destaque); }
+.config-nota { padding: 0 14px; line-height: 18px; font-size: 11px; }
+.config-aba { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.config-filtro, .config-campo, .config-modelo input, .config-entrada {
+  display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; box-sizing: border-box;
+  border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--fundo); font-size: 12px;
+}
+.config-filtro { margin: 12px 16px; }
+.config-filtro input, .config-campo input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--texto); font-family: inherit; font-size: 12px; }
+.config-filtro:focus-within, .config-campo:focus-within, .config-modelo input:focus, .config-entrada:focus { border-color: var(--destaque); outline: none; }
+.config-cabeca, .config-linha { display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 12px; }
+.config-cabeca { height: 24px; font-size: 11px; letter-spacing: 0.1em; }
+.config-linha { height: 30px; border-bottom: 1px solid var(--selecao); cursor: pointer; }
+.config-linha.sel { background: var(--selecao); box-shadow: inset 3px 0 0 var(--destaque); }
+.config-cabeca .acao, .config-linha .acao { width: 300px; flex-shrink: 0; }
+.config-lista { flex: 1; min-height: 0; overflow: auto; }
+.config-vazio { padding: 12px 16px; }
+.tecla-lider { font-size: 12px; padding: 2px 9px; }
+.tecla-lider.trocada { color: var(--destaque); border-color: var(--destaque); }
+.config-entrada { width: 220px; color: var(--texto); font-family: inherit; }
+.config-captura { margin: 12px 16px; padding: 10px 12px; border: 2px dashed var(--borda); border-radius: 10px; font-size: 11.5px; line-height: 19px; }
+.config-rodape { padding: 10px 16px; border-top: var(--espessura-borda) solid var(--borda); font-size: 11px; white-space: nowrap; }
+.config-ia { padding: 16px; gap: 14px; }
+.config-ia .config-rodape { padding: 10px 0; margin: 0 -16px -16px; padding-left: 16px; }
+.config-opcao { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: var(--espessura-borda) solid var(--borda); border-radius: 12px; background: var(--painel-elevado); cursor: pointer; font-size: 12px; line-height: 19px; }
+.config-opcao.on { border-color: var(--destaque); }
+.config-opcao-t { display: flex; align-items: center; gap: 10px; }
+.config-radio { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--texto-suave); flex-shrink: 0; box-sizing: border-box; }
+.config-opcao.on .config-radio { border-color: var(--destaque); background: var(--destaque); box-shadow: inset 0 0 0 3px var(--painel-elevado); }
+.config-tag { padding: 1px 8px; border-radius: 6px; background: var(--fundo); border: 1px solid var(--borda); font-size: 11px; }
+.config-estado { display: flex; align-items: center; gap: 10px; }
+.config-estado .botao { height: 30px; font-size: 12px; }
+.config-modelo { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.config-modelo input { width: 300px; color: var(--texto); font-family: inherit; }
+.config-resultado { font-size: 12px; }
+.link { border: 0; background: transparent; color: var(--destaque); font-family: inherit; cursor: pointer; padding: 0; }

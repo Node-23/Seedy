@@ -33,7 +33,7 @@ pub fn pasta_web() -> PathBuf {
     crate::tema::pasta_config().join("web")
 }
 
-fn sem_janela(c: &mut Command) {
+pub(crate) fn sem_janela(c: &mut Command) {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -44,7 +44,7 @@ fn sem_janela(c: &mut Command) {
 }
 
 /// `npm`, `npx` etc.: no Windows são .cmd e precisam passar pelo cmd.
-fn comando_do_node(programa: &str, args: &[String]) -> Command {
+pub(crate) fn comando_do_node(programa: &str, args: &[String]) -> Command {
     #[cfg(windows)]
     {
         let mut c = Command::new("cmd");

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Configurações — IDE Java</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{position:relative;width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Inky Mono','Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:32px;padding:0 11px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px}
+.quad{width:36px;height:36px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:3px 3px 0 #0B0B0C}
+.suave{color:#A29D93}.dest{color:#9CD7BA}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.cod{flex:1;padding:8px 0;overflow:hidden;font-size:12px;line-height:22px;position:relative}
+.l{display:block;white-space:pre;position:relative}
+.l .n{display:inline-block;width:46px;text-align:right;padding-right:16px;color:#A29D93}
+.arv div{height:24px;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;white-space:nowrap}
+.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.onda{text-decoration:underline wavy #E8C979;text-underline-offset:4px}
+.log div{white-space:pre;padding:0 14px;line-height:20px;font-size:11.5px}
+.script{display:flex;align-items:center;gap:8px;height:28px;padding:0 12px;font-size:12px;white-space:nowrap}
+.seg{display:flex;align-items:center;padding:0 12px;border-left:2px solid #0B0B0C}
+
+.icone{width:40px;height:40px;border-radius:10px;border:2px solid #0B0B0C;background:#2A2A2D;color:#A29D93;display:flex;align-items:center;justify-content:center;position:relative}
+.icone.on{background:#9CD7BA;color:#16171C;box-shadow:3px 3px 0 #0B0B0C}
+.badge{position:absolute;right:-6px;top:-6px;min-width:18px;height:18px;border-radius:9px;background:#E8C979;color:#16171C;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #0B0B0C;box-sizing:border-box;padding:0 4px}
+.card{border:2px solid #0B0B0C;border-radius:11px;background:#222225;box-shadow:3px 3px 0 #0B0B0C;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.card.on{box-shadow:0 0 0 2px #9CD7BA,3px 3px 0 #0B0B0C;background:#2D2D30}
+.ct{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;line-height:18px}
+.caixa{width:16px;height:16px;flex-shrink:0;margin-top:1px;border:2px solid #A29D93;border-radius:5px;box-sizing:border-box}
+.caixa.feita{background:#B7D39C;border-color:#B7D39C;color:#16171C;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding-left:26px}
+.chip{display:flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:7px;border:1px solid #0B0B0C;background:#19191B;font-size:11px;white-space:nowrap}
+.nota{padding-left:26px;font-size:11.5px;line-height:17px;color:#A29D93}
+.grupo{padding:12px 14px 6px;font-size:10.5px;letter-spacing:.14em;color:#A29D93}
+
+.nav{width:210px;border-right:2px solid #0B0B0C;padding:10px 0;display:flex;flex-direction:column;gap:2px;font-size:12px}
+.nav div{height:30px;display:flex;align-items:center;gap:8px;padding:0 14px}
+.lin{height:30px;display:flex;align-items:center;gap:10px;padding:0 16px;font-size:12px;border-bottom:1px solid #333337}
+.lin .ac{width:300px}.k{font-size:12px;padding:2px 9px}
+.campo{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:2px solid #0B0B0C;border-radius:9px;background:#19191B;font-size:12px}
+.opc{border:2px solid #0B0B0C;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#222225}
+.opc.on{border-color:#9CD7BA}
+.rad{width:14px;height:14px;border-radius:50%;border:2px solid #A29D93;display:inline-block;flex-shrink:0}
+.on .rad{border-color:#9CD7BA;background:#9CD7BA;box-shadow:inset 0 0 0 3px #222225}
+.tag{padding:1px 8px;border-radius:6px;background:#19191B;border:1px solid #0B0B0C;font-size:11px}
+</style></head><body>
+<div class="tela">
+ <div class="janela" style="flex:1">
+  <div class="faixa"><span class="rotulo">CONFIGURAÇÕES</span><span class="suave" id="sub"></span><span style="flex:1"></span><kbd>esc</kbd></div>
+  <div style="display:flex;flex:1;min-height:0">
+   <div class="nav">
+    <div id="n1"><span class="dest">⌨</span>Atalhos<span style="flex:1"></span><kbd>1</kbd></div>
+    <div id="n2"><span class="dest">✦</span>IA<span style="flex:1"></span><kbd>2</kbd></div>
+    <div id="n3"><span class="dest">≡</span>Editor e terminal<span style="flex:1"></span><kbd>3</kbd></div>
+    <div style="flex:1"></div>
+    <div class="suave" style="height:auto;line-height:18px;font-size:11px">grava em seedy.json<br>(global ou do projeto)</div>
+   </div>
+   <div id="abaA" style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <div style="padding:12px 16px;display:flex;gap:10px"><div class="campo" style="flex:1"><span class="dest">/</span><span class="suave">filtrar ação ou tecla…</span></div></div>
+    <div class="lin suave" style="height:24px;font-size:11px;letter-spacing:.1em"><span class="ac">AÇÃO</span><span style="flex:1">ONDE</span><span>TECLA DO LÍDER</span></div>
+    <div style="flex:1;overflow:hidden"><div class="lin"><span class="ac">buscar tudo</span><span class="suave" style="flex:1">busca</span><kbd class="k">␣ ␣</kbd></div><div class="lin"><span class="ac">buscar arquivo</span><span class="suave" style="flex:1">busca</span><kbd class="k">␣ f</kbd></div><div class="lin"><span class="ac">buscar no projeto</span><span class="suave" style="flex:1">busca</span><kbd class="k">␣ /</kbd></div><div class="lin sel"><span class="ac">árvore de arquivos</span><span class="suave" style="flex:1">painel</span><kbd class="k">␣ e</kbd></div><div class="lin"><span class="ac">terminal</span><span class="suave" style="flex:1">painel</span><kbd class="k">␣ t</kbd></div><div class="lin"><span class="ac">git</span><span class="suave" style="flex:1">tela</span><kbd class="k">␣ g</kbd></div><div class="lin"><span class="ac">TODO</span><span class="suave" style="flex:1">painel</span><kbd class="k">␣ T</kbd></div><div class="lin"><span class="ac">entender o sistema</span><span class="suave" style="flex:1">tela</span><kbd class="k">␣ A</kbd></div><div class="lin"><span class="ac">IA (painel)</span><span class="suave" style="flex:1">painel</span><kbd class="k">␣ a</kbd></div><div class="lin"><span class="ac">layout: mover painel</span><span class="suave" style="flex:1">menu</span><kbd class="k">␣ L</kbd></div><div class="lin"><span class="ac">configurações</span><span class="suave" style="flex:1">tela</span><kbd class="k">␣ ,</kbd></div></div>
+    <div style="margin:12px 16px;padding:10px 12px;border:2px dashed #3F3F44;border-radius:10px;font-size:11.5px;line-height:19px">
+     <span class="rotulo">REATRIBUINDO · ÁRVORE DE ARQUIVOS</span><br>aperte a nova tecla depois do <kbd>␣</kbd>… <span class="aviso">␣ t já é “terminal”</span><br>
+     <span class="suave">⏎ confirma · esc cancela · <span class="dest">r</span> volta ao padrão · só a tecla depois do líder muda</span></div>
+    <div class="suave" style="padding:10px 16px;border-top:2px solid #0B0B0C;font-size:11px">j k · <span class="dest">⏎</span> trocar a tecla · <span class="dest">r</span> padrão · <span class="dest">/</span> filtrar · 3 trocadas</div>
+   </div>
+   <div id="abaI" style="flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0">
+    <div class="rotulo">COMO O SEEDY FALA COM O CLAUDE</div>
+    <div class="opc on">
+     <div style="display:flex;align-items:center;gap:10px"><span class="rad"></span><b>Assinatura do Claude (Pro/Max)</b><span class="tag ok">usa o Claude Code já logado</span></div>
+     <div class="suave" style="line-height:19px">O Seedy chama o <span class="dest">claude</span> instalado na sua máquina; ele usa a sua conta. O Seedy não vê nem guarda senha ou token. O uso conta no limite da assinatura.</div>
+     <div style="display:flex;gap:10px;align-items:center"><span class="ok">✓</span><span>claude encontrado</span><span class="suave">· logado</span><span style="flex:1"></span><span class="btn">entrar de novo <kbd>l</kbd></span></div>
+    </div>
+    <div class="opc">
+     <div style="display:flex;align-items:center;gap:10px"><span class="rad"></span><b>Chave da API (Anthropic Console)</b><span class="tag suave">paga por uso</span></div>
+     <div class="campo"><span class="suave">sk-ant-</span><span>••••••••••••••••••••••••</span><span style="flex:1"></span><span class="suave">colar <kbd>ctrl v</kbd></span></div>
+     <div style="display:flex;gap:10px;align-items:center" class="suave"><span>fica só nesta máquina (ia.chave na pasta do Seedy) · ou ANTHROPIC_API_KEY</span><span style="flex:1"></span><span class="btn">testar <kbd>t</kbd></span><span class="btn">esquecer <kbd>x</kbd></span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px"><span style="width:90px" class="suave">modelo</span><div class="campo" style="width:300px"><span>claude-opus-5-5</span><span style="flex:1"></span><span class="suave">▾</span></div><span class="suave">vale para o chat, o merge e as regras</span></div>
+    <div style="flex:1"></div>
+    <div class="suave" style="padding:10px 0;border-top:2px solid #0B0B0C;font-size:11px"><span class="dest">1</span> assinatura · <span class="dest">2</span> chave · <span class="dest">m</span> modelo · <span class="dest">⏎</span> salvar · esc</div>
+   </div>
+   <div id="abaE" style="flex:1;padding:16px" class="suave">editor: tabulação, espaços, minimapa, formatar ao salvar · terminal: shell e argumentos</div>
+  </div>
+ </div>
+</div>
+<script>
+const a=(location.hash||'#a').slice(1);
+document.getElementById('abaA').style.display=a=='a'?'flex':'none';
+document.getElementById('abaI').style.display=a=='i'?'flex':'none';
+document.getElementById('abaE').style.display=a=='e'?'block':'none';
+const n={a:'n1',i:'n2',e:'n3'}[a];document.getElementById(n).classList.add('sel');
+document.getElementById('sub').textContent={a:'Atalhos',i:'IA',e:'Editor e terminal'}[a];
+</script></body></html>

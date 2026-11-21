@@ -17,7 +17,7 @@ export interface Config {
   terminal: { shell: string | null; argumentos: string[] };
   /** id da ação do líder → tecla (ex.: { "todo": "T" }). */
   atalhos: { lider: Record<string, string> };
-  ia: { modelo: string };
+  ia: { modelo: string; modo: 'chave' | 'assinatura' };
   /** Disposições do layout (gravadas pelo próprio Seedy ao editar o layout). */
   layout?: unknown;
 }
@@ -59,6 +59,9 @@ export class ConfigService {
     effect(() => {
       const m = this.projeto.mudancas();
       if (m && [...m.alterados, ...m.criados].some((c) => /[\\/]\.seedy[\\/]seedy\.json$/.test(c))) untracked(() => void this.lerDoProjeto());
+    });
+    effect(() => {
+      ponte.ia.modo = this.atual().ia.modo === 'assinatura' ? 'assinatura' : 'chave';
     });
     if (isDevMode()) Object.assign(window, { seedyConfig: this });
   }

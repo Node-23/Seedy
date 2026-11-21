@@ -63,6 +63,7 @@ pub fn run() {
             ia::ia_definir_chave,
             ia::ia_esquecer_chave,
             ia::ia_mensagem,
+            ia::ia_claude_estado,
             banco::banco_perfis,
             banco::banco_salvar_perfil,
             banco::banco_apagar_perfil,

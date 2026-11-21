@@ -25,6 +25,7 @@ import { BlameService } from '../git/blame.service';
 import { EntenderService } from '../entender/entender.service';
 import { TodoService } from '../todo/todo.service';
 import { ConfigService } from '../config/config.service';
+import { ConfiguracoesService } from '../config/configuracoes.service';
 
 export interface AcaoLider {
   /** Nome da ação no seedy.json (atalhos.lider: { "todo": "T" }). */
@@ -58,6 +59,7 @@ export class AtalhosService {
   private readonly projeto = inject(ProjetoService);
   private readonly tema = inject(TemaService);
   private readonly mensagens = inject(MensagensService);
+  private readonly configuracoes = inject(ConfiguracoesService);
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
   private readonly jdtls = inject(JdtlsService);
@@ -119,7 +121,7 @@ export class AtalhosService {
     { id: 'ia', tecla: 'a', rotulo: 'IA (painel; no merge, o chat do conflito)', disponivel: true, executar: () => this.alternarIA() },
     { id: 'revisar-ia', tecla: 'y', rotulo: 'revisar alterações da IA', disponivel: true, executar: () => this.revisao.aberta.set(true) },
     { id: 'layout', tecla: 'L', rotulo: 'layout: mover painel, disposições', disponivel: true, executar: () => void this.menuLayout() },
-    { id: 'config', tecla: ',', rotulo: 'configurações (seedy.json)', disponivel: true, executar: () => this.abrirConfig() },
+    { id: 'config', tecla: ',', rotulo: 'configurações (atalhos, IA, editor)', disponivel: true, executar: () => this.abrirConfig() },
     { id: 'mcp', tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },
   ];
 
@@ -479,9 +481,7 @@ export class AtalhosService {
   }
 
   private abrirConfig(): void {
-    const caminho = this.config.caminho();
-    if (caminho) void this.editor.abrir(caminho);
-    else this.mensagens.mostrar('o seedy.json só existe dentro do app');
+    this.configuracoes.alternar();
   }
 
   /** Teclas do líder trocadas no seedy.json; a ação que perde a tecla fica sem atalho. */
