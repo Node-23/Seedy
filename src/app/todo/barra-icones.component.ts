@@ -6,6 +6,7 @@ import { BuscaService } from '../busca/busca.service';
 import { ScriptsService } from '../web/scripts.service';
 import { DockerService } from '../containers/docker.service';
 import { TodoService } from './todo.service';
+import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
 
 /**
@@ -29,6 +30,11 @@ import { ConfiguracoesService } from '../config/configuracoes.service';
       <button class="icone-lateral" [class.ativo]="todo.aberto()" title="TODO (␣ T)" (click)="todo.alternar()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" /><path d="M8 12.5l2.8 2.8L16.5 9" /></svg>
         @if (abertos(); as n) { <span class="icone-contador">{{ n }}</span> }
+      </button>
+
+      <button class="icone-lateral" title="Bookmarks (␣ B lista · ␣ M marca a linha)" (click)="bookmarks.listar()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4.5L6 21z" /></svg>
+        @if (bookmarks.marcas().length; as n) { <span class="icone-contador">{{ n }}</span> }
       </button>
 
       <span class="icone-divisa" aria-hidden="true"></span>
@@ -76,6 +82,7 @@ export class BarraIconesComponent {
   protected readonly scripts = inject(ScriptsService);
   protected readonly docker = inject(DockerService);
   protected readonly configuracoes = inject(ConfiguracoesService);
+  protected readonly bookmarks = inject(BookmarksService);
   private readonly editor = inject(EditorService);
   protected readonly abertos = computed(() => this.todo.abertos().length);
   protected readonly noEditor = computed(() => this.layout.tela() === 'editor');
