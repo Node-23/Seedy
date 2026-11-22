@@ -59,7 +59,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Banco de dados** (mockup 03, `␣ d`): conexões PostgreSQL, MySQL/MariaDB e Oracle com perfis
   Local / Homolog / Produção (cor por ambiente; Produção nasce somente leitura e, liberada, pede
   confirmação antes de alterar). Senhas no cofre do sistema (Gerenciador de Credenciais do
-  Windows, Secret Service no Linux). Túnel SSH pelo `ssh` do sistema (usa `~/.ssh/config`,
+  Windows, Secret Service no Linux). Túnel SSH com usuário e senha ou chave (cliente embutido) ou pelo `ssh` do sistema (usa `~/.ssh/config`,
   `known_hosts`, chaves e o ssh-agent). Árvore de schemas, tabelas, views, funções e colunas;
   console SQL por conexão ou qualquer `.sql` do projeto, com autocompletar (tabelas, colunas e
   apelidos); `Ctrl+Enter` executa a instrução sob o cursor; grade **somente leitura**, explain,
@@ -134,6 +134,20 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   aplicação local e consulta os bancos (só leitura). Toda edição vira diff na **revisão**
   (`␣ y`): propostas esperam você aceitar ou recusar (a IA recebe a decisão); edições que o
   Claude Code faz direto no disco num arquivo aberto aparecem já aplicadas, com desfazer.
+  A IA também **roda e depura** (`rodar`, `parar`, breakpoints, passos, avaliar), **roda os testes**
+  e lê a cobertura das regras, mexe nos **containers** e no `docker compose`, usa o **TODO** e os
+  **bookmarks**, navega pelo código (definição, usos, símbolos), lê a **arquitetura** e as
+  **regras de negócio**, opera o **Git** e o **GitHub** (commit, push, branches, PR, issue), o
+  **jdtls e o JDK**, edita o **servidor de aplicação** e liga um container ao **banco**. Rodar,
+  testar, commitar e mexer em container pedem a sua aprovação (o modo automático, `␣ Y`, dispensa);
+  push, apagar, `docker compose down`, PR e issue perguntam sempre. `/historico` no chat mostra o
+  que foi pedido e decidido na sessão.
+- **Mandar para o chat da IA** (mockup 25): `ctrl+shift+a` manda o que está em foco (container,
+  regra, bloco da arquitetura, caminho, card do TODO, teste e a falha, conexão de banco, commit
+  selecionado, estado do Git ou o trecho do código) e o botão direito faz o mesmo no item clicado.
+  Viram chips removíveis no painel da IA e vão junto da próxima mensagem; `ctrl+shift+backspace`
+  limpa. Na tela de testes, `i` manda todas as falhas. A conversa da IA é guardada por projeto e
+  volta quando você reabre o projeto (`/clear` apaga).
 - **IA no merge** (mockup 10): `␣ a` abre um chat ao lado das três colunas para conversar
   sobre os conflitos. A IA (Claude) lê o código relacionado e o histórico do arquivo e propõe a
   resolução, que aparece como prévia no resultado: `⏎` aplica, `esc` recusa, `ctrl+r` pede outra.
@@ -239,6 +253,7 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `␣ m` | resolver conflitos (merge em 3 colunas) |
 | `␣ a` | painel de IA (no merge: o chat do conflito); no campo, `⏎` envia ou aplica a proposta, `esc` recusa, `ctrl+l` nova conversa |
 | `␣ y` | revisar as alterações da IA: `⏎` aceita/mantém, `d` recusa/desfaz, `D` diff completo |
+| `ctrl+shift+a` | mandar para o chat da IA o que está em foco; `ctrl+shift+backspace` limpa os anexos |
 | `␣ i` | copiar o comando que liga o Claude Code ao Seedy (MCP) |
 | `␣ j` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
 | `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | rodar / depurar a configuração escolhida / parar / redeploy do servidor (como no IntelliJ) |

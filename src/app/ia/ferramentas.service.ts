@@ -1,4 +1,5 @@
 import { inject, Injectable, Injector } from '@angular/core';
+import { AprovacoesService } from './aprovacoes.service';
 import { FERRAMENTAS_IDE, FerramentasIdeService } from './ferramentas-ide.service';
 import { TestesService, FiltroDeTipo } from '../testes/testes.service';
 import { DockerService } from '../containers/docker.service';
@@ -175,7 +176,14 @@ const FERRAMENTAS_BASE: DefinicaoDeFerramenta[] = [
       tipo: { type: 'string', enum: ['todos', 'unitario', 'integracao', 'api', 'e2e'], description: 'Padrão: todos' },
       filtro: texto('Classe ou classe#metodo'),
       so_falhas: { type: 'boolean' },
+      segundos: { type: 'number', description: 'Quanto esperar pelo fim (padrão 600, máximo 1800); passou disso, os testes são cancelados' },
     }),
+  },
+  {
+    name: 'testes_parar',
+    rotulo: 'testes.parar',
+    description: 'Cancela os testes que estão rodando (o botão de parar da tela de testes).',
+    input_schema: objeto({}),
   },
   // ---------- containers ----------
   {
@@ -288,6 +296,7 @@ export class FerramentasService {
   private readonly escolha = inject(EscolhaService);
   private readonly automatico = inject(AutomaticoService);
   private readonly injetor = inject(Injector);
+  private readonly aprovacoes = inject(AprovacoesService);
 
   // Estes serviços dependem (direta ou indiretamente) da IA, que usa as ferramentas: pegos só na hora de usar.
   private testesSvc = () => this.injetor.get(TestesService);
@@ -340,6 +349,8 @@ export class FerramentasService {
         return this.testesResumo();
       case 'testes_rodar':
         return this.testesRodar(entrada);
+      case 'testes_parar':
+        return this.testesParar();
       case 'containers_listar':
         return this.containersListar();
       case 'container_acao':
@@ -494,14 +505,7 @@ export class FerramentasService {
   private async executarComando(comando: string, segundos: number | undefined, deixar: boolean): Promise<string> {
     const raiz = this.projeto.raiz();
     if (!raiz) throw new Error('nenhum projeto aberto');
-    const decisao = this.automatico.ligado() || (await this.escolha.escolherUm(
-      'A IA QUER RODAR UM COMANDO',
-      [
-        { rotulo: 'Rodar', detalhe: comando, valor: true },
-        { rotulo: 'Recusar', detalhe: 'o comando não roda e a IA é avisada', valor: false },
-      ],
-      `na pasta ${raiz}`,
-    ));
+    const decisao = await this.autorizar('A IA QUER RODAR UM COMANDO', 'Rodar', comando);
     if (!decisao) return 'o usuário recusou o comando; não rodou';
     const espera = Math.max(5, Math.min(600, segundos ?? 120)) * 1000;
     const id = `ia-cmd-${Date.now()}`;
@@ -563,11 +567,16 @@ export class FerramentasService {
 
   /** O usuário aprova (ou o modo automático dispensa); `forcar` pergunta sempre. */
   async autorizar(titulo: string, rotulo: string, detalhe: string, forcar = false): Promise<boolean> {
-    if (this.automatico.ligado() && !forcar) return true;
-    return !!(await this.escolha.escolherUm(titulo, [
+    if (this.automatico.ligado() && !forcar) {
+      this.aprovacoes.registrar(titulo, detalhe, 'automático');
+      return true;
+    }
+    const ok = !!(await this.escolha.escolherUm(titulo, [
       { rotulo, detalhe, valor: true },
       { rotulo: 'Recusar', detalhe: 'não roda e a IA é avisada', valor: false },
     ]));
+    this.aprovacoes.registrar(titulo, detalhe, ok ? 'aprovado' : 'recusado');
+    return ok;
   }
 
   /** Roda um processo na raiz do projeto e espera o fim (ou o tempo), devolvendo a saída. */
@@ -625,12 +634,24 @@ export class FerramentasService {
     if (!(await this.autorizar('A IA QUER RODAR OS TESTES', 'Rodar', alvo))) return 'o usuário recusou; os testes não rodaram';
     if (soFalhas) await t.rodarFalhas();
     else await t.rodar(tipo, filtro);
-    // O Maven pode baixar o mundo na primeira vez: espera até 10 minutos.
-    const fim = Date.now() + 600_000;
+    // O Maven pode baixar o mundo na primeira vez: espera até o limite (padrão 10 minutos).
+    const limite = Math.max(10, Math.min(1800, num(entrada['segundos']) ?? 600));
+    const fim = Date.now() + limite * 1000;
     await new Promise((r) => setTimeout(r, 500));
     while (t.rodando() && Date.now() < fim) await new Promise((r) => setTimeout(r, 500));
-    if (t.rodando()) return `ainda rodando depois de 10 minutos; veja testes_resumo mais tarde.\n${cortar(t.saida().slice(-60).join('\n'))}`;
+    if (t.rodando()) {
+      await t.parar();
+      return `passou de ${limite} s e os testes foram cancelados. Saída até agora:\n${cortar(t.saida().slice(-60).join('\n'))}`;
+    }
     return `${this.testesResumo()}\n\nSAÍDA (final):\n${cortar(t.saida().slice(-60).join('\n'))}`;
+  }
+
+  private async testesParar(): Promise<string> {
+    const t = this.testesSvc();
+    if (!t.rodando()) return 'não há testes rodando';
+    await t.parar();
+    await new Promise((r) => setTimeout(r, 1000));
+    return `testes cancelados. Saída até agora:\n${cortar(t.saida().slice(-30).join('\n'))}`;
   }
 
   // ---------- containers ----------

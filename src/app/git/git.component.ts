@@ -316,12 +316,14 @@ export class GitComponent {
       aoLimpar(() => (valido = false));
       if (!c) {
         this.detalhe.set(null);
+        this.git.commitEmFoco.set(null);
         return;
       }
       const t = setTimeout(async () => {
         const d = await this.git.detalhe(c.hash).catch(() => null);
         if (!valido) return;
         this.detalhe.set(d);
+        this.git.commitEmFoco.set(d);
         this.arquivoSel.set(0);
       }, 60);
       aoLimpar(() => clearTimeout(t));

@@ -25,6 +25,7 @@ export class CarregamentoService {
     const l: Carga[] = [];
     if (this.entender.analisando()) l.push({ id: 'analise', rotulo: 'lendo o código', detalhe: 'arquitetura, regras de negócio e testes do projeto' });
     if (this.testes.lendoRelatorios()) l.push({ id: 'relatorios', rotulo: 'lendo relatórios de teste', detalhe: 'resultado do último mvn/gradle test' });
+    if (this.testes.preparando()) l.push({ id: 'maven', rotulo: 'preparando os testes', detalhe: 'sem Maven instalado, o Seedy baixa o Maven na primeira vez' });
     if (this.testes.rodando()) l.push({ id: 'testes', rotulo: 'rodando testes', detalhe: this.testes.comandoAtual() || 'testes do projeto' });
     if (this.busca.indexando()) l.push({ id: 'indice', rotulo: 'indexando arquivos', detalhe: 'índice da busca (␣ f e ␣ /)' });
     return l;

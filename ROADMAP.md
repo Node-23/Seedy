@@ -123,6 +123,12 @@ o resto entra como módulos internos (mockups 13 e 14):
    bancos (só leitura); as mesmas ferramentas servem ao painel de IA do mockup 06 (`␣ a`)
 3. ✅ Painel de revisão (`␣ y`): toda proposta vira diff para aceitar ou recusar (a IA recebe a
    decisão); edições feitas direto no disco num arquivo aberto ficam registradas, com desfazer
+3b. ✅ A IA opera quase tudo: rodar, parar e depurar (breakpoints, passos, avaliar), testes e
+   cobertura das regras, containers e compose, TODO, bookmarks, navegação pelo código, arquitetura e
+   regras, Git e GitHub, jdtls e JDK, servidor de aplicação e container → banco. Aprovação do usuário
+   nas ações que mexem em algo (o modo automático dispensa; push, apagar, PR e issue perguntam sempre)
+3c. ✅ Mandar itens para o chat (mockup 25): `ctrl+shift+a` e botão direito, chips removíveis;
+   `/historico` lista as aprovações; a conversa é guardada por projeto
 4. ✅ Chat da IA no merge de conflitos (mockup 10, `␣ a`): Claude lê o código e o histórico,
    propõe a resolução como prévia no resultado e o usuário aplica ou recusa
 

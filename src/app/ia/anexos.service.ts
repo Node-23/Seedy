@@ -97,6 +97,22 @@ export class AnexosService {
 
   // ---------- o que está em foco ----------
 
+  /** Todos os testes que falharam no último run, de uma vez (a tela de testes). */
+  anexarFalhasDosTestes(): void {
+    const t = this.injetor.get(TestesService);
+    const falhas = t.testes().filter((x) => t.estadoDe(x) === 'falhou');
+    if (!falhas.length) return void this.mensagens.alerta('nenhum teste falhou no último run');
+    let novos = 0;
+    for (const f of falhas.slice(0, 15)) {
+      const a = this.doTeste(f);
+      if (!this.lista().some((x) => x.id === a.id)) {
+        this.lista.update((l) => [...l, a]);
+        novos++;
+      }
+    }
+    this.mensagens.mostrar(`${novos} ${novos === 1 ? 'teste que falhou foi mandado' : 'testes que falharam foram mandados'} para a IA${falhas.length > 15 ? ` (os 15 primeiros de ${falhas.length})` : ''}`);
+  }
+
   /** ⌃⇧A: manda o que está em foco na tela de baixo. */
   anexarEmFoco(): void {
     this.adicionar(this.emFoco());
@@ -239,6 +255,16 @@ export class AnexosService {
 
   doGit(): Anexo | null {
     const g = this.injetor.get(GitService);
+    const c = g.commitEmFoco();
+    if (c) {
+      const arquivos = c.arquivos.slice(0, 60).map((a) => `${a.letra} ${a.relativo} (+${a.mais} -${a.menos})`).join('\n');
+      return {
+        id: `commit:${c.hash}`,
+        rotulo: `commit ${c.hash.slice(0, 8)} · ${c.mensagem.split('\n')[0].slice(0, 40)}`,
+        icone: '●',
+        texto: corta(`commit ${c.hash} de ${c.autor} em ${new Date(c.data * 1000).toISOString().slice(0, 10)}\n${c.mensagem}\narquivos (${c.arquivos.length}):\n${arquivos}\nPara ver o diff: git_diff ou executar_comando "git show ${c.hash.slice(0, 8)}".`),
+      };
+    }
     const e = g.estado();
     if (!e) return null;
     const alt = g.alterados();

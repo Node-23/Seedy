@@ -45,6 +45,8 @@ export class TestesService {
   /** A análise do projeto ainda está lendo o código (a lista de testes vem dela). */
   readonly lendoCodigo = computed(() => this.entender.analisando());
   readonly comandoAtual = signal('');
+  /** Montando o comando: na primeira vez, sem Maven instalado, o Seedy baixa o Maven (alguns segundos). */
+  readonly preparando = signal(false);
   readonly ultimaExecucao = signal<{ em: Date; segundos: number; codigo: number | null } | null>(null);
 
   readonly filtroTipo = signal<FiltroDeTipo>('todos');
@@ -208,7 +210,8 @@ export class TestesService {
       return;
     }
     try {
-      const comando = await ponte.testes.comando(raiz, tipo, filtro);
+      this.preparando.set(true);
+      const comando = await ponte.testes.comando(raiz, tipo, filtro).finally(() => this.preparando.set(false));
       this.comandoAtual.set(comando.join(' '));
       await ponte.tarefa.iniciar(
         'testes',

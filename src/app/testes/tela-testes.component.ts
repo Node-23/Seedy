@@ -20,6 +20,7 @@ const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
         <button class="botao" [disabled]="!!t.rodando()" (click)="t.rodarFalhas()">▶ só as que falharam <kbd>f</kbd></button>
         <button class="botao" [disabled]="!!t.rodando()" (click)="rodarClasseDoCursor()">▶ a classe do cursor <kbd>c</kbd></button>
         <button class="botao" [disabled]="!t.rodando()" (click)="t.parar()">◼ parar</button>
+        <button class="botao" [disabled]="!t.totais().falhou" (click)="anexos.anexarFalhasDosTestes()" title="manda todos os testes que falharam para o chat da IA">✦ falhas para a IA <kbd>i</kbd></button>
         <span class="espaco"></span>
         @if (t.rodando()) { <span class="aviso-texto">rodando… {{ t.comandoAtual() }}</span> }
         @else {
@@ -131,7 +132,7 @@ const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
 })
 export class TelaTestesComponent {
   protected readonly t = inject(TestesService);
-  private readonly anexos = inject(AnexosService);
+  protected readonly anexos = inject(AnexosService);
 
   protected menuIa(e: MouseEvent, teste: TesteInfo, i: number): void {
     this.sel.set(i);
@@ -252,6 +253,7 @@ export class TelaTestesComponent {
       case 't': this.t.filtroTipo.set(TIPOS[(TIPOS.indexOf(this.t.filtroTipo()) + 1) % TIPOS.length]); this.sel.set(0); break;
       case 'o': this.t.abrirNoCodigo(); break;
       case 'a': void this.t.explicarFalha(); break;
+      case 'i': this.anexos.anexarFalhasDosTestes(); break;
       case 'g': this.verRegrasSemTeste(); break;
       default: return;
     }

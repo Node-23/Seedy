@@ -7,6 +7,7 @@ import { MensagensService } from '../nucleo/mensagens.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { FERRAMENTAS, FerramentasService } from './ferramentas.service';
 import { AnexosService } from './anexos.service';
+import { AprovacoesService } from './aprovacoes.service';
 import { RevisaoService } from './revisao.service';
 import { ConfigService } from '../config/config.service';
 import { BlocoDaApi, MensagemDaApi, pedirComStream, resultadoDeFerramenta } from './stream';
@@ -25,6 +26,8 @@ export type ItemDaIa =
   | { tipo: 'erro'; texto: string };
 
 const MAX_VOLTAS = 25;
+const LIMITE_DA_CONVERSA = 400_000;
+const chaveDaConversa = (raiz: string) => `seedy.ia.conversa:${raiz}`;
 
 const SISTEMA = `Você é a IA do Seedy, a IDE do usuário para projetos Java web (Struts/JSP, JBoss/WildFly, Tomcat, bancos PostgreSQL/MySQL/Oracle). Você opera a IDE pelas ferramentas: abre e lê código, vê os erros do jdtls, configura, sobe e derruba o servidor de aplicação (servidor_criar, servidor_iniciar), roda comandos de build e de projeto com a aprovação do usuário (executar_comando), lê o log, faz requisições HTTP à aplicação local e consulta os bancos configurados (só leitura).
 
@@ -46,6 +49,7 @@ export class IaService {
   private readonly mensagens = inject(MensagensService);
   private readonly servidor = inject(ServidorService);
   private readonly anexos = inject(AnexosService);
+  private readonly aprovacoes = inject(AprovacoesService);
 
   readonly itens = signal<ItemDaIa[]>([]);
   readonly pensando = signal(false);
@@ -58,30 +62,96 @@ export class IaService {
   private historico: MensagemDaApi[] = [];
   private geracao = 0;
 
-  /** Projeto da conversa atual: ao abrir outro, a conversa do anterior não vale mais. */
+  /** Projeto da conversa atual: cada projeto tem a sua conversa (guardada ao sair, retomada ao voltar). */
   private raizDaConversa: string | null | undefined;
+  private temporizadorDeSalvar: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     effect(() => {
       const raiz = this.projeto.raiz();
       untracked(() => {
         const trocou = this.raizDaConversa !== undefined && this.raizDaConversa !== raiz;
+        const anterior = this.raizDaConversa;
         this.raizDaConversa = raiz;
-        if (trocou && (this.itens().length || this.pensando())) {
-          this.reiniciar();
-          this.mensagens.mostrar('conversa da IA zerada: outro projeto');
+        if (anterior === undefined) {
+          // Abriu o Seedy já com um projeto: retoma a conversa dele.
+          if (raiz && this.retomarConversa(raiz)) this.mensagens.mostrar(`conversa da IA retomada (${nomeBase(raiz)})`);
+          return;
         }
+        if (!trocou) return;
+        clearTimeout(this.temporizadorDeSalvar);
+        if (anterior && !this.pensando()) this.guardarConversa(anterior);
+        this.limparMemoria();
+        if (raiz && this.retomarConversa(raiz)) this.mensagens.mostrar(`conversa da IA retomada (${nomeBase(raiz)})`);
+        else if (anterior) this.mensagens.mostrar('conversa da IA: projeto novo, começa do zero');
+      });
+    });
+    // Guarda a conversa aos poucos (quando a IA termina de responder), para sobreviver a fechar o Seedy.
+    effect(() => {
+      this.itens();
+      const pensando = this.pensando();
+      untracked(() => {
+        clearTimeout(this.temporizadorDeSalvar);
+        const raiz = this.raizDaConversa;
+        if (raiz && !pensando) this.temporizadorDeSalvar = setTimeout(() => this.guardarConversa(raiz), 800);
       });
     });
     this.revisao.aoProporDaIa = (id) => this.registrarProposta(id);
     if (isDevMode()) Object.assign(window, { seedyIa: this });
   }
 
+  /** `/clear`: zera a conversa e apaga a que estava guardada deste projeto. */
   reiniciar(): void {
+    this.limparMemoria();
+    const raiz = this.raizDaConversa;
+    if (raiz) {
+      try {
+        localStorage.removeItem(chaveDaConversa(raiz));
+      } catch {
+        /* sem armazenamento: nada guardado */
+      }
+    }
+  }
+
+  private limparMemoria(): void {
     this.geracao++;
     this.historico = [];
     this.itens.set([]);
     this.pensando.set(false);
+  }
+
+  /** Guarda a conversa do projeto (sem as propostas, que dependem da revisão da sessão). */
+  private guardarConversa(raiz: string): void {
+    const itens = this.itens().filter((i) => i.tipo !== 'proposta');
+    try {
+      if (!itens.length) return void localStorage.removeItem(chaveDaConversa(raiz));
+      let h = this.historico;
+      let texto = JSON.stringify({ itens, historico: h });
+      // Conversa grande demais: fica com o final.
+      while (texto.length > LIMITE_DA_CONVERSA && h.length > 2) {
+        h = h.slice(Math.ceil(h.length / 4));
+        while (h.length && !(h[0].role === 'user' && Array.isArray(h[0].content) && h[0].content.some((b) => b.type === 'text'))) h = h.slice(1);
+        texto = JSON.stringify({ itens: itens.slice(-Math.max(10, Math.floor(itens.length / 2))), historico: h });
+      }
+      localStorage.setItem(chaveDaConversa(raiz), texto);
+    } catch {
+      /* sem armazenamento ou cheio: a conversa não é retomada depois */
+    }
+  }
+
+  /** Volta a conversa guardada do projeto; true se havia uma. */
+  private retomarConversa(raiz: string): boolean {
+    try {
+      const bruto = localStorage.getItem(chaveDaConversa(raiz));
+      if (!bruto) return false;
+      const c = JSON.parse(bruto) as { itens?: ItemDaIa[]; historico?: MensagemDaApi[] };
+      if (!Array.isArray(c.itens) || !c.itens.length || !Array.isArray(c.historico)) return false;
+      this.itens.set(c.itens);
+      this.historico = c.historico;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
 
@@ -91,6 +161,10 @@ export class IaService {
    */
   comando(texto: string): boolean {
     const c = texto.trim().toLowerCase();
+    if (c === '/historico' || c === '/histórico') {
+      this.adicionar({ tipo: 'texto', texto: this.aprovacoes.texto() });
+      return true;
+    }
     if (c !== '/clear' && c !== '/limpar' && c !== '/novo') return false;
     this.reiniciar();
     this.mensagens.mostrar('conversa zerada');

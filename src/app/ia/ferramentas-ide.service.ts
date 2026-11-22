@@ -32,7 +32,7 @@ const LIMITE = 60_000;
 
 const LIGACAO = {
   type: 'array',
-  description: 'Ligações do card. codigo: alvo "caminho/relativo.java:linha"; regra: chave da regra (regras_listar); caminho: "Componente.metodo"; bloco: id do componente; container: nome; banco: id da conexão.',
+  description: 'Ligações do card. codigo: alvo "caminho/relativo.java:linha"; regra: id da regra (R12, de regras_listar); caminho: "Componente.metodo"; bloco: id do componente; container: nome; banco: id da conexão.',
   items: objeto({ tipo: { type: 'string', enum: TIPOS_DE_LIGACAO }, alvo: texto('Alvo da ligação'), rotulo: texto('Texto que o card mostra (opcional)') }, ['tipo', 'alvo']),
 };
 
@@ -52,7 +52,7 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   // ---------- arquitetura e regras ----------
   { name: 'arquitetura_resumo', rotulo: 'arquitetura.resumo', description: 'A arquitetura do projeto lida do código: tecnologias, quantos componentes por papel (tela, entrada, serviço, repositório, entidade...) e por domínio, e a lista deles com o arquivo.', input_schema: objeto({ papel: { type: 'string', description: 'Opcional: só este papel (tela, front, entrada, job, servico, repositorio, entidade, excecao, tratador, teste, outro)' }, dominio: texto('Opcional: só este domínio') }) },
   { name: 'arquitetura_componente', rotulo: 'arquitetura.componente', description: 'Detalhe de um componente: papel, arquivo, o que ele usa e quem o usa, e os métodos (rota HTTP, chamadas, desvios).', input_schema: objeto({ nome: texto('Nome do componente (ou parte dele) ou o id') }, ['nome']) },
-  { name: 'regras_listar', rotulo: 'regras.listar', description: 'Regras de negócio do projeto (as de .seedy/regras.md e as achadas no código): id, domínio, título, descrição, chave, onde está no código e a cobertura de testes de cada uma.', input_schema: objeto({ dominio: texto('Opcional'), busca: texto('Opcional: texto no título, descrição ou componente'), cobertura: { type: 'string', enum: ['todas', 'sem', 'so-feliz', 'falhando'], description: 'Padrão: todas' } }) },
+  { name: 'regras_listar', rotulo: 'regras.listar', description: 'Regras de negócio do projeto (as de .seedy/regras.md e as achadas no código): id, domínio, título, descrição, chave, onde está no código e a cobertura de testes de cada uma. Nas outras ferramentas, use o id (R12).', input_schema: objeto({ dominio: texto('Opcional'), busca: texto('Opcional: texto no título, descrição ou componente'), cobertura: { type: 'string', enum: ['todas', 'sem', 'so-feliz', 'falhando'], description: 'Padrão: todas' } }) },
   { name: 'regra_cenarios', rotulo: 'regra.cenarios', description: 'Os cenários de uma regra (o caminho feliz e cada erro que ela barra) e quais testes os cobrem. Use antes de escrever testes: o que está "sem" teste é o que falta. Depois escreva o teste com propor_edicao.', input_schema: objeto({ regra: texto('Id (R12), chave ou parte do título') }, ['regra']) },
   // ---------- git ----------
   { name: 'git_estado', rotulo: 'git.estado', description: 'Branch atual, à frente/atrás do remoto, operação em andamento (merge, rebase...) e os arquivos alterados (M, A, D, ?, C = conflito; [stage] = no índice).', input_schema: objeto({}) },
@@ -111,7 +111,7 @@ export class FerramentasIdeService {
       case 'todo_listar':
         return this.todoListar(opc(e, 'estado') ?? 'abertos');
       case 'todo_criar':
-        return this.todoCriar(str(e, 'titulo'), opc(e, 'nota'), this.ligacoes(e['ligacoes']));
+        return this.todoCriar(str(e, 'titulo'), opc(e, 'nota'), await this.ligacoes(e['ligacoes']));
       case 'todo_atualizar':
         return this.todoAtualizar(e);
       case 'todo_apagar':
@@ -174,15 +174,24 @@ export class FerramentasIdeService {
 
   // ---------- TODO ----------
 
-  private ligacoes(v: unknown): Ligacao[] {
+  private async ligacoes(v: unknown): Promise<Ligacao[]> {
     if (v === undefined || v === null) return [];
     if (!Array.isArray(v)) throw new Error('"ligacoes" é uma lista de {tipo, alvo, rotulo}');
+    const regras = v.some((x) => (x as Record<string, unknown>)?.['tipo'] === 'regra') ? await this.regrasVisiveis() : [];
     return v.map((x) => {
       const o = (x ?? {}) as Record<string, unknown>;
       const tipo = String(o['tipo']) as TipoLigacao;
       if (!TIPOS_DE_LIGACAO.includes(tipo)) throw new Error(`tipo de ligação inválido: ${String(o['tipo'])} (use ${TIPOS_DE_LIGACAO.join(', ')})`);
-      const alvo = str(o, 'alvo');
-      return { tipo, alvo, rotulo: opc(o, 'rotulo') ?? alvo };
+      let alvo = str(o, 'alvo');
+      let rotulo = opc(o, 'rotulo');
+      if (tipo === 'regra' && !alvo.includes(':')) {
+        // O id legível (R12) vira a chave técnica que o arquivo do TODO guarda.
+        const r = regras.find((x) => x.id.toLowerCase() === alvo.toLowerCase());
+        if (!r?.chave) throw new Error(`regra "${alvo}" não encontrada ou sem ligação com o código; veja regras_listar`);
+        rotulo = rotulo ?? `${r.id} ${r.titulo}`;
+        alvo = r.chave;
+      }
+      return { tipo, alvo, rotulo: rotulo ?? alvo };
     });
   }
 
@@ -216,7 +225,7 @@ export class FerramentasIdeService {
     if (opc(e, 'titulo')) mudanca.titulo = opc(e, 'titulo')!.replace(/\s+/g, ' ').trim();
     if (opc(e, 'nota') !== null) mudanca.nota = opc(e, 'nota')!;
     if (typeof e['feito'] === 'boolean') mudanca.feito = e['feito'] as boolean;
-    const novas = this.ligacoes(e['ligacoes']).filter((l) => !c.ligacoes.some((x) => x.tipo === l.tipo && x.alvo === l.alvo));
+    const novas = (await this.ligacoes(e['ligacoes'])).filter((l) => !c.ligacoes.some((x) => x.tipo === l.tipo && x.alvo === l.alvo));
     if (novas.length) mudanca.ligacoes = [...c.ligacoes, ...novas];
     await t.atualizar(id, mudanca);
     const depois = t.cards().find((x) => x.id === id) ?? c;
@@ -385,7 +394,7 @@ export class FerramentasIdeService {
         .map((r) => {
           const c = cob.get(r.chave);
           const onde = r.codigo ? `${r.codigo.caminho.replace(/\\/g, '/').replace((this.projeto.raiz() ?? '').replace(/\\/g, '/') + '/', '')}:${r.codigo.linha}` : 'sem código ligado';
-          return `${r.id} [${r.dominio}] ${r.titulo} — ${onde} — testes: ${c ? NOME_COBERTURA[c.estado] : 'sem'} — chave ${r.chave || '(escrita à mão)'}${r.descricao ? `\n    ${r.descricao.split('\n')[0].slice(0, 240)}` : ''}`;
+          return `${r.id} [${r.dominio}] ${r.titulo} — ${onde} — testes: ${c ? NOME_COBERTURA[c.estado] : 'sem'}${r.descricao ? `\n    ${r.descricao.split('\n')[0].slice(0, 240)}` : ''}`;
         })
         .join('\n') + (lista.length > 150 ? `\n… e mais ${lista.length - 150}` : ''),
     );

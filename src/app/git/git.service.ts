@@ -93,6 +93,9 @@ export class GitService {
   /** Quantos commits o log da tela do Git mostra (a statusline exibe). */
   readonly totalDeCommits = signal(0);
 
+  /** O commit selecionado na tela do Git (para mandar à IA). */
+  readonly commitEmFoco = signal<DetalheDoCommit | null>(null);
+
   readonly ehRepositorio = computed(() => !!this.estado());
   readonly conflitos = computed(() => this.alterados().filter((a) => a.letra === 'C'));
   private readonly porCaminho = computed(() => new Map(this.alterados().map((a) => [chave(a.caminho), a])));
