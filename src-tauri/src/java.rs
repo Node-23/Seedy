@@ -180,6 +180,65 @@ pub fn java_jdks() -> Vec<Jdk> {
     todos_os_jdks()
 }
 
+/// O JDK que o projeto pede para o Maven e o Gradle rodarem: o menor instalado que seja pelo menos da
+/// versão declarada no pom.xml / build.gradle. (Rodar com um JDK muito mais novo costuma quebrar o
+/// Lombok e outros processadores de anotação; o `JAVA_HOME` do sistema não é lembrado.)
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct JdkDoProjeto {
+    pub home: String,
+    pub versao: String,
+    /// A versão que o projeto declara (17, 21...).
+    pub declarada: u32,
+}
+
+/// "1.8", "1_8" e "8" viram 8; "17" e "17.0" viram 17.
+fn versao_de_java(texto: &str) -> Option<u32> {
+    let limpo = texto.trim().trim_matches(|c| c == '"' || c == '\'');
+    let sem_prefixo = limpo.strip_prefix("1.").or_else(|| limpo.strip_prefix("1_")).unwrap_or(limpo);
+    let n: u32 = sem_prefixo.split(['.', '_']).next()?.parse().ok()?;
+    (5..=99).contains(&n).then_some(n)
+}
+
+/// A versão de Java que o pom.xml ou o build.gradle da raiz declaram, se declaram.
+pub fn versao_declarada(raiz: &Path) -> Option<u32> {
+    use regex::Regex;
+    if let Ok(pom) = fs::read_to_string(raiz.join("pom.xml")) {
+        for tag in ["maven.compiler.release", "java.version", "maven.compiler.source", "maven.compiler.target", "release", "source", "target"] {
+            let re = Regex::new(&format!(r"<{}>\s*([0-9._]+)\s*</{}>", regex::escape(tag), regex::escape(tag))).ok()?;
+            if let Some(v) = re.captures(&pom).and_then(|c| versao_de_java(&c[1])) {
+                return Some(v);
+            }
+        }
+    }
+    for nome in ["build.gradle", "build.gradle.kts"] {
+        if let Ok(g) = fs::read_to_string(raiz.join(nome)) {
+            for padrao in [
+                r"JavaLanguageVersion\.of\(\s*(\d+)",
+                r"(?:sourceCompatibility|targetCompatibility)\s*=?\s*(?:JavaVersion\.VERSION_)?['\x22]?([0-9._]+)",
+                r"jvmTarget\s*=?\s*['\x22]?([0-9._]+)",
+            ] {
+                if let Some(v) = Regex::new(padrao).ok().and_then(|re| re.captures(&g)).and_then(|c| versao_de_java(&c[1])) {
+                    return Some(v);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// O menor JDK instalado que atende a versão declarada.
+pub fn escolher_jdk(jdks: &[Jdk], declarada: u32) -> Option<Jdk> {
+    jdks.iter().filter(|j| j.maior >= declarada).min_by_key(|j| j.maior).cloned()
+}
+
+#[tauri::command]
+pub fn java_jdk_do_projeto(raiz: String) -> Option<JdkDoProjeto> {
+    let declarada = versao_declarada(Path::new(&raiz))?;
+    let jdk = escolher_jdk(&todos_os_jdks(), declarada)?;
+    Some(JdkDoProjeto { home: jdk.home, versao: jdk.versao, declarada })
+}
+
 // ---------- jdtls: instalação ----------
 
 fn pasta_jdtls() -> PathBuf {
@@ -454,6 +513,49 @@ fn escrever_mensagem<W: Write>(escritor: &mut W, mensagem: &str) -> io::Result<(
 #[cfg(test)]
 mod testes {
     use super::*;
+
+    fn jdk(maior: u32) -> Jdk {
+        Jdk { home: format!("/jdk-{maior}"), versao: maior.to_string(), maior }
+    }
+
+    #[test]
+    fn versao_declarada_do_pom_e_do_gradle() {
+        let base = std::env::temp_dir().join(format!("seedy-jdk-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        let escrever = |pasta: &str, nome: &str, texto: &str| {
+            let d = base.join(pasta);
+            fs::create_dir_all(&d).unwrap();
+            fs::write(d.join(nome), texto).unwrap();
+            d
+        };
+        let a = escrever("a", "pom.xml", "<properties><maven.compiler.source>17</maven.compiler.source><maven.compiler.target>17</maven.compiler.target></properties>");
+        assert_eq!(versao_declarada(&a), Some(17));
+        let b = escrever("b", "pom.xml", "<properties><java.version>1.8</java.version></properties>");
+        assert_eq!(versao_declarada(&b), Some(8));
+        let c = escrever("c", "pom.xml", "<properties><maven.compiler.release>21</maven.compiler.release><java.version>11</java.version></properties>");
+        assert_eq!(versao_declarada(&c), Some(21), "release manda");
+        let d = escrever("d", "build.gradle", "java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }");
+        assert_eq!(versao_declarada(&d), Some(21));
+        let e = escrever("e", "build.gradle", "sourceCompatibility = '17'\ntargetCompatibility = '17'");
+        assert_eq!(versao_declarada(&e), Some(17));
+        let f = escrever("f", "build.gradle.kts", "java { sourceCompatibility = JavaVersion.VERSION_11 }");
+        assert_eq!(versao_declarada(&f), Some(11));
+        let g = escrever("g", "pom.xml", "<project><artifactId>x</artifactId></project>");
+        assert_eq!(versao_declarada(&g), None);
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn escolhe_o_menor_jdk_que_atende() {
+        let todos = vec![jdk(25), jdk(21), jdk(8)];
+        assert_eq!(escolher_jdk(&todos, 17).map(|j| j.maior), Some(21), "17 não está instalado: vai o 21, não o 25");
+        assert_eq!(escolher_jdk(&todos, 21).map(|j| j.maior), Some(21));
+        assert_eq!(escolher_jdk(&todos, 8).map(|j| j.maior), Some(8));
+        assert_eq!(escolher_jdk(&todos, 26).map(|j| j.maior), None);
+        assert_eq!(versao_de_java("1.8"), Some(8));
+        assert_eq!(versao_de_java("17.0"), Some(17));
+        assert_eq!(versao_de_java("abc"), None);
+    }
 
     #[test]
     fn le_versao_do_release() {

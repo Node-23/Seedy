@@ -16,7 +16,10 @@ import { ServidorService } from '../servidor/servidor.service';
 import { DockerService } from '../containers/docker.service';
 import { BancoService } from '../banco/banco.service';
 import type { FerramentasService } from './ferramentas.service';
+import { escreve as sqlEscreve, instrucoes as sqlInstrucoes } from '../banco/sql';
 import { EnvService } from '../execucao/env.service';
+import { OrigemDaAlteracao, RevisaoService } from './revisao.service';
+import { caminhoDaUri, EdicaoDeWorkspaceLsp, EdicaoLsp, edicoesPorArquivo, paraEdicao, uriMonaco } from '../java/conversao';
 import { EscopoDaMemoria, MemoriaService, prepararNota } from './memoria.service';
 
 /** Definição de ferramenta (o mesmo formato de `FERRAMENTAS`). */
@@ -50,6 +53,7 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   // ---------- navegar pelo código ----------
   { name: 'ir_para_definicao', rotulo: 'codigo.definicao', description: 'Onde está declarado o símbolo (Java, pelo jdtls) numa posição do arquivo; abre o arquivo no editor. Coluna começa em 1.', input_schema: objeto({ caminho: texto('Relativo à raiz'), linha: { type: 'integer' }, coluna: { type: 'integer' } }, ['caminho', 'linha', 'coluna']) },
   { name: 'usos_do_simbolo', rotulo: 'codigo.usos', description: 'Onde o símbolo (Java) de uma posição é usado, em todo o projeto. Coluna começa em 1.', input_schema: objeto({ caminho: texto('Relativo à raiz'), linha: { type: 'integer' }, coluna: { type: 'integer' } }, ['caminho', 'linha', 'coluna']) },
+  { name: 'refatorar_java', rotulo: 'java.refatorar', description: 'Refactors de Java pelo jdtls: `renomear` um símbolo (classe, método, campo ou variável) em todo o projeto, ou `organizar_imports` de um arquivo. Cada arquivo alterado vira um diff para o usuário aceitar ou recusar (revisão ␣ y), e a resposta diz o que foi decidido. Prefira isto a editar vários arquivos à mão. Linha e coluna começam em 1 e apontam para o nome do símbolo.', input_schema: objeto({ acao: { type: 'string', enum: ['renomear', 'organizar_imports'] }, caminho: texto('Relativo à raiz'), linha: { type: 'integer', description: 'Só para renomear' }, coluna: { type: 'integer', description: 'Só para renomear' }, novo_nome: texto('Só para renomear') }, ['acao', 'caminho']) },
   { name: 'buscar_simbolo', rotulo: 'codigo.simbolo', description: 'Procura classes, métodos e campos Java pelo nome em todo o projeto (jdtls).', input_schema: objeto({ nome: texto('Parte do nome') }, ['nome']) },
   // ---------- arquitetura e regras ----------
   { name: 'arquitetura_resumo', rotulo: 'arquitetura.resumo', description: 'A arquitetura do projeto lida do código: tecnologias, quantos componentes por papel (tela, entrada, serviço, repositório, entidade...) e por domínio, e a lista deles com o arquivo.', input_schema: objeto({ papel: { type: 'string', description: 'Opcional: só este papel (tela, front, entrada, job, servico, repositorio, entidade, excecao, tratador, teste, outro)' }, dominio: texto('Opcional: só este domínio') }) },
@@ -73,6 +77,8 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   { name: 'jdtls_reiniciar', rotulo: 'jdtls.reiniciar', description: 'Reinicia o jdtls (útil quando o classpath ou os erros estão desatualizados).', input_schema: objeto({}) },
   { name: 'jdks_listar', rotulo: 'jdk.listar', description: 'JDKs instalados na máquina (versão e pasta) e qual roda o jdtls.', input_schema: objeto({}) },
   { name: 'jdk_escolher', rotulo: 'jdk.escolher', description: 'Escolhe o JDK que roda o jdtls (precisa ser a versão mínima ou mais nova) e reinicia o jdtls. O usuário aprova.', input_schema: objeto({ pasta: texto('Pasta do JDK (jdks_listar)') }, ['pasta']) },
+  // ---------- banco: escrita ----------
+  { name: 'banco_executar', rotulo: 'banco.executar', description: 'ALTERA um banco configurado (INSERT, UPDATE, DELETE, DDL). O usuário vê as instruções e aprova SEMPRE, até no modo automático. Recusado em conexão somente leitura e em Produção, e UPDATE/DELETE sem WHERE. Para ler use banco_consultar. Devolve as linhas afetadas.', input_schema: objeto({ conexao: texto('Nome da conexão'), sql: texto('Uma ou mais instruções') }, ['conexao', 'sql']) },
   // ---------- .env ----------
   { name: 'env_listar', rotulo: 'env.listar', description: 'Os arquivos .env da raiz do projeto, qual está em uso e os NOMES das variáveis que ele define (nunca os valores). O RUN, o DEBUG, os testes e executar_comando já usam o .env sozinhos.', input_schema: objeto({}) },
   // ---------- memória ----------
@@ -110,12 +116,13 @@ export class FerramentasIdeService {
   private readonly banco = () => this.injetor.get(BancoService);
   private readonly memoria = () => this.injetor.get(MemoriaService);
   private readonly env = () => this.injetor.get(EnvService);
+  private readonly revisao = () => this.injetor.get(RevisaoService);
 
   conhece(nome: string): boolean {
     return FERRAMENTAS_IDE.some((f) => f.name === nome);
   }
 
-  async executar(nome: string, e: Record<string, unknown>, base: FerramentasService): Promise<string> {
+  async executar(nome: string, e: Record<string, unknown>, base: FerramentasService, origem: OrigemDaAlteracao = 'ia'): Promise<string> {
     this.baseSvc = base;
     switch (nome) {
       case 'todo_listar':
@@ -134,6 +141,8 @@ export class FerramentasIdeService {
         return this.definicao(str(e, 'caminho'), inteiro(e, 'linha'), inteiro(e, 'coluna'));
       case 'usos_do_simbolo':
         return this.usos(str(e, 'caminho'), inteiro(e, 'linha'), inteiro(e, 'coluna'));
+      case 'refatorar_java':
+        return this.refatorar(e, origem);
       case 'buscar_simbolo':
         return this.simbolos(str(e, 'nome'));
       case 'arquitetura_resumo':
@@ -173,6 +182,8 @@ export class FerramentasIdeService {
         return this.jdksListar();
       case 'jdk_escolher':
         return this.jdkEscolher(str(e, 'pasta'));
+      case 'banco_executar':
+        return this.bancoExecutar(str(e, 'conexao'), str(e, 'sql'));
       case 'env_listar':
         return this.envListar();
       case 'memoria_ler':
@@ -319,6 +330,52 @@ export class FerramentasIdeService {
     const r = await this.lsp<any[] | null>('textDocument/references', { ...p, context: { includeDeclaration: false } });
     if (!r?.length) return 'nenhum uso encontrado (confira a linha e a coluna, que começam em 1)';
     return cortar(`${r.length} usos:\n${r.slice(0, 200).map((l) => this.lugar(l)).join('\n')}`);
+  }
+
+  /** Renomear e organizar imports: o jdtls devolve as edições e cada arquivo vira uma proposta (diff) para aprovar. */
+  private async refatorar(e: Record<string, unknown>, origem: OrigemDaAlteracao): Promise<string> {
+    const acao = str(e, 'acao');
+    const caminhoRel = str(e, 'caminho');
+    let edicao: EdicaoDeWorkspaceLsp | null = null;
+    let motivo = '';
+    if (acao === 'renomear') {
+      const novo = str(e, 'novo_nome');
+      if (!/^[A-Za-z_$][\w$]*$/.test(novo)) throw new Error('novo_nome precisa ser um identificador Java válido');
+      const p = await this.posicao(caminhoRel, inteiro(e, 'linha'), inteiro(e, 'coluna'));
+      edicao = await this.lsp<EdicaoDeWorkspaceLsp | null>('textDocument/rename', { ...p, newName: novo }).catch((erro) => {
+        throw new Error(`o jdtls não conseguiu renomear: ${(erro as Error).message ?? erro}`);
+      });
+      motivo = `renomear para ${novo}`;
+    } else if (acao === 'organizar_imports') {
+      const p = await this.posicao(caminhoRel, 1, 1);
+      const abs = this.base().caminho({ caminho: caminhoRel });
+      const modelo = this.editor().bufferDe(abs)?.modelo;
+      const ultima = Math.max(0, (modelo?.getLineCount() ?? 1) - 1);
+      const acoes = await this.lsp<{ edit?: EdicaoDeWorkspaceLsp }[] | null>('textDocument/codeAction', {
+        textDocument: p.textDocument,
+        range: { start: { line: 0, character: 0 }, end: { line: ultima, character: 0 } },
+        context: { diagnostics: [], only: ['source.organizeImports'] },
+      });
+      edicao = acoes?.find((a) => a.edit)?.edit ?? null;
+      motivo = 'organizar os imports';
+    } else {
+      throw new Error('acao: renomear ou organizar_imports');
+    }
+    const porArquivo = edicao ? edicoesPorArquivo(edicao) : new Map<string, EdicaoLsp[]>();
+    if (!porArquivo.size) return acao === 'renomear' ? 'o jdtls não achou o que renomear nessa posição (linha e coluna começam em 1 e apontam para o nome)' : 'os imports já estão organizados';
+    const revisao = this.revisao();
+    const linhas: string[] = [];
+    for (const [uri, edits] of porArquivo) {
+      const abs = caminhoDaUri(uriMonaco(uri));
+      const atual = this.editor().bufferDe(abs)?.modelo.getValue() ?? (await ponte.lerArquivo(abs));
+      const modelo = monaco.editor.createModel(atual);
+      modelo.applyEdits(edits.map(paraEdicao).map((x) => ({ range: x.range, text: x.text })));
+      const novo = modelo.getValue();
+      modelo.dispose();
+      const r = await revisao.propor(abs, novo, origem, `${motivo} (${edits.length} ${edits.length === 1 ? 'alteração' : 'alterações'})`);
+      linhas.push(`${this.relativoDoProjeto(abs)}: ${r.aceita ? 'aceito' : 'recusado'}`);
+    }
+    return `${motivo}: ${porArquivo.size} ${porArquivo.size === 1 ? 'arquivo' : 'arquivos'}\n${linhas.join('\n')}`;
   }
 
   private async simbolos(nome: string): Promise<string> {
@@ -558,6 +615,38 @@ export class FerramentasIdeService {
     if (!(await this.base().autorizar('A IA QUER TROCAR O JDK DO JDTLS', 'Trocar', `Java ${jdk.versao} — ${jdk.home}\no jdtls reinicia`))) return 'o usuário recusou; o JDK ficou';
     await this.jdtls().usarJdk(jdk.home);
     return `jdtls reiniciando com o Java ${jdk.versao}`;
+  }
+
+  // ---------- banco: escrita ----------
+
+  private async bancoExecutar(conexao: string, sqlTexto: string): Promise<string> {
+    const b = this.banco();
+    const p = b.perfis().find((x) => x.nome.toLowerCase() === conexao.toLowerCase() || x.id === conexao);
+    if (!p) throw new Error(`conexão "${conexao}" não existe; veja banco_conexoes`);
+    if (p.somenteLeitura) throw new Error(`"${p.nome}" é somente leitura: peça ao usuário para desligar a opção no perfil, ou use banco_consultar`);
+    if (p.ambiente === 'producao') throw new Error('a IA não altera banco de Produção: peça ao usuário para executar a alteração');
+    const instrucoes = sqlInstrucoes(sqlTexto);
+    if (!instrucoes.length) throw new Error('nada para executar');
+    const escritas = instrucoes.filter((i) => sqlEscreve(i.texto));
+    if (!escritas.length) throw new Error('só leitura: use banco_consultar');
+    for (const i of escritas) {
+      const t = i.texto.replace(/--[^\n]*|\/\*[\s\S]*?\*\//g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (/^(update|delete)\b/.test(t) && !/\bwhere\b/.test(t)) throw new Error('UPDATE/DELETE sem WHERE altera a tabela inteira: acrescente o WHERE (ou peça ao usuário para rodar)');
+    }
+    const resumo = instrucoes.map((i) => i.texto.trim().replace(/\s+/g, ' ').slice(0, 140)).slice(0, 6).join('\n');
+    const destrutivo = escritas.some((i) => /^\s*(drop|truncate|alter)\b/i.test(i.texto.replace(/--[^\n]*|\/\*[\s\S]*?\*\//g, ' ')));
+    const ok = await this.base().autorizar(
+      destrutivo ? 'A IA QUER ALTERAR A ESTRUTURA DO BANCO' : 'A IA QUER ALTERAR DADOS DO BANCO',
+      'Executar',
+      `${p.nome} (${p.ambiente}): ${resumo.split('\n')[0]}${instrucoes.length > 1 ? ` (+${instrucoes.length - 1})` : ''}`,
+      true,
+      '⚠ só você aprova, até no automático',
+    );
+    if (!ok) return 'o usuário recusou; o banco não foi alterado';
+    if (!b.conectado(p.id) && !(await b.conectar(p.id))) throw new Error(`não consegui conectar em ${p.nome}`);
+    const r = await ponte.banco.consultar(p.id, sqlTexto, 100);
+    if (r.colunas.length) return `executado em ${p.nome} (${r.ms} ms), com resultado:\n${r.colunas.map((c) => c.nome).join(' | ')}\n${r.linhas.slice(0, 20).map((l) => l.map((v) => v ?? 'NULL').join(' | ')).join('\n')}`;
+    return `executado em ${p.nome} (${r.ms} ms): ${r.afetadas ?? 0} ${r.afetadas === 1 ? 'linha afetada' : 'linhas afetadas'}`;
   }
 
   // ---------- .env ----------

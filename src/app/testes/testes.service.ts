@@ -1,4 +1,5 @@
 import { EnvService } from '../execucao/env.service';
+import { JdkProjetoService } from '../execucao/jdk-projeto.service';
 import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
 import { EntenderService } from '../entender/entender.service';
@@ -33,6 +34,7 @@ export class TestesService {
   private readonly editor = inject(EditorService);
   private readonly mensagens = inject(MensagensService);
   private readonly env = inject(EnvService);
+  private readonly jdk = inject(JdkProjetoService);
   private readonly entender = inject(EntenderService);
   private readonly scripts = inject(ScriptsService);
   private readonly ia = inject(IaService);
@@ -192,17 +194,24 @@ export class TestesService {
   }
 
   /** `tipo`: o que rodar; `filtro`: classe ou classe#método (Maven/Gradle). Os do front rodam pelos scripts. */
-  async rodar(tipo: FiltroDeTipo, filtro: string | null = null, doFront = false): Promise<void> {
+  async rodar(tipo: FiltroDeTipo, filtro: string | null = null, doFront = false, limpo = false): Promise<void> {
     const raiz = this.projeto.raiz();
     if (!raiz || this.rodando()) return;
     if (doFront || tipo === 'e2e') return this.rodarFront(tipo);
     this.rodando.set(tipo);
-    this.saida.set([]);
+    this.saida.update((l) => (limpo ? [...l, '', '── de novo, com clean ──'] : []));
     const inicio = Date.now();
     const terminar = async (codigo: number | null) => {
       await this.lerRelatorios();
       this.ultimaExecucao.set({ em: new Date(), segundos: (Date.now() - inicio) / 1000, codigo });
       this.rodando.set(null);
+      // O editor (jdtls) compila em target/ sem o Lombok e outros processadores: o Maven acha as classes em dia
+      // e roda as quebradas ("Unresolved compilation problem"). Uma vez só, refaz com clean.
+      const quebradas = !limpo && [...this.resultados().values()].some((r) => r.mensagem?.includes('Unresolved compilation problem'));
+      if (quebradas) {
+        this.saida.update((l) => [...l, '', 'as classes que o editor compilou em target/ estavam quebradas: refazendo com clean…']);
+        void this.rodar(tipo, filtro, doFront, true);
+      }
     };
     if (!noApp()) {
       this.comandoAtual.set('mvn test -B');
@@ -212,13 +221,19 @@ export class TestesService {
       return;
     }
     try {
-      const env = await this.env.variaveis();
-      if (env === null) {
+      const dotenv = await this.env.variaveis();
+      if (dotenv === null) {
         this.rodando.set(null);
         return; // cancelou a escolha do .env
       }
+      // Maven/Gradle rodam com o JDK que o projeto declara (o .env ainda pode mandar um JAVA_HOME próprio).
+      const jdk = await this.jdk.ambiente();
+      const env = { ...jdk.ambiente, ...dotenv };
+      if (jdk.aviso) this.saida.update((l) => [...l, jdk.aviso!]);
       this.preparando.set(true);
-      const comando = await ponte.testes.comando(raiz, tipo, filtro).finally(() => this.preparando.set(false));
+      const base = await ponte.testes.comando(raiz, tipo, filtro).finally(() => this.preparando.set(false));
+      // `clean` logo depois do mvn/gradle: apaga o target/ antes de compilar.
+      const comando = limpo && /(^|[\\/])(mvnw?|gradlew?)(\.cmd|\.bat)?$/i.test(base[0] ?? '') ? [base[0], 'clean', ...base.slice(1)] : base;
       this.comandoAtual.set(comando.join(' '));
       await ponte.tarefa.iniciar(
         'testes',

@@ -2,6 +2,7 @@ import { inject, Injectable, Injector } from '@angular/core';
 import { AprovacoesService } from './aprovacoes.service';
 import { motivoSensivel } from './comandos-sensiveis';
 import { EnvService } from '../execucao/env.service';
+import { JdkProjetoService } from '../execucao/jdk-projeto.service';
 import { FERRAMENTAS_IDE, FerramentasIdeService } from './ferramentas-ide.service';
 import { TestesService, FiltroDeTipo } from '../testes/testes.service';
 import { DockerService } from '../containers/docker.service';
@@ -158,7 +159,7 @@ const FERRAMENTAS_BASE: DefinicaoDeFerramenta[] = [
   {
     name: 'banco_consultar',
     rotulo: 'banco.consultar',
-    description: 'Consulta um banco configurado. Só leitura: SELECT/WITH/EXPLAIN; qualquer alteração é recusada.',
+    description: 'Consulta um banco configurado. Só leitura: SELECT/WITH/EXPLAIN; qualquer alteração é recusada aqui (para alterar use banco_executar, com a aprovação do usuário).',
     input_schema: objeto({ conexao: texto('Nome da conexão'), sql: texto('Consulta') }, ['conexao', 'sql']),
   },
   // ---------- testes ----------
@@ -307,6 +308,7 @@ export class FerramentasService {
   private depSvc = () => this.injetor.get(DepuradorService);
   private scriptsSvc = () => this.injetor.get(ScriptsService);
   private envSvc = () => this.injetor.get(EnvService);
+  private jdkSvc = () => this.injetor.get(JdkProjetoService);
 
   rotulo(nome: string): string {
     return FERRAMENTAS.find((f) => f.name === nome)?.rotulo ?? nome;
@@ -382,7 +384,7 @@ export class FerramentasService {
       case 'debug_avaliar':
         return this.avaliarNoDebug(str(entrada, 'expressao'));
       default:
-        if (this.injetor.get(FerramentasIdeService).conhece(nome)) return this.injetor.get(FerramentasIdeService).executar(nome, entrada, this);
+        if (this.injetor.get(FerramentasIdeService).conhece(nome)) return this.injetor.get(FerramentasIdeService).executar(nome, entrada, this, origem);
         throw new Error(`ferramenta desconhecida: ${nome}`);
     }
   }
@@ -525,8 +527,10 @@ export class FerramentasService {
     const argv = windows ? ['cmd.exe', '/C', comando] : ['sh', '-c', comando];
     let saida: string[] = [];
     let codigo: number | null | undefined;
-    const env = await this.envSvc().variaveis();
-    if (env === null) return 'o usuário cancelou a escolha do .env; o comando não rodou';
+    const dotenv = await this.envSvc().variaveis();
+    if (dotenv === null) return 'o usuário cancelou a escolha do .env; o comando não rodou';
+    const jdk = await this.jdkSvc().ambiente();
+    const env = { ...jdk.ambiente, ...dotenv };
     await ponte.tarefa.iniciar(
       id,
       raiz,
@@ -604,7 +608,7 @@ export class FerramentasService {
     const id = `ia-tarefa-${Date.now()}`;
     let saida: string[] = [];
     let codigo: number | null | undefined;
-    const env = (await this.envSvc().variaveis()) ?? {};
+    const env = { ...(await this.jdkSvc().ambiente()).ambiente, ...((await this.envSvc().variaveis()) ?? {}) };
     await ponte.tarefa.iniciar(id, raiz, argv, (l) => (saida = [...saida, ...l].slice(-1500)), (c) => (codigo = c), Object.keys(env).length ? env : null);
     const fim = Date.now() + segundos * 1000;
     while (codigo === undefined && Date.now() < fim) await new Promise((r) => setTimeout(r, 300));

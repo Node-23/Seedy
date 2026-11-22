@@ -124,6 +124,7 @@ pub fn run() {
             observador::projeto_observar,
             java::java_estado,
             java::java_jdks,
+            java::java_jdk_do_projeto,
             java::jdtls_instalar,
             java::lsp_iniciar,
             java::lsp_enviar,

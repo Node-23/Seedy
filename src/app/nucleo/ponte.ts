@@ -574,6 +574,10 @@ export const ponte = {
     async jdks(): Promise<Jdk[]> {
       return noApp() ? invoke<Jdk[]>('java_jdks') : [];
     },
+    /** O JDK para o Maven/Gradle do projeto (o menor instalado que atenda a versão que ele declara). */
+    async jdkDoProjeto(raiz: string): Promise<{ home: string; versao: string; declarada: number } | null> {
+      return noApp() ? invoke<{ home: string; versao: string; declarada: number } | null>('java_jdk_do_projeto', { raiz }) : null;
+    },
     /** Plugin java-debug para o jdtls (baixado e conferido na primeira vez). */
     debugPlugin: () => invoke<string>('java_debug_plugin'),
     async instalar(aoProgresso: (p: ProgressoJdtls) => void): Promise<void> {
