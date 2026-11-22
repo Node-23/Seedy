@@ -97,7 +97,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **TODO** (mockup 20, `␣ T` ou o botão na barra de ícones à esquerda): um painel por cima das
   telas com cards ligados a linhas de código, regras, caminhos, blocos da arquitetura, containers
   e conexões de banco. `l` liga ao card o que está aberto embaixo; a linha ligada ganha a marca
-  "☐ TODO" no editor. Os cards ficam em `.seedy/todo.md` (vai para o git, dá para editar à mão).
+  "☐ TODO" no editor. Os cards ficam em `.seedy/todo.md` (fica só nesta máquina: o Seedy põe `.seedy/` no .gitignore; dá para editar à mão).
 - **Testes** (mockup 21, `␣ E` ou o frasco na barra de ícones): os testes do projeto lidos do código,
   por tipo (unitários, integração, API e e2e), rodados pelo Maven (surefire e failsafe) ou Gradle, com
   o resultado dos relatórios, a falha explicada (`a`, com a IA) e a saída do comando. Os do front
@@ -146,8 +146,9 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   regra, bloco da arquitetura, caminho, card do TODO, teste e a falha, conexão de banco, commit
   selecionado, estado do Git ou o trecho do código) e o botão direito faz o mesmo no item clicado.
   Viram chips removíveis no painel da IA e vão junto da próxima mensagem; `ctrl+shift+backspace`
-  limpa. Na tela de testes, `i` manda todas as falhas. A conversa da IA é guardada por projeto e
-  volta quando você reabre o projeto (`/clear` apaga).
+  limpa. Na tela de testes, `i` manda todas as falhas. A conversa da IA é guardada por projeto em
+  `.seedy/conversa.json` e volta quando você reabre o projeto (`/clear` apaga). O Seedy põe `.seedy/`
+  no .gitignore do repositório na primeira vez que grava ali.
 - **IA no merge** (mockup 10): `␣ a` abre um chat ao lado das três colunas para conversar
   sobre os conflitos. A IA (Claude) lê o código relacionado e o histórico do arquivo e propõe a
   resolução, que aparece como prévia no resultado: `⏎` aplica, `esc` recusa, `ctrl+r` pede outra.

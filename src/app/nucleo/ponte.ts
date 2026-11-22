@@ -410,6 +410,30 @@ export interface AnaliseArquitetura {
   arquivos: number;
 }
 
+const pastasSeedyIgnoradas = new Set<string>();
+
+/**
+ * `.seedy/` guarda o que é desta máquina (conversa da IA, TODO, regras, bookmarks...): na primeira
+ * gravação ali, a pasta entra no .gitignore do repositório (se o projeto for um).
+ */
+async function ignorarPastaSeedy(caminho: string): Promise<void> {
+  const m = /^(.*?)[\\/]\.seedy[\\/]/.exec(caminho);
+  if (!m || pastasSeedyIgnoradas.has(m[1])) return;
+  pastasSeedyIgnoradas.add(m[1]);
+  const raiz = m[1];
+  try {
+    const repo = await ponte.git(raiz, ['rev-parse', '--is-inside-work-tree']);
+    if (repo.codigo !== 0) return;
+    const arquivo = `${raiz}${raiz.includes('\\') ? '\\' : '/'}.gitignore`;
+    const atual = await ponte.lerArquivo(arquivo).catch(() => '');
+    if (/^\s*\/?\.seedy\/?\s*$/m.test(atual)) return;
+    const quebra = atual && !atual.endsWith('\n') ? '\n' : '';
+    await invoke('gravar_arquivo', { caminho: arquivo, conteudo: `${atual}${quebra}.seedy/\n` });
+  } catch {
+    /* sem git ou sem permissão: o projeto segue sem o ajuste */
+  }
+}
+
 export const ponte = {
   /** Abre um link (http, https, mailto) no navegador do sistema. */
   async abrirLink(url: string): Promise<void> {
@@ -430,8 +454,10 @@ export const ponte = {
   },
 
   async gravarArquivo(caminho: string, conteudo: string): Promise<void> {
-    if (noApp()) await invoke('gravar_arquivo', { caminho, conteudo });
-    else exemplo.gravarArquivo(caminho, conteudo);
+    if (noApp()) {
+      await invoke('gravar_arquivo', { caminho, conteudo });
+      void ignorarPastaSeedy(caminho);
+    } else exemplo.gravarArquivo(caminho, conteudo);
   },
 
   async branchAtual(raiz: string): Promise<string | null> {

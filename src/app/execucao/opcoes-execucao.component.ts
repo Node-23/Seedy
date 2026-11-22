@@ -20,7 +20,7 @@ import { ExecucaoService, OpcoesDeExecucao, OPCOES_VAZIAS } from './execucao.ser
           }
           <label class="campo larga"><span>variáveis de ambiente (uma por linha: NOME=valor)</span>
             <textarea class="campo-variaveis" spellcheck="false" [value]="variaveis()" (input)="definirVariaveis(valor($event))" placeholder="DATABASE_URL=jdbc:postgresql://localhost:5432/feira"></textarea></label>
-          <div class="perfil-dica larga suave">fica em .seedy/execucao.json (vai para o git; dá para editar à mão) · o RUN e o DEBUG usam</div>
+          <div class="perfil-dica larga suave">fica em .seedy/execucao.json (só desta máquina, o git ignora; dá para editar à mão) · o RUN e o DEBUG usam</div>
         </div>
         <div class="perfil-acoes">
           <span class="espaco"></span>

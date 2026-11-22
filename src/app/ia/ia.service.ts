@@ -27,7 +27,8 @@ export type ItemDaIa =
 
 const MAX_VOLTAS = 25;
 const LIMITE_DA_CONVERSA = 400_000;
-const chaveDaConversa = (raiz: string) => `seedy.ia.conversa:${raiz}`;
+const chaveAntigaDaConversa = (raiz: string) => `seedy.ia.conversa:${raiz}`;
+const arquivoDaConversa = (raiz: string) => `${raiz.replace(/[\\/]+$/, '')}${raiz.includes('\\') ? '\\' : '/'}.seedy${raiz.includes('\\') ? '\\' : '/'}conversa.json`;
 
 const SISTEMA = `Você é a IA do Seedy, a IDE do usuário para projetos Java web (Struts/JSP, JBoss/WildFly, Tomcat, bancos PostgreSQL/MySQL/Oracle). Você opera a IDE pelas ferramentas: abre e lê código, vê os erros do jdtls, configura, sobe e derruba o servidor de aplicação (servidor_criar, servidor_iniciar), roda comandos de build e de projeto com a aprovação do usuário (executar_comando), lê o log, faz requisições HTTP à aplicação local e consulta os bancos configurados (só leitura).
 
@@ -75,15 +76,14 @@ export class IaService {
         this.raizDaConversa = raiz;
         if (anterior === undefined) {
           // Abriu o Seedy já com um projeto: retoma a conversa dele.
-          if (raiz && this.retomarConversa(raiz)) this.mensagens.mostrar(`conversa da IA retomada (${nomeBase(raiz)})`);
+          if (raiz) void this.retomarConversa(raiz).then((ok) => ok && this.mensagens.mostrar(`conversa da IA retomada (${nomeBase(raiz)})`));
           return;
         }
         if (!trocou) return;
         clearTimeout(this.temporizadorDeSalvar);
-        if (anterior && !this.pensando()) this.guardarConversa(anterior);
+        if (anterior && !this.pensando()) void this.guardarConversa(anterior, this.itens(), this.historico);
         this.limparMemoria();
-        if (raiz && this.retomarConversa(raiz)) this.mensagens.mostrar(`conversa da IA retomada (${nomeBase(raiz)})`);
-        else if (anterior) this.mensagens.mostrar('conversa da IA: projeto novo, começa do zero');
+        if (raiz) void this.retomarConversa(raiz).then((ok) => ok && this.mensagens.mostrar(`conversa da IA retomada (${nomeBase(raiz)})`));
       });
     });
     // Guarda a conversa aos poucos (quando a IA termina de responder), para sobreviver a fechar o Seedy.
@@ -93,7 +93,7 @@ export class IaService {
       untracked(() => {
         clearTimeout(this.temporizadorDeSalvar);
         const raiz = this.raizDaConversa;
-        if (raiz && !pensando) this.temporizadorDeSalvar = setTimeout(() => this.guardarConversa(raiz), 800);
+        if (raiz && !pensando) this.temporizadorDeSalvar = setTimeout(() => void this.guardarConversa(raiz), 800);
       });
     });
     this.revisao.aoProporDaIa = (id) => this.registrarProposta(id);
@@ -104,13 +104,15 @@ export class IaService {
   reiniciar(): void {
     this.limparMemoria();
     const raiz = this.raizDaConversa;
-    if (raiz) {
-      try {
-        localStorage.removeItem(chaveDaConversa(raiz));
-      } catch {
-        /* sem armazenamento: nada guardado */
-      }
-    }
+    if (raiz) this.apagarArquivoDaConversa(raiz);
+  }
+
+  /** Projetos que já têm .seedy/conversa.json (só esses são mexidos ao zerar, para não criar a pasta à toa). */
+  private readonly comArquivoDeConversa = new Set<string>();
+
+  private apagarArquivoDaConversa(raiz: string): void {
+    if (!this.comArquivoDeConversa.delete(raiz)) return;
+    void ponte.gravarArquivo(arquivoDaConversa(raiz), '').catch(() => undefined);
   }
 
   private limparMemoria(): void {
@@ -120,32 +122,38 @@ export class IaService {
     this.pensando.set(false);
   }
 
-  /** Guarda a conversa do projeto (sem as propostas, que dependem da revisão da sessão). */
-  private guardarConversa(raiz: string): void {
-    const itens = this.itens().filter((i) => i.tipo !== 'proposta');
-    try {
-      if (!itens.length) return void localStorage.removeItem(chaveDaConversa(raiz));
-      let h = this.historico;
-      let texto = JSON.stringify({ itens, historico: h });
-      // Conversa grande demais: fica com o final.
-      while (texto.length > LIMITE_DA_CONVERSA && h.length > 2) {
-        h = h.slice(Math.ceil(h.length / 4));
-        while (h.length && !(h[0].role === 'user' && Array.isArray(h[0].content) && h[0].content.some((b) => b.type === 'text'))) h = h.slice(1);
-        texto = JSON.stringify({ itens: itens.slice(-Math.max(10, Math.floor(itens.length / 2))), historico: h });
-      }
-      localStorage.setItem(chaveDaConversa(raiz), texto);
-    } catch {
-      /* sem armazenamento ou cheio: a conversa não é retomada depois */
+  /** Guarda a conversa do projeto em .seedy/conversa.json (sem as propostas, que dependem da revisão da sessão). */
+  private async guardarConversa(raiz: string, itensDaConversa = this.itens(), historico = this.historico): Promise<void> {
+    const itens = itensDaConversa.filter((i) => i.tipo !== 'proposta');
+    if (!itens.length) return this.apagarArquivoDaConversa(raiz);
+    this.comArquivoDeConversa.add(raiz);
+    let h = historico;
+    let texto = JSON.stringify({ itens, historico: h });
+    // Conversa grande demais: fica com o final.
+    while (texto.length > LIMITE_DA_CONVERSA && h.length > 2) {
+      h = h.slice(Math.ceil(h.length / 4));
+      while (h.length && !(h[0].role === 'user' && Array.isArray(h[0].content) && h[0].content.some((b) => b.type === 'text'))) h = h.slice(1);
+      texto = JSON.stringify({ itens: itens.slice(-Math.max(10, Math.floor(itens.length / 2))), historico: h });
     }
+    await ponte.gravarArquivo(arquivoDaConversa(raiz), texto).catch(() => undefined);
   }
 
-  /** Volta a conversa guardada do projeto; true se havia uma. */
-  private retomarConversa(raiz: string): boolean {
+  /** Volta a conversa guardada do projeto; true se havia uma. Importa a que o Seedy guardava no navegador. */
+  private async retomarConversa(raiz: string): Promise<boolean> {
+    let bruto = await ponte.lerArquivo(arquivoDaConversa(raiz)).catch(() => '');
+    if (!bruto.trim()) {
+      try {
+        bruto = localStorage.getItem(chaveAntigaDaConversa(raiz)) ?? '';
+        if (bruto) localStorage.removeItem(chaveAntigaDaConversa(raiz));
+      } catch {
+        bruto = '';
+      }
+    }
+    if (!bruto.trim() || raiz !== this.raizDaConversa || this.itens().length) return false;
     try {
-      const bruto = localStorage.getItem(chaveDaConversa(raiz));
-      if (!bruto) return false;
       const c = JSON.parse(bruto) as { itens?: ItemDaIa[]; historico?: MensagemDaApi[] };
       if (!Array.isArray(c.itens) || !c.itens.length || !Array.isArray(c.historico)) return false;
+      this.comArquivoDeConversa.add(raiz);
       this.itens.set(c.itens);
       this.historico = c.historico;
       return true;
@@ -153,7 +161,6 @@ export class IaService {
       return false;
     }
   }
-
 
   /**
    * Comandos do chat (`/clear`, `/limpar`, `/novo`): zeram a conversa, mesmo no meio de uma

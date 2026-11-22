@@ -156,7 +156,7 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 - ✅ Regras de negócio: candidatas tiradas do código (exceções de negócio com a condição e o status
   HTTP, `if ... return` com status, Bean Validation e Validators do Angular, `@Scheduled`/`@Schedule`,
   `@PreAuthorize`/`@RolesAllowed`), com onde mais a mensagem aparece e o teste que cobre. Ficam em
-  `.seedy/regras.md` (vai para o git, edita à mão); a IA reescreve em linguagem de negócio
+  `.seedy/regras.md` (fica só nesta máquina, `.seedy/` é ignorado pelo git; edita à mão); a IA reescreve em linguagem de negócio
 - ✅ Caminho do método (ctrl+. "acompanhar método", ou `c` num método): de onde vem até o botão da
   tela, para onde vai até a tabela, as condições que desviam (com o status e a regra) e o passo a
   passo; a IA explica o caminho
