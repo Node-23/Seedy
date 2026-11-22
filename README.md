@@ -103,6 +103,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   o resultado dos relatórios, a falha explicada (`a`, com a IA) e a saída do comando. Os do front
   (`.spec.ts`, Cypress, Playwright) aparecem na lista e rodam pelo painel de scripts. Cenários que
   conferem um erro levam ⚠.
+- **Perfis do Spring** (`␣ r` → ⚙ da classe main, só em projeto Spring Boot): o Seedy acha os `application-<perfil>.yml|properties`
+  e você marca os que quer. Vira `-Dspring.profiles.active=dev,local` no RUN e no DEBUG (se o `.env` já define
+  `SPRING_PROFILES_ACTIVE`, a escolha troca o valor dele; a JVM ou as variáveis da configuração têm a palavra final). A porta
+  mostrada na tela de endpoints segue o `SERVER_PORT` do `.env`, o perfil escolhido e o `application`.
 - **Atualização do Seedy** (`␣ U`): ao abrir e a cada 6 horas ele olha a última release do GitHub e, havendo versão
   nova, mostra "⬆ x.y.z disponível" na barra de status; nada baixa sozinho. O quadro mostra as notas; "instalar e
   reiniciar" baixa o instalador, confere o tamanho e o SHA-256 do `SHA256SUMS.txt` da release (sem ele o Seedy não

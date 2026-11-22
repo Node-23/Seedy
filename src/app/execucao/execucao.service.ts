@@ -24,9 +24,11 @@ export interface OpcoesDeExecucao {
   ambiente: Record<string, string>;
   /** Só classe main. */
   jvm: string;
+  /** Só classe main de projeto Spring: perfis ativos (`-Dspring.profiles.active`). */
+  perfis?: string[];
 }
 
-export const OPCOES_VAZIAS: OpcoesDeExecucao = { argumentos: '', ambiente: {}, jvm: '' };
+export const OPCOES_VAZIAS: OpcoesDeExecucao = { argumentos: '', ambiente: {}, jvm: '', perfis: [] };
 
 /** "a b 'c d'" → ["a", "b", "c d"] (aspas simples ou duplas juntam). */
 export function separarArgumentos(texto: string): string[] {
@@ -215,7 +217,7 @@ export class ExecucaoService {
 
   private resumoDasOpcoes(id: string): string {
     const o = this.opcoesDe(id);
-    const partes = [o.argumentos && `args: ${o.argumentos}`, Object.keys(o.ambiente).length && `${Object.keys(o.ambiente).length} variáveis`, o.jvm && `JVM: ${o.jvm}`].filter(Boolean);
+    const partes = [o.argumentos && `args: ${o.argumentos}`, Object.keys(o.ambiente).length && `${Object.keys(o.ambiente).length} variáveis`, o.jvm && `JVM: ${o.jvm}`, o.perfis?.length && `perfil: ${o.perfis.join(',')}`].filter(Boolean);
     return partes.join(' · ') || 'nada definido';
   }
 
@@ -245,10 +247,10 @@ export class ExecucaoService {
   }
 
   async salvarOpcoes(id: string, o: OpcoesDeExecucao): Promise<void> {
-    const vazias = !o.argumentos.trim() && !o.jvm.trim() && !Object.keys(o.ambiente).length;
+    const vazias = !o.argumentos.trim() && !o.jvm.trim() && !Object.keys(o.ambiente).length && !o.perfis?.length;
     const todas = { ...this.opcoes() };
     if (vazias) delete todas[id];
-    else todas[id] = { argumentos: o.argumentos.trim(), ambiente: o.ambiente, jvm: o.jvm.trim() };
+    else todas[id] = { argumentos: o.argumentos.trim(), ambiente: o.ambiente, jvm: o.jvm.trim(), ...(o.perfis?.length ? { perfis: o.perfis } : {}) };
     this.opcoes.set(todas);
     const caminho = this.arquivoDeOpcoes();
     if (caminho) await ponte.gravarArquivo(caminho, JSON.stringify(todas, null, 2) + '\n').catch((e) => this.mensagens.erro(String(e)));
@@ -295,7 +297,17 @@ export class ExecucaoService {
     this.layout.mostrar('servidor');
     if (debug) this.layout.tela.set('debug');
     const o = this.opcoesDe(c.id);
-    const ok = await this.depurador.lancar({ nome: c.nome, mainClass: c.mainClass, projectName: c.projectName, argumentos: comAspasDuplas(separarArgumentos(o.argumentos)), jvm: o.jvm, ambiente: { ...env, ...o.ambiente } }, debug);
+    const ambiente = { ...env, ...o.ambiente };
+    // Perfis do Spring escolhidos aqui valem sobre o .env: se o .env já define SPRING_PROFILES_ACTIVE, a variável é
+    // trocada; senão entra o -D. A JVM ou as variáveis desta configuração que já definam o perfil têm a palavra final.
+    let jvm = o.jvm;
+    if (o.perfis?.length && !/spring\.profiles\.active/.test(jvm) && !o.ambiente['SPRING_PROFILES_ACTIVE']) {
+      const lista = o.perfis.join(',');
+      if (ambiente['SPRING_PROFILES_ACTIVE'] !== undefined) ambiente['SPRING_PROFILES_ACTIVE'] = lista;
+      else jvm = `${jvm} -Dspring.profiles.active=${lista}`.trim();
+      this.registrarSeedy(`perfil do Spring: ${lista}`);
+    }
+    const ok = await this.depurador.lancar({ nome: c.nome, mainClass: c.mainClass, projectName: c.projectName, argumentos: comAspasDuplas(separarArgumentos(o.argumentos)), jvm, ambiente }, debug);
     if (ok) this.mudar((m) => ({ ...m, fase: 'rodando' }));
     else {
       this.mudar((m) => ({ ...m, fase: 'parado' }));

@@ -8,6 +8,7 @@ import { ComponenteAnalise, MetodoAnalise, ponte, TesteInfo } from '../nucleo/po
 import { ProjetoService } from '../nucleo/projeto.service';
 import { TestesService } from '../testes/testes.service';
 import { EstadoDeTeste } from '../testes/cobertura';
+import { SpringService } from '../spring/spring.service';
 
 export type Http = NonNullable<MetodoAnalise['http']>;
 export type Verbo = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -66,10 +67,11 @@ export class EndpointsService {
   private readonly env = inject(EnvService);
   private readonly mensagens = inject(MensagensService);
 
-  /** O projeto aberto é Spring Boot (pom.xml ou build.gradle com spring-boot)? Mostra o botão. */
-  readonly ehSpring = signal(false);
-  readonly porta = signal(8080);
-  readonly contexto = signal('');
+  private readonly spring = inject(SpringService);
+  /** O projeto aberto é Spring Boot? Mostra o botão. */
+  readonly ehSpring = this.spring.ehSpring;
+  readonly porta = this.spring.porta;
+  readonly contexto = this.spring.contexto;
   readonly noAr = signal(false);
 
   readonly selecionado = signal<string | null>(null);
@@ -125,11 +127,6 @@ export class EndpointsService {
   readonly atual = computed(() => this.todos().find((e) => e.id === this.selecionado()) ?? null);
 
   constructor() {
-    effect(() => {
-      this.projeto.raiz();
-      this.projeto.mudancas();
-      untracked(() => void this.detectar());
-    });
     // A análise chegou (ou o projeto mudou): sem endpoint escolhido, vale o primeiro.
     effect(() => {
       const todos = this.todos();
@@ -157,31 +154,12 @@ export class EndpointsService {
     });
   }
 
-  // ---------- projeto ----------
-
-  private async detectar(): Promise<void> {
-    const raiz = this.projeto.raiz();
-    if (!raiz) return this.ehSpring.set(false);
-    const sep = raiz.includes('\\') ? '\\' : '/';
-    const base = raiz.replace(/[\\/]+$/, '');
-    const ler = (rel: string) => ponte.lerArquivo(`${base}${sep}${rel.replace(/\//g, sep)}`).catch(() => '');
-    const [pom, gradle, kts] = await Promise.all([ler('pom.xml'), ler('build.gradle'), ler('build.gradle.kts')]);
-    const spring = /spring-boot/i.test(pom + gradle + kts);
-    this.ehSpring.set(spring);
-    if (!spring) return;
-    const [props, yml, yaml] = await Promise.all([ler('src/main/resources/application.properties'), ler('src/main/resources/application.yml'), ler('src/main/resources/application.yaml')]);
-    const texto = `${props}\n${yml}\n${yaml}`;
-    const porta = /^\s*server\.port\s*[=:]\s*(\d+)/m.exec(texto)?.[1] ?? /^server:\s*\r?\n(?:[ \t]+.*\r?\n)*?[ \t]+port:\s*(\d+)/m.exec(texto)?.[1];
-    this.porta.set(porta ? Number(porta) : 8080);
-    const ctx = /^\s*server\.servlet\.context-path\s*[=:]\s*(\S+)/m.exec(texto)?.[1] ?? /^[ \t]+context-path:\s*(\S+)/m.exec(texto)?.[1] ?? '';
-    this.contexto.set(ctx === '/' ? '' : ctx.replace(/\/+$/, ''));
-  }
-
   // ---------- tela ----------
 
   async abrir(): Promise<void> {
     if (!this.ehSpring()) return void this.mensagens.alerta('endpoints: o projeto aberto não é Spring Boot');
     this.layout.tela.set('endpoints');
+    void this.spring.atualizar();
     if (!this.entender.analise() || this.entender.analisando()) await this.entender.analisar();
     await this.testes.lerRelatorios?.();
     if (!this.atual()) this.selecionado.set(this.todos()[0]?.id ?? null);

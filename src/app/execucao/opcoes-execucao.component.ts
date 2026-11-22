@@ -3,6 +3,7 @@ import { ExecucaoService, OpcoesDeExecucao, OPCOES_VAZIAS } from './execucao.ser
 import { EnvService } from './env.service';
 import { ponte } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
+import { SpringService } from '../spring/spring.service';
 
 /**
  * Argumentos do programa, variáveis de ambiente e opções da JVM de uma configuração de
@@ -20,6 +21,18 @@ import { ProjetoService } from '../nucleo/projeto.service';
           @if (c.tipo === 'main') {
             <label class="campo larga"><span>opções da JVM</span>
               <input type="text" spellcheck="false" [value]="o().jvm" (input)="mudar('jvm', valor($event))" placeholder="-Xmx1g -Dspring.profiles.active=dev" /></label>
+          }
+          @if (c.tipo === 'main' && spring.ehSpring()) {
+            <div class="spring-perfis larga">
+              <span class="suave">perfil do Spring@if (spring.perfis().length) { (achados em application-*.yml) } @else { (nenhum application-*.yml em src/main/resources) }</span>
+              <div class="spring-perfis-lista">
+                @for (p of spring.perfis(); track p) {
+                  <button type="button" class="entender-chip" [class.ligado]="o().perfis?.includes(p)" (click)="alternarPerfil(p)">{{ p }}</button>
+                }
+                @if (spring.perfilDoArquivo(); as f) { <span class="suave">o application já ativa: {{ f }}</span> }
+              </div>
+              <div class="suave spring-perfis-nota">{{ notaDoPerfil() }}</div>
+            </div>
           }
           @if (env.arquivos().length) {
             <div class="env-caixa larga" [class.desligado]="!env.escolhido().usar">
@@ -68,6 +81,7 @@ import { ProjetoService } from '../nucleo/projeto.service';
 export class OpcoesExecucaoComponent {
   protected readonly x = inject(ExecucaoService);
   protected readonly env = inject(EnvService);
+  protected readonly spring = inject(SpringService);
   /** As primeiras variáveis do .env em uso (para mostrar; o valor com cara de senha sai mascarado). */
   protected readonly previa = signal<{ nome: string; valor: string }[]>([]);
   protected readonly ignorado = signal<boolean | null>(null);
@@ -129,6 +143,22 @@ export class OpcoesExecucaoComponent {
 
   protected mudar(campo: 'argumentos' | 'jvm', valor: string): void {
     this.o.update((o) => ({ ...o, [campo]: valor }));
+  }
+
+  protected alternarPerfil(p: string): void {
+    this.o.update((o) => {
+      const atuais = o.perfis ?? [];
+      return { ...o, perfis: atuais.includes(p) ? atuais.filter((x) => x !== p) : [...atuais, p] };
+    });
+  }
+
+  protected notaDoPerfil(): string {
+    const perfis = this.o().perfis ?? [];
+    if (!perfis.length) return 'sem escolha: vale o que o application.yml e o .env definirem';
+    if (/spring\.profiles\.active/.test(this.o().jvm) || this.variaveis().includes('SPRING_PROFILES_ACTIVE')) return 'a JVM ou o ambiente já definem o perfil: essa escolha fica de lado';
+    const lista = perfis.join(',');
+    const doEnv = this.previa().find((v) => v.nome === 'SPRING_PROFILES_ACTIVE');
+    return doEnv ? `troca o SPRING_PROFILES_ACTIVE do .env (${doEnv.valor}) por ${lista} no RUN e no DEBUG` : `vira -Dspring.profiles.active=${lista} no RUN e no DEBUG`;
   }
 
   protected definirVariaveis(texto: string): void {
