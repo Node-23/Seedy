@@ -28,6 +28,7 @@ import { TodoService } from '../todo/todo.service';
 import { ConfigService } from '../config/config.service';
 import { AutomaticoService } from '../ia/automatico.service';
 import { TestesService } from '../testes/testes.service';
+import { EndpointsService } from '../endpoints/endpoints.service';
 import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
 
@@ -66,6 +67,7 @@ export class AtalhosService {
   private readonly configuracoes = inject(ConfiguracoesService);
   private readonly bookmarks = inject(BookmarksService);
   private readonly testes = inject(TestesService);
+  private readonly endpoints = inject(EndpointsService);
   private readonly automatico = inject(AutomaticoService);
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
@@ -122,6 +124,7 @@ export class AtalhosService {
     { id: 'todo', tecla: 'T', rotulo: 'TODO (cards ligados ao código, regras e containers)', disponivel: true, executar: () => this.todo.alternar() },
     { id: 'entender', tecla: 'A', rotulo: 'entender o sistema (arquitetura, regras, caminho)', disponivel: true, executar: () => this.entender.alternar() },
     { id: 'testes', tecla: 'E', rotulo: 'testes: rodar, resultado e cobertura das regras', disponivel: true, executar: () => this.testes.alternar() },
+    { id: 'endpoints', tecla: 'H', rotulo: 'endpoints do Spring: ver, chamar e abrir o código', disponivel: true, executar: () => this.endpoints.alternar() },
     { id: 'bookmark', tecla: 'M', rotulo: 'bookmark: marcar/desmarcar a linha', disponivel: true, executar: () => void this.bookmarks.alternar() },
     { id: 'bookmarks', tecla: 'B', rotulo: 'bookmarks: lista e ir até uma marca', disponivel: true, executar: () => void this.bookmarks.listar() },
     { id: 'merge', tecla: 'm', rotulo: 'resolver conflitos (merge)', disponivel: true, executar: () => this.abrirMerge() },

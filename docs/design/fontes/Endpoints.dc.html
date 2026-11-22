@@ -1,0 +1,132 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Endpoints do Spring — IDE Java</title><link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet"><style>
+body{margin:0;background:#19191B}
+header,footer,header *,footer *,button{white-space:nowrap}
+.tela{width:1440px;height:900px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:12px;background:#19191B;color:#E9E2D3;font-family:'Martian Mono',ui-monospace,monospace;font-size:13px}
+.janela{border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.faixa{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:2px solid #0B0B0C;flex-shrink:0;font-size:12px}
+.rotulo{font-size:11px;letter-spacing:.14em;color:#A29D93}
+kbd{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:5px;background:#19191B;color:#A29D93;border:1px solid #0B0B0C}
+.btn{height:34px;padding:0 12px;border-radius:9px;border:2px solid #0B0B0C;background:#2A2A2D;color:#E9E2D3;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:8px;box-shadow:3px 3px 0 #0B0B0C;white-space:nowrap}
+.btn.p{background:#9CD7BA;color:#16171C;font-weight:700}
+.btn.p kbd{background:transparent;color:#16171C;border-color:#16171C}
+.suave{color:#A29D93}.dest{color:#9CD7BA}.ok{color:#B7D39C}.aviso{color:#E8C979}.erro{color:#EE8C84}.rosa{color:#E3A9CC}
+.abas{display:flex;align-items:center;gap:8px;height:54px;flex-shrink:0;box-sizing:border-box;padding:0 10px 0 16px;border:2px solid #0B0B0C;border-radius:14px;background:#2A2A2D;box-shadow:4px 4px 0 #0B0B0C;white-space:nowrap}
+.aba{height:36px;padding:0 14px;border-radius:9px;border:2px solid #0B0B0C;display:flex;align-items:center;gap:8px;font-size:12px;background:#2A2A2D}
+.aba.on{background:#9CD7BA;color:#16171C;font-weight:700;box-shadow:3px 3px 0 #0B0B0C}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:8px;border:2px solid #0B0B0C;background:#222225;font-size:11.5px;white-space:nowrap}
+.chip.on{background:#333337;box-shadow:inset 0 0 0 1px #9CD7BA;color:#9CD7BA}
+.grupo{display:flex;align-items:center;gap:8px;padding:10px 12px 4px;font-size:11.5px;white-space:nowrap}
+.grupo .d{margin-left:auto;color:#A29D93;font-size:11px}
+.e{display:flex;align-items:center;gap:10px;height:28px;padding:0 12px 0 24px;font-size:12px;white-space:nowrap}
+.e.sel{background:#333337;box-shadow:inset 3px 0 0 #9CD7BA}
+.e .d{margin-left:auto;color:#A29D93;font-size:11px;display:flex;gap:8px}
+.v{display:inline-block;width:52px;text-align:center;font-size:10.5px;font-weight:700;padding:1px 0;border-radius:6px;border:1px solid currentColor;flex-shrink:0}
+.v.get{color:#9CD7BA}.v.post{color:#B7D39C}.v.put{color:#E8C979}.v.del{color:#EE8C84}.v.pat{color:#E3A9CC}
+.kv{display:flex;gap:8px;font-size:11.5px;line-height:22px;white-space:nowrap}
+.kv .k{width:170px;color:#A29D93;flex-shrink:0}
+.l{display:block;white-space:pre;font-size:11.5px;line-height:21px}
+.l .n{display:inline-block;width:38px;text-align:right;padding-right:12px;color:#A29D93}
+.caixa{border:2px solid #0B0B0C;border-radius:10px;background:#222225}
+.tag{font-size:10.5px;padding:1px 7px;border-radius:6px;border:1px solid currentColor}
+</style></head><body>
+<div class="tela">
+ <div class="abas">
+  <span class="aba on">🌐 Endpoints</span>
+  <span class="btn p">⇢ abrir no código <kbd>⏎</kbd></span>
+  <span class="btn">▶ chamar <kbd>c</kbd></span>
+  <span class="btn">⧉ copiar curl <kbd>y</kbd></span>
+  <span class="btn">📖 Swagger <kbd>w</kbd></span>
+  <span class="btn">♥ Actuator <kbd>a</kbd></span>
+  <span style="flex:1"></span>
+  <span style="font-size:12px"><span class="ok">● :8080</span> <span class="suave">perfil</span> <b class="dest">dev</b> &nbsp; <span class="suave">26 em 7 controllers</span></span>
+ </div>
+
+ <div style="flex:1;min-height:0;display:grid;grid-template-columns:520px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 230px;gap:12px">
+
+  <!-- lista -->
+  <section class="janela" style="grid-row:1/3">
+   <div class="faixa"><span class="rotulo">ENDPOINTS</span><span style="flex:1"></span><span class="chip" style="min-width:190px;justify-content:space-between"><span class="suave">/ buscar caminho…</span><kbd>/</kbd></span></div>
+   <div style="display:flex;gap:6px;padding:8px 12px;border-bottom:2px solid #0B0B0C;flex-wrap:wrap"><span class="chip on">todos 26</span><span class="chip">GET 13</span><span class="chip">POST 6</span><span class="chip">PUT 3</span><span class="chip">DELETE 3</span><span class="chip">PATCH 1</span><span class="chip"><span class="aviso">🔒</span> protegidos 18</span></div>
+   <div style="padding:4px 0;overflow:hidden;flex:1">
+    <div class="grupo"><span class="suave">▾</span><b>FeiraController</b><span class="suave">/feiras</span><span class="d">5</span></div>
+    <div class="e"><span class="v get">GET</span>/feiras<span class="d"><span class="ok">✓ 2 testes</span></span></div>
+    <div class="e"><span class="v get">GET</span>/feiras/{id}<span class="d"><span class="ok">✓ 1 teste</span></span></div>
+    <div class="e"><span class="v post">POST</span>/feiras<span class="d"><span class="aviso">🔒</span><span class="ok">✓ 3 testes</span></span></div>
+    <div class="e"><span class="v put">PUT</span>/feiras/{id}<span class="d"><span class="aviso">🔒</span><span class="suave">sem teste</span></span></div>
+    <div class="e"><span class="v del">DELETE</span>/feiras/{id}<span class="d"><span class="aviso">🔒</span><span class="suave">sem teste</span></span></div>
+    <div class="grupo"><span class="suave">▾</span><b>ReservaController</b><span class="suave">/reservas</span><span class="d">4</span></div>
+    <div class="e"><span class="v get">GET</span>/reservas<span class="d"><span class="aviso">🔒</span><span class="ok">✓ 1 teste</span></span></div>
+    <div class="e sel"><span class="v post">POST</span><b>/reservas</b><span class="d"><span class="aviso">🔒</span><span class="ok">✓ 4 testes</span></span></div>
+    <div class="e"><span class="v pat">PATCH</span>/reservas/{id}/confirmar<span class="d"><span class="aviso">🔒</span><span class="ok">✓ 2 testes</span></span></div>
+    <div class="e"><span class="v del">DELETE</span>/reservas/{id}<span class="d"><span class="aviso">🔒</span><span class="suave">sem teste</span></span></div>
+    <div class="grupo"><span class="suave">▸</span><b>BancaController</b><span class="suave">/bancas</span><span class="d">6</span></div>
+    <div class="grupo"><span class="suave">▸</span><b>PagamentoController</b><span class="suave">/pagamentos</span><span class="d">4</span></div>
+    <div class="grupo"><span class="suave">▸</span><b>AuthController</b><span class="suave">/auth</span><span class="d">3</span></div>
+    <div class="grupo"><span class="suave">▸</span><b>UsuarioController</b><span class="suave">/usuarios</span><span class="d">3</span></div>
+    <div class="grupo"><span class="suave">▸</span><b>RelatorioController</b><span class="suave">/relatorios</span><span class="d">1</span></div>
+   </div>
+   <div class="suave" style="padding:10px 12px;border-top:2px solid #0B0B0C;font-size:11px"><span class="aviso">🔒</span> exige login · <span class="ok">✓</span> testes que chamam · <span class="dest">h l</span> fecha/abre</div>
+  </section>
+
+  <!-- detalhe -->
+  <section class="janela">
+   <div class="faixa"><span class="v post">POST</span><b style="font-size:13px">/reservas</b><span style="flex:1"></span><span class="tag aviso">🔒 ROLE_USER</span><span class="tag ok">201 Created</span></div>
+   <div style="padding:14px 16px;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px">
+    <div>
+     <div class="kv"><span class="k">método</span><span class="dest">ReservaController.reservar(…)</span></div>
+     <div class="kv"><span class="k">arquivo</span><span>ReservaController.java:34</span></div>
+     <div class="kv"><span class="k">consome</span><span>application/json</span></div>
+     <div class="kv"><span class="k">devolve</span><span>ReservaDTO <span class="suave">(201)</span></span></div>
+     <div class="rotulo" style="margin:14px 0 6px">PARÂMETROS</div>
+     <div class="kv"><span class="k"><span class="rosa">@RequestBody</span></span><span>ReservaRequest</span></div>
+     <div class="kv"><span class="k"><span class="rosa">@RequestParam</span></span><span>notificar <span class="suave">boolean = false</span></span></div>
+     <div class="kv"><span class="k"><span class="rosa">@AuthPrincipal</span></span><span>Usuario <span class="suave">(do token)</span></span></div>
+     <div class="rotulo" style="margin:14px 0 6px">ACESSO</div>
+     <div class="kv"><span class="aviso">🔒</span><span>@PreAuthorize("hasRole('USER')")</span></div>
+    </div>
+    <div>
+     <div class="rotulo" style="margin-bottom:6px">CORPO DA REQUISIÇÃO · ReservaRequest</div>
+     <div class="caixa" style="padding:8px 0">
+      <span class="l"><span class="suave">{</span></span>
+      <span class="l">  <span class="dest">"feiraId"</span>: <span class="aviso">Long</span> <span class="erro">*</span></span>
+      <span class="l">  <span class="dest">"bancaCodigo"</span>: <span class="aviso">String</span> <span class="erro">*</span></span>
+      <span class="l">  <span class="dest">"observacao"</span>: <span class="aviso">String</span> <span class="suave">  máx. 200</span></span>
+      <span class="l"><span class="suave">}</span>   <span class="suave" style="font-size:10.5px">  * obrigatório (@NotNull / @NotBlank)</span></span>
+     </div>
+     <div class="rotulo" style="margin:14px 0 6px">TESTES QUE CHAMAM ESTE CAMINHO</div>
+     <div class="kv"><span class="ok">✓</span><span>ReservaApiTest.postReservasDevolve409SemVaga</span></div>
+     <div class="kv"><span class="ok">✓</span><span>ReservaApiTest.postReservasCriaReserva</span></div>
+     <div class="kv"><span class="erro">✗</span><span>ReservaServiceTest.naoReservaEmFeiraLotada</span></div>
+     <div class="kv"><span class="suave">⚑</span><span class="suave">regras: R1 Feira lotada · R2 Banca única</span></div>
+    </div>
+   </div>
+   <div style="flex:1"></div>
+   <div style="display:flex;gap:8px;padding:10px 14px;border-top:2px solid #0B0B0C"><span class="btn p">⇢ abrir no código <kbd>⏎</kbd></span><span class="btn">▶ chamar agora <kbd>c</kbd></span><span class="btn">⧉ copiar curl <kbd>y</kbd></span><span class="btn"><span class="dest">✦</span> pedir à IA um teste <kbd>t</kbd></span></div>
+  </section>
+
+  <!-- chamar -->
+  <section class="janela">
+   <div class="faixa"><span class="rotulo">CHAMAR · http://localhost:8080</span><span style="flex:1"></span><span class="tag ok">201 Created · 38 ms</span></div>
+   <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;flex:1;min-height:0">
+    <div style="padding:10px 14px;border-right:2px solid #0B0B0C;font-size:11.5px;line-height:21px">
+     <div class="suave">POST /reservas?notificar=false</div>
+     <div class="suave">Authorization: <span class="dest">Bearer</span> eyJhbGciOi… <span class="aviso">(do .env: API_TOKEN)</span></div>
+     <div style="margin-top:4px"><span class="dest">{ "feiraId": 1, "bancaCodigo": "A1" }</span></div>
+    </div>
+    <div style="padding:10px 14px;font-size:11.5px;line-height:21px;overflow:hidden">
+     <span class="l ok">{ "id": 87, "status": "PENDENTE",</span>
+     <span class="l ok">  "feiraId": 1, "bancaCodigo": "A1",</span>
+     <span class="l ok">  "expiraEm": "2026-11-22T15:30:00" }</span>
+    </div>
+   </div>
+  </section>
+ </div>
+
+ <div style="height:30px;border:2px solid #0B0B0C;border-radius:10px;background:#2A2A2D;display:flex;align-items:stretch;font-size:12px;overflow:hidden;white-space:nowrap">
+  <span style="display:flex;align-items:center;padding:0 14px;background:#9CD7BA;color:#16171C;font-weight:700;letter-spacing:.08em">ENDPOINTS</span>
+  <span style="display:flex;align-items:center;padding:0 12px" class="suave"><b class="dest">j</b>&nbsp;k endpoints · <b class="dest">⏎</b>&nbsp;código · <b class="dest">c</b>&nbsp;chamar · <b class="dest">/</b>&nbsp;buscar · <b class="dest">w</b>&nbsp;swagger · <b class="dest">esc</b>&nbsp;editor</span>
+  <span style="flex:1"></span>
+  <span style="display:flex;align-items:center;padding:0 12px;border-left:2px solid #0B0B0C" class="suave"><b class="dest">␣ E</b></span>
+ </div>
+</div>
+</body></html>

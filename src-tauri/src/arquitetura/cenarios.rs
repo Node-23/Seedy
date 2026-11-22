@@ -26,6 +26,8 @@ pub struct TesteInfo {
     pub componentes: Vec<String>,
     /// Nomes dos métodos chamados no corpo do teste.
     pub chamadas: Vec<String>,
+    /// Caminhos HTTP citados no corpo (`"POST /reservas"` quando o verbo aparece antes; senão `"/reservas"`).
+    pub caminhos: Vec<String>,
     /// "java" ou "ts".
     pub linguagem: &'static str,
 }
@@ -95,6 +97,21 @@ fn componentes_citados(texto: &str, por_nome: &HashMap<&str, Vec<&str>>) -> Vec<
     ids
 }
 
+/// Caminhos de API citados no teste (`mockMvc.perform(post("/reservas"))`, `.uri("/feiras/1")`).
+fn caminhos_citados(corpo: &str) -> Vec<String> {
+    static C: OnceLock<Regex> = OnceLock::new();
+    let mut vistos: HashSet<String> = HashSet::new();
+    re(&C, r#"(?:\b(get|post|put|delete|patch)\s*\(\s*)?"(/[A-Za-z0-9_\-./{}:?=&]*)""#)
+        .captures_iter(corpo)
+        .map(|c| match c.get(1) {
+            Some(v) => format!("{} {}", v.as_str().to_uppercase(), &c[2]),
+            None => c[2].to_string(),
+        })
+        .filter(|c| vistos.insert(c.clone()))
+        .take(40)
+        .collect()
+}
+
 fn metodos_chamados(corpo: &str) -> Vec<String> {
     static CHAMADA: OnceLock<Regex> = OnceLock::new();
     let mut vistos: HashSet<&str> = HashSet::new();
@@ -148,6 +165,7 @@ pub(super) fn descobrir(fontes: &[Fonte], brutos: &[Bruto]) -> Vec<TesteInfo> {
                 espera_erro: espera_erro(&m.nome, corpo, &anotacoes),
                 componentes: componentes.clone(),
                 chamadas: metodos_chamados(corpo),
+                caminhos: caminhos_citados(corpo),
                 linguagem: "java",
             });
         }
@@ -176,6 +194,7 @@ pub(super) fn descobrir(fontes: &[Fonte], brutos: &[Bruto]) -> Vec<TesteInfo> {
                 espera_erro: espera_erro(&titulo, corpo, ""),
                 componentes: componentes.clone(),
                 chamadas: metodos_chamados(corpo),
+                caminhos: vec![],
                 linguagem: "ts",
             });
         }

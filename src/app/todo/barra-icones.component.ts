@@ -7,6 +7,7 @@ import { ScriptsService } from '../web/scripts.service';
 import { DockerService } from '../containers/docker.service';
 import { TodoService } from './todo.service';
 import { TestesService } from '../testes/testes.service';
+import { EndpointsService } from '../endpoints/endpoints.service';
 import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfigService } from '../config/config.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
@@ -66,6 +67,11 @@ import { ConfiguracoesService } from '../config/configuracoes.service';
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6.2L4.6 18.5A2 2 0 0 0 6.3 21.5h11.4a2 2 0 0 0 1.7-3L14 9.2V3" /><path d="M7.5 15h9" /></svg>
         @if (testes.totais().falhou; as n) { <span class="icone-contador erro">{{ n }}</span> }
       </button>
+      @if (endpoints.ehSpring()) {
+        <button class="icone-lateral" data-id="endpoints" [style.order]="o('endpoints')" (pointerdown)="arrastar($event, 'endpoints')" [class.ativo]="layout.tela() === 'endpoints'" title="Endpoints do Spring (␣ H)" (click)="endpoints.alternar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9z" /></svg>
+        </button>
+      }
       <button class="icone-lateral" data-id="entender" [style.order]="o('entender')" (pointerdown)="arrastar($event, 'entender')" [class.ativo]="layout.tela() === 'entender'" title="Entender o sistema (␣ A)" (click)="entender.alternar()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7" height="6" rx="1.5" /><rect x="14" y="4" width="7" height="6" rx="1.5" /><rect x="8.5" y="15" width="7" height="6" rx="1.5" /><path d="M6.5 10v2.5h11V10M12 12.5V15" /></svg>
       </button>
@@ -90,6 +96,7 @@ export class BarraIconesComponent {
   protected readonly configuracoes = inject(ConfiguracoesService);
   protected readonly bookmarks = inject(BookmarksService);
   protected readonly testes = inject(TestesService);
+  protected readonly endpoints = inject(EndpointsService);
   private readonly editor = inject(EditorService);
   private readonly config = inject(ConfigService);
   private readonly barra = viewChild.required<ElementRef<HTMLElement>>('barra');
@@ -175,7 +182,7 @@ export class BarraIconesComponent {
 }
 
 /** Ordem de fábrica (o debug logo abaixo dos arquivos). */
-export const ORDEM_PADRAO = ['arquivos', 'debug', 'buscar', 'git', 'todo', 'bookmarks', 'divisa', 'terminal', 'servidor', 'scripts', 'banco', 'containers', 'entender', 'testes'];
+export const ORDEM_PADRAO = ['arquivos', 'debug', 'buscar', 'git', 'todo', 'bookmarks', 'divisa', 'terminal', 'servidor', 'scripts', 'banco', 'containers', 'entender', 'testes', 'endpoints'];
 
 /** A ordem do seedy.json; botões que ela não cita (de versões novas) entram nas suas posições de fábrica. */
 function ordemCompleta(salva: string[] | undefined): string[] {

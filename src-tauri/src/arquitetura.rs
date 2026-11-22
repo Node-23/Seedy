@@ -116,6 +116,34 @@ pub struct Metodo {
 pub struct Endpoint {
     pub verbo: String,
     pub rota: String,
+    /// Parâmetros (`@RequestBody`, `@RequestParam`, `@PathVariable`...).
+    pub params: Vec<ParamHttp>,
+    /// Campos do corpo (a classe do `@RequestBody`), com as restrições de validação.
+    pub corpo: Vec<CampoHttp>,
+    /// `@PreAuthorize`, `@Secured`, `@RolesAllowed` (do método ou da classe).
+    pub acesso: Option<String>,
+    pub consome: Option<String>,
+    pub retorno: Option<String>,
+    pub status: Option<u16>,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamHttp {
+    /// body, query, path, header, cookie, principal.
+    pub origem: String,
+    pub nome: String,
+    pub tipo: String,
+    pub obrigatorio: bool,
+    pub padrao: Option<String>,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CampoHttp {
+    pub nome: String,
+    pub tipo: String,
+    pub restricoes: Vec<String>,
 }
 
 #[derive(Serialize, Clone)]
@@ -516,6 +544,10 @@ struct MetodoBruto {
     nome_pos: usize,
     anotacoes: Vec<Anotacao>,
     params: Vec<(String, String)>,
+    /// Texto original dos parâmetros (com as anotações).
+    params_texto: String,
+    /// Tipo de retorno (texto original).
+    retorno: String,
     corpo: Option<(usize, usize)>,
 }
 
@@ -573,6 +605,46 @@ fn sem_anotacoes(s: &str) -> String {
     static R: OnceLock<Regex> = OnceLock::new();
     let r = re(&R, r"@[\w.]+(\s*\([^()]*(\([^()]*\)[^()]*)*\))?");
     r.replace_all(s, " ").to_string()
+}
+
+/// Parâmetros HTTP de um método Spring e o tipo do `@RequestBody`.
+fn params_http(texto: &str) -> (Vec<ParamHttp>, Option<String>) {
+    static ANOT: OnceLock<Regex> = OnceLock::new();
+    let anot = re(&ANOT, r"@(RequestBody|RequestParam|PathVariable|RequestHeader|CookieValue|RequestPart|ModelAttribute|AuthenticationPrincipal)\b(?:\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\))?");
+    let mut lista = Vec::new();
+    let mut corpo = None;
+    for p in dividir(texto) {
+        let Some((nome, tipo)) = parametros(&p, false).into_iter().next() else { continue };
+        let simples = tipo_simples(&tipo);
+        let c = anot.captures(&p);
+        let (origem, args) = match &c {
+            Some(c) => (
+                match &c[1] {
+                    "RequestBody" | "RequestPart" => "body",
+                    "RequestParam" | "ModelAttribute" => "query",
+                    "PathVariable" => "path",
+                    "RequestHeader" => "header",
+                    "CookieValue" => "cookie",
+                    _ => "principal",
+                },
+                c.get(2).map(|m| m.as_str()).unwrap_or(""),
+            ),
+            None => {
+                if ["HttpServletRequest", "HttpServletResponse", "Model", "BindingResult", "Principal", "Authentication", "Locale", "HttpSession", "UriComponentsBuilder"].contains(&simples.as_str()) {
+                    continue;
+                }
+                ("query", "")
+            }
+        };
+        if origem == "body" && corpo.is_none() {
+            corpo = Some(tipos_genericos(&tipo).into_iter().next().filter(|_| tipo.contains('<')).unwrap_or(simples.clone()));
+        }
+        let nome_param = argumento(args, "value").or_else(|| argumento(args, "name")).or_else(|| primeira_string(args)).unwrap_or(nome);
+        let padrao = argumento(args, "defaultValue");
+        let obrigatorio = origem == "path" || origem == "body" || (!args.replace(' ', "").contains("required=false") && padrao.is_none());
+        lista.push(ParamHttp { origem: origem.into(), nome: nome_param, tipo: simples, obrigatorio, padrao });
+    }
+    (lista, corpo)
 }
 
 /// (nome, tipo) de cada parâmetro.
@@ -688,6 +760,8 @@ fn membro(f: &Fonte, ini: usize, fim: usize, corpo: Option<(usize, usize)>, camp
             nome_pos: p + nome_ini,
             anotacoes: anots,
             params: parametros(f.orig(a + 1, fecha), f.ts),
+            params_texto: f.orig(a + 1, fecha).to_string(),
+            retorno: tirar_modificadores(antes[..nome_ini].trim()).trim().to_string(),
             corpo,
         });
         return;
@@ -1594,7 +1668,24 @@ fn montar_com(fontes: Vec<Fonte>, htmls: &HashMap<String, (String, String)>, jsp
             if let (Some(v), "entrada") = (verbo, b.comp.papel) {
                 let completa = rota_fixa.unwrap_or_else(|| juntar_rota(&base, rota.as_deref().unwrap_or("")));
                 endpoints.push((bi, m.nome.clone(), v.to_string(), trechos(&completa).1));
-                met.http = Some(Endpoint { verbo: v.into(), rota: completa });
+                let (params, corpo_tipo) = params_http(&m.params_texto);
+                let corpo = corpo_tipo
+                    .and_then(|t| brutos.iter().find(|o| o.comp.nome == t))
+                    .map(|o| o.campos.iter().map(|c| CampoHttp { nome: c.nome.clone(), tipo: c.tipo.clone(), restricoes: c.anotacoes.iter().filter(|a| a.nome != "JsonProperty" && a.nome != "Column").map(|a| if a.args.trim().is_empty() { a.nome.clone() } else { format!("{}({})", a.nome, juntar_espacos(&a.args)) }).collect() }).collect())
+                    .unwrap_or_default();
+                let acesso_de = |anots: &[Anotacao]| anots.iter().find(|a| matches!(a.nome.as_str(), "PreAuthorize" | "Secured" | "RolesAllowed" | "PermitAll" | "DenyAll")).map(|a| if a.args.trim().is_empty() { a.nome.clone() } else { format!("{}({})", a.nome, juntar_espacos(&a.args)) });
+                let consome = m.anotacoes.iter().find(|a| a.nome.ends_with("Mapping")).and_then(|a| argumento(&a.args, "consumes"));
+                let status = m.anotacoes.iter().find(|a| a.nome == "ResponseStatus").and_then(|a| status_de(&a.args));
+                met.http = Some(Endpoint {
+                    verbo: v.into(),
+                    rota: completa,
+                    params,
+                    corpo,
+                    acesso: acesso_de(&m.anotacoes).or_else(|| acesso_de(&b.anots)),
+                    consome,
+                    retorno: Some(m.retorno.clone()).filter(|r| !r.is_empty() && r != "void"),
+                    status,
+                });
             }
             lista.push(met);
         }

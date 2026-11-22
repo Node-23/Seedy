@@ -327,7 +327,7 @@ pub struct RespostaHttp {
 
 /// Requisição HTTP à aplicação local (a IA testa a tela/endpoint depois de mudar o código).
 #[tauri::command]
-pub async fn servidor_http(metodo: String, url: String, corpo: Option<String>, tipo: Option<String>) -> Result<RespostaHttp, String> {
+pub async fn servidor_http(metodo: String, url: String, corpo: Option<String>, tipo: Option<String>, cabecalhos: Option<Vec<(String, String)>>) -> Result<RespostaHttp, String> {
     let local = ["http://localhost:", "http://127.0.0.1:"].iter().any(|p| url.starts_with(p));
     if !local {
         return Err("só faço requisições para a aplicação local (http://localhost:…)".into());
@@ -342,6 +342,11 @@ pub async fn servidor_http(metodo: String, url: String, corpo: Option<String>, t
         let mut pedido = agente.request(&metodo, &url);
         if let Some(t) = &tipo {
             pedido = pedido.set("Content-Type", t);
+        }
+        for (n, v) in cabecalhos.unwrap_or_default() {
+            if !n.is_empty() && !n.contains(char::is_whitespace) {
+                pedido = pedido.set(&n, &v);
+            }
         }
         let resposta = match corpo {
             Some(c) => pedido.send_string(&c),

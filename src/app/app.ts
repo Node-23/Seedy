@@ -49,6 +49,8 @@ import { WebLspService } from './web/web-lsp.service';
 import { TelaContainersComponent } from './containers/tela-containers.component';
 import { ContainersPainelComponent } from './containers/containers-painel.component';
 import { TelaTestesComponent } from './testes/tela-testes.component';
+import { TelaEndpointsComponent } from './endpoints/tela-endpoints.component';
+import { EndpointsService } from './endpoints/endpoints.service';
 import { TestesService } from './testes/testes.service';
 import { TelaConfiguracoesComponent } from './config/tela-configuracoes.component';
 import { BookmarksService } from './editor/bookmarks.service';
@@ -71,7 +73,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
   ],
   template: `
     <div class="seedy">
@@ -136,6 +138,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (layout.tela() === 'entender') { <sd-tela-entender class="tela-cheia" /> }
       @if (layout.tela() === 'config') { <sd-tela-configuracoes class="tela-cheia" /> }
       @if (layout.tela() === 'testes') { <sd-tela-testes class="tela-cheia" /> }
+      @if (layout.tela() === 'endpoints') { <sd-tela-endpoints class="tela-cheia" /> }
       <sd-diff />
       <sd-menu-gutter />
       <sd-toasts />
@@ -194,6 +197,7 @@ export class App {
     inject(ExecucaoService); // RUN/DEBUG: acha as classes main quando o jdtls fica pronto
     inject(WebLspService); // projeto web: TypeScript, Angular, ESLint e Prettier
     inject(TestesService); // testes: tela (␣ E) e a cobertura das regras
+    inject(EndpointsService); // endpoints do Spring: tela (␣ H), só em projeto Spring Boot
     inject(BookmarksService); // bookmarks no código (␣ M, ␣ B)
     inject(DivisoresService); // arrastar o vão entre painéis em qualquer tela cheia
     inject(EntenderService); // Fase 9: arquitetura, regras e o "acompanhar método" (ctrl+.)

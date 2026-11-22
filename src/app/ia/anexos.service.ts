@@ -9,6 +9,7 @@ import { ServidorService } from '../servidor/servidor.service';
 import { DockerService } from '../containers/docker.service';
 import { EntenderService, RegraVisivel } from '../entender/entender.service';
 import { TestesService } from '../testes/testes.service';
+import { EndpointsService, EndpointInfo } from '../endpoints/endpoints.service';
 import { TodoService } from '../todo/todo.service';
 import { GitService } from '../git/git.service';
 import { Card } from '../todo/todo';
@@ -142,6 +143,10 @@ export class AnexosService {
       const t = this.injetor.get(TestesService).atual();
       return t ? this.doTeste(t) : null;
     }
+    if (tela === 'endpoints') {
+      const e = this.injetor.get(EndpointsService).atual();
+      return e ? this.doEndpoint(e) : null;
+    }
     if (tela === 'git') return this.doGit();
     if (this.layout.visivel('conexoes') && this.injetor.get(BancoService).perfilAtivo()) return this.doBanco();
     if (tela === 'editor' || tela === 'debug') return this.doCodigo();
@@ -226,6 +231,20 @@ export class AnexosService {
       r?.mensagem ? `falha:\n${r.mensagem}` : '',
     ].filter(Boolean).join('\n');
     return { id: `teste:${t.id}`, rotulo: `${t.classe}#${t.metodo}`, icone: estado === 'falhou' ? '✗' : '✓', texto: corta(texto) };
+  }
+
+  doEndpoint(e: EndpointInfo): Anexo {
+    const s = this.injetor.get(EndpointsService);
+    const h = e.http;
+    const texto = [
+      `endpoint ${e.verbo} ${s.urlRelativa(e)} — ${e.controller.nome}.${e.metodo.nome} (${e.controller.relativo}:${e.metodo.linha})`,
+      h.acesso ? `acesso: ${h.acesso}` : 'sem restrição de acesso no código',
+      h.params?.length ? `parâmetros:\n${h.params.map((p) => `  ${p.origem} ${p.nome}: ${p.tipo}${p.obrigatorio ? '' : ' (opcional)'}`).join('\n')}` : '',
+      h.corpo?.length ? `corpo:\n${h.corpo.map((c) => `  ${c.nome}: ${c.tipo}${c.restricoes.length ? ` @${c.restricoes.join(' @')}` : ''}`).join('\n')}` : '',
+      h.retorno ? `devolve: ${h.retorno}${h.status ? ` (${h.status})` : ''}` : '',
+      `testes que passam por ele: ${s.testesDe(e).map((t) => `${t.classe}#${t.metodo}`).join(', ') || 'nenhum'}`,
+    ].filter(Boolean).join('\n');
+    return { id: `endpoint:${e.id}`, rotulo: `${e.verbo} ${s.urlRelativa(e)}`, icone: '🌐', texto: corta(texto) };
   }
 
   doBanco(): Anexo | null {

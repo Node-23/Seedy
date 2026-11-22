@@ -18,6 +18,7 @@ import { BancoService } from '../banco/banco.service';
 import type { FerramentasService } from './ferramentas.service';
 import { escreve as sqlEscreve, instrucoes as sqlInstrucoes } from '../banco/sql';
 import { EnvService } from '../execucao/env.service';
+import { EndpointsService } from '../endpoints/endpoints.service';
 import { OrigemDaAlteracao, RevisaoService } from './revisao.service';
 import { caminhoDaUri, EdicaoDeWorkspaceLsp, EdicaoLsp, edicoesPorArquivo, paraEdicao, uriMonaco } from '../java/conversao';
 import { EscopoDaMemoria, MemoriaService, prepararNota } from './memoria.service';
@@ -80,6 +81,7 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   // ---------- banco: escrita ----------
   { name: 'banco_executar', rotulo: 'banco.executar', description: 'ALTERA um banco configurado (INSERT, UPDATE, DELETE, DDL). O usuário vê as instruções e aprova SEMPRE, até no modo automático. Recusado em conexão somente leitura e em Produção, e UPDATE/DELETE sem WHERE. Para ler use banco_consultar. Devolve as linhas afetadas.', input_schema: objeto({ conexao: texto('Nome da conexão'), sql: texto('Uma ou mais instruções') }, ['conexao', 'sql']) },
   // ---------- .env ----------
+  { name: 'endpoints_listar', rotulo: 'endpoints.listar', description: 'Os endpoints Spring do projeto (verbo, caminho, controller.método e arquivo:linha, acesso e quantos testes passam por ele). Filtre por `busca` (parte do caminho, verbo ou controller). Só em projeto Spring Boot; para chamar um deles use a ferramenta de requisição HTTP.', input_schema: objeto({ busca: { type: 'string' } }) },
   { name: 'env_listar', rotulo: 'env.listar', description: 'Os arquivos .env da raiz do projeto, qual está em uso e os NOMES das variáveis que ele define (nunca os valores). O RUN, o DEBUG, os testes e executar_comando já usam o .env sozinhos.', input_schema: objeto({}) },
   // ---------- memória ----------
   { name: 'memoria_ler', rotulo: 'memoria.ler', description: 'As notas que já foram guardadas na memória: do projeto e globais (as globais valem para todos os projetos).', input_schema: objeto({ escopo: { type: 'string', enum: ['projeto', 'global', 'todas'], description: 'Padrão: todas' } }) },
@@ -116,6 +118,7 @@ export class FerramentasIdeService {
   private readonly banco = () => this.injetor.get(BancoService);
   private readonly memoria = () => this.injetor.get(MemoriaService);
   private readonly env = () => this.injetor.get(EnvService);
+  private readonly endpoints = () => this.injetor.get(EndpointsService);
   private readonly revisao = () => this.injetor.get(RevisaoService);
 
   conhece(nome: string): boolean {
@@ -184,6 +187,8 @@ export class FerramentasIdeService {
         return this.jdkEscolher(str(e, 'pasta'));
       case 'banco_executar':
         return this.bancoExecutar(str(e, 'conexao'), str(e, 'sql'));
+      case 'endpoints_listar':
+        return this.endpointsListar(opc(e, 'busca') ?? undefined);
       case 'env_listar':
         return this.envListar();
       case 'memoria_ler':
@@ -650,6 +655,15 @@ export class FerramentasIdeService {
   }
 
   // ---------- .env ----------
+
+  private async endpointsListar(busca: string | undefined): Promise<string> {
+    const s = this.endpoints();
+    if (!s.ehSpring()) return 'o projeto aberto não é Spring Boot';
+    if (!this.entender().analise()) await this.entender().analisar();
+    const q = (busca ?? '').toLowerCase();
+    const linhas = s.resumo().split('\n').filter((l) => !q || l.toLowerCase().includes(q));
+    return `porta ${s.porta()}${s.contexto() ? `, contexto ${s.contexto()}` : ''}, ${s.noAr() ? 'no ar' : 'parado'}\n${linhas.join('\n') || 'nenhum endpoint com esse filtro'}`;
+  }
 
   private async envListar(): Promise<string> {
     const e = this.env();

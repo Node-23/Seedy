@@ -103,6 +103,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   o resultado dos relatórios, a falha explicada (`a`, com a IA) e a saída do comando. Os do front
   (`.spec.ts`, Cypress, Playwright) aparecem na lista e rodam pelo painel de scripts. Cenários que
   conferem um erro levam ⚠.
+- **Endpoints do Spring** (mockup 28, `␣ H` ou o globo na barra de ícones, só em projeto Spring Boot): os
+  endpoints lidos do código por controller, com verbo, caminho, parâmetros, corpo (campos e validações),
+  acesso (`@PreAuthorize`) e os testes que passam por cada um. `c` chama o endpoint na aplicação local
+  (o pedido é editável, `{{NOME}}` vem do `.env`), `y` copia o curl, `w` abre o Swagger, `a` o Actuator.
 - **Regras de negócio com cobertura** (mockups 22 e 23): cada regra mostra se tem teste, se ele falha e
   quais cenários estão cobertos: o caminho feliz e cada desvio que o código tem (`throw`, validação,
   4xx). `u` filtra as sem teste, `x` as falhando; o clique direito (ou `t`) abre ir para o teste,

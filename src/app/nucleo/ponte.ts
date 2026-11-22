@@ -303,13 +303,25 @@ export interface DesvioAnalise {
   status: number | null;
 }
 
+/** Endpoint Spring lido do código: verbo, rota completa, parâmetros, corpo e acesso. */
+export interface EndpointAnalise {
+  verbo: string;
+  rota: string;
+  params?: { origem: 'body' | 'query' | 'path' | 'header' | 'cookie' | 'principal'; nome: string; tipo: string; obrigatorio: boolean; padrao: string | null }[];
+  corpo?: { nome: string; tipo: string; restricoes: string[] }[];
+  acesso?: string | null;
+  consome?: string | null;
+  retorno?: string | null;
+  status?: number | null;
+}
+
 export interface MetodoAnalise {
   nome: string;
   linha: number;
   linhaFim: number;
   params: string[];
   anotacoes: string[];
-  http: { verbo: string; rota: string } | null;
+  http: EndpointAnalise | null;
   agendado: string | null;
   chamadas: ChamadaAnalise[];
   desvios: DesvioAnalise[];
@@ -396,6 +408,8 @@ export interface TesteInfo {
   esperaErro: boolean;
   componentes: string[];
   chamadas: string[];
+  /** Caminhos de API citados no corpo ("POST /reservas" ou "/reservas"). */
+  caminhos?: string[];
   linguagem: 'java' | 'ts';
 }
 
@@ -681,8 +695,8 @@ export const ponte = {
       noApp() ? invoke<{ id: string; url: string; portaDebug: number | null }[]>('servidor_em_execucao') : [],
     abrirUrl: (url: string) => invoke<void>('servidor_abrir_url', { url }),
     /** Requisição à aplicação local (só http://localhost). */
-    http: (metodo: string, url: string, corpo: string | null, tipo: string | null) =>
-      invoke<{ status: number; tipo: string | null; corpo: string; ms: number }>('servidor_http', { metodo, url, corpo, tipo }),
+    http: (metodo: string, url: string, corpo: string | null, tipo: string | null, cabecalhos: [string, string][] | null = null) =>
+      invoke<{ status: number; tipo: string | null; corpo: string; ms: number }>('servidor_http', { metodo, url, corpo, tipo, cabecalhos }),
   },
 
   /** Servidor MCP do Seedy (o Claude Code opera a IDE): as ferramentas rodam na interface. */

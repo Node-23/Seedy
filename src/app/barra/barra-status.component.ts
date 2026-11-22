@@ -216,10 +216,10 @@ export class BarraStatusComponent {
   }
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
-    this.todo.aberto() ? 'todo' : this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.layout.tela() === 'config' ? 'entender' : this.layout.tela() === 'testes' ? 'testes' : this.buscando() ? 'busca' : this.editor.modo(),
+    this.todo.aberto() ? 'todo' : this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.layout.tela() === 'config' ? 'entender' : this.layout.tela() === 'testes' ? 'testes' : this.layout.tela() === 'endpoints' ? 'testes' : this.buscando() ? 'busca' : this.editor.modo(),
   );
   protected readonly rotuloDoModo = computed(() =>
-    this.todo.aberto() ? 'TODO' : this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.layout.tela() === 'entender' ? this.entender.aba().toUpperCase() : this.layout.tela() === 'config' ? 'CONFIG' : this.layout.tela() === 'testes' ? 'TESTES' : this.buscando() ? 'BUSCA' : this.nomeModo(),
+    this.todo.aberto() ? 'TODO' : this.layout.tela() === 'git' ? 'GIT' : this.layout.tela() === 'merge' ? 'MERGE' : this.layout.tela() === 'debug' ? 'DEBUG' : this.layout.tela() === 'containers' ? 'DOCKER' : this.layout.tela() === 'entender' ? this.entender.aba().toUpperCase() : this.layout.tela() === 'config' ? 'CONFIG' : this.layout.tela() === 'testes' ? 'TESTES' : this.layout.tela() === 'endpoints' ? 'ENDPOINTS' : this.buscando() ? 'BUSCA' : this.nomeModo(),
   );
   protected readonly buscando = computed(() => this.busca.aberta() || this.buscaProjeto.aberta());
 
