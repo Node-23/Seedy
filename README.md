@@ -103,6 +103,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   o resultado dos relatórios, a falha explicada (`a`, com a IA) e a saída do comando. Os do front
   (`.spec.ts`, Cypress, Playwright) aparecem na lista e rodam pelo painel de scripts. Cenários que
   conferem um erro levam ⚠.
+- **Imagem no chat da IA** (`ctrl+v` no campo, o botão 🖼 ou arrastar um arquivo): PNG, JPEG, GIF ou WebP até 5 MB, até
+  4 por mensagem. O chip mostra a miniatura; imagens grandes são reduzidas a 1568 px antes de seguir. Vale para a
+  chave da API e para o modo assinatura (Claude Code). A conversa guardada em `.seedy/conversa.json` fica só com as
+  miniaturas, nunca com a imagem inteira.
 - **Endpoints do Spring** (mockup 28, `␣ H` ou o globo na barra de ícones, só em projeto Spring Boot): os
   endpoints lidos do código por controller, com verbo, caminho, parâmetros, corpo (campos e validações),
   acesso (`@PreAuthorize`) e os testes que passam por cada um. `c` chama o endpoint na aplicação local

@@ -364,6 +364,7 @@ fn texto_do_conteudo(c: &serde_json::Value) -> String {
             .filter_map(|b| match b["type"].as_str() {
                 Some("text") => b["text"].as_str().map(str::to_string),
                 Some("tool_result") => Some(texto_do_conteudo(&b["content"])),
+                Some("image") => Some("[imagem anexada]".to_string()),
                 _ => None,
             })
             .collect::<Vec<_>>()
@@ -394,6 +395,22 @@ fn prompt_do_corpo(corpo: &serde_json::Value) -> String {
     saida
 }
 
+/// As imagens da conversa (blocos `image` das mensagens do usuário), as últimas 8.
+fn imagens_do_corpo(corpo: &serde_json::Value) -> Vec<serde_json::Value> {
+    let mut todas: Vec<serde_json::Value> = corpo["messages"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|m| m["role"] == "user")
+        .flat_map(|m| m["content"].as_array().cloned().unwrap_or_default())
+        .filter(|b| b["type"] == "image")
+        .collect();
+    if todas.len() > 8 {
+        todas.drain(..todas.len() - 8);
+    }
+    todas
+}
+
 /// Modo assinatura: roda o `claude -p` (login do próprio Claude Code, sem ferramentas) e repassa
 /// os eventos de stream, que já vêm no formato da Messages API dentro de `stream_event`.
 fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: Option<PathBuf>, app: &AppHandle) -> Result<(), String> {
@@ -408,12 +425,23 @@ fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: 
     if let Some(arquivo) = config_mcp {
         args.extend(["--mcp-config".into(), arquivo.to_string_lossy().into_owned(), "--strict-mcp-config".into(), "--allowedTools".into(), "mcp__seedy".into()]);
     }
+    // Com imagens, o `claude -p` só as recebe pela entrada em stream-json (uma mensagem do usuário com os blocos).
+    let imagens = imagens_do_corpo(corpo);
+    if !imagens.is_empty() {
+        args.extend(["--input-format".into(), "stream-json".into()]);
+    }
     let mut c = comando_claude(&args);
     c.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     crate::web::sem_janela(&mut c);
     let mut filho = c.spawn().map_err(|e| format!("não achei o Claude Code (instale com `npm i -g @anthropic-ai/claude-code` ou veja claude.com/claude-code): {e}"))?;
     let mut entrada = filho.stdin.take().ok_or("sem stdin do claude")?;
-    let prompt = prompt_do_corpo(corpo);
+    let mut prompt = prompt_do_corpo(corpo);
+    if !imagens.is_empty() {
+        prompt.push_str("(as imagens anexadas à conversa seguem abaixo, na ordem em que foram enviadas)");
+        let mut blocos = vec![serde_json::json!({"type": "text", "text": prompt})];
+        blocos.extend(imagens);
+        prompt = format!("{}\n", serde_json::json!({"type": "user", "message": {"role": "user", "content": blocos}}));
+    }
     std::thread::spawn(move || {
         let _ = entrada.write_all(prompt.as_bytes());
     });

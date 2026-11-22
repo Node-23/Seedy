@@ -20,7 +20,7 @@ export interface PassoDaIa {
 }
 
 export type ItemDaIa =
-  | { tipo: 'usuario'; texto: string; anexos?: string[] }
+  | { tipo: 'usuario'; texto: string; anexos?: string[]; imagens?: string[] }
   | { tipo: 'texto'; texto: string }
   | { tipo: 'ferramentas'; passos: PassoDaIa[] }
   | { tipo: 'proposta'; alteracao: number }
@@ -131,7 +131,8 @@ export class IaService {
     const itens = itensDaConversa.filter((i) => i.tipo !== 'proposta');
     if (!itens.length) return this.apagarArquivoDaConversa(raiz);
     this.comArquivoDeConversa.add(raiz);
-    let h = historico;
+    // As imagens da conversa não vão para o disco (pesam megabytes): ficam só as miniaturas nos itens.
+    let h: MensagemDaApi[] = historico.map((m) => (m.content.some((b) => b.type === 'image') ? { ...m, content: m.content.map((b) => (b.type === 'image' ? { type: 'text', text: '[imagem anexada, não guardada]' } : b)) } : m));
     let texto = JSON.stringify({ itens, historico: h });
     // Conversa grande demais: fica com o final.
     while (texto.length > LIMITE_DA_CONVERSA && h.length > 2) {
@@ -199,15 +200,28 @@ export class IaService {
   }
 
   async enviar(texto: string): Promise<void> {
-    const pergunta = texto.trim();
+    const imagens = this.anexos.imagens();
+    const pergunta = texto.trim() || (imagens.length ? 'o que você vê nesta imagem?' : '');
     if (!pergunta || this.pensando()) return;
     if (!(await this.garantirChave())) return;
     const contexto = this.contexto();
     const anexos = this.anexos.lista();
     const completa = `${this.anexos.texto()}${pergunta}`;
-    this.historico.push({ role: 'user', content: [{ type: 'text', text: contexto ? `${contexto}\n\n${completa}` : completa }] });
-    this.adicionar({ tipo: 'usuario', texto: pergunta, ...(anexos.length ? { anexos: anexos.map((a) => a.rotulo) } : {}) });
+    this.historico.push({
+      role: 'user',
+      content: [
+        ...imagens.map((i) => ({ type: 'image', source: { type: 'base64', media_type: i.tipo, data: i.dados } })),
+        { type: 'text', text: contexto ? `${contexto}\n\n${completa}` : completa },
+      ],
+    });
+    this.adicionar({
+      tipo: 'usuario',
+      texto: texto.trim(),
+      ...(anexos.length ? { anexos: anexos.map((a) => a.rotulo) } : {}),
+      ...(imagens.length ? { imagens: imagens.map((i) => i.miniatura) } : {}),
+    });
     this.anexos.lista.set([]);
+    this.anexos.imagens.set([]);
     await this.rodar();
   }
 

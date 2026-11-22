@@ -28,6 +28,34 @@ export interface Anexo {
 }
 
 /** Menu de um item só ("✦ Mandar para a IA") aberto com o botão direito. */
+/** Imagem colada ou arrastada para o chat: vai como bloco `image` da API junto da próxima mensagem. */
+export interface ImagemAnexada {
+  id: string;
+  nome: string;
+  /** image/png, image/jpeg, image/gif ou image/webp. */
+  tipo: string;
+  /** Base64 sem o prefixo `data:`. */
+  dados: string;
+  bytes: number;
+  /** Miniatura (data URL pequena) para o chip e para a conversa. */
+  miniatura: string;
+}
+
+export const TIPOS_DE_IMAGEM = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+export const LIMITE_DE_IMAGEM = 5 * 1024 * 1024;
+export const MAX_IMAGENS = 4;
+/** Lado maior: a API reduz o que passa disto, então reduzimos antes (menos bytes, mesma leitura). */
+const LADO_MAXIMO = 1568;
+
+const paraBase64 = (b: Blob) =>
+  new Promise<string>((ok, erro) => {
+    const l = new FileReader();
+    l.onload = () => ok(String(l.result).split(',')[1] ?? '');
+    l.onerror = () => erro(l.error);
+    l.readAsDataURL(b);
+  });
+
+/** Menu de um item só ("✦ Mandar para a IA") aberto com o botão direito. */
 export interface MenuDeAnexo {
   x: number;
   y: number;
@@ -52,6 +80,57 @@ export class AnexosService {
 
   readonly lista = signal<Anexo[]>([]);
   readonly menu = signal<MenuDeAnexo | null>(null);
+  readonly imagens = signal<ImagemAnexada[]>([]);
+
+  /** Anexa uma imagem (colar, arrastar ou escolher arquivo). Devolve true se entrou. */
+  async adicionarImagem(arquivo: Blob, nome = 'imagem'): Promise<boolean> {
+    let tipo = arquivo.type;
+    if (!TIPOS_DE_IMAGEM.includes(tipo)) {
+      this.mensagens.alerta('imagem: só PNG, JPEG, GIF ou WebP');
+      return false;
+    }
+    if (this.imagens().length >= MAX_IMAGENS) {
+      this.mensagens.alerta(`imagem: no máximo ${MAX_IMAGENS} por mensagem`);
+      return false;
+    }
+    try {
+      let blob: Blob = arquivo;
+      const bmp = await createImageBitmap(arquivo);
+      const lado = Math.max(bmp.width, bmp.height);
+      if (lado > LADO_MAXIMO && tipo !== 'image/gif') {
+        const f = LADO_MAXIMO / lado;
+        const c = document.createElement('canvas');
+        c.width = Math.round(bmp.width * f);
+        c.height = Math.round(bmp.height * f);
+        c.getContext('2d')?.drawImage(bmp, 0, 0, c.width, c.height);
+        const novo = await new Promise<Blob | null>((r) => c.toBlob(r, tipo === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.9));
+        if (novo) {
+          blob = novo;
+          tipo = novo.type;
+        }
+      }
+      if (blob.size > LIMITE_DE_IMAGEM) {
+        this.mensagens.alerta(`imagem: ${(blob.size / 1048576).toFixed(1)} MB passa do limite de 5 MB`);
+        return false;
+      }
+      const m = document.createElement('canvas');
+      const f = Math.min(1, 96 / Math.max(bmp.width, bmp.height));
+      m.width = Math.max(1, Math.round(bmp.width * f));
+      m.height = Math.max(1, Math.round(bmp.height * f));
+      m.getContext('2d')?.drawImage(bmp, 0, 0, m.width, m.height);
+      bmp.close();
+      const img: ImagemAnexada = { id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, nome, tipo, dados: await paraBase64(blob), bytes: blob.size, miniatura: m.toDataURL('image/jpeg', 0.7) };
+      this.imagens.update((l) => [...l, img]);
+      return true;
+    } catch {
+      this.mensagens.alerta('imagem: não consegui ler esse arquivo');
+      return false;
+    }
+  }
+
+  removerImagem(id: string): void {
+    this.imagens.update((l) => l.filter((i) => i.id !== id));
+  }
 
   // ---------- a lista ----------
 

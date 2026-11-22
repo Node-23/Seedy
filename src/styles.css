@@ -2050,3 +2050,11 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .endpoints-colunas > div { min-width: 0; overflow: hidden; }
 .endpoints-colunas .kv-linha, .endpoints-colunas .testes-trecho-linha { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .endpoints-colunas .kv-linha > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* Imagem no chat da IA (ctrl+v, mockup 27). */
+.ia-anexo-imagem { padding-left: 3px; }
+.ia-anexo-imagem img { width: 34px; height: 24px; object-fit: cover; border-radius: 4px; vertical-align: middle; }
+.ia-usuario-imagens { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.ia-usuario-imagens img { max-width: 120px; max-height: 80px; border-radius: 6px; border: 1px solid var(--texto-sobre-destaque); object-fit: cover; }
+.ia-imagem { border: 0; background: transparent; color: var(--texto-suave); cursor: pointer; font-size: 14px; padding: 0 6px; }
+.ia-imagem:hover { color: var(--destaque); }

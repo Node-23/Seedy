@@ -38,6 +38,9 @@ import { nomeBase } from '../nucleo/ponte';
             @case ('usuario') {
               <div class="ia-usuario">
                 {{ item.texto }}
+                @if (item.imagens?.length) {
+                  <div class="ia-usuario-imagens">@for (m of item.imagens; track $index) { <img [src]="m" alt="imagem enviada" /> }</div>
+                }
                 @if (item.anexos?.length) {
                   <div class="ia-usuario-anexos">@for (a of item.anexos; track $index) { <span>{{ a }}</span> }</div>
                 }
@@ -95,9 +98,13 @@ import { nomeBase } from '../nucleo/ponte';
       </div>
 
       <div class="ia-pe">
-        @if (anexos.lista().length) {
+        @if (anexos.lista().length || anexos.imagens().length) {
           <div class="ia-anexos-titulo">mandado para esta conversa · vai junto da próxima mensagem</div>
           <div class="ia-contexto ia-anexos">
+            @for (i of anexos.imagens(); track i.id) {
+              <span class="ia-chip ia-anexo ia-anexo-imagem" [title]="i.nome"><img [src]="i.miniatura" alt="" /> {{ i.nome }} · {{ tamanho(i.bytes) }}
+                <button class="ia-anexo-x" [attr.aria-label]="'Tirar ' + i.nome" (click)="anexos.removerImagem(i.id)">✕</button></span>
+            }
             @for (a of anexos.lista(); track a.id) {
               <span class="ia-chip ia-anexo" [title]="a.texto">{{ a.icone }} {{ a.rotulo }}
                 <button class="ia-anexo-x" [attr.aria-label]="'Tirar ' + a.rotulo" (click)="anexos.remover(a.id)">✕</button></span>
@@ -107,10 +114,12 @@ import { nomeBase } from '../nucleo/ponte';
         <div class="ia-contexto">
           @for (c of contexto(); track c) { <span class="ia-chip ia-chip-suave">&#64;{{ c }}</span> }
         </div>
-        <label class="ia-campo ia-campo-grande">
-          <input #campo type="text" spellcheck="false" aria-label="Mensagem para a IA"
-                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça uma alteração ou pergunte… (/clear zera · /historico · /memoria)'"
+        <label class="ia-campo ia-campo-grande" (dragover)="$event.preventDefault()" (drop)="soltar($event)">
+          <input #campo type="text" spellcheck="false" aria-label="Mensagem para a IA" (paste)="colar($event)"
+                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça, pergunte ou cole uma imagem (ctrl+v)…'"
                  [value]="texto()" (input)="texto.set($any($event.target).value)" (keydown)="teclar($event)" />
+          <button class="ia-imagem" aria-label="Anexar imagem" title="anexar imagem (ou cole com ctrl+v)" (click)="escolherImagem.click()">🖼</button>
+          <input #escolherImagem type="file" hidden multiple accept="image/png,image/jpeg,image/gif,image/webp" (change)="escolhidas($event)" />
           <button class="ia-enviar" aria-label="Enviar" [disabled]="ia.pensando()" (click)="enviar()">→</button>
         </label>
       </div>
@@ -181,7 +190,7 @@ export class IaComponent {
   protected teclar(e: KeyboardEvent): void {
     const pendente = this.ia.pendente();
     if (e.key === 'Enter' && !e.shiftKey) {
-      if (this.texto().trim()) void this.enviar();
+      if (this.texto().trim() || this.anexos.imagens().length) void this.enviar();
       else if (pendente) void this.revisao.aceitar(pendente.id);
     } else if (e.key === 'Escape') {
       if (pendente) void this.revisao.recusar(pendente.id);
@@ -196,10 +205,36 @@ export class IaComponent {
     e.stopPropagation();
   }
 
+  protected tamanho(bytes: number): string {
+    return bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  }
+
+  /** ctrl+v com imagem na área de transferência: anexa em vez de colar texto. */
+  protected colar(e: ClipboardEvent): void {
+    const arquivos = Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'));
+    if (!arquivos.length) return;
+    e.preventDefault();
+    for (const f of arquivos) void this.anexos.adicionarImagem(f, f.name && f.name !== 'image.png' ? f.name : `print-${this.anexos.imagens().length + 1}.png`);
+  }
+
+  protected soltar(e: DragEvent): void {
+    const arquivos = Array.from(e.dataTransfer?.files ?? []);
+    if (!arquivos.length) return;
+    e.preventDefault();
+    for (const f of arquivos) void this.anexos.adicionarImagem(f, f.name);
+  }
+
+  protected escolhidas(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    for (const f of Array.from(input.files ?? [])) void this.anexos.adicionarImagem(f, f.name);
+    input.value = '';
+    this.campo()?.nativeElement.focus();
+  }
+
   protected async enviar(): Promise<void> {
     const t = this.texto();
     if (this.ia.comando(t)) return void this.texto.set('');
-    if (!t.trim() || this.ia.pensando()) return;
+    if ((!t.trim() && !this.anexos.imagens().length) || this.ia.pensando()) return;
     this.texto.set('');
     await this.ia.enviar(t);
     this.campo()?.nativeElement.focus();
