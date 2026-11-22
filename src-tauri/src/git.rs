@@ -91,6 +91,13 @@ pub async fn git(pasta: Option<String>, args: Vec<String>, entrada: Option<Strin
 #[derive(Default)]
 pub struct ContaGithub(Mutex<Option<String>>);
 
+impl ContaGithub {
+    /// O token da conta conectada (só o núcleo vê).
+    pub fn token(&self) -> Option<String> {
+        self.0.lock().unwrap().clone()
+    }
+}
+
 #[derive(Serialize, Clone)]
 pub struct Usuario {
     pub login: String,

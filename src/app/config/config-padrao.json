@@ -15,6 +15,9 @@
   "atalhos": {
     "lider": {}
   },
+  "atualizacao": {
+    "verificar": true
+  },
   "ia": {
     "modelo": "claude-opus-5-5",
     "modo": "chave",

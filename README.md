@@ -103,6 +103,12 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   o resultado dos relatórios, a falha explicada (`a`, com a IA) e a saída do comando. Os do front
   (`.spec.ts`, Cypress, Playwright) aparecem na lista e rodam pelo painel de scripts. Cenários que
   conferem um erro levam ⚠.
+- **Atualização do Seedy** (`␣ U`): ao abrir e a cada 6 horas ele olha a última release do GitHub e, havendo versão
+  nova, mostra "⬆ x.y.z disponível" na barra de status; nada baixa sozinho. O quadro mostra as notas; "instalar e
+  reiniciar" baixa o instalador, confere o tamanho e o SHA-256 do `SHA256SUMS.txt` da release (sem ele o Seedy não
+  instala), fecha, instala em silêncio e abre de novo no mesmo projeto. Vale para o instalador do Windows e para o
+  AppImage do Linux; o portátil e os pacotes `.deb`/`.rpm` só abrem a página da release. Com o repositório privado
+  usa a conta do GitHub conectada (`␣ G`). Desliga com `atualizacao.verificar: false` no `seedy.json`.
 - **Imagem no chat da IA** (`ctrl+v` no campo, o botão 🖼 ou arrastar um arquivo): PNG, JPEG, GIF ou WebP até 5 MB, até
   4 por mensagem. O chip mostra a miniatura; imagens grandes são reduzidas a 1568 px antes de seguir. Vale para a
   chave da API e para o modo assinatura (Claude Code). A conversa guardada em `.seedy/conversa.json` fica só com as
@@ -364,6 +370,7 @@ exemplo).
   "terminal": { "shell": null, "argumentos": [] },   // ex.: "C:\\Program Files\\Git\\bin\\bash.exe", ["--login"]
   "atalhos": { "lider": { "todo": "t" } },           // id da ação → tecla do líder
   "ia": { "modelo": "claude-opus-5-5" },
+  "atualizacao": { "verificar": true },              // false desliga a procura de versão nova
   "layout": { ... }                                  // gravado pelo Seedy (␣ L)
 }
 ```

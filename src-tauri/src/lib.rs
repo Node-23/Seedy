@@ -5,6 +5,7 @@
 //! de acesso ao sistema (arquivos, busca, processos, PTY, Git, banco, servidores) mora aqui.
 
 mod arquivos;
+mod atualizacao;
 mod arquitetura;
 mod banco;
 mod busca;
@@ -117,6 +118,9 @@ pub fn run() {
             novo_projeto::spring_metadados,
             web::web_estado,
             web::porta_em_uso,
+            atualizacao::atualizacao_versao,
+            atualizacao::atualizacao_verificar,
+            atualizacao::atualizacao_instalar,
             web::web_instalar,
             web::lsp_web_iniciar,
             web::web_formatar,

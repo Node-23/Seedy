@@ -2058,3 +2058,20 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .ia-usuario-imagens img { max-width: 120px; max-height: 80px; border-radius: 6px; border: 1px solid var(--texto-sobre-destaque); object-fit: cover; }
 .ia-imagem { border: 0; background: transparent; color: var(--texto-suave); cursor: pointer; font-size: 14px; padding: 0 6px; }
 .ia-imagem:hover { color: var(--destaque); }
+
+/* Atualização do Seedy (␣ U, mockup 27). */
+.atualizacao-aviso { border: 0; border-left: var(--espessura-borda) solid var(--borda); background: var(--sucesso-fundo); color: var(--sucesso); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.painel-atualizacao .botao { white-space: nowrap; }
+.painel-atualizacao {
+  position: fixed; right: 14px; bottom: 64px; width: 500px; max-width: calc(100vw - 28px); z-index: 56; overflow: hidden; outline: none; font-size: 12px;
+  border: var(--espessura-borda) solid var(--borda); border-radius: 12px; background: var(--painel-elevado);
+  box-shadow: var(--deslocamento-sombra) var(--deslocamento-sombra) 0 var(--sombra);
+}
+.atualizacao-topo { padding: 10px 14px; border-bottom: var(--espessura-borda) solid var(--borda); }
+.atualizacao-notas { padding: 10px 14px; line-height: 1.7; max-height: 240px; overflow: auto; }
+.atualizacao-nota { margin-top: 6px; font-size: 11px; line-height: 1.5; }
+.atualizacao-acoes { padding: 10px 14px; border-top: var(--espessura-borda) solid var(--borda); display: flex; gap: 8px; justify-content: flex-end; }
+.atualizacao-barra { height: 8px; margin: 4px 14px 0; border-radius: 4px; background: var(--fundo); border: 1px solid var(--borda); overflow: hidden; }
+.atualizacao-barra > i { display: block; height: 100%; background: var(--destaque); }
+.painel-atualizacao .atualizacao-barra + .atualizacao-nota { padding: 0 14px 10px; }
+.atualizacao-acoes .botao { padding: 0 9px; font-size: 11.5px; }

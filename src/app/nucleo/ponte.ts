@@ -424,6 +424,20 @@ export interface ResultadoTeste {
   integracao: boolean;
 }
 
+/** Uma release do Seedy mais nova que esta versão. */
+export interface AtualizacaoInfo {
+  versao: string;
+  atual: string;
+  notas: string;
+  tamanho: number;
+  arquivo: string;
+  pagina: string;
+  /** A release publica o SHA256SUMS.txt (sem ele não instala sozinho). */
+  confere: boolean;
+  /** Instalação automática possível neste Seedy (instalador no Windows, AppImage no Linux). */
+  automatica: boolean;
+}
+
 export interface AnaliseArquitetura {
   tecnologias: string[];
   componentes: ComponenteAnalise[];
@@ -614,6 +628,17 @@ export const ponte = {
   /** Alguém escuta nesta porta? (sem conectar nela) */
   rede: {
     portaEmUso: async (porta: number): Promise<boolean> => (noApp() ? invoke<boolean>('porta_em_uso', { porta }) : false),
+  },
+
+  /** Atualização do próprio Seedy pela última release do GitHub. */
+  atualizacao: {
+    versao: () => invoke<string>('atualizacao_versao'),
+    verificar: () => invoke<AtualizacaoInfo | null>('atualizacao_verificar'),
+    instalar: (versao: string) => invoke<void>('atualizacao_instalar', { versao }),
+    async aoProgresso(fn: (p: { lido: number; total: number }) => void): Promise<UnlistenFn> {
+      if (!noApp()) return () => {};
+      return listen<{ lido: number; total: number }>('atualizacao-progresso', (e) => fn(e.payload));
+    },
   },
 
   /** Arquivos `.env` da raiz do projeto (fora do app não há). */

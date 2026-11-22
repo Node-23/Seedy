@@ -5,6 +5,7 @@ import { BuscaService } from '../busca/busca.service';
 import { BuscaProjetoService } from '../busca/busca-projeto.service';
 import { CarregandoComponent } from './carregando.component';
 import { LimitesUsoComponent } from '../ia/limites-uso.component';
+import { AtualizacaoComponent } from '../atualizacao/atualizacao.component';
 import { JdtlsService } from '../java/jdtls.service';
 import { GitService } from '../git/git.service';
 import { LayoutService } from '../layout/layout.service';
@@ -32,7 +33,7 @@ const NOMES_MODO: Record<string, string> = {
 /** Statusline no estilo lualine: modo, branch, arquivo, linguagem e posição. */
 @Component({
   selector: 'sd-barra-status',
-  imports: [LimitesUsoComponent, CarregandoComponent],
+  imports: [LimitesUsoComponent, CarregandoComponent, AtualizacaoComponent],
   template: `
     <footer class="barra-status">
       <span class="segmento modo" [attr.data-modo]="modoDaTela()">{{ rotuloDoModo() }}</span>
@@ -146,6 +147,7 @@ const NOMES_MODO: Record<string, string> = {
       }
       }
       @if (layout.tela() !== 'editor') { <sd-carregando /> }
+      <sd-atualizacao />
       <sd-limites-uso />
     </footer>
   `,

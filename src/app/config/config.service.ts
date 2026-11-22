@@ -18,6 +18,8 @@ export interface Config {
   /** id da ação do líder → tecla (ex.: { "todo": "T" }). */
   atalhos: { lider: Record<string, string> };
   ia: { modelo: string; modo: 'chave' | 'assinatura'; /** Sem confirmar edições e comandos da IA. */ automatico?: boolean };
+  /** Atualização do Seedy: `verificar: false` desliga a procura (ao abrir e a cada 6 horas). */
+  atualizacao?: { verificar?: boolean };
   /** Barra de ícones: ordem dos botões (arraste para reorganizar). */
   barra?: { ordem?: string[] };
   /** Disposições do layout (gravadas pelo próprio Seedy ao editar o layout). */
