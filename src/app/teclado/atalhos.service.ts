@@ -1,3 +1,4 @@
+import { AnexosService } from '../ia/anexos.service';
 import { Injectable, Injector, effect, inject, signal, untracked } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
 import { LayoutService, NOME_DA_REGIAO, NOME_PADRAO, PAINEIS, Regiao } from '../layout/layout.service';
@@ -80,6 +81,7 @@ export class AtalhosService {
   private readonly banco = inject(BancoService);
   private readonly revisao = inject(RevisaoService);
   private readonly mcp = inject(McpService);
+  private readonly anexos = inject(AnexosService);
   private readonly execucao = inject(ExecucaoService);
   private readonly novoProjeto = inject(NovoProjetoService);
   private readonly servidor = inject(ServidorService);
@@ -214,6 +216,17 @@ export class AtalhosService {
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
     const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
     const livre = !janelaAberta && !this.noTerminal(e.target);
+
+    if (ctrl && e.shiftKey && !e.altKey && e.code === 'KeyA') {
+      this.engolir(e);
+      this.anexos.anexarEmFoco();
+      return;
+    }
+    if (ctrl && e.shiftKey && !e.altKey && e.code === 'Backspace') {
+      this.engolir(e);
+      this.anexos.limpar();
+      return;
+    }
 
     if (ctrl && e.shiftKey && !e.altKey && (e.code === 'KeyF' || e.code === 'KeyR')) {
       // Ctrl+Shift+R também é "recarregar" do navegador: aqui é substituir no projeto.

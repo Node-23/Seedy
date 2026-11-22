@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mandar para a IA — mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #19191B; }
+  .t { font-family: 'Martian Mono', ui-monospace, monospace; color: #E9E2D3; }
+  kbd { font-family: inherit; font-size: 10px; padding: 1px 6px; border: 1px solid #333337; border-radius: 5px; color: #A29D93; background: #19191B; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px 2px 9px; border-radius: 7px; border: 1px solid #9CD7BA; color: #9CD7BA; font-size: 11px; }
+  .chip b { font-weight: 500; color: #A29D93; font-size: 11px; padding: 0 4px; }
+  .chip.suave { border-color: #333337; color: #A29D93; padding-right: 9px; }
+  .rotulo { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #A29D93; }
+</style>
+</head>
+<body>
+<div class="t" style="width: 1280px; height: 760px; box-sizing: border-box; padding: 14px; display: flex; gap: 14px; background: #19191B; position: relative">
+
+  <!-- Tela de containers (exemplo de onde se manda algo para a IA) -->
+  <section style="flex: 1; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 12px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px; border-bottom: 2px solid #0B0B0C">
+      <span class="rotulo">Containers</span>
+      <span style="display: flex; gap: 6px"><kbd>j k</kbd><kbd>⌃⇧A  mandar para a IA</kbd></span>
+    </div>
+    <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px">
+      <div style="padding: 8px 12px; border-radius: 8px; background: #222225; display: flex; gap: 12px; align-items: center"><span style="color: #B7D39C">●</span><span style="flex: 1">seedy-pg</span><span style="color: #A29D93">postgres:16 · :55432</span></div>
+      <div style="padding: 8px 12px; border-radius: 8px; background: #333337; border: 2px solid #9CD7BA; display: flex; gap: 12px; align-items: center"><span style="color: #B7D39C">●</span><span style="flex: 1; font-weight: 700">postgres-db</span><span style="color: #A29D93">postgres:16 · :5433</span></div>
+      <div style="padding: 8px 12px; border-radius: 8px; background: #222225; display: flex; gap: 12px; align-items: center"><span style="color: #EE8C84">●</span><span style="flex: 1">redis-cache</span><span style="color: #A29D93">redis:7 · parado</span></div>
+      <div style="padding: 8px 12px; border-radius: 8px; background: #222225; display: flex; gap: 12px; align-items: center"><span style="color: #B7D39C">●</span><span style="flex: 1">seedy-mysql</span><span style="color: #A29D93">mysql:8 · :53306</span></div>
+    </div>
+
+    <!-- Menu do botão direito -->
+    <div style="position: absolute; left: 250px; top: 168px; width: 290px; border: 2px solid #0B0B0C; border-radius: 10px; background: #222225; box-shadow: 4px 4px 0 #0B0B0C; font-size: 12px; overflow: hidden">
+      <div style="padding: 8px 14px; display: flex; justify-content: space-between; background: #333337; color: #9CD7BA; font-weight: 700"><span>✦ Mandar para a IA</span><kbd>⌃⇧A</kbd></div>
+      <div style="padding: 8px 14px; display: flex; justify-content: space-between"><span>Reiniciar</span><kbd>r</kbd></div>
+      <div style="padding: 8px 14px; display: flex; justify-content: space-between"><span>Terminal dentro</span><kbd>t</kbd></div>
+      <div style="padding: 8px 14px; display: flex; justify-content: space-between"><span>Ligar ao banco</span><kbd>b</kbd></div>
+      <div style="padding: 8px 14px; display: flex; justify-content: space-between"><span>Logs</span><kbd>l</kbd></div>
+    </div>
+
+    <div style="margin-top: auto; padding: 14px; color: #A29D93; font-size: 11.5px; line-height: 1.7; border-top: 2px solid #0B0B0C">
+      Vale em qualquer tela: container, regra de negócio, bloco da arquitetura, caminho de um método, card do TODO, teste (e a falha dele), commit, arquivo alterado, bookmark, conexão de banco, servidor e a linha do cursor.<br>
+      <span style="color: #E9E2D3">⌃⇧A</span> manda o que está em foco; o botão direito faz o mesmo no item clicado.
+    </div>
+  </section>
+
+  <!-- Painel da IA -->
+  <section style="width: 470px; display: flex; flex-direction: column; border: 2px solid #0B0B0C; border-radius: 12px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px; border-bottom: 2px solid #0B0B0C">
+      <span class="rotulo" style="color: #9CD7BA">✦ IA</span>
+      <span style="display: flex; gap: 8px; align-items: center; font-size: 11px; color: #A29D93"><span>☑ automático</span><kbd>␣ a</kbd></span>
+    </div>
+
+    <div style="flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 12px; font-size: 12px; line-height: 1.6; overflow: hidden">
+      <div style="align-self: flex-end; max-width: 80%; padding: 8px 12px; border-radius: 12px; background: #9CD7BA; color: #16171C">por que o postgres-db cai quando a regra R12 acontece?</div>
+      <div style="border: 2px solid #0B0B0C; border-radius: 10px; background: #222225; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 11.5px">
+        <div style="display: flex; gap: 10px"><span style="color: #B7D39C">✓</span><span style="color: #9CD7BA; width: 130px">container.logs</span><span style="color: #A29D93">postgres-db · 100 linhas</span></div>
+        <div style="display: flex; gap: 10px"><span style="color: #B7D39C">✓</span><span style="color: #9CD7BA; width: 130px">regra.cenarios</span><span style="color: #A29D93">R12 · 2 sem teste</span></div>
+      </div>
+      <div>O log do <span style="color: #9CD7BA">postgres-db</span> mostra <i>too many connections</i> logo depois de <span style="color: #9CD7BA">R12 Feira lotada</span> rodar. A reserva abre uma conexão por tentativa…</div>
+    </div>
+
+    <div style="padding: 12px; border-top: 2px solid #0B0B0C">
+      <div class="rotulo" style="font-size: 10px; margin-bottom: 6px">Mandado para esta conversa · vai junto da próxima mensagem</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px">
+        <span class="chip">🐳 postgres-db<b>✕</b></span>
+        <span class="chip">R12 · Feira lotada<b>✕</b></span>
+        <span class="chip">#3 TODO · limite de bancas<b>✕</b></span>
+        <span class="chip">CommonUserTest#falha<b>✕</b></span>
+        <span class="chip">ReservaService.java:24<b>✕</b></span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px">
+        <span class="chip suave">@Main.java</span>
+        <span class="chip suave">@log</span>
+        <span style="font-size: 10.5px; color: #A29D93; align-self: center">← o que a IA já vê sozinha (arquivo ativo, log, banco)</span>
+      </div>
+      <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 14px; border: 2px solid #0B0B0C; border-radius: 11px; background: #19191B">
+        <span style="flex: 1; color: #A29D93; font-size: 12px">peça uma alteração ou pergunte…</span>
+        <span style="width: 32px; height: 32px; border-radius: 8px; border: 2px solid #0B0B0C; background: #9CD7BA; color: #16171C; display: flex; align-items: center; justify-content: center; font-weight: 700">→</span>
+      </label>
+      <div style="margin-top: 8px; display: flex; gap: 10px; font-size: 10.5px; color: #A29D93"><span><kbd>⌃⇧A</kbd> mandar o que está em foco</span><span><kbd>⌃⇧⌫</kbd> limpar os anexos</span><span><kbd>/clear</kbd> zera tudo</span></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

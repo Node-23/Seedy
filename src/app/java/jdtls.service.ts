@@ -229,6 +229,11 @@ export class JdtlsService {
       `só ${minimo}+ roda o jdtls; o projeto usa o JDK da versão dele`,
     );
     if (!escolhido) return;
+    await this.usarJdk(escolhido);
+  }
+
+  /** Guarda o JDK que roda o jdtls e reinicia (a escolha pela tela e pela IA passam por aqui). */
+  async usarJdk(escolhido: string): Promise<void> {
     try {
       localStorage.setItem(CHAVE_JDK, escolhido);
     } catch {

@@ -1,3 +1,4 @@
+import { AnexosService } from '../ia/anexos.service';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
 import { EntenderService, RegraVisivel } from '../entender/entender.service';
@@ -38,6 +39,7 @@ export interface MenuDaRegra {
 @Injectable({ providedIn: 'root' })
 export class TestesDaRegraService {
   private readonly testes = inject(TestesService);
+  private readonly anexos = inject(AnexosService);
   private readonly entender = inject(EntenderService);
   private readonly editor = inject(EditorService);
   private readonly escolha = inject(EscolhaService);
@@ -65,6 +67,7 @@ export class TestesDaRegraService {
       if (doMetodo.length) itens.push({ id: 'irMetodo', rotulo: `ver os testes do método (${doMetodo.length})`, dica: 'não cobrem este erro', tecla: 'g', icone: '⇢' });
     }
     itens.push({ id: 'cenarios', rotulo: 'sugerir cenários de erro', dica: '', tecla: 's', icone: '⚠' });
+    itens.push({ id: 'chat', rotulo: 'mandar para o chat da IA', dica: '⌃⇧A', tecla: 'a', icone: '✦' });
     if (tem) itens.push({ id: 'ia', rotulo: 'criar outro teste com a IA', dica: '', tecla: 'i', icone: '✦' }, { id: 'manual', rotulo: 'criar outro teste manualmente', dica: '', tecla: 'm', icone: '✎' });
     itens.push(
       { id: 'codigo', rotulo: 'ver no código', dica: '⏎', tecla: '', icone: '⇢', separador: true, desabilitado: !m.regra.codigo },
@@ -114,6 +117,7 @@ export class TestesDaRegraService {
       case 'ia': return this.criarComIa(r);
       case 'manual': return this.criarManual(r);
       case 'cenarios': return this.sugerirCenarios(r);
+      case 'chat': this.anexos.adicionar(this.anexos.daRegra(r)); return;
       case 'codigo': if (r.codigo) this.entender.abrirNoEditor(r.codigo.caminho, r.codigo.linha); return;
       case 'caminho': if (r.codigo?.metodo) void this.entender.acompanhar(r.codigo.componente, r.codigo.metodo); return;
       case 'editar': return void this.entender.editarRegra(r);

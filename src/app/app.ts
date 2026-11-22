@@ -55,6 +55,7 @@ import { BookmarksService } from './editor/bookmarks.service';
 import { MenuRegraComponent } from './testes/menu-regra.component';
 import { ToastsComponent } from './nucleo/toasts.component';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
+import { MenuAnexoComponent } from './ia/menu-anexo.component';
 import { DivisoresService } from './layout/divisores.service';
 import { TelaEntenderComponent } from './entender/tela-entender.component';
 import { EntenderService } from './entender/entender.service';
@@ -70,7 +71,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, MenuGutterComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
   ],
   template: `
     <div class="seedy">
@@ -139,6 +140,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       <sd-menu-gutter />
       <sd-toasts />
       <sd-menu-regra />
+      <sd-menu-anexo />
       <sd-busca />
       <sd-busca-projeto />
       <sd-commit />

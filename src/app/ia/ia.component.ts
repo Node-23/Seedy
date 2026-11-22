@@ -3,6 +3,7 @@ import { IaService } from './ia.service';
 import { RevisaoService } from './revisao.service';
 import { MarkdownComponent } from './markdown.component';
 import { AutomaticoService } from './automatico.service';
+import { AnexosService } from './anexos.service';
 import { McpService } from './mcp.service';
 import { trechos } from './trechos';
 import { EditorService } from '../editor/editor.service';
@@ -34,7 +35,14 @@ import { nomeBase } from '../nucleo/ponte';
       <div #lista class="ia-conversa" aria-live="polite">
         @for (item of ia.itens(); track $index) {
           @switch (item.tipo) {
-            @case ('usuario') { <div class="ia-usuario">{{ item.texto }}</div> }
+            @case ('usuario') {
+              <div class="ia-usuario">
+                {{ item.texto }}
+                @if (item.anexos?.length) {
+                  <div class="ia-usuario-anexos">@for (a of item.anexos; track $index) { <span>{{ a }}</span> }</div>
+                }
+              </div>
+            }
             @case ('texto') { @if (item.texto) { <div class="ia-texto"><sd-markdown [texto]="item.texto" /></div> } }
             @case ('ferramentas') {
               <div class="ia-ferramentas">
@@ -87,8 +95,17 @@ import { nomeBase } from '../nucleo/ponte';
       </div>
 
       <div class="ia-pe">
+        @if (anexos.lista().length) {
+          <div class="ia-anexos-titulo">mandado para esta conversa · vai junto da próxima mensagem</div>
+          <div class="ia-contexto ia-anexos">
+            @for (a of anexos.lista(); track a.id) {
+              <span class="ia-chip ia-anexo" [title]="a.texto">{{ a.icone }} {{ a.rotulo }}
+                <button class="ia-anexo-x" [attr.aria-label]="'Tirar ' + a.rotulo" (click)="anexos.remover(a.id)">✕</button></span>
+            }
+          </div>
+        }
         <div class="ia-contexto">
-          @for (c of contexto(); track c) { <span class="ia-chip">&#64;{{ c }}</span> }
+          @for (c of contexto(); track c) { <span class="ia-chip ia-chip-suave">&#64;{{ c }}</span> }
         </div>
         <label class="ia-campo ia-campo-grande">
           <input #campo type="text" spellcheck="false" aria-label="Mensagem para a IA"
@@ -105,6 +122,7 @@ export class IaComponent {
   protected readonly revisao = inject(RevisaoService);
   protected readonly mcp = inject(McpService);
   protected readonly auto = inject(AutomaticoService);
+  protected readonly anexos = inject(AnexosService);
   private readonly editor = inject(EditorService);
   private readonly servidor = inject(ServidorService);
   private readonly banco = inject(BancoService);

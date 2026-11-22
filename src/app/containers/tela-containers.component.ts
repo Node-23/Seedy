@@ -1,3 +1,5 @@
+import { AnexosService } from '../ia/anexos.service';
+import { ContainerDocker } from '../nucleo/ponte';
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { DockerService, HOST } from './docker.service';
 import { caminho, desenhar, LARGURA_NO } from './mapa';
@@ -41,7 +43,7 @@ const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } a
             @for (g of d.grupos(); track g.titulo) {
               <div class="docker-grupo">{{ g.titulo }}</div>
               @for (c of g.containers; track c.id) {
-                <div class="docker-item" role="option" [class.selecionado]="c.nome === d.atual()?.nome" (click)="d.escolher(c.nome)" (dblclick)="d.iniciarOuParar(c.nome)">
+                <div class="docker-item" role="option" [class.selecionado]="c.nome === d.atual()?.nome" (click)="d.escolher(c.nome)" (dblclick)="d.iniciarOuParar(c.nome)" (contextmenu)="menuIa($event, c)">
                   <span [class.git-mais]="c.estado === 'running'" [class.suave]="c.estado !== 'running'">{{ c.estado === 'running' ? '●' : '○' }}</span>
                   <span [class.forte]="c.nome === d.atual()?.nome" [class.suave]="c.estado !== 'running'">{{ c.composeServico ?? c.nome }}</span>
                   <span class="suave docker-img">{{ resumo(c) }}</span>
@@ -88,7 +90,7 @@ const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } a
               }
               @for (n of desenho().nos; track n.nome) {
                 @if (container(n.nome); as c) {
-                  <div class="docker-no" [style.left.px]="n.x" [style.top.px]="n.y" [class.selecionado]="c.nome === d.atual()?.nome" [class.parado]="c.estado !== 'running'" [title]="c.nome + '\n' + c.imagem" (click)="d.escolher(c.nome)">
+                  <div class="docker-no" [style.left.px]="n.x" [style.top.px]="n.y" [class.selecionado]="c.nome === d.atual()?.nome" [class.parado]="c.estado !== 'running'" [title]="c.nome + '\n' + c.imagem" (click)="d.escolher(c.nome)" (contextmenu)="menuIa($event, c)">
                     <div class="docker-no-nome"><b>{{ c.composeServico ?? c.nome }}</b> <span [class.git-mais]="c.estado === 'running'" [class.suave]="c.estado !== 'running'">{{ c.estado === 'running' ? '●' : '○ parado' }}</span></div>
                     <div class="suave docker-no-imagem">{{ c.imagem }}</div>
                     <div>
@@ -161,6 +163,13 @@ const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } a
 })
 export class TelaContainersComponent {
   protected readonly d = inject(DockerService);
+  private readonly anexos = inject(AnexosService);
+
+  protected menuIa(e: MouseEvent, c: ContainerDocker): void {
+    this.d.escolher(c.nome);
+    this.anexos.abrirMenu(e, () => this.anexos.doContainer(c));
+  }
+
   private readonly layout = inject(LayoutService);
   private readonly editor = inject(EditorService);
   private readonly elLista = viewChild.required<ElementRef<HTMLElement>>('lista');

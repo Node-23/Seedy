@@ -6,6 +6,7 @@ import { EscolhaService } from '../escolha/escolha.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { ServidorService } from '../servidor/servidor.service';
 import { FERRAMENTAS, FerramentasService } from './ferramentas.service';
+import { AnexosService } from './anexos.service';
 import { RevisaoService } from './revisao.service';
 import { ConfigService } from '../config/config.service';
 import { BlocoDaApi, MensagemDaApi, pedirComStream, resultadoDeFerramenta } from './stream';
@@ -17,7 +18,7 @@ export interface PassoDaIa {
 }
 
 export type ItemDaIa =
-  | { tipo: 'usuario'; texto: string }
+  | { tipo: 'usuario'; texto: string; anexos?: string[] }
   | { tipo: 'texto'; texto: string }
   | { tipo: 'ferramentas'; passos: PassoDaIa[] }
   | { tipo: 'proposta'; alteracao: number }
@@ -44,6 +45,7 @@ export class IaService {
   private readonly escolha = inject(EscolhaService);
   private readonly mensagens = inject(MensagensService);
   private readonly servidor = inject(ServidorService);
+  private readonly anexos = inject(AnexosService);
 
   readonly itens = signal<ItemDaIa[]>([]);
   readonly pensando = signal(false);
@@ -100,8 +102,11 @@ export class IaService {
     if (!pergunta || this.pensando()) return;
     if (!(await this.garantirChave())) return;
     const contexto = this.contexto();
-    this.historico.push({ role: 'user', content: [{ type: 'text', text: contexto ? `${contexto}\n\n${pergunta}` : pergunta }] });
-    this.adicionar({ tipo: 'usuario', texto: pergunta });
+    const anexos = this.anexos.lista();
+    const completa = `${this.anexos.texto()}${pergunta}`;
+    this.historico.push({ role: 'user', content: [{ type: 'text', text: contexto ? `${contexto}\n\n${completa}` : completa }] });
+    this.adicionar({ tipo: 'usuario', texto: pergunta, ...(anexos.length ? { anexos: anexos.map((a) => a.rotulo) } : {}) });
+    this.anexos.lista.set([]);
     await this.rodar();
   }
 

@@ -1,5 +1,5 @@
 import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
-import { ContainerDocker, ponte, TrafegoDocker } from '../nucleo/ponte';
+import { ContainerDocker, PerfilBanco, ponte, TrafegoDocker } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { LayoutService } from '../layout/layout.service';
@@ -291,22 +291,21 @@ export class DockerService {
     this.layout.tela.set('editor');
   }
 
-  /** Container de PostgreSQL/MySQL vira conexão no painel de banco (o editor abre preenchido). */
-  ligarAoBanco(nome = this.atual()?.nome): void {
+  /** O perfil de banco que o container publica (PostgreSQL ou MySQL), ou o motivo de não dar. */
+  perfilParaBanco(nome: string | undefined): { perfil: PerfilBanco; senha: string | undefined } | string {
     const c = this.containers().find((x) => x.nome === nome);
-    if (!c) return;
+    if (!c) return `container "${nome}" não existe`;
     const tipo = /postgres|postgis|timescale/i.test(c.imagem) ? 'postgres' : /mysql|mariadb|percona/i.test(c.imagem) ? 'mysql' : null;
-    if (!tipo) return void this.mensagens.alerta(`${c.nome} não parece um PostgreSQL nem um MySQL`);
+    if (!tipo) return `${c.nome} não parece um PostgreSQL nem um MySQL`;
     const padrao = tipo === 'postgres' ? 5432 : 3306;
     const porta = c.portas.find((p) => p.container === padrao && p.host)?.host ?? c.portas.find((p) => p.host)?.host;
-    if (!porta) return void this.mensagens.alerta(`${c.nome} não publica a porta ${padrao} no host`);
+    if (!porta) return `${c.nome} não publica a porta ${padrao} no host`;
     const env = (k: string) => c.ambiente.find((e) => e.startsWith(`${k}=`))?.slice(k.length + 1);
     const usuario = tipo === 'postgres' ? (env('POSTGRES_USER') ?? 'postgres') : (env('MYSQL_USER') ?? 'root');
     const senha = tipo === 'postgres' ? env('POSTGRES_PASSWORD') : usuario === 'root' ? env('MYSQL_ROOT_PASSWORD') : env('MYSQL_PASSWORD');
     const banco = tipo === 'postgres' ? (env('POSTGRES_DB') ?? usuario) : (env('MYSQL_DATABASE') ?? '');
-    this.banco.editando.set({
-      novo: true,
-      senha: senha ?? undefined,
+    return {
+      senha,
       perfil: {
         id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
         nome: c.composeServico ?? c.nome,
@@ -323,7 +322,14 @@ export class DockerService {
         sshUsuario: null,
         sshChave: null,
       },
-    });
+    };
+  }
+
+  /** Container de PostgreSQL/MySQL vira conexão no painel de banco (o editor abre preenchido). */
+  ligarAoBanco(nome = this.atual()?.nome): void {
+    const r = this.perfilParaBanco(nome);
+    if (typeof r === 'string') return void this.mensagens.alerta(r);
+    this.banco.editando.set({ novo: true, senha: r.senha, perfil: r.perfil });
     this.layout.tela.set('editor');
   }
 

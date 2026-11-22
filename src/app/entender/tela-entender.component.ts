@@ -1,3 +1,4 @@
+import { AnexosService } from '../ia/anexos.service';
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { EntenderService, AbaEntender, RegraVisivel } from './entender.service';
 import { Bloco, CorTexto, nomeCurto, nomeDaTela, Seta, TipoSeta } from './desenho';
@@ -100,7 +101,7 @@ type Parte = 'diagrama' | 'metodos';
                         }
                       </svg>
                       @for (b of d.blocos; track b.id) {
-                        <div class="entender-bloco" [attr.data-id]="b.id" [class.db]="b.estilo === 'db'" [class.ext]="b.estilo === 'ext'" [class.selecionado]="b.id === e.selecionado()" [class.apagado]="apagado(b.id, b.titulo)"
+                        <div class="entender-bloco" (contextmenu)="menuIaDoBloco($event, b.id)" [attr.data-id]="b.id" [class.db]="b.estilo === 'db'" [class.ext]="b.estilo === 'ext'" [class.selecionado]="b.id === e.selecionado()" [class.apagado]="apagado(b.id, b.titulo)"
                              [style.left.px]="b.x" [style.top.px]="b.y" [style.width.px]="b.largura" [style.height.px]="b.detalhe !== undefined ? b.altura : null" (click)="escolherBloco(b)" (dblclick)="duploClique(b)">
                           <b [class]="corDe(b.tituloCor)">{{ b.titulo }}</b><br /><span [class]="corDe(b.subCor)">{{ b.sub }}</span>
                           @if (b.detalhe) { <br /><span class="suave">{{ b.detalhe }}</span> }
@@ -294,7 +295,7 @@ type Parte = 'diagrama' | 'metodos';
                         }
                       </svg>
                       @for (b of d.blocos; track b.id) {
-                        <div class="entender-bloco" [attr.data-id]="b.id" [class.db]="b.estilo === 'db'" [class.ext]="b.estilo === 'ext'" [class.erro]="b.estilo === 'erro'" [class.tela-erro]="b.estilo === 'tela-erro'"
+                        <div class="entender-bloco" (contextmenu)="menuIaDoBloco($event, b.id)" [attr.data-id]="b.id" [class.db]="b.estilo === 'db'" [class.ext]="b.estilo === 'ext'" [class.erro]="b.estilo === 'erro'" [class.tela-erro]="b.estilo === 'tela-erro'"
                              [class.foco]="b.id === d.foco" [class.selecionado]="b.id === e.noSel()"
                              [style.left.px]="b.x" [style.top.px]="b.y" [style.width.px]="b.largura" [attr.title]="b.titulo + '  ' + b.sub" (click)="e.noSel.set(b.id)" (dblclick)="e.abrirNoEditor(b.caminho, b.linha)">
                           <b [class]="corDe(b.tituloCor)">{{ b.titulo }}</b><br /><span [class]="corDe(b.subCor)">{{ b.sub }}</span>
@@ -408,6 +409,12 @@ export class TelaEntenderComponent {
     const testadas = cobs.filter((c) => c && c.estado !== 'sem' && c.estado !== 'so-feliz').length;
     const falha = cobs.some((c) => c?.estado === 'falhando');
     return { texto: `${testadas}/${regras.length}${falha ? ' ✗' : ''}`, classe: falha ? 'erro-texto' : testadas === regras.length ? 'git-mais' : 'aviso-texto' };
+  }
+
+  private readonly anexos = inject(AnexosService);
+
+  protected menuIaDoBloco(ev: MouseEvent, id: string): void {
+    this.anexos.abrirMenu(ev, () => this.anexos.doBloco(id));
   }
 
   protected menuDaRegra(ev: MouseEvent, r: RegraVisivel): void {

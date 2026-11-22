@@ -1,3 +1,4 @@
+import { AnexosService } from '../ia/anexos.service';
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { NOMES_DO_TIPO, SIGLA_DO_TIPO, TestesService, FiltroDeTipo } from './testes.service';
 import { EntenderService } from '../entender/entender.service';
@@ -53,7 +54,7 @@ const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
                   </div>
                 }
                 @case ('teste') {
-                  <div class="testes-linha teste" [class.sel]="i === sel()" [id]="'tst-' + i" (click)="sel.set(i); t.selecionado.set(l.teste.id)" (dblclick)="t.rodarTeste(l.teste)">
+                  <div class="testes-linha teste" (contextmenu)="menuIa($event, l.teste, i)" [class.sel]="i === sel()" [id]="'tst-' + i" (click)="sel.set(i); t.selecionado.set(l.teste.id)" (dblclick)="t.rodarTeste(l.teste)">
                     {{ icone(l.estado) }}<span [class.erro-texto]="l.estado === 'falhou'">{{ l.teste.metodo }}</span>
                     @if (l.teste.esperaErro) { <span class="aviso-texto" title="cenário de erro">⚠</span> }
                     <span class="testes-direita"><span class="tipo-teste" [attr.data-tipo]="l.teste.tipo">{{ sigla(l.teste.tipo) }}</span><span class="suave">{{ l.segundos ? ms(l.segundos) : '' }}</span></span>
@@ -130,6 +131,14 @@ const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
 })
 export class TelaTestesComponent {
   protected readonly t = inject(TestesService);
+  private readonly anexos = inject(AnexosService);
+
+  protected menuIa(e: MouseEvent, teste: TesteInfo, i: number): void {
+    this.sel.set(i);
+    this.t.selecionado.set(teste.id);
+    this.anexos.abrirMenu(e, () => this.anexos.doTeste(teste));
+  }
+
   private readonly entender = inject(EntenderService);
   private readonly raiz = viewChild.required<ElementRef<HTMLDivElement>>('raiz');
   private readonly saidaEl = viewChild<ElementRef<HTMLElement>>('saida');

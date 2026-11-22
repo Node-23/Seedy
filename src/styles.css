@@ -1030,6 +1030,14 @@ sd-merge-ia { display: flex; flex-shrink: 0; min-height: 0; }
 .merge-ia-pe { padding: 10px 12px 12px; border-top: var(--espessura-borda) solid var(--borda); flex-shrink: 0; }
 .ia-contexto { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; font-size: 11px; }
 .ia-chip { padding: 0 7px; border-radius: 6px; border: 1px solid var(--destaque); color: var(--destaque); }
+.ia-chip-suave { border-color: var(--selecao); color: var(--texto-suave); }
+.ia-anexos-titulo { margin-bottom: 6px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-suave); }
+.ia-anexos { margin-bottom: 10px; }
+.ia-anexo { display: inline-flex; align-items: center; gap: 6px; padding-right: 3px; }
+.ia-anexo-x { border: 0; background: none; color: var(--texto-suave); font: inherit; font-size: 11px; padding: 0 4px; cursor: pointer; border-radius: 4px; }
+.ia-anexo-x:hover { color: var(--erro); background: var(--selecao); }
+.ia-usuario-anexos { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; font-size: 10.5px; opacity: 0.8; }
+.ia-usuario-anexos span { padding: 0 6px; border-radius: 5px; border: 1px solid currentColor; }
 .ia-campo {
   display: flex;
   align-items: center;

@@ -1,3 +1,4 @@
+import { AnexosService } from '../ia/anexos.service';
 import { Component, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { TodoService } from './todo.service';
 import { Card, COR, ICONE, Ligacao } from './todo';
@@ -21,7 +22,7 @@ import { Card, COR, ICONE, Ligacao } from './todo';
 
       <div #lista class="todo-lista" tabindex="0">
         @for (c of t.abertos(); track c.id) {
-          <div class="todo-card" [attr.data-id]="c.id" [class.selecionado]="c.id === t.atual()?.id" (click)="t.selecionado.set(c.id)">
+          <div class="todo-card" [attr.data-id]="c.id" [class.selecionado]="c.id === t.atual()?.id" (click)="t.selecionado.set(c.id)" (contextmenu)="menuIa($event, c)">
             @if (editando() === c.id) {
               <input #titulo class="todo-editar" type="text" spellcheck="false" [value]="c.titulo" (keydown)="teclarEdicao($event, c)" />
               <textarea #nota class="todo-editar" rows="2" spellcheck="false" placeholder="nota (ctrl+⏎ salva)" [value]="c.nota" (keydown)="teclarEdicao($event, c)"></textarea>
@@ -48,7 +49,7 @@ import { Card, COR, ICONE, Ligacao } from './todo';
         @if (t.feitos().length) {
           <div class="entender-grupo todo-grupo">FEITOS · {{ t.feitos().length }}</div>
           @for (c of t.feitos(); track c.id) {
-            <div class="todo-feito" [attr.data-id]="c.id" [class.selecionado]="c.id === t.atual()?.id" (click)="t.selecionado.set(c.id)">
+            <div class="todo-feito" [attr.data-id]="c.id" [class.selecionado]="c.id === t.atual()?.id" (click)="t.selecionado.set(c.id)" (contextmenu)="menuIa($event, c)">
               <span class="todo-caixa feita" (click)="$event.stopPropagation(); t.alternarFeito(c)">✓</span><span class="suave">{{ c.titulo }}</span>
             </div>
           }
@@ -71,6 +72,13 @@ import { Card, COR, ICONE, Ligacao } from './todo';
 })
 export class TodoPainelComponent {
   protected readonly t = inject(TodoService);
+  private readonly anexos = inject(AnexosService);
+
+  protected menuIa(e: MouseEvent, c: Card): void {
+    this.t.selecionado.set(c.id);
+    this.anexos.abrirMenu(e, () => this.anexos.doCard(c));
+  }
+
   private readonly elNovo = viewChild.required<ElementRef<HTMLInputElement>>('novo');
   private readonly elLista = viewChild.required<ElementRef<HTMLElement>>('lista');
   private readonly elTitulo = viewChild<ElementRef<HTMLInputElement>>('titulo');

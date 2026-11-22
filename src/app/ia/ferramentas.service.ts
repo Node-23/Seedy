@@ -1,4 +1,12 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector } from '@angular/core';
+import { FERRAMENTAS_IDE, FerramentasIdeService } from './ferramentas-ide.service';
+import { TestesService, FiltroDeTipo } from '../testes/testes.service';
+import { DockerService } from '../containers/docker.service';
+import { ConfigDeExecucao, ExecucaoService } from '../execucao/execucao.service';
+import { aceitaBreakpoint, DepuradorService } from '../servidor/depurador.service';
+import { ScriptsService } from '../web/scripts.service';
+
+import { LinhaDeLog } from '../servidor/log';
 import { ponte } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { EditorService } from '../editor/editor.service';
@@ -28,7 +36,7 @@ const objeto = (props: Record<string, unknown>, obrigatorios: string[] = []) => 
 });
 const texto = (description: string) => ({ type: 'string', description });
 
-export const FERRAMENTAS: DefinicaoDeFerramenta[] = [
+const FERRAMENTAS_BASE: DefinicaoDeFerramenta[] = [
   {
     name: 'abrir_arquivo',
     rotulo: 'codigo.abrir',
@@ -150,7 +158,118 @@ export const FERRAMENTAS: DefinicaoDeFerramenta[] = [
     description: 'Consulta um banco configurado. Só leitura: SELECT/WITH/EXPLAIN; qualquer alteração é recusada.',
     input_schema: objeto({ conexao: texto('Nome da conexão'), sql: texto('Consulta') }, ['conexao', 'sql']),
   },
+  // ---------- testes ----------
+  {
+    name: 'testes_resumo',
+    rotulo: 'testes.resumo',
+    description:
+      'Estado dos testes do projeto (tela de testes): quantos passaram/falharam/ignorados, os que falharam com a mensagem, e a cobertura das regras de negócio (regras sem teste e cenários de erro sem teste), com base no último run.',
+    input_schema: objeto({}),
+  },
+  {
+    name: 'testes_rodar',
+    rotulo: 'testes.rodar',
+    description:
+      'Roda os testes pelo Maven/Gradle (o mesmo botão da tela de testes), espera terminar e devolve o resultado. Sem argumentos roda todos; `filtro` é uma classe ou classe#metodo; `so_falhas` repete só os que falharam. O usuário aprova a execução (a não ser no modo automático).',
+    input_schema: objeto({
+      tipo: { type: 'string', enum: ['todos', 'unitario', 'integracao', 'api', 'e2e'], description: 'Padrão: todos' },
+      filtro: texto('Classe ou classe#metodo'),
+      so_falhas: { type: 'boolean' },
+    }),
+  },
+  // ---------- containers ----------
+  {
+    name: 'containers_listar',
+    rotulo: 'containers.listar',
+    description: 'Containers do Docker (nome, imagem, estado, portas publicadas, serviço do compose e do que depende).',
+    input_schema: objeto({}),
+  },
+  {
+    name: 'container_acao',
+    rotulo: 'container.acao',
+    description: 'Inicia, para ou reinicia um container pelo nome. O usuário aprova (a não ser no modo automático).',
+    input_schema: objeto({ nome: texto('Nome do container'), acao: { type: 'string', enum: ['iniciar', 'parar', 'reiniciar'] } }, ['nome', 'acao']),
+  },
+  {
+    name: 'container_logs',
+    rotulo: 'container.logs',
+    description: 'Últimas linhas do log de um container.',
+    input_schema: objeto({ nome: texto('Nome do container'), ultimas: { type: 'integer', description: 'Padrão 100' } }, ['nome']),
+  },
+  {
+    name: 'docker_compose',
+    rotulo: 'docker.compose',
+    description:
+      'Roda `docker compose up -d` ou `down` na pasta do compose do projeto. `down` remove os containers e sempre pede confirmação ao usuário, mesmo no modo automático.',
+    input_schema: objeto({ acao: { type: 'string', enum: ['up', 'down'] } }, ['acao']),
+  },
+  // ---------- rodar e depurar ----------
+  {
+    name: 'execucoes',
+    rotulo: 'executar.lista',
+    description:
+      'As configurações de execução do projeto (as do botão de rodar: servidor, classe main, scripts npm), qual está escolhida, se está rodando e se há um debug ativo.',
+    input_schema: objeto({}),
+  },
+  {
+    name: 'rodar',
+    rotulo: 'executar.rodar',
+    description:
+      'Aperta o botão de rodar (ou o de debug, com debug=true) numa configuração de execução: sobe o servidor, a classe main ou o script, como o usuário faria. Devolve o estado e o começo da saída. Use `execucoes` para ver os nomes; sem `config` usa a escolhida. O usuário aprova (a não ser no modo automático).',
+    input_schema: objeto({ config: texto('Nome ou id da configuração (opcional)'), debug: { type: 'boolean', description: 'Rodar com o depurador' } }),
+  },
+  {
+    name: 'parar',
+    rotulo: 'executar.parar',
+    description: 'Aperta o botão de parar: encerra a configuração que está rodando (e o debug dela).',
+    input_schema: objeto({ config: texto('Nome ou id da configuração (opcional)') }),
+  },
+  {
+    name: 'saida_da_execucao',
+    rotulo: 'executar.saida',
+    description: 'Últimas linhas da saída da configuração de execução (classe main, script ou servidor), com o estado e o código de saída.',
+    input_schema: objeto({ config: texto('Nome ou id da configuração (opcional)'), filtro: { type: 'string', enum: ['todos', 'avisos', 'erros'] }, ultimas: { type: 'integer', description: 'Padrão 80' } }),
+  },
+  {
+    name: 'debug_breakpoints',
+    rotulo: 'debug.breakpoints',
+    description: 'Lista, adiciona ou remove breakpoints (Java, TS e JS). `adicionar` pode levar uma condição (expressão Java que precisa dar true).',
+    input_schema: objeto(
+      {
+        acao: { type: 'string', enum: ['listar', 'adicionar', 'remover'] },
+        caminho: texto('Relativo à raiz do projeto'),
+        linha: { type: 'integer' },
+        condicao: texto('Opcional: só para quando for true'),
+      },
+      ['acao'],
+    ),
+  },
+  {
+    name: 'debug_estado',
+    rotulo: 'debug.estado',
+    description: 'Estado do debug: se há sessão, se está pausada (onde, por quê), a pilha, as variáveis do frame atual e as expressões já avaliadas.',
+    input_schema: objeto({}),
+  },
+  {
+    name: 'debug_controle',
+    rotulo: 'debug.controle',
+    description:
+      'Controla o debug pausado: continuar, passar (step over), entrar (step into), sair (step out) ou ate_linha (roda até um arquivo e linha). Espera parar de novo (ou terminar) e devolve o estado.',
+    input_schema: objeto(
+      { acao: { type: 'string', enum: ['continuar', 'passar', 'entrar', 'sair', 'ate_linha'] }, caminho: texto('Só para ate_linha'), linha: { type: 'integer', description: 'Só para ate_linha' } },
+      ['acao'],
+    ),
+  },
+  {
+    name: 'debug_avaliar',
+    rotulo: 'debug.avaliar',
+    description: 'Avalia uma expressão Java no frame atual (o debug precisa estar pausado) e devolve o resultado.',
+    input_schema: objeto({ expressao: texto('Expressão Java') }, ['expressao']),
+  },
 ];
+
+/** Todas as ferramentas: as de base daqui e as da IDE (TODO, git, arquitetura...). */
+export const FERRAMENTAS: DefinicaoDeFerramenta[] = [...FERRAMENTAS_BASE, ...FERRAMENTAS_IDE];
 
 const LIMITE_DE_TEXTO = 60_000;
 
@@ -168,6 +287,14 @@ export class FerramentasService {
   private readonly revisao = inject(RevisaoService);
   private readonly escolha = inject(EscolhaService);
   private readonly automatico = inject(AutomaticoService);
+  private readonly injetor = inject(Injector);
+
+  // Estes serviços dependem (direta ou indiretamente) da IA, que usa as ferramentas: pegos só na hora de usar.
+  private testesSvc = () => this.injetor.get(TestesService);
+  private dockerSvc = () => this.injetor.get(DockerService);
+  private execSvc = () => this.injetor.get(ExecucaoService);
+  private depSvc = () => this.injetor.get(DepuradorService);
+  private scriptsSvc = () => this.injetor.get(ScriptsService);
 
   rotulo(nome: string): string {
     return FERRAMENTAS.find((f) => f.name === nome)?.rotulo ?? nome;
@@ -209,7 +336,39 @@ export class FerramentasService {
         return this.conexoes();
       case 'banco_consultar':
         return this.consultar(str(entrada, 'conexao'), str(entrada, 'sql'));
+      case 'testes_resumo':
+        return this.testesResumo();
+      case 'testes_rodar':
+        return this.testesRodar(entrada);
+      case 'containers_listar':
+        return this.containersListar();
+      case 'container_acao':
+        return this.containerAcao(str(entrada, 'nome'), str(entrada, 'acao'));
+      case 'container_logs':
+        return this.containerLogs(str(entrada, 'nome'), num(entrada['ultimas']) ?? 100);
+      case 'docker_compose':
+        return this.compose(str(entrada, 'acao'));
+      case 'execucoes':
+        return this.execucoes();
+      case 'rodar':
+        return this.rodar(opc(entrada, 'config'), entrada['debug'] === true);
+      case 'parar':
+        return this.pararConfig(opc(entrada, 'config'));
+      case 'saida_da_execucao': {
+        const c = this.escolherConfig(opc(entrada, 'config'));
+        if (!c) throw new Error('nenhuma configuração de execução');
+        return `${c.nome}: ${this.estadoDaConfig(c)}\n${this.saidaDaConfig(c, opc(entrada, 'filtro') ?? 'todos', num(entrada['ultimas']) ?? 80)}`;
+      }
+      case 'debug_breakpoints':
+        return this.breakpoints(entrada);
+      case 'debug_estado':
+        return this.estadoDoDebug();
+      case 'debug_controle':
+        return this.controlarDebug(entrada);
+      case 'debug_avaliar':
+        return this.avaliarNoDebug(str(entrada, 'expressao'));
       default:
+        if (this.injetor.get(FerramentasIdeService).conhece(nome)) return this.injetor.get(FerramentasIdeService).executar(nome, entrada, this);
         throw new Error(`ferramenta desconhecida: ${nome}`);
     }
   }
@@ -217,7 +376,7 @@ export class FerramentasService {
   // ---------- código ----------
 
   /** Caminho dentro do projeto (relativo ou absoluto); fora dele é recusado. */
-  private caminho(entrada: Record<string, unknown>): string {
+  caminho(entrada: Record<string, unknown>): string {
     const raiz = this.projeto.raiz();
     if (!raiz) throw new Error('nenhum projeto aberto no Seedy');
     const bruto = str(entrada, 'caminho').replace(/\\/g, '/');
@@ -236,7 +395,7 @@ export class FerramentasService {
     return final.replace(/\//g, sep);
   }
 
-  private relativo(caminho: string): string {
+  relativo(caminho: string): string {
     const raiz = (this.projeto.raiz() ?? '').replace(/\\/g, '/');
     return caminho.replace(/\\/g, '/').replace(raiz + '/', '');
   }
@@ -398,6 +557,295 @@ export class FerramentasService {
     }
     const r = await ponte.servidor.http(metodo, url, corpo, tipo);
     return cortar(`${metodo} ${url} → ${r.status} (${r.ms} ms${r.tipo ? `, ${r.tipo}` : ''})\n\n${r.corpo}`);
+  }
+
+  // ---------- autorização ----------
+
+  /** O usuário aprova (ou o modo automático dispensa); `forcar` pergunta sempre. */
+  async autorizar(titulo: string, rotulo: string, detalhe: string, forcar = false): Promise<boolean> {
+    if (this.automatico.ligado() && !forcar) return true;
+    return !!(await this.escolha.escolherUm(titulo, [
+      { rotulo, detalhe, valor: true },
+      { rotulo: 'Recusar', detalhe: 'não roda e a IA é avisada', valor: false },
+    ]));
+  }
+
+  /** Roda um processo na raiz do projeto e espera o fim (ou o tempo), devolvendo a saída. */
+  private async tarefa(argv: string[], segundos: number): Promise<{ codigo: number | null | undefined; saida: string }> {
+    const raiz = this.projeto.raiz() ?? '.';
+    const id = `ia-tarefa-${Date.now()}`;
+    let saida: string[] = [];
+    let codigo: number | null | undefined;
+    await ponte.tarefa.iniciar(id, raiz, argv, (l) => (saida = [...saida, ...l].slice(-1500)), (c) => (codigo = c));
+    const fim = Date.now() + segundos * 1000;
+    while (codigo === undefined && Date.now() < fim) await new Promise((r) => setTimeout(r, 300));
+    if (codigo === undefined) await ponte.tarefa.parar(id).catch(() => undefined);
+    return { codigo, saida: saida.join('\n') };
+  }
+
+  // ---------- testes ----------
+
+  private testesResumo(): string {
+    const t = this.testesSvc();
+    const tot = t.totais();
+    if (!tot.todos) return 'nenhum teste encontrado no projeto (a análise ainda pode estar lendo o código)';
+    const linhas = [
+      `${tot.todos} testes: ${tot.ok} passaram, ${tot.falhou} falharam, ${tot.ignorado} ignorados, ${tot.semResultado} sem resultado (nunca rodaram)`,
+      `por tipo: unitários ${tot.unitario}, integração ${tot.integracao}, API ${tot.api}, e2e ${tot.e2e}`,
+    ];
+    const ult = t.ultimaExecucao();
+    if (ult) linhas.push(`último run: ${ult.segundos.toFixed(1)} s, código ${ult.codigo}`);
+    if (t.rodando()) linhas.push(`rodando agora: ${t.rodando()}`);
+    const falhas = t.testes().filter((x) => t.estadoDe(x) === 'falhou');
+    if (falhas.length) {
+      linhas.push('', 'FALHARAM:');
+      for (const f of falhas.slice(0, 30)) {
+        const r = t.resultadoDe(f);
+        linhas.push(`- ${f.classe}#${f.metodo} (${f.relativo}:${f.linha})${r?.mensagem ? `: ${r.mensagem.split('\n')[0].slice(0, 300)}` : ''}`);
+      }
+    }
+    const resumo = t.resumoDaCobertura();
+    if (resumo.regras) {
+      linhas.push('', `REGRAS DE NEGÓCIO: ${resumo.comTeste} de ${resumo.regras} com teste (${resumo.passando} passando, ${resumo.falhando} falhando, ${resumo.semTeste} sem teste); cenários de erro: ${resumo.errosCobertos} de ${resumo.errosTotal} com teste`);
+      const sem = [...t.cobertura().values()].filter((c) => c.estado === 'sem' || c.estado === 'so-feliz');
+      for (const c of sem.slice(0, 25)) linhas.push(`- ${c.chave}: ${c.estado === 'sem' ? 'sem nenhum teste' : 'só o caminho feliz (falta o cenário de erro)'}`);
+    }
+    return cortar(linhas.join('\n'));
+  }
+
+  private async testesRodar(entrada: Record<string, unknown>): Promise<string> {
+    const t = this.testesSvc();
+    if (!this.projeto.raiz()) throw new Error('nenhum projeto aberto');
+    if (t.rodando()) throw new Error('já há testes rodando; espere ou use testes_resumo');
+    const tipoBruto = opc(entrada, 'tipo') ?? 'todos';
+    const tipo = (['todos', 'unitario', 'integracao', 'api', 'e2e'].includes(tipoBruto) ? tipoBruto : 'todos') as FiltroDeTipo;
+    const filtro = opc(entrada, 'filtro');
+    const soFalhas = entrada['so_falhas'] === true;
+    const alvo = soFalhas ? 'só os que falharam' : filtro ? `${filtro} (${tipo})` : `todos (${tipo})`;
+    if (!(await this.autorizar('A IA QUER RODAR OS TESTES', 'Rodar', alvo))) return 'o usuário recusou; os testes não rodaram';
+    if (soFalhas) await t.rodarFalhas();
+    else await t.rodar(tipo, filtro);
+    // O Maven pode baixar o mundo na primeira vez: espera até 10 minutos.
+    const fim = Date.now() + 600_000;
+    await new Promise((r) => setTimeout(r, 500));
+    while (t.rodando() && Date.now() < fim) await new Promise((r) => setTimeout(r, 500));
+    if (t.rodando()) return `ainda rodando depois de 10 minutos; veja testes_resumo mais tarde.\n${cortar(t.saida().slice(-60).join('\n'))}`;
+    return `${this.testesResumo()}\n\nSAÍDA (final):\n${cortar(t.saida().slice(-60).join('\n'))}`;
+  }
+
+  // ---------- containers ----------
+
+  private async containersListar(): Promise<string> {
+    const d = this.dockerSvc();
+    await d.atualizar(true);
+    if (d.erro() && !d.containers().length) return `Docker indisponível: ${d.erro()}`;
+    if (!d.containers().length) return 'nenhum container';
+    return d
+      .containers()
+      .map((c) => {
+        const portas = c.portas.filter((p) => p.host).map((p) => `${p.host}→${p.container}`).join(', ');
+        return `${c.nome} — ${c.imagem} — ${c.estado}${portas ? ` — portas ${portas}` : ''}${c.composeServico ? ` — compose: ${c.composeServico}` : ''}${c.dependeDe.length ? ` — depende de ${c.dependeDe.join(', ')}` : ''}`;
+      })
+      .join('\n');
+  }
+
+  private async containerAcao(nome: string, acao: string): Promise<string> {
+    const d = this.dockerSvc();
+    await d.atualizar(false);
+    const c = d.containers().find((x) => x.nome === nome);
+    if (!c) throw new Error(`container "${nome}" não existe; veja containers_listar`);
+    if (!['iniciar', 'parar', 'reiniciar'].includes(acao)) throw new Error('acao: iniciar, parar ou reiniciar');
+    if (!(await this.autorizar('A IA QUER MEXER NUM CONTAINER', acao[0].toUpperCase() + acao.slice(1), c.nome))) return 'o usuário recusou; nada foi feito';
+    if (acao === 'reiniciar') await d.reiniciar(c.nome);
+    else if ((acao === 'parar') === (c.estado === 'running')) await d.iniciarOuParar(c.nome);
+    else return `${c.nome} já está ${c.estado}`;
+    const depois = d.containers().find((x) => x.nome === nome);
+    return `${nome}: ${depois?.estado ?? 'desconhecido'}`;
+  }
+
+  private async containerLogs(nome: string, ultimas: number): Promise<string> {
+    const n = Math.max(1, Math.min(1000, ultimas));
+    const r = await this.tarefa(['docker', 'logs', '--tail', String(n), '--timestamps', nome], 30);
+    return r.codigo ? `docker logs falhou (código ${r.codigo}):\n${cortar(r.saida)}` : cortar(r.saida) || 'sem linhas';
+  }
+
+  private async compose(acao: string): Promise<string> {
+    if (acao !== 'up' && acao !== 'down') throw new Error('acao: up ou down');
+    const d = this.dockerSvc();
+    const detalhe = acao === 'down' ? 'para e remove os containers do compose (os volumes ficam)' : 'docker compose up -d';
+    if (!(await this.autorizar(acao === 'down' ? 'A IA QUER DERRUBAR O COMPOSE' : 'A IA QUER SUBIR O COMPOSE', acao === 'down' ? 'Derrubar' : 'Subir', detalhe, acao === 'down'))) {
+      return 'o usuário recusou; nada foi feito';
+    }
+    if (!this.projeto.raiz()) throw new Error('nenhum projeto aberto');
+    const r = await this.tarefa(['docker', 'compose', ...(acao === 'up' ? ['up', '-d'] : ['down'])], 300);
+    await d.atualizar(false);
+    return `docker compose ${acao}: código ${r.codigo ?? 'sem fim'}\n${cortar(r.saida)}`;
+  }
+
+  // ---------- rodar e depurar ----------
+
+  private escolherConfig(nome: string | null): ConfigDeExecucao | null {
+    const e = this.execSvc();
+    if (nome) {
+      const alvo = nome.toLowerCase();
+      const c = e.configs().find((x) => x.id.toLowerCase() === alvo || x.nome.toLowerCase() === alvo) ?? e.configs().find((x) => x.nome.toLowerCase().includes(alvo));
+      if (!c) throw new Error(`configuração "${nome}" não existe; veja execucoes`);
+      e.escolher(c.id);
+      return c;
+    }
+    return e.atual();
+  }
+
+  private estadoDaConfig(c: ConfigDeExecucao): string {
+    const e = this.execSvc();
+    if (c.tipo === 'servidor') {
+      const x = this.servidor.execucoes().get(c.perfilId);
+      return x && x.fase !== 'parado' ? `${x.fase}${x.info?.url ? ` em ${x.info.url}` : ''}${x.debug ? ' (debug)' : ''}` : 'parado';
+    }
+    if (c.tipo === 'script') {
+      const x = this.scriptsSvc().execucoes().get(c.script);
+      return !x ? 'parado' : x.fase === 'rodando' ? `rodando${x.url ? ` em ${x.url}` : ''}` : `terminou (código ${x.codigo})`;
+    }
+    const m = e.main();
+    if (!m || m.config.id !== c.id) return 'parado';
+    return m.fase === 'parado' ? `terminou${m.codigo !== null ? ` (código ${m.codigo})` : ''}` : `${m.fase}${m.debug ? ' (debug)' : ''}`;
+  }
+
+  private execucoes(): string {
+    const e = this.execSvc();
+    const lista = e.configs();
+    if (!lista.length) return e.procurando() ? 'procurando as classes main…' : 'nenhuma configuração de execução (sem classe main, servidor ou script npm)';
+    const dep = this.depSvc().sessao();
+    return [
+      ...lista.map((c) => `${c.id === e.atual()?.id ? '* ' : '  '}${c.nome} [${c.tipo}] — ${this.estadoDaConfig(c)}`),
+      dep ? `debug ativo: ${dep.nome}${this.depSvc().pausado() ? ' (pausado)' : ''}` : 'sem sessão de debug',
+    ].join('\n');
+  }
+
+  private saidaDaConfig(c: ConfigDeExecucao, filtro: string, ultimas: number): string {
+    const e = this.execSvc();
+    let linhas: LinhaDeLog[] = [];
+    if (c.tipo === 'servidor') linhas = this.servidor.execucoes().get(c.perfilId)?.linhas ?? [];
+    else if (c.tipo === 'script') linhas = this.scriptsSvc().execucoes().get(c.script)?.linhas ?? [];
+    else if (e.main()?.config.id === c.id) linhas = e.main()!.linhas;
+    const f = linhas.filter((l) => (filtro === 'erros' ? l.nivel === 'erro' : filtro === 'avisos' ? l.nivel === 'erro' || l.nivel === 'aviso' : true));
+    const fim = f.slice(-Math.max(1, Math.min(500, ultimas)));
+    return fim.length ? cortar(fim.map((l) => l.texto).join('\n')) : `nenhuma linha (${filtro})`;
+  }
+
+  private async rodar(nome: string | null, debug: boolean): Promise<string> {
+    const e = this.execSvc();
+    if (!this.projeto.raiz()) throw new Error('nenhum projeto aberto');
+    await e.procurarMains();
+    const c = this.escolherConfig(nome);
+    if (!c) throw new Error(this.jdtls.pronto() ? 'nenhuma configuração para rodar (sem classe main, servidor ou script)' : 'o jdtls ainda está carregando o projeto; tente de novo em instantes');
+    if (!(await this.autorizar(debug ? 'A IA QUER DEPURAR' : 'A IA QUER RODAR', debug ? 'Depurar' : 'Rodar', `${c.nome} (${c.tipo})`))) return 'o usuário recusou; nada rodou';
+    await e.rodar(debug);
+    // Dá alguns segundos para subir e mostra o começo da saída.
+    const fim = Date.now() + 20_000;
+    await new Promise((r) => setTimeout(r, 1500));
+    while (Date.now() < fim && /subindo/.test(this.estadoDaConfig(c))) await new Promise((r) => setTimeout(r, 500));
+    return `${c.nome}: ${this.estadoDaConfig(c)}\n${this.saidaDaConfig(c, 'todos', 40)}`;
+  }
+
+  private async pararConfig(nome: string | null): Promise<string> {
+    const c = this.escolherConfig(nome);
+    if (!c) throw new Error('nada para parar');
+    await this.execSvc().parar();
+    await new Promise((r) => setTimeout(r, 1500));
+    return `${c.nome}: ${this.estadoDaConfig(c)}`;
+  }
+
+  private breakpoints(entrada: Record<string, unknown>): string {
+    const d = this.depSvc();
+    const acao = str(entrada, 'acao');
+    if (acao === 'listar') {
+      const todos = [...d.breakpoints().entries()].flatMap(([arq, ls]) => ls.map((l) => `${this.relativo(arq)}:${l}${d.condicao(arq, l) ? `  se ${d.condicao(arq, l)}` : ''}`));
+      return todos.length ? todos.join('\n') : 'nenhum breakpoint';
+    }
+    const caminho = this.caminho(entrada);
+    const linha = num(entrada['linha']);
+    if (!linha || linha < 1) throw new Error('"linha" é obrigatória');
+    if (!aceitaBreakpoint(caminho)) throw new Error('breakpoints só em arquivos .java, .ts e .js');
+    const tem = (d.breakpoints().get(caminho) ?? []).includes(linha);
+    if (acao === 'adicionar') {
+      if (!tem) d.alternar(caminho, linha);
+      const cond = opc(entrada, 'condicao');
+      if (cond !== null) d.definirCondicao(caminho, linha, cond);
+      return `breakpoint em ${this.relativo(caminho)}:${linha}${cond ? ` se ${cond}` : ''}`;
+    }
+    if (acao === 'remover') {
+      d.remover(caminho, linha);
+      return tem ? `breakpoint removido de ${this.relativo(caminho)}:${linha}` : 'não havia breakpoint nessa linha';
+    }
+    throw new Error('acao: listar, adicionar ou remover');
+  }
+
+  private estadoDoDebug(): string {
+    const d = this.depSvc();
+    const s = d.sessao();
+    if (!s) return 'sem sessão de debug (use rodar com debug=true)';
+    const linhas = [`sessão: ${s.nome} (${s.tipo})${s.semDebug ? ' — rodando sem debug, breakpoints não valem' : ''}`];
+    const p = d.pausado();
+    if (!p) return `${linhas[0]}\nrodando (não pausado)`;
+    linhas.push(`PAUSADO: ${p.motivo}${p.texto ? ` — ${p.texto}` : ''}`);
+    const frames = d.frames();
+    if (frames.length) {
+      linhas.push('', 'PILHA:');
+      frames.slice(0, 15).forEach((f, i) => linhas.push(`${i === 0 ? '→' : ' '} ${f.name} — ${f.source?.path ? this.relativo(f.source.path) : (f.source?.name ?? '?')}:${f.line}${f.id === d.frameAtual() ? ' [frame atual]' : ''}`));
+    }
+    const vars = d.variaveis().filter((n) => n.nivel === 0).slice(0, 40);
+    if (vars.length) {
+      linhas.push('', 'VARIÁVEIS (frame atual):');
+      for (const n of vars) linhas.push(`  ${n.v.name}${n.v.type ? ` (${n.v.type})` : ''} = ${n.v.value}`);
+    }
+    return cortar(linhas.join('\n'));
+  }
+
+  private async controlarDebug(entrada: Record<string, unknown>): Promise<string> {
+    const d = this.depSvc();
+    if (!d.sessao()) throw new Error('sem sessão de debug');
+    const acao = str(entrada, 'acao');
+    if (!d.pausado()) throw new Error('a execução não está pausada (veja debug_estado)');
+    switch (acao) {
+      case 'continuar':
+        d.continuar();
+        break;
+      case 'passar':
+        d.passar();
+        break;
+      case 'entrar':
+        d.entrar();
+        break;
+      case 'sair':
+        d.sair();
+        break;
+      case 'ate_linha': {
+        const linha = num(entrada['linha']);
+        if (!linha) throw new Error('"linha" é obrigatória');
+        await d.ateALinha(this.caminho(entrada), linha);
+        break;
+      }
+      default:
+        throw new Error('acao: continuar, passar, entrar, sair ou ate_linha');
+    }
+    // Espera retomar e parar de novo (ou a sessão acabar); `continuar` pode levar mais.
+    const fim = Date.now() + (acao === 'continuar' || acao === 'ate_linha' ? 30_000 : 10_000);
+    await new Promise((r) => setTimeout(r, 400));
+    while (Date.now() < fim && d.sessao() && !d.pausado()) await new Promise((r) => setTimeout(r, 300));
+    if (!d.sessao()) return 'a sessão de debug terminou';
+    if (!d.pausado()) return 'continua rodando (não parou em nenhum breakpoint ainda)';
+    await new Promise((r) => setTimeout(r, 500)); // deixa a pilha e as variáveis chegarem
+    return this.estadoDoDebug();
+  }
+
+  private async avaliarNoDebug(expressao: string): Promise<string> {
+    const d = this.depSvc();
+    if (!d.pausado()) throw new Error('a execução não está pausada (veja debug_estado)');
+    await d.avaliar(expressao);
+    const r = d.avaliacoes().at(-1);
+    if (!r || r.expressao !== expressao.trim()) return 'não consegui avaliar';
+    return r.erro ? `erro: ${r.resultado}` : `${expressao} = ${r.resultado}`;
   }
 
   // ---------- banco ----------
