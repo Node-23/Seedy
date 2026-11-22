@@ -28,7 +28,7 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Regras de negócio com cobertura de testes e cenários de erro (`fontes/Testes.dc.html`) | [22-regras-cobertura.jpg](22-regras-cobertura.jpg) | ✅ |
 | Menu do botão direito numa regra (ir para o teste, criar manual/IA, sugerir cenários) | [23-menu-regra.jpg](23-menu-regra.jpg) | ✅ |
 | Uso da assinatura do Claude na barra de status (5 horas e semana) | [24-limites-de-uso.jpg](24-limites-de-uso.jpg) | ✅ |
-| Depurar um teste só, Spring Boot (perfis e endpoints), imagem no chat da IA e atualização automática — **proposta, aguardando aprovação** (`fontes/Ideias.dc.html`) | [27-ideias.png](27-ideias.png) | proposta |
+| Depurar um teste só, Spring Boot (perfis e endpoints), imagem no chat da IA e atualização automática — **implementada** (`fontes/Ideias.dc.html`) | [27-ideias.png](27-ideias.png) | ✅ (depurar teste, imagem no chat, atualização; Spring: endpoints no 28, perfis pendentes) |
 | Tela **Endpoints** do Spring Boot (botão só em projetos Spring): lista por controller, detalhe, testes que cobrem, chamar e copiar curl — **implementada (␣ H)** (`fontes/Endpoints.dc.html`) | [28-endpoints.png](28-endpoints.png) | ✅ |
 | Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
