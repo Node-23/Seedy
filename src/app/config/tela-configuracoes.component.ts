@@ -76,7 +76,7 @@ const LINHAS_EDITOR: LinhaEditor[] = [
                   <div class="config-estado">
                     @if (claude() === undefined) { <span class="suave">procurando o claude…</span> }
                     @else if (claude()) { <span class="sucesso-texto">✓</span> <span>Claude Code {{ claude() }} encontrado</span> <span class="suave">· se pedir login, rode <b>claude</b> no terminal e use /login</span> }
-                    @else { <span class="erro-texto">✗</span> <span>não achei o <b>claude</b> no PATH</span> <span class="suave">· instale o Claude Code e faça login</span> }
+                    @else { <span class="erro-texto">✗</span> <span>não achei o <b>claude</b> (nem no PATH, nem nas pastas de instalação)</span> <span class="suave">· instale o Claude Code e faça login</span> }
                   </div>
                 </div>
                 <div class="config-opcao" [class.on]="modo() === 'chave'" (click)="escolherModo('chave')">

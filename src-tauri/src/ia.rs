@@ -249,11 +249,77 @@ pub fn abrir_link(url: String) -> Result<(), String> {
     c.spawn().map(|_| ()).map_err(|e| format!("não consegui abrir o navegador: {e}"))
 }
 
+/// Onde está o Claude Code: o `claude` do PATH ou, se ele não estiver lá, os lugares onde o
+/// instalador oficial, o npm e o app Claude para desktop costumam deixá-lo.
+fn localizar_claude() -> Option<PathBuf> {
+    let nomes: &[&str] = if cfg!(windows) { &["claude.exe", "claude.cmd", "claude.bat"] } else { &["claude"] };
+    let mut pastas: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
+    if let Some(casa) = dirs::home_dir() {
+        pastas.extend([casa.join(".local").join("bin"), casa.join(".claude").join("local"), casa.join(".npm-global").join("bin"), casa.join(".bun").join("bin")]);
+    }
+    if let Some(d) = dirs::data_dir() {
+        pastas.push(d.join("npm"));
+    }
+    pastas.extend(["/usr/local/bin", "/opt/homebrew/bin"].map(PathBuf::from));
+    for p in &pastas {
+        for n in nomes {
+            let c = p.join(n);
+            if c.is_file() {
+                return Some(c);
+            }
+        }
+    }
+    claude_do_app_desktop(nomes)
+}
+
+/// O app Claude para desktop guarda o Claude Code em `<dados>/claude-code/<versão>/<hash>/`;
+/// vale a versão mais nova.
+fn claude_do_app_desktop(nomes: &[&str]) -> Option<PathBuf> {
+    let mut raizes: Vec<PathBuf> = Vec::new();
+    for base in [dirs::data_local_dir().map(|d| d.join("Claude-Data")), dirs::data_dir().map(|d| d.join("Claude"))].into_iter().flatten() {
+        raizes.push(base.join("claude-code"));
+        if let Ok(ls) = fs::read_dir(&base) {
+            raizes.extend(ls.flatten().map(|e| e.path().join("claude-code")));
+        }
+    }
+    let versao = |p: &std::path::Path| -> Vec<u32> {
+        p.file_name().and_then(|n| n.to_str()).unwrap_or("").split('.').map(|x| x.parse().unwrap_or(0)).collect()
+    };
+    let mut achados: Vec<(Vec<u32>, PathBuf)> = Vec::new();
+    for raiz in raizes {
+        for dir_versao in fs::read_dir(&raiz).into_iter().flatten().flatten().map(|e| e.path()) {
+            for dir_hash in fs::read_dir(&dir_versao).into_iter().flatten().flatten().map(|e| e.path()) {
+                if let Some(c) = nomes.iter().map(|n| dir_hash.join(n)).find(|c| c.is_file()) {
+                    achados.push((versao(&dir_versao), c));
+                }
+            }
+        }
+    }
+    achados.into_iter().max_by(|a, b| a.0.cmp(&b.0)).map(|(_, c)| c)
+}
+
+/// Comando do Claude Code com esses argumentos (`.cmd` e `.bat` passam pelo cmd no Windows).
+fn comando_claude(args: &[String]) -> std::process::Command {
+    match localizar_claude() {
+        Some(c) if cfg!(windows) && matches!(c.extension().and_then(|e| e.to_str()), Some("cmd" | "bat")) => {
+            let mut cmd = std::process::Command::new("cmd");
+            cmd.arg("/C").arg(c).args(args);
+            cmd
+        }
+        Some(c) => {
+            let mut cmd = std::process::Command::new(c);
+            cmd.args(args);
+            cmd
+        }
+        None => crate::web::comando_do_node("claude", args),
+    }
+}
+
 /// Versão do Claude Code instalado (`claude --version`), se houver. É ele que usa a assinatura.
 #[tauri::command]
 pub async fn ia_claude_estado() -> Option<String> {
     tauri::async_runtime::spawn_blocking(|| {
-        let mut c = crate::web::comando_do_node("claude", &["--version".to_string()]);
+        let mut c = comando_claude(&["--version".to_string()]);
         c.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null());
         crate::web::sem_janela(&mut c);
         let saida = c.output().ok()?;
@@ -317,10 +383,10 @@ fn via_claude(corpo: &serde_json::Value, eventos: &Channel<String>, config_mcp: 
     if let Some(arquivo) = config_mcp {
         args.extend(["--mcp-config".into(), arquivo.to_string_lossy().into_owned(), "--strict-mcp-config".into(), "--allowedTools".into(), "mcp__seedy".into()]);
     }
-    let mut c = crate::web::comando_do_node("claude", &args);
+    let mut c = comando_claude(&args);
     c.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     crate::web::sem_janela(&mut c);
-    let mut filho = c.spawn().map_err(|e| format!("não achei o Claude Code (`claude`) no PATH: {e}"))?;
+    let mut filho = c.spawn().map_err(|e| format!("não achei o Claude Code (instale com `npm i -g @anthropic-ai/claude-code` ou veja claude.com/claude-code): {e}"))?;
     let mut entrada = filho.stdin.take().ok_or("sem stdin do claude")?;
     let prompt = prompt_do_corpo(corpo);
     std::thread::spawn(move || {
@@ -622,5 +688,18 @@ Usuário: ok
         let corpo = r#"{"type":"error","error":{"type":"invalid_request_error","message":"max_tokens: too large"}}"#;
         assert_eq!(erro_da_api(400, corpo), "API 400: max_tokens: too large");
         assert!(erro_da_api(401, "").contains("chave"));
+    }
+}
+
+#[cfg(test)]
+mod testes_claude_local {
+    /// Depende do Claude Code estar instalado nesta máquina: `cargo test --lib claude_local -- --ignored`.
+    #[test]
+    #[ignore]
+    fn claude_local_e_achado_e_responde() {
+        let caminho = super::localizar_claude().expect("claude não encontrado");
+        let saida = super::comando_claude(&["--version".to_string()]).output().unwrap();
+        assert!(saida.status.success(), "{}: {}", caminho.display(), String::from_utf8_lossy(&saida.stderr));
+        println!("{} -> {}", caminho.display(), String::from_utf8_lossy(&saida.stdout).trim());
     }
 }
