@@ -8,6 +8,7 @@ import { ServidorService } from '../servidor/servidor.service';
 import { FERRAMENTAS, FerramentasService } from './ferramentas.service';
 import { AnexosService } from './anexos.service';
 import { AprovacoesService } from './aprovacoes.service';
+import { MemoriaService } from './memoria.service';
 import { RevisaoService } from './revisao.service';
 import { ConfigService } from '../config/config.service';
 import { BlocoDaApi, MensagemDaApi, pedirComStream, resultadoDeFerramenta } from './stream';
@@ -32,6 +33,8 @@ const arquivoDaConversa = (raiz: string) => `${raiz.replace(/[\\/]+$/, '')}${rai
 
 const SISTEMA = `Você é a IA do Seedy, a IDE do usuário para projetos Java web (Struts/JSP, JBoss/WildFly, Tomcat, bancos PostgreSQL/MySQL/Oracle). Você opera a IDE pelas ferramentas: abre e lê código, vê os erros do jdtls, configura, sobe e derruba o servidor de aplicação (servidor_criar, servidor_iniciar), roda comandos de build e de projeto com a aprovação do usuário (executar_comando), lê o log, faz requisições HTTP à aplicação local e consulta os bancos configurados (só leitura).
 
+Quando você descobrir algo durável que não dá para ler do código (o comando que roda o sistema, uma convenção, uma armadilha, uma preferência do usuário que ele corrigiu), proponha guardar com memoria_salvar: ele sempre aprova antes. Nunca guarde senhas, chaves nem tokens. Consulte memoria_ler se precisar lembrar do que já foi guardado.
+
 Quando o usuário relatar um erro, reproduza antes de corrigir sempre que der (servidor, requisição, log) e confirme a causa no código. Para mudar código use propor_edicao: o usuário vê o diff e aceita ou recusa; a ferramenta devolve a decisão. Não peça para o usuário colar arquivos: leia você mesmo.
 
 Quando pedirem para rodar o sistema: leia o README e os arquivos de build, veja servidor_estado; sem servidor configurado, procure a instalação (cloud/, dev/, README) e use servidor_criar; compile com executar_comando se a pasta de classes não existir; suba com servidor_iniciar e confirme pelo log e por uma requisição. Não diga que falta ferramenta antes de tentar essas.
@@ -51,6 +54,7 @@ export class IaService {
   private readonly servidor = inject(ServidorService);
   private readonly anexos = inject(AnexosService);
   private readonly aprovacoes = inject(AprovacoesService);
+  private readonly memoria = inject(MemoriaService);
 
   readonly itens = signal<ItemDaIa[]>([]);
   readonly pensando = signal(false);
@@ -138,6 +142,14 @@ export class IaService {
     await ponte.gravarArquivo(arquivoDaConversa(raiz), texto).catch(() => undefined);
   }
 
+  /** `/memoria editar` e `/memoria global`: abre o arquivo da memória no editor (criando-o, se não existe). */
+  private async abrirMemoria(global: boolean): Promise<void> {
+    const caminho = global ? await ponte.memoriaGlobal.caminho() : this.memoria.arquivoDoProjeto();
+    if (!caminho) return void this.mensagens.alerta(global ? 'a memória global só existe no app' : 'abra um projeto para editar a memória dele');
+    if (!(await ponte.lerArquivo(caminho).catch(() => ''))) await this.memoria.salvarVazio(global ? 'global' : 'projeto');
+    await this.editor.abrir(caminho);
+  }
+
   /** Volta a conversa guardada do projeto; true se havia uma. Importa a que o Seedy guardava no navegador. */
   private async retomarConversa(raiz: string): Promise<boolean> {
     let bruto = await ponte.lerArquivo(arquivoDaConversa(raiz)).catch(() => '');
@@ -168,6 +180,14 @@ export class IaService {
    */
   comando(texto: string): boolean {
     const c = texto.trim().toLowerCase();
+    if (c === '/memoria' || c === '/memória') {
+      this.adicionar({ tipo: 'texto', texto: this.memoria.texto() });
+      return true;
+    }
+    if (c === '/memoria editar' || c === '/memória editar' || c === '/memoria global' || c === '/memória global') {
+      void this.abrirMemoria(c.endsWith('global'));
+      return true;
+    }
     if (c === '/historico' || c === '/histórico') {
       this.adicionar({ tipo: 'texto', texto: this.aprovacoes.texto() });
       return true;
@@ -283,7 +303,7 @@ export class IaService {
       output_config: { effort: 'high' },
       fallbacks: 'default',
       cache_control: { type: 'ephemeral' },
-      system: SISTEMA,
+      system: SISTEMA + this.memoria.bloco(),
       tools: FERRAMENTAS.map((f) => ({ name: f.name, description: f.description, input_schema: f.input_schema, eager_input_streaming: true })),
       messages: this.historico,
     };

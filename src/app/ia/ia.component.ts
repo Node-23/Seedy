@@ -109,7 +109,7 @@ import { nomeBase } from '../nucleo/ponte';
         </div>
         <label class="ia-campo ia-campo-grande">
           <input #campo type="text" spellcheck="false" aria-label="Mensagem para a IA"
-                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça uma alteração ou pergunte… (/clear zera · /historico mostra o que você aprovou)'"
+                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça uma alteração ou pergunte… (/clear zera · /historico · /memoria)'"
                  [value]="texto()" (input)="texto.set($any($event.target).value)" (keydown)="teclar($event)" />
           <button class="ia-enviar" aria-label="Enviar" [disabled]="ia.pensando()" (click)="enviar()">→</button>
         </label>

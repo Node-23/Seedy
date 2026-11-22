@@ -315,6 +315,31 @@ fn comando_claude(args: &[String]) -> std::process::Command {
     }
 }
 
+fn arquivo_da_memoria_global() -> PathBuf {
+    pasta_config().join("memoria.md")
+}
+
+/// A memória global da IA (notas que valem para todos os projetos), em `<config>/seedy/memoria.md`.
+#[tauri::command]
+pub fn memoria_global_ler() -> String {
+    fs::read_to_string(arquivo_da_memoria_global()).unwrap_or_default()
+}
+
+#[tauri::command]
+pub fn memoria_global_gravar(texto: String) -> Result<(), String> {
+    let arquivo = arquivo_da_memoria_global();
+    if let Some(pasta) = arquivo.parent() {
+        fs::create_dir_all(pasta).map_err(|e| format!("não consegui criar {}: {e}", pasta.display()))?;
+    }
+    fs::write(&arquivo, texto).map_err(|e| format!("não consegui gravar a memória: {e}"))
+}
+
+/// Onde fica o arquivo da memória global (para abrir no editor).
+#[tauri::command]
+pub fn memoria_global_caminho() -> String {
+    arquivo_da_memoria_global().to_string_lossy().into_owned()
+}
+
 /// Versão do Claude Code instalado (`claude --version`), se houver. É ele que usa a assinatura.
 #[tauri::command]
 pub async fn ia_claude_estado() -> Option<String> {

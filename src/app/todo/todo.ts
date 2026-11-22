@@ -1,5 +1,5 @@
 /**
- * Cards do TODO e o arquivo `.seedy/todo.md` (só desta máquina, o git ignora; dá para editar à mão):
+ * Cards do TODO e o arquivo `.seedy/todo.md` (vai para o git; dá para editar à mão):
  *
  *   - [ ] Limite de bancas vem do banco
  *     Hoje é LIMITE_BANCAS fixo.                     ← nota (linhas indentadas)

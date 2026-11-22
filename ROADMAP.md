@@ -128,7 +128,8 @@ o resto entra como módulos internos (mockups 13 e 14):
    regras, Git e GitHub, jdtls e JDK, servidor de aplicação e container → banco. Aprovação do usuário
    nas ações que mexem em algo (o modo automático dispensa; push, apagar, PR e issue perguntam sempre)
 3c. ✅ Mandar itens para o chat (mockup 25): `ctrl+shift+a` e botão direito, chips removíveis;
-   `/historico` lista as aprovações; a conversa é guardada por projeto
+   `/historico` lista as aprovações; a conversa é guardada por projeto (`.seedy/conversa.json`);
+   memória da IA (`.seedy/memoria.md` e global): ela propõe, o usuário aprova cada nota
 4. ✅ Chat da IA no merge de conflitos (mockup 10, `␣ a`): Claude lê o código e o histórico,
    propõe a resolução como prévia no resultado e o usuário aplica ou recusa
 
@@ -156,7 +157,7 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 - ✅ Regras de negócio: candidatas tiradas do código (exceções de negócio com a condição e o status
   HTTP, `if ... return` com status, Bean Validation e Validators do Angular, `@Scheduled`/`@Schedule`,
   `@PreAuthorize`/`@RolesAllowed`), com onde mais a mensagem aparece e o teste que cobre. Ficam em
-  `.seedy/regras.md` (fica só nesta máquina, `.seedy/` é ignorado pelo git; edita à mão); a IA reescreve em linguagem de negócio
+  `.seedy/regras.md` (vai para o git, edita à mão); a IA reescreve em linguagem de negócio
 - ✅ Caminho do método (ctrl+. "acompanhar método", ou `c` num método): de onde vem até o botão da
   tela, para onde vai até a tabela, as condições que desviam (com o status e a regra) e o passo a
   passo; a IA explica o caminho

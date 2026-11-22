@@ -16,6 +16,7 @@ import { ServidorService } from '../servidor/servidor.service';
 import { DockerService } from '../containers/docker.service';
 import { BancoService } from '../banco/banco.service';
 import type { FerramentasService } from './ferramentas.service';
+import { EscopoDaMemoria, MemoriaService, prepararNota } from './memoria.service';
 
 /** Definição de ferramenta (o mesmo formato de `FERRAMENTAS`). */
 export interface DefinicaoIde {
@@ -71,6 +72,10 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   { name: 'jdtls_reiniciar', rotulo: 'jdtls.reiniciar', description: 'Reinicia o jdtls (útil quando o classpath ou os erros estão desatualizados).', input_schema: objeto({}) },
   { name: 'jdks_listar', rotulo: 'jdk.listar', description: 'JDKs instalados na máquina (versão e pasta) e qual roda o jdtls.', input_schema: objeto({}) },
   { name: 'jdk_escolher', rotulo: 'jdk.escolher', description: 'Escolhe o JDK que roda o jdtls (precisa ser a versão mínima ou mais nova) e reinicia o jdtls. O usuário aprova.', input_schema: objeto({ pasta: texto('Pasta do JDK (jdks_listar)') }, ['pasta']) },
+  // ---------- memória ----------
+  { name: 'memoria_ler', rotulo: 'memoria.ler', description: 'As notas que já foram guardadas na memória: do projeto e globais (as globais valem para todos os projetos).', input_schema: objeto({ escopo: { type: 'string', enum: ['projeto', 'global', 'todas'], description: 'Padrão: todas' } }) },
+  { name: 'memoria_salvar', rotulo: 'memoria.salvar', description: 'Guarda uma nota na memória para as próximas conversas. O usuário SEMPRE aprova antes, mesmo no modo automático. Use para o que é durável e não dá para ler do código (comando que roda o sistema, convenção, armadilha, preferência corrigida pelo usuário). Uma frase só, até 400 caracteres; nunca senhas, chaves ou tokens. Escopo "projeto" para o que vale só aqui, "global" para o que vale em qualquer projeto.', input_schema: objeto({ nota: texto('A nota, numa frase'), escopo: { type: 'string', enum: ['projeto', 'global'] } }, ['nota', 'escopo']) },
+  { name: 'memoria_apagar', rotulo: 'memoria.apagar', description: 'Apaga da memória as notas que contêm o trecho (útil quando uma nota ficou desatualizada). O usuário SEMPRE aprova antes.', input_schema: objeto({ trecho: texto('Trecho do texto da nota'), escopo: { type: 'string', enum: ['projeto', 'global'] } }, ['trecho', 'escopo']) },
   // ---------- servidor de aplicação e container → banco ----------
   { name: 'servidor_editar', rotulo: 'servidor.editar', description: 'Altera a configuração de um servidor de aplicação já criado (portas, opções da JVM, JDK, contexto, pastas, variáveis de ambiente, nome). Só os campos enviados mudam. O usuário aprova.', input_schema: objeto({ servidor: texto('Nome do servidor (servidor_estado); sem isso, o selecionado'), nome: texto('Novo nome'), portaHttp: { type: 'integer' }, portaDebug: { type: 'integer' }, opcoesJvm: texto('Ex.: -Xms256m -Xmx1024m'), jdk: texto('JAVA_HOME do servidor; vazio = o do sistema'), contexto: texto('Ex.: /feira'), pastaWeb: texto('Relativa ao projeto'), pastaClasses: texto('Relativa ao projeto'), variaveis: { type: 'object', additionalProperties: { type: 'string' }, description: 'Variáveis de ambiente (substitui todas)' } }) },
   { name: 'container_ligar_banco', rotulo: 'container.banco', description: 'Cria no Seedy uma conexão de banco a partir de um container PostgreSQL ou MySQL (host, porta publicada, usuário, senha e banco vêm do container). A senha vai para o cofre do sistema. O usuário aprova.', input_schema: objeto({ nome: texto('Nome do container'), conexao: texto('Nome da conexão (padrão: o serviço do compose ou o nome do container)') }, ['nome']) },
@@ -100,6 +105,7 @@ export class FerramentasIdeService {
   private readonly servidor = () => this.injetor.get(ServidorService);
   private readonly docker = () => this.injetor.get(DockerService);
   private readonly banco = () => this.injetor.get(BancoService);
+  private readonly memoria = () => this.injetor.get(MemoriaService);
 
   conhece(nome: string): boolean {
     return FERRAMENTAS_IDE.some((f) => f.name === nome);
@@ -163,6 +169,12 @@ export class FerramentasIdeService {
         return this.jdksListar();
       case 'jdk_escolher':
         return this.jdkEscolher(str(e, 'pasta'));
+      case 'memoria_ler':
+        return this.memoriaLer(opc(e, 'escopo') ?? 'todas');
+      case 'memoria_salvar':
+        return this.memoriaSalvar(str(e, 'nota'), str(e, 'escopo'));
+      case 'memoria_apagar':
+        return this.memoriaApagar(str(e, 'trecho'), str(e, 'escopo'));
       case 'servidor_editar':
         return this.servidorEditar(e);
       case 'container_ligar_banco':
@@ -540,6 +552,45 @@ export class FerramentasIdeService {
     if (!(await this.base().autorizar('A IA QUER TROCAR O JDK DO JDTLS', 'Trocar', `Java ${jdk.versao} — ${jdk.home}\no jdtls reinicia`))) return 'o usuário recusou; o JDK ficou';
     await this.jdtls().usarJdk(jdk.home);
     return `jdtls reiniciando com o Java ${jdk.versao}`;
+  }
+
+  // ---------- memória ----------
+
+  private escopoDaMemoria(v: string): EscopoDaMemoria {
+    if (v !== 'projeto' && v !== 'global') throw new Error('escopo: projeto ou global');
+    return v;
+  }
+
+  private async memoriaLer(escopo: string): Promise<string> {
+    const m = this.memoria();
+    await m.carregar();
+    const lista = (n: string[]) => (n.length ? n.map((x) => `- ${x}`).join('\n') : '(nenhuma nota)');
+    const partes: string[] = [];
+    if (escopo !== 'global') partes.push(`PROJETO:\n${lista(m.doProjeto())}`);
+    if (escopo !== 'projeto') partes.push(`GLOBAL:\n${lista(m.global())}`);
+    return partes.join('\n\n');
+  }
+
+  private async memoriaSalvar(nota: string, escopoBruto: string): Promise<string> {
+    const escopo = this.escopoDaMemoria(escopoBruto);
+    const m = this.memoria();
+    const p = prepararNota(nota);
+    if ('erro' in p) throw new Error(p.erro);
+    if (escopo === 'projeto' && !m.arquivoDoProjeto()) throw new Error('nenhum projeto aberto: use o escopo global');
+    const onde = escopo === 'global' ? 'em todos os projetos' : 'neste projeto';
+    if (!(await this.base().autorizar('A IA QUER GUARDAR NA MEMÓRIA', 'Guardar', `${p.nota}\n(vale ${onde})`, true))) return 'o usuário recusou; nada foi guardado';
+    const r = await m.salvar(escopo, p.nota);
+    return r === 'repetida' ? 'já existia uma nota igual; nada mudou' : `guardado na memória (${escopo}): ${p.nota}`;
+  }
+
+  private async memoriaApagar(trecho: string, escopoBruto: string): Promise<string> {
+    const escopo = this.escopoDaMemoria(escopoBruto);
+    const m = this.memoria();
+    const alvo = m.notas(escopo).filter((n) => n.toLowerCase().includes(trecho.trim().toLowerCase()));
+    if (!alvo.length) return 'nenhuma nota contém esse trecho';
+    if (!(await this.base().autorizar('A IA QUER APAGAR DA MEMÓRIA', 'Apagar', alvo.map((n) => `- ${n}`).join('\n'), true))) return 'o usuário recusou; as notas ficaram';
+    const apagadas = await m.apagar(escopo, trecho);
+    return `${apagadas.length} ${apagadas.length === 1 ? 'nota apagada' : 'notas apagadas'}`;
   }
 
   // ---------- servidor e banco ----------

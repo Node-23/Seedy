@@ -410,25 +410,31 @@ export interface AnaliseArquitetura {
   arquivos: number;
 }
 
-const pastasSeedyIgnoradas = new Set<string>();
+const arquivosSeedyIgnorados = new Set<string>();
 
 /**
- * `.seedy/` guarda o que é desta máquina (conversa da IA, TODO, regras, bookmarks...): na primeira
- * gravação ali, a pasta entra no .gitignore do repositório (se o projeto for um).
+ * Só a conversa e a memória da IA (`.seedy/conversa.json` e `.seedy/memoria.md`) ficam de fora do git:
+ * na primeira gravação, o arquivo entra no .gitignore do repositório (se o projeto for um).
+ * O resto de `.seedy/` (TODO, regras, bookmarks, seedy.json) continua para o time.
  */
-async function ignorarPastaSeedy(caminho: string): Promise<void> {
-  const m = /^(.*?)[\\/]\.seedy[\\/]/.exec(caminho);
-  if (!m || pastasSeedyIgnoradas.has(m[1])) return;
-  pastasSeedyIgnoradas.add(m[1]);
-  const raiz = m[1];
+async function ignorarArquivoSeedy(caminho: string): Promise<void> {
+  const m = /^(.*?)[\\/]\.seedy[\\/](conversa\.json|memoria\.md)$/.exec(caminho);
+  if (!m || arquivosSeedyIgnorados.has(caminho)) return;
+  arquivosSeedyIgnorados.add(caminho);
+  const [, raiz, arquivoSeedy] = m;
   try {
     const repo = await ponte.git(raiz, ['rev-parse', '--is-inside-work-tree']);
     if (repo.codigo !== 0) return;
-    const arquivo = `${raiz}${raiz.includes('\\') ? '\\' : '/'}.gitignore`;
-    const atual = await ponte.lerArquivo(arquivo).catch(() => '');
-    if (/^\s*\/?\.seedy\/?\s*$/m.test(atual)) return;
+    const gitignore = `${raiz}${raiz.includes('\\') ? '\\' : '/'}.gitignore`;
+    const atual = await ponte.lerArquivo(gitignore).catch(() => '');
+    const entrada = `.seedy/${arquivoSeedy}`;
+    const jaTem = atual.split(/\r?\n/).some((l) => {
+      const t = l.trim().replace(/^\//, '');
+      return t === '.seedy' || t === '.seedy/' || t === '.seedy/*' || t === entrada;
+    });
+    if (jaTem) return;
     const quebra = atual && !atual.endsWith('\n') ? '\n' : '';
-    await invoke('gravar_arquivo', { caminho: arquivo, conteudo: `${atual}${quebra}.seedy/\n` });
+    await invoke('gravar_arquivo', { caminho: gitignore, conteudo: `${atual}${quebra}${entrada}\n` });
   } catch {
     /* sem git ou sem permissão: o projeto segue sem o ajuste */
   }
@@ -456,7 +462,7 @@ export const ponte = {
   async gravarArquivo(caminho: string, conteudo: string): Promise<void> {
     if (noApp()) {
       await invoke('gravar_arquivo', { caminho, conteudo });
-      void ignorarPastaSeedy(caminho);
+      void ignorarArquivoSeedy(caminho);
     } else exemplo.gravarArquivo(caminho, conteudo);
   },
 
@@ -579,6 +585,27 @@ export const ponte = {
   },
 
   /** IA (Claude): a chave fica no núcleo; aqui só vão o corpo do pedido e os eventos do stream. */
+  /** Memória global da IA (`memoria.md` na pasta de configuração do Seedy); no navegador, o localStorage. */
+  memoriaGlobal: {
+    ler: async (): Promise<string> => {
+      if (noApp()) return invoke<string>('memoria_global_ler');
+      try {
+        return localStorage.getItem('seedy.memoria.global') ?? '';
+      } catch {
+        return '';
+      }
+    },
+    gravar: async (texto: string): Promise<void> => {
+      if (noApp()) return invoke<void>('memoria_global_gravar', { texto });
+      try {
+        localStorage.setItem('seedy.memoria.global', texto);
+      } catch {
+        /* sem armazenamento */
+      }
+    },
+    caminho: async (): Promise<string | null> => (noApp() ? invoke<string>('memoria_global_caminho') : null),
+  },
+
   ia: {
     /** 'assinatura' = fala com o `claude` (Claude Code) instalado, com o login da conta; 'chave' = API. */
     modo: 'chave' as 'chave' | 'assinatura',

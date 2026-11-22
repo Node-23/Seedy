@@ -1,7 +1,7 @@
 import type { RegraAnalise } from '../nucleo/ponte';
 
 /**
- * Regras de negócio (Fase 9, aba 2). Ficam em `.seedy/regras.md`, que o git ignora (só desta máquina) e dá
+ * Regras de negócio (Fase 9, aba 2). Ficam em `.seedy/regras.md`, que vai para o git e dá
  * para editar à mão: o título e o texto são do usuário; o comentário `seedy` de cada regra
  * liga a regra ao código (a chave vem da análise) e guarda se ela já foi revisada.
  */

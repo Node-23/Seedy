@@ -19,7 +19,7 @@ const LIMPAR = Symbol('limpar');
 /**
  * Bookmarks no código: marcam uma linha (barra rosa na margem) para voltar a ela depois.
  * `␣ M` marca/desmarca a linha, `ctrl+F2` também, `␣ B` lista e vai até uma marca.
- * Ficam em `.seedy/bookmarks.json` (só desta máquina, o git ignora; dá para editar à mão) e acompanham a
+ * Ficam em `.seedy/bookmarks.json` (vai para o git; dá para editar à mão) e acompanham a
  * linha quando o código muda acima dela.
  */
 @Injectable({ providedIn: 'root' })
