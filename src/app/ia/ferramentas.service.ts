@@ -1,5 +1,6 @@
 import { inject, Injectable, Injector } from '@angular/core';
 import { AprovacoesService } from './aprovacoes.service';
+import { motivoSensivel } from './comandos-sensiveis';
 import { EnvService } from '../execucao/env.service';
 import { FERRAMENTAS_IDE, FerramentasIdeService } from './ferramentas-ide.service';
 import { TestesService, FiltroDeTipo } from '../testes/testes.service';
@@ -138,7 +139,7 @@ const FERRAMENTAS_BASE: DefinicaoDeFerramenta[] = [
     name: 'executar_comando',
     rotulo: 'comando',
     description:
-      'Roda um comando de shell na raiz do projeto (build, instalação de dependências, scripts do README) e devolve a saída e o código de saída. O usuário vê o comando e aprova cada execução. Para subir o servidor de aplicação use servidor_iniciar, não este. Comando que não termina (modo watch, servidor) precisa de deixar_rodando: ele devolve a saída dos primeiros segundos e continua em segundo plano.',
+      'Roda um comando de shell na raiz do projeto (build, instalação de dependências, scripts do README) e devolve a saída e o código de saída. O usuário vê o comando e aprova cada execução (comandos sensíveis, como apagar em massa, git push --force ou baixar e executar um script, pedem aprovação direta mesmo no modo automático: explique por que precisa deles). Para subir o servidor de aplicação use servidor_iniciar, não este. Comando que não termina (modo watch, servidor) precisa de deixar_rodando: ele devolve a saída dos primeiros segundos e continua em segundo plano.',
     input_schema: objeto(
       {
         comando: texto('Comando completo (ex.: "mvn -q -DskipTests package")'),
@@ -507,8 +508,17 @@ export class FerramentasService {
   private async executarComando(comando: string, segundos: number | undefined, deixar: boolean): Promise<string> {
     const raiz = this.projeto.raiz();
     if (!raiz) throw new Error('nenhum projeto aberto');
-    const decisao = await this.autorizar('A IA QUER RODAR UM COMANDO', 'Rodar', comando);
-    if (!decisao) return 'o usuário recusou o comando; não rodou';
+    const sensivel = motivoSensivel(comando);
+    const decisao = sensivel
+      ? await this.autorizar(
+          `⚠ COMANDO SENSÍVEL: ${sensivel}`,
+          'Rodar mesmo assim',
+          comando,
+          true,
+          '⚠ vale até no automático',
+        )
+      : await this.autorizar('A IA QUER RODAR UM COMANDO', 'Rodar', comando);
+    if (!decisao) return sensivel ? 'o usuário recusou o comando sensível; não rodou' : 'o usuário recusou o comando; não rodou';
     const espera = Math.max(5, Math.min(600, segundos ?? 120)) * 1000;
     const id = `ia-cmd-${Date.now()}`;
     const windows = /win/i.test(navigator.platform);
@@ -571,15 +581,19 @@ export class FerramentasService {
   // ---------- autorização ----------
 
   /** O usuário aprova (ou o modo automático dispensa); `forcar` pergunta sempre. */
-  async autorizar(titulo: string, rotulo: string, detalhe: string, forcar = false): Promise<boolean> {
+  async autorizar(titulo: string, rotulo: string, detalhe: string, forcar = false, dica?: string): Promise<boolean> {
     if (this.automatico.ligado() && !forcar) {
       this.aprovacoes.registrar(titulo, detalhe, 'automático');
       return true;
     }
-    const ok = !!(await this.escolha.escolherUm(titulo, [
-      { rotulo, detalhe, valor: true },
-      { rotulo: 'Recusar', detalhe: 'não roda e a IA é avisada', valor: false },
-    ]));
+    const ok = !!(await this.escolha.escolherUm(
+      titulo,
+      [
+        { rotulo, detalhe, valor: true },
+        { rotulo: 'Recusar', detalhe: 'não roda e a IA é avisada', valor: false },
+      ],
+      dica,
+    ));
     this.aprovacoes.registrar(titulo, detalhe, ok ? 'aprovado' : 'recusado');
     return ok;
   }
