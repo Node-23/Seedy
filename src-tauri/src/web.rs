@@ -256,6 +256,37 @@ pub fn tarefa_parar(estado: State<'_, Tarefas>, id: String) {
     }
 }
 
+/// Alguém está escutando nesta porta de 127.0.0.1? (Tenta ocupá-la: sem conectar, para não gastar a única
+/// conexão que um servidor de debug JDWP aceita.)
+#[tauri::command]
+pub fn porta_em_uso(porta: u16) -> bool {
+    escutando(porta)
+}
+
+/// No Windows, o Java escuta com SO_REUSEADDR e outro processo consegue ocupar a mesma porta: tentar
+/// ocupá-la não prova nada. Lê a tabela TCP do sistema.
+#[cfg(windows)]
+fn escutando(porta: u16) -> bool {
+    use windows_sys::Win32::NetworkManagement::IpHelper::{GetTcpTable, MIB_TCPTABLE, MIB_TCP_STATE_LISTEN};
+    let mut tamanho: u32 = 0;
+    unsafe {
+        GetTcpTable(std::ptr::null_mut(), &mut tamanho, 0); // só descobre o tamanho
+        let mut memoria = vec![0u8; tamanho as usize + 4096];
+        let tabela = memoria.as_mut_ptr() as *mut MIB_TCPTABLE;
+        tamanho = memoria.len() as u32;
+        if GetTcpTable(tabela, &mut tamanho, 0) != 0 {
+            return false;
+        }
+        let linhas = std::slice::from_raw_parts((*tabela).table.as_ptr(), (*tabela).dwNumEntries as usize);
+        linhas.iter().any(|l| l.Anonymous.dwState == MIB_TCP_STATE_LISTEN as u32 && u16::from_be(l.dwLocalPort as u16) == porta)
+    }
+}
+
+#[cfg(not(windows))]
+fn escutando(porta: u16) -> bool {
+    std::net::TcpListener::bind(("0.0.0.0", porta)).is_err() || std::net::TcpListener::bind(("127.0.0.1", porta)).is_err()
+}
+
 // ---------- js-debug (debug no navegador) ----------
 
 #[derive(Default)]

@@ -95,6 +95,7 @@ const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
             <span class="espaco-v"></span>
             <div class="docker-acoes testes-acoes">
               <button class="botao" [disabled]="!!t.rodando()" (click)="t.rodarTeste(a)">▶ rodar este <kbd>⏎</kbd></button>
+              @if (a.linguagem === 'java') { <button class="botao destaque" [disabled]="!!t.rodando()" (click)="t.depurarTeste(a)" title="roda só este teste com o depurador anexado">🐞 depurar este <kbd>d</kbd></button> }
               <button class="botao" (click)="t.abrirNoCodigo(a)">⇢ abrir no código <kbd>o</kbd></button>
               <button class="botao" [disabled]="t.atualResultado()?.estado !== 'falhou'" (click)="t.explicarFalha(a)"><span class="destaque-texto">✦</span> explicar a falha <kbd>a</kbd></button>
             </div>
@@ -253,6 +254,7 @@ export class TelaTestesComponent {
       case 't': this.t.filtroTipo.set(TIPOS[(TIPOS.indexOf(this.t.filtroTipo()) + 1) % TIPOS.length]); this.sel.set(0); break;
       case 'o': this.t.abrirNoCodigo(); break;
       case 'a': void this.t.explicarFalha(); break;
+      case 'd': if (this.t.atual()) void this.t.depurarTeste(this.t.atual()!); break;
       case 'i': this.anexos.anexarFalhasDosTestes(); break;
       case 'g': this.verRegrasSemTeste(); break;
       default: return;

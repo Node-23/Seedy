@@ -1,6 +1,8 @@
 import { EnvService } from '../execucao/env.service';
 import { JdkProjetoService } from '../execucao/jdk-projeto.service';
-import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
+import { computed, effect, inject, Injectable, Injector, isDevMode, signal, untracked } from '@angular/core';
+import { DepuradorService } from '../servidor/depurador.service';
+import { JdtlsService } from '../java/jdtls.service';
 import { EditorService } from '../editor/editor.service';
 import { EntenderService } from '../entender/entender.service';
 import { IaService } from '../ia/ia.service';
@@ -35,6 +37,7 @@ export class TestesService {
   private readonly mensagens = inject(MensagensService);
   private readonly env = inject(EnvService);
   private readonly jdk = inject(JdkProjetoService);
+  private readonly injetor = inject(Injector);
   private readonly entender = inject(EntenderService);
   private readonly scripts = inject(ScriptsService);
   private readonly ia = inject(IaService);
@@ -194,7 +197,7 @@ export class TestesService {
   }
 
   /** `tipo`: o que rodar; `filtro`: classe ou classe#método (Maven/Gradle). Os do front rodam pelos scripts. */
-  async rodar(tipo: FiltroDeTipo, filtro: string | null = null, doFront = false, limpo = false): Promise<void> {
+  async rodar(tipo: FiltroDeTipo, filtro: string | null = null, doFront = false, limpo = false, depurar: string | null = null): Promise<void> {
     const raiz = this.projeto.raiz();
     if (!raiz || this.rodando()) return;
     if (doFront || tipo === 'e2e') return this.rodarFront(tipo);
@@ -233,8 +236,19 @@ export class TestesService {
       this.preparando.set(true);
       const base = await ponte.testes.comando(raiz, tipo, filtro).finally(() => this.preparando.set(false));
       // `clean` logo depois do mvn/gradle: apaga o target/ antes de compilar.
-      const comando = limpo && /(^|[\\/])(mvnw?|gradlew?)(\.cmd|\.bat)?$/i.test(base[0] ?? '') ? [base[0], 'clean', ...base.slice(1)] : base;
+      const ehMaven = /(^|[\\/])mvnw?(\.cmd|\.bat)?$/i.test(base[0] ?? '');
+      const ehGradle = /(^|[\\/])gradlew?(\.cmd|\.bat)?$/i.test(base[0] ?? '');
+      let comando = limpo && (ehMaven || ehGradle) ? [base[0], 'clean', ...base.slice(1)] : base;
+      // Debug de um teste: o Maven (surefire) e o Gradle sobem a JVM do teste esperando o depurador numa porta.
+      const porta = ehGradle ? 5005 : 5200 + Math.floor(Math.random() * 700);
+      if (depurar) {
+        if (!ehMaven && !ehGradle) throw new Error('depurar teste só com Maven ou Gradle');
+        comando = ehMaven
+          ? [...comando, `-Dmaven.surefire.debug=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:${porta}`, '-DforkCount=1', '-DreuseForks=false']
+          : [...comando, '--debug-jvm'];
+      }
       this.comandoAtual.set(comando.join(' '));
+
       await ponte.tarefa.iniciar(
         'testes',
         raiz,
@@ -243,9 +257,26 @@ export class TestesService {
         (codigo) => void terminar(codigo),
         Object.keys(env).length ? env : null,
       );
+      if (depurar) void this.anexarQuandoEscutar(`teste ${depurar}`, porta);
     } catch (e) {
       this.mensagens.erro(String(e));
       this.rodando.set(null);
+    }
+  }
+
+  /**
+   * A JVM do teste só abre a porta do depurador depois de compilar. O Seedy espera ela escutar (sem conectar,
+   * que gastaria a única conexão aceita), anexa o depurador e vai para a tela de debug.
+   */
+  private async anexarQuandoEscutar(nome: string, porta: number): Promise<void> {
+    const fim = Date.now() + 300_000;
+    while (Date.now() < fim && this.rodando()) {
+      if (await ponte.rede.portaEmUso(porta)) {
+        await new Promise((r) => setTimeout(r, 300));
+        if (await this.injetor.get(DepuradorService).anexarAoTeste(nome, porta)) this.layout.tela.set('debug');
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 400));
     }
   }
 
@@ -263,6 +294,15 @@ export class TestesService {
   async rodarTeste(t: TesteInfo): Promise<void> {
     if (t.linguagem === 'ts') return this.rodarFront(t.tipo);
     await this.rodar(t.tipo === 'unitario' ? 'unitario' : 'todos', `${t.classe}#${t.metodo}`);
+  }
+
+  /** `d`: roda só este teste com o depurador anexado (breakpoints do projeto valem). */
+  async depurarTeste(t: TesteInfo): Promise<void> {
+    if (t.linguagem !== 'java') return this.mensagens.alerta('depurar um teste só vale para os de Java (Maven e Gradle)');
+    if (this.rodando()) return this.mensagens.alerta('já há testes rodando: espere ou pare (◼)');
+    if (!this.injetor.get(JdtlsService).pronto()) return this.mensagens.alerta('o jdtls ainda está carregando o projeto');
+    this.mensagens.mostrar(`depurando ${t.classe}#${t.metodo}: o Maven sobe só este teste e o depurador anexa quando ele esperar`);
+    await this.rodar(t.tipo === 'unitario' ? 'unitario' : 'todos', `${t.classe}#${t.metodo}`, false, false, `${t.classe}#${t.metodo}`);
   }
 
   async rodarClasse(classe: string, tipo: TipoDeTeste = 'unitario'): Promise<void> {

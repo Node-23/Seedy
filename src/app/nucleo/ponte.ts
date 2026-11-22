@@ -597,6 +597,11 @@ export const ponte = {
   },
 
   /** IA (Claude): a chave fica no núcleo; aqui só vão o corpo do pedido e os eventos do stream. */
+  /** Alguém escuta nesta porta? (sem conectar nela) */
+  rede: {
+    portaEmUso: async (porta: number): Promise<boolean> => (noApp() ? invoke<boolean>('porta_em_uso', { porta }) : false),
+  },
+
   /** Arquivos `.env` da raiz do projeto (fora do app não há). */
   env: {
     arquivos: async (raiz: string): Promise<ArquivoEnv[]> => (noApp() ? invoke<ArquivoEnv[]>('env_arquivos', { raiz }) : []),

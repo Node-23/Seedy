@@ -286,6 +286,13 @@ export class DepuradorService {
     );
   }
 
+  /** Anexa o depurador a um teste que o Maven ou o Gradle subiram em modo debug (JDWP em `porta`). */
+  async anexarAoTeste(nome: string, porta: number): Promise<boolean> {
+    return this.abrirSessao({ tipo: 'servidor', nome, perfilId: null, porta, semDebug: false }, () =>
+      this.pedir('attach', { type: 'java', name: nome, request: 'attach', hostName: 'localhost', port: porta, timeout: 30000 }),
+    );
+  }
+
   /** RUN/DEBUG de uma classe `main`: o java-debug monta o classpath e sobe a JVM. */
   async lancar(alvo: AlvoMain, debug: boolean): Promise<boolean> {
     let caminhos: [string[], string[]];

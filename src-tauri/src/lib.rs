@@ -21,6 +21,7 @@ mod terminal;
 mod testes;
 mod web;
 mod env;
+mod icone;
 mod tema;
 
 pub fn run() {
@@ -42,6 +43,12 @@ pub fn run() {
             {
                 use tauri::Manager;
                 mcp::iniciar(app.handle().clone(), app.state::<mcp::Mcp>().inner());
+            }
+            {
+                use tauri::Manager;
+                if let Some(janela) = app.get_webview_window("principal") {
+                    icone::definir(&janela);
+                }
             }
             Ok(())
         })
@@ -109,6 +116,7 @@ pub fn run() {
             novo_projeto::projeto_criar,
             novo_projeto::spring_metadados,
             web::web_estado,
+            web::porta_em_uso,
             web::web_instalar,
             web::lsp_web_iniciar,
             web::web_formatar,

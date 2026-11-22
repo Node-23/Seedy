@@ -179,6 +179,7 @@ const FERRAMENTAS_BASE: DefinicaoDeFerramenta[] = [
       tipo: { type: 'string', enum: ['todos', 'unitario', 'integracao', 'api', 'e2e'], description: 'Padrão: todos' },
       filtro: texto('Classe ou classe#metodo'),
       so_falhas: { type: 'boolean' },
+      depurar: { type: 'boolean', description: 'Roda só o teste de `filtro` (Classe#metodo) com o depurador anexado: espera parar num breakpoint e devolve o estado do debug (use debug_controle depois)' },
       segundos: { type: 'number', description: 'Quanto esperar pelo fim (padrão 600, máximo 1800); passou disso, os testes são cancelados' },
     }),
   },
@@ -656,6 +657,18 @@ export class FerramentasService {
     const soFalhas = entrada['so_falhas'] === true;
     const alvo = soFalhas ? 'só os que falharam' : filtro ? `${filtro} (${tipo})` : `todos (${tipo})`;
     if (!(await this.autorizar('A IA QUER RODAR OS TESTES', 'Rodar', alvo))) return 'o usuário recusou; os testes não rodaram';
+    if (entrada['depurar'] === true) {
+      const alvoDebug = t.testes().find((x) => x.linguagem === 'java' && `${x.classe}#${x.metodo}` === filtro);
+      if (!alvoDebug) throw new Error('para depurar, passe em "filtro" um teste exato: Classe#metodo (veja testes_resumo)');
+      await t.depurarTeste(alvoDebug);
+      // Espera parar num breakpoint (ou o teste terminar sem parar).
+      const limiteDebug = Date.now() + Math.max(20, Math.min(300, num(entrada['segundos']) ?? 120)) * 1000;
+      await new Promise((r) => setTimeout(r, 1000));
+      while (Date.now() < limiteDebug && t.rodando() && !this.depSvc().pausado()) await new Promise((r) => setTimeout(r, 500));
+      if (this.depSvc().pausado()) return `${this.estadoDoDebug()}\n(o teste continua suspenso: use debug_controle; \`continuar\` até o fim)`;
+      if (t.rodando()) return 'o teste ainda não chegou a um breakpoint (confira debug_breakpoints); ele segue rodando com o depurador anexado';
+      return `o teste terminou sem parar em nenhum breakpoint.\n${this.testesResumo()}`;
+    }
     if (soFalhas) await t.rodarFalhas();
     else await t.rodar(tipo, filtro);
     // O Maven pode baixar o mundo na primeira vez: espera até o limite (padrão 10 minutos).

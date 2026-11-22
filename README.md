@@ -147,6 +147,12 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   pelo painel de scripts (o Seedy pega o endereço do Vite) e depurar no Edge/Chrome com source maps.
   Os testes `*.test.tsx` e `*.spec.tsx` entram na lista de testes. A tela de arquitetura ainda não
   entende componentes React (função + JSX), e os resultados do Vitest/Jest não são lidos.
+- **Depurar um teste só** (tela de testes, `d` ou "🐞 depurar este"): sobe só aquele teste pelo Maven
+  (ou Gradle) com o depurador anexado, e o Seedy vai para a tela de debug quando ele para num breakpoint.
+  A IA faz o mesmo com `testes_rodar` + `depurar`.
+- **Janela**: o ícone do Seedy aparece na barra de tarefas e no Alt+Tab do Windows, e a interface se
+  adapta de 900 × 560 em diante (painéis laterais encolhem, a barra de ícones rola e as telas cheias
+  estreitam as colunas).
 - **Variáveis do `.env`** (mockup 26): o Seedy lê o `.env` da raiz do projeto e o passa para o que roda:
   a classe `main` (RUN e DEBUG), o servidor de aplicação, os scripts do `package.json`, os testes e os
   comandos da IA. Com um só `.env` ele é usado sozinho; com vários (`.env`, `.env.local`...) o Seedy

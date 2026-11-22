@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Depurar teste, Spring Boot, imagem no chat e atualização — mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #19191B; }
+  .t { font-family: 'Martian Mono', ui-monospace, monospace; color: #E9E2D3; font-size: 12px; }
+  kbd { font-family: inherit; font-size: 10px; padding: 1px 6px; border: 1px solid #333337; border-radius: 5px; color: #A29D93; background: #19191B; }
+  .rotulo { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #A29D93; }
+  .janela { border: 2px solid #0B0B0C; border-radius: 12px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; overflow: hidden; display: flex; flex-direction: column; }
+  .faixa { display: flex; align-items: center; justify-content: space-between; height: 34px; padding: 0 14px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0; }
+  .botao { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 8px; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; box-shadow: 2px 2px 0 #0B0B0C; font-size: 11px; }
+  .botao.dest { background: #9CD7BA; color: #16171C; font-weight: 700; }
+  .nota { font-size: 10.5px; color: #A29D93; line-height: 1.6; }
+  .titulo-ideia { font-size: 11px; font-weight: 700; color: #9CD7BA; margin: 0 0 8px; letter-spacing: .06em; }
+  .sel { background: #333337; }
+  .campo { height: 30px; box-sizing: border-box; padding: 0 10px; border: 2px solid #0B0B0C; border-radius: 8px; background: #19191B; display: flex; align-items: center; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="t" style="width: 1280px; height: 900px; box-sizing: border-box; padding: 14px; background: #19191B; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px">
+
+  <!-- 1. Depurar um teste só -->
+  <div style="display: flex; flex-direction: column; min-height: 0">
+    <p class="titulo-ideia">1 · DEPURAR UM TESTE SÓ (tela de testes, tecla d)</p>
+    <div class="janela" style="flex: 1">
+      <div class="faixa"><span class="rotulo">⚗ Testes</span>
+        <span style="display: flex; gap: 6px"><span class="botao dest">▶ rodar tudo <kbd style="background: transparent; color: #16171C; border-color: #16171C">r</kbd></span><span class="botao">▶ só as que falharam <kbd>f</kbd></span><span class="botao">◼ parar</span></span></div>
+      <div style="display: flex; flex: 1; min-height: 0">
+        <div style="width: 52%; border-right: 2px solid #0B0B0C; padding: 8px; display: flex; flex-direction: column; gap: 2px; font-size: 11.5px">
+          <div style="padding: 4px 8px; color: #A29D93">▾ CommonUserTest</div>
+          <div style="padding: 4px 8px 4px 22px; display: flex; gap: 8px"><span style="color: #B7D39C">✓</span>testCreateCommonUserSuccessfully</div>
+          <div class="sel" style="padding: 4px 8px 4px 22px; display: flex; gap: 8px; border-radius: 6px; border: 1px solid #9CD7BA"><span style="color: #EE8C84">✗</span><span style="flex: 1">testInvalidEmailCommonUser</span><span style="display: flex; gap: 5px"><span style="font-size: 10px; color: #A29D93">▶ <kbd>⏎</kbd></span><span style="font-size: 10px; color: #9CD7BA">🐞 <kbd>d</kbd></span></span></div>
+          <div style="padding: 4px 8px 4px 22px; display: flex; gap: 8px"><span style="color: #B7D39C">✓</span>testInvalidAddressCommonUser</div>
+        </div>
+        <div style="flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+          <span class="rotulo">CommonUserTest.testInvalidEmailCommonUser</span>
+          <div class="nota">TESTE UNITÁRIO · CENÁRIO DE ERRO · falhou em 0,02 s</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap"><span class="botao">▶ rodar este <kbd>⏎</kbd></span><span class="botao dest">🐞 depurar este <kbd style="background: transparent; color: #16171C; border-color: #16171C">d</kbd></span><span class="botao">→ abrir no código <kbd>o</kbd></span></div>
+          <div class="nota">Depurar sobe só este teste com o depurador anexado: os breakpoints do projeto valem, e o Seedy vai para a tela de debug quando parar. Funciona com Maven e Gradle (JUnit 5).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Spring Boot -->
+  <div style="display: flex; flex-direction: column; min-height: 0">
+    <p class="titulo-ideia">2 · SPRING BOOT: PERFIS E ENDPOINTS</p>
+    <div class="janela" style="flex: 1">
+      <div class="faixa"><span class="rotulo">Execução · FeirinhaBackendApplication</span><span class="nota">Spring Boot 3.4</span></div>
+      <div style="padding: 12px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 12px">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 5px"><span class="nota">perfil do Spring (achados em application-*.yml)</span><span class="campo"><span>dev, local</span><span style="color: #A29D93">▾</span></span></div>
+          <div style="width: 150px; display: flex; flex-direction: column; gap: 5px"><span class="nota">porta</span><span class="campo"><span>8082</span><span class="nota">do .env</span></span></div>
+        </div>
+        <div style="padding: 8px 10px; border-radius: 8px; background: #222225" class="nota">Vira <span style="color: #9CD7BA">-Dspring.profiles.active=dev,local</span> (ou <span style="color: #9CD7BA">SPRING_PROFILES_ACTIVE</span>, se o .env já define) e entra no RUN e no DEBUG.</div>
+      </div>
+      <div style="border-top: 2px solid #0B0B0C; display: flex; flex-direction: column; flex: 1; min-height: 0">
+        <div class="faixa" style="border-bottom: 1px solid #333337"><span class="rotulo">Endpoints · 14</span><span style="display: flex; gap: 6px"><span class="botao">Swagger <kbd>w</kbd></span><span class="botao">actuator <kbd>a</kbd></span></span></div>
+        <div style="padding: 6px 12px; font-size: 11px; display: flex; flex-direction: column; gap: 3px">
+          <div style="display: flex; gap: 10px"><span style="width: 44px; color: #B7D39C">GET</span><span style="width: 170px">/api/feiras</span><span class="nota">FeiraController.listar</span></div>
+          <div style="display: flex; gap: 10px" class="sel"><span style="width: 44px; color: #E8C979">POST</span><span style="width: 170px">/api/reservas</span><span class="nota">ReservaController.criar · ⏎ abre no código</span></div>
+          <div style="display: flex; gap: 10px"><span style="width: 44px; color: #B7D39C">GET</span><span style="width: 170px">/api/reservas/{id}</span><span class="nota">ReservaController.ver</span></div>
+          <div style="display: flex; gap: 10px"><span style="width: 44px; color: #EE8C84">DEL</span><span style="width: 170px">/api/bancas/{id}</span><span class="nota">BancaController.apagar</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Imagem no chat -->
+  <div style="display: flex; flex-direction: column; min-height: 0">
+    <p class="titulo-ideia">3 · COLAR IMAGEM NO CHAT DA IA (ctrl+v)</p>
+    <div class="janela" style="flex: 1">
+      <div class="faixa"><span class="rotulo" style="color: #9CD7BA">✦ IA</span><span class="nota">☑ automático</span></div>
+      <div style="flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+        <div style="align-self: flex-end; max-width: 85%; padding: 8px 12px; border-radius: 12px; background: #9CD7BA; color: #16171C">o que é esse erro na tela de reserva?
+          <div style="margin-top: 6px; width: 120px; height: 62px; border-radius: 6px; background: #3A2A2B; border: 1px solid #16171C; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #EE8C84">print-erro.png</div></div>
+        <div class="nota" style="color: #E9E2D3; font-size: 11.5px">Pelo print, o 409 vem de <span style="color: #9CD7BA">ReservaService.reservar</span> (Feira lotada)…</div>
+      </div>
+      <div style="padding: 10px 12px; border-top: 2px solid #0B0B0C">
+        <div class="nota" style="margin-bottom: 6px">ANEXADO PARA A PRÓXIMA MENSAGEM</div>
+        <div style="display: flex; gap: 6px; margin-bottom: 8px">
+          <span style="display: inline-flex; align-items: center; gap: 8px; padding: 3px 6px 3px 3px; border-radius: 8px; border: 1px solid #9CD7BA"><span style="width: 34px; height: 24px; border-radius: 4px; background: #3A2A2B; display: inline-block"></span><span style="color: #9CD7BA; font-size: 11px">print-erro.png · 214 KB</span><span style="color: #A29D93">✕</span></span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 8px; border: 1px solid #9CD7BA; color: #9CD7BA; font-size: 11px">R12 · Feira lotada <span style="color: #A29D93">✕</span></span>
+        </div>
+        <div class="campo" style="height: 40px; border-radius: 11px"><span class="nota">peça uma alteração, pergunte ou cole uma imagem (ctrl+v)…</span><span style="width: 28px; height: 28px; border-radius: 7px; background: #9CD7BA; color: #16171C; display: flex; align-items: center; justify-content: center; font-weight: 700">→</span></div>
+        <div class="nota" style="margin-top: 6px">PNG, JPEG, GIF ou WebP até 5 MB (até 4 por mensagem) · arrastar um arquivo para o painel também anexa</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Atualização automática -->
+  <div style="display: flex; flex-direction: column; min-height: 0">
+    <p class="titulo-ideia">4 · ATUALIZAÇÃO AUTOMÁTICA</p>
+    <div class="janela" style="flex: 1; position: relative">
+      <div class="faixa"><span class="rotulo">Seedy 0.5.5</span><span class="nota">verifica ao abrir e a cada 6 horas</span></div>
+      <div style="flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div class="nota">Na barra de status, à direita, aparece um aviso discreto; nada baixa sozinho:</div>
+        <div style="display: flex; align-items: stretch; height: 28px; border: 2px solid #0B0B0C; border-radius: 9px; background: #222225; overflow: hidden; font-size: 11px">
+          <span style="padding: 0 12px; background: #9CD7BA; color: #16171C; font-weight: 700; display: flex; align-items: center">NORMAL</span>
+          <span style="padding: 0 12px; display: flex; align-items: center; border-right: 1px solid #333337">master</span>
+          <span style="flex: 1"></span>
+          <span style="padding: 0 12px; display: flex; align-items: center; border-left: 1px solid #333337; color: #9CD7BA">jdtls ✓</span>
+          <span style="padding: 0 12px; display: flex; align-items: center; border-left: 1px solid #333337; background: #2E3A2B; color: #B7D39C; font-weight: 700">⬆ 0.5.6 disponível <kbd style="margin-left: 6px">␣ U</kbd></span>
+        </div>
+        <div style="align-self: flex-end; width: 400px; border: 2px solid #0B0B0C; border-radius: 12px; background: #222225; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden">
+          <div style="padding: 10px 14px; border-bottom: 2px solid #0B0B0C"><span class="rotulo" style="color: #9CD7BA">Seedy 0.5.6</span><div class="nota">você está na 0.5.5 · 31 MB</div></div>
+          <div style="padding: 10px 14px; font-size: 11px; line-height: 1.7">
+            <div>• Depurar um teste só</div><div>• Spring Boot: perfis e endpoints</div><div>• Colar imagem no chat da IA</div>
+            <div class="nota" style="margin-top: 4px">o instalador não é assinado: o Windows pode avisar na primeira vez</div>
+          </div>
+          <div style="padding: 10px 14px; border-top: 2px solid #0B0B0C; display: flex; gap: 8px; justify-content: flex-end"><span class="botao">depois <kbd>esc</kbd></span><span class="botao">ver notas</span><span class="botao dest">instalar e reiniciar <kbd style="background: transparent; color: #16171C; border-color: #16171C">⏎</kbd></span></div>
+        </div>
+        <div class="nota">Baixa o instalador da release do GitHub, confere o tamanho e o SHA-256 publicado, fecha o Seedy, instala e abre de novo no mesmo projeto. Desligável em <span style="color: #9CD7BA">seedy.json</span> (<span style="color: #9CD7BA">atualizacao.verificar</span>).</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
