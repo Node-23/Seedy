@@ -1,3 +1,4 @@
+import { EnvService } from '../execucao/env.service';
 import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
 import { ponte } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
@@ -37,6 +38,7 @@ export const ID_INSTALAR = '__install__';
 export class ScriptsService {
   private readonly projeto = inject(ProjetoService);
   private readonly mensagens = inject(MensagensService);
+  private readonly env = inject(EnvService);
   private readonly layout = inject(LayoutService);
 
   readonly scripts = signal<ScriptDoPacote[]>([]);
@@ -84,6 +86,9 @@ export class ScriptsService {
       this.mensagens.mostrar(`${nome} já está rodando`);
       return;
     }
+    const env = await this.env.variaveis();
+    if (env === null) return; // cancelou a escolha do .env
+    const ambiente = { ...env, ...(extras.ambiente ?? {}) };
     this.selecionado.set(nome);
     this.layout.mostrar('scripts');
     const args = extras.argumentos?.length ? ['--', ...extras.argumentos] : [];
@@ -97,7 +102,7 @@ export class ScriptsService {
         comando,
         (linhas) => this.registrar(nome, linhas),
         (codigo) => this.aoTerminar(nome, codigo),
-        extras.ambiente && Object.keys(extras.ambiente).length ? extras.ambiente : null,
+        Object.keys(ambiente).length ? ambiente : null,
       );
     } catch (e) {
       this.registrar(nome, [String(e)], true, 'erro');

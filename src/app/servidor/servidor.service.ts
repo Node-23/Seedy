@@ -1,3 +1,4 @@
+import { EnvService } from '../execucao/env.service';
 import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
 import { FonteDeDeploy, InfoExecucao, nomeBase, PerfilServidor, ponte, TipoServidor } from '../nucleo/ponte';
 import { ProjetoService } from '../nucleo/projeto.service';
@@ -46,6 +47,7 @@ const JAR_DO_SERVIDOR = /(^|[-_.])(servlet-api|jsp-api|el-api|javaee-(web-)?api|
 export class ServidorService {
   private readonly projeto = inject(ProjetoService);
   private readonly mensagens = inject(MensagensService);
+  private readonly env = inject(EnvService);
   private readonly escolha = inject(EscolhaService);
   private readonly jdtls = inject(JdtlsService);
   private readonly busca = inject(BuscaService);
@@ -234,6 +236,8 @@ export class ServidorService {
       this.mensagens.mostrar(`${p.nome} já está rodando`);
       return;
     }
+    const env = await this.env.variaveis();
+    if (env === null) return; // cancelou a escolha do .env
     this.layout.mostrar('servidor');
     this.selecionado.set(id);
     const fontes = await this.fontes(p);
@@ -249,6 +253,7 @@ export class ServidorService {
           if (e.tipo === 'copiados') this.aoCopiar(id, e.arquivos);
           else this.aoEncerrar(id, e.codigo);
         },
+        env,
       );
       this.mudar(id, (x) => ({ ...x, info }));
       this.registrar(id, [`${info.versao} · aplicação montada (${info.copiados} arquivos) em ${info.aplicacao}`], true);

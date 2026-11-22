@@ -142,6 +142,13 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   testar, commitar e mexer em container pedem a sua aprovação (o modo automático, `␣ Y`, dispensa);
   push, apagar, `docker compose down`, PR e issue perguntam sempre. `/historico` no chat mostra o
   que foi pedido e decidido na sessão.
+- **Variáveis do `.env`** (mockup 26): o Seedy lê o `.env` da raiz do projeto e o passa para o que roda:
+  a classe `main` (RUN e DEBUG), o servidor de aplicação, os scripts do `package.json`, os testes e os
+  comandos da IA. Com um só `.env` ele é usado sozinho; com vários (`.env`, `.env.local`...) o Seedy
+  pergunta qual usar na primeira execução e guarda a escolha por projeto (`␣ r` → ⚙ muda ou desliga,
+  `alt+e`). O arquivo é lido de novo a cada execução, as "variáveis de ambiente" da configuração valem
+  por cima, valores com cara de senha aparecem mascarados e a IA só vê os nomes (`env_listar`). Se o
+  arquivo não está no `.gitignore`, as opções avisam e dão o botão "adicionar".
 - **Mandar para o chat da IA** (mockup 25): `ctrl+shift+a` manda o que está em foco (container,
   regra, bloco da arquitetura, caminho, card do TODO, teste e a falha, conexão de banco, commit
   selecionado, estado do Git ou o trecho do código) e o botão direito faz o mesmo no item clicado.

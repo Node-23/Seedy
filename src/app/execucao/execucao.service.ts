@@ -1,3 +1,4 @@
+import { EnvService } from './env.service';
 import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { MensagensService } from '../nucleo/mensagens.service';
@@ -68,6 +69,7 @@ const CHAVE = 'seedy.execucao';
 export class ExecucaoService {
   private readonly projeto = inject(ProjetoService);
   private readonly mensagens = inject(MensagensService);
+  private readonly env = inject(EnvService);
   private readonly escolha = inject(EscolhaService);
   private readonly jdtls = inject(JdtlsService);
   private readonly layout = inject(LayoutService);
@@ -282,6 +284,9 @@ export class ExecucaoService {
       if (debug) this.layout.tela.set('debug');
       return;
     }
+    // As variáveis do .env (a classe main só sobe com elas); cancelar a escolha cancela o RUN.
+    const env = await this.env.variaveis();
+    if (env === null) return;
     if (this.rodando()) await this.parar();
     this.contador = 0;
     this.resto = { stdout: '', stderr: '' };
@@ -290,7 +295,7 @@ export class ExecucaoService {
     this.layout.mostrar('servidor');
     if (debug) this.layout.tela.set('debug');
     const o = this.opcoesDe(c.id);
-    const ok = await this.depurador.lancar({ nome: c.nome, mainClass: c.mainClass, projectName: c.projectName, argumentos: comAspasDuplas(separarArgumentos(o.argumentos)), jvm: o.jvm, ambiente: o.ambiente }, debug);
+    const ok = await this.depurador.lancar({ nome: c.nome, mainClass: c.mainClass, projectName: c.projectName, argumentos: comAspasDuplas(separarArgumentos(o.argumentos)), jvm: o.jvm, ambiente: { ...env, ...o.ambiente } }, debug);
     if (ok) this.mudar((m) => ({ ...m, fase: 'rodando' }));
     else {
       this.mudar((m) => ({ ...m, fase: 'parado' }));

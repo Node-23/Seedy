@@ -1,5 +1,6 @@
 import { inject, Injectable, Injector } from '@angular/core';
 import { AprovacoesService } from './aprovacoes.service';
+import { EnvService } from '../execucao/env.service';
 import { FERRAMENTAS_IDE, FerramentasIdeService } from './ferramentas-ide.service';
 import { TestesService, FiltroDeTipo } from '../testes/testes.service';
 import { DockerService } from '../containers/docker.service';
@@ -304,6 +305,7 @@ export class FerramentasService {
   private execSvc = () => this.injetor.get(ExecucaoService);
   private depSvc = () => this.injetor.get(DepuradorService);
   private scriptsSvc = () => this.injetor.get(ScriptsService);
+  private envSvc = () => this.injetor.get(EnvService);
 
   rotulo(nome: string): string {
     return FERRAMENTAS.find((f) => f.name === nome)?.rotulo ?? nome;
@@ -513,12 +515,15 @@ export class FerramentasService {
     const argv = windows ? ['cmd.exe', '/C', comando] : ['sh', '-c', comando];
     let saida: string[] = [];
     let codigo: number | null | undefined;
+    const env = await this.envSvc().variaveis();
+    if (env === null) return 'o usuário cancelou a escolha do .env; o comando não rodou';
     await ponte.tarefa.iniciar(
       id,
       raiz,
       argv,
       (linhas) => (saida = [...saida, ...linhas].slice(-1500)),
       (c) => (codigo = c),
+      Object.keys(env).length ? env : null,
     );
     const fim = Date.now() + espera;
     while (codigo === undefined && Date.now() < fim) await new Promise((r) => setTimeout(r, 300));
@@ -585,7 +590,8 @@ export class FerramentasService {
     const id = `ia-tarefa-${Date.now()}`;
     let saida: string[] = [];
     let codigo: number | null | undefined;
-    await ponte.tarefa.iniciar(id, raiz, argv, (l) => (saida = [...saida, ...l].slice(-1500)), (c) => (codigo = c));
+    const env = (await this.envSvc().variaveis()) ?? {};
+    await ponte.tarefa.iniciar(id, raiz, argv, (l) => (saida = [...saida, ...l].slice(-1500)), (c) => (codigo = c), Object.keys(env).length ? env : null);
     const fim = Date.now() + segundos * 1000;
     while (codigo === undefined && Date.now() < fim) await new Promise((r) => setTimeout(r, 300));
     if (codigo === undefined) await ponte.tarefa.parar(id).catch(() => undefined);

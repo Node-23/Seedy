@@ -188,11 +188,17 @@ pub async fn servidor_iniciar(
     debug: bool,
     saida: Channel<Vec<String>>,
     eventos: Channel<Evento>,
+    ambiente: Option<BTreeMap<String, String>>,
 ) -> Result<InfoExecucao, String> {
     if travar(&estado.0).contains_key(&id) {
         return Err("este servidor já está rodando".into());
     }
-    let perfil = ler_perfis().into_iter().find(|p| p.id == id).ok_or("servidor não encontrado")?;
+    let mut perfil = ler_perfis().into_iter().find(|p| p.id == id).ok_or("servidor não encontrado")?;
+    // Variáveis do .env: valem por baixo das do perfil (o que o perfil define manda).
+    if let Some(mut base) = ambiente {
+        base.extend(std::mem::take(&mut perfil.variaveis));
+        perfil.variaveis = base;
+    }
     let para_subir = eventos.clone();
     let (info, execucao, processo) = tauri::async_runtime::spawn_blocking(move || subir(perfil, fontes, debug, saida, para_subir))
         .await

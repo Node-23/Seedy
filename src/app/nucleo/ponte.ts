@@ -204,6 +204,14 @@ export interface EstadoWeb {
 export type TipoServidorWeb = 'ts' | 'angular' | 'eslint';
 
 /** Container do Docker já inspecionado (Fase 8). */
+/** Um `.env*` da raiz do projeto. */
+export interface ArquivoEnv {
+  nome: string;
+  variaveis: number;
+  /** `.env.example` e parecidos: modelo, não valores de verdade. */
+  modelo: boolean;
+}
+
 export interface ContainerDocker {
   id: string;
   nome: string;
@@ -585,6 +593,12 @@ export const ponte = {
   },
 
   /** IA (Claude): a chave fica no núcleo; aqui só vão o corpo do pedido e os eventos do stream. */
+  /** Arquivos `.env` da raiz do projeto (fora do app não há). */
+  env: {
+    arquivos: async (raiz: string): Promise<ArquivoEnv[]> => (noApp() ? invoke<ArquivoEnv[]>('env_arquivos', { raiz }) : []),
+    ler: async (raiz: string, arquivo: string): Promise<{ nome: string; valor: string }[]> => (noApp() ? invoke<{ nome: string; valor: string }[]>('env_ler', { raiz, arquivo }) : []),
+  },
+
   /** Memória global da IA (`memoria.md` na pasta de configuração do Seedy); no navegador, o localStorage. */
   memoriaGlobal: {
     ler: async (): Promise<string> => {
@@ -644,12 +658,13 @@ export const ponte = {
       debug: boolean,
       aoLer: (linhas: string[]) => void,
       aoEvento: (e: EventoServidor) => void,
+      ambiente: Record<string, string> | null = null,
     ): Promise<InfoExecucao> {
       const saida = new Channel<string[]>();
       saida.onmessage = aoLer;
       const eventos = new Channel<EventoServidor>();
       eventos.onmessage = aoEvento;
-      return invoke<InfoExecucao>('servidor_iniciar', { id, fontes, debug, saida, eventos });
+      return invoke<InfoExecucao>('servidor_iniciar', { id, fontes, debug, saida, eventos, ambiente: ambiente && Object.keys(ambiente).length ? ambiente : null });
     },
     parar: (id: string) => invoke<void>('servidor_parar', { id }),
     redeploy: (id: string, fontes: FonteDeDeploy[]) => invoke<number>('servidor_redeploy', { id, fontes }),

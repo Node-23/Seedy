@@ -28,6 +28,7 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Regras de negócio com cobertura de testes e cenários de erro (`fontes/Testes.dc.html`) | [22-regras-cobertura.jpg](22-regras-cobertura.jpg) | ✅ |
 | Menu do botão direito numa regra (ir para o teste, criar manual/IA, sugerir cenários) | [23-menu-regra.jpg](23-menu-regra.jpg) | ✅ |
 | Uso da assinatura do Claude na barra de status (5 horas e semana) | [24-limites-de-uso.jpg](24-limites-de-uso.jpg) | ✅ |
+| Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
 
 As telas 07 a 09 não têm mockup próprio: foram feitas na linguagem visual dos outros e

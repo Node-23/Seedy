@@ -1,5 +1,8 @@
 import { Component, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { ExecucaoService, OpcoesDeExecucao, OPCOES_VAZIAS } from './execucao.service';
+import { EnvService } from './env.service';
+import { ponte } from '../nucleo/ponte';
+import { ProjetoService } from '../nucleo/projeto.service';
 
 /**
  * Argumentos do programa, variáveis de ambiente e opções da JVM de uma configuração de
@@ -18,9 +21,40 @@ import { ExecucaoService, OpcoesDeExecucao, OPCOES_VAZIAS } from './execucao.ser
             <label class="campo larga"><span>opções da JVM</span>
               <input type="text" spellcheck="false" [value]="o().jvm" (input)="mudar('jvm', valor($event))" placeholder="-Xmx1g -Dspring.profiles.active=dev" /></label>
           }
-          <label class="campo larga"><span>variáveis de ambiente (uma por linha: NOME=valor)</span>
+          @if (env.arquivos().length) {
+            <div class="env-caixa larga" [class.desligado]="!env.escolhido().usar">
+              <label class="commit-opcao" title="alt+e">
+                <input type="checkbox" [checked]="env.escolhido().usar" (change)="usarEnv(!env.escolhido().usar)" />
+                usar variáveis de um arquivo .env
+                <span class="espaco"></span><kbd>alt+e</kbd>
+              </label>
+              @if (env.escolhido().usar) {
+                <div class="env-linha">
+                  <label class="campo env-arquivo"><span>arquivo</span>
+                    <select [value]="env.emUso()?.nome ?? ''" (change)="escolherArquivo(valor($event))">
+                      @if (!env.emUso()) { <option value="">escolher…</option> }
+                      @for (a of env.arquivos(); track a.nome) { <option [value]="a.nome">{{ a.nome }}{{ a.modelo ? ' (modelo)' : '' }}</option> }
+                    </select></label>
+                  @if (env.emUso(); as f) { <span class="suave env-resumo">{{ f.variaveis }} {{ f.variaveis === 1 ? 'variável' : 'variáveis' }} · lidas de novo a cada execução</span> }
+                  @else { <span class="suave env-resumo">escolha o arquivo: há mais de um na raiz do projeto</span> }
+                </div>
+                @if (previa().length) {
+                  <div class="env-variaveis">
+                    @for (v of previa().slice(0, 3); track v.nome) { <div><span class="destaque-texto">{{ v.nome }}</span><span class="suave">{{ env.mascarar(v.nome, v.valor) }}</span></div> }
+                    @if (previa().length > 3) { <div><span class="suave">… mais {{ previa().length - 3 }}</span></div> }
+                  </div>
+                }
+                @if (env.emUso(); as f) {
+                  @if (ignorado() === false) {
+                    <div class="env-aviso"><span>⚠ {{ f.nome }} não está no .gitignore deste projeto</span><button class="botao" (click)="ignorar(f.nome)">adicionar</button></div>
+                  }
+                }
+              }
+            </div>
+          }
+          <label class="campo larga"><span>variáveis de ambiente (uma por linha: NOME=valor){{ env.escolhido().usar && env.emUso() ? ' — valem por cima do .env' : '' }}</span>
             <textarea class="campo-variaveis" spellcheck="false" [value]="variaveis()" (input)="definirVariaveis(valor($event))" placeholder="DATABASE_URL=jdbc:postgresql://localhost:5432/feira"></textarea></label>
-          <div class="perfil-dica larga suave">fica em .seedy/execucao.json (vai para o git; dá para editar à mão) · o RUN e o DEBUG usam</div>
+          <div class="perfil-dica larga suave">fica em .seedy/execucao.json (vai para o git; dá para editar à mão) · o RUN, o DEBUG, os testes e a IA usam</div>
         </div>
         <div class="perfil-acoes">
           <span class="espaco"></span>
@@ -33,6 +67,11 @@ import { ExecucaoService, OpcoesDeExecucao, OPCOES_VAZIAS } from './execucao.ser
 })
 export class OpcoesExecucaoComponent {
   protected readonly x = inject(ExecucaoService);
+  protected readonly env = inject(EnvService);
+  /** As primeiras variáveis do .env em uso (para mostrar; o valor com cara de senha sai mascarado). */
+  protected readonly previa = signal<{ nome: string; valor: string }[]>([]);
+  protected readonly ignorado = signal<boolean | null>(null);
+  private readonly projeto = inject(ProjetoService);
   private readonly primeiro = viewChild<ElementRef<HTMLInputElement>>('primeiro');
   protected readonly o = signal<OpcoesDeExecucao>(OPCOES_VAZIAS);
   protected readonly variaveis = signal('');
@@ -47,9 +86,41 @@ export class OpcoesExecucaoComponent {
         const o = this.x.opcoesDe(c.id);
         this.o.set(o);
         this.variaveis.set(Object.entries(o.ambiente).map(([k, v]) => `${k}=${v}`).join('\n'));
+        void this.env.carregar();
         setTimeout(() => this.primeiro()?.nativeElement.focus());
       });
     });
+    // A prévia e o aviso do .gitignore acompanham o arquivo em uso.
+    effect(() => {
+      const aberto = this.x.editandoOpcoes();
+      const f = this.env.emUso();
+      this.env.nomes();
+      untracked(() => void this.atualizarPrevia(aberto ? f?.nome ?? null : null));
+    });
+  }
+
+  private async atualizarPrevia(arquivo: string | null): Promise<void> {
+    const raiz = this.projeto.raiz();
+    if (!arquivo || !raiz) {
+      this.previa.set([]);
+      this.ignorado.set(null);
+      return;
+    }
+    this.previa.set(await ponte.env.ler(raiz, arquivo).catch(() => []));
+    this.ignorado.set(await this.env.ignorado(arquivo));
+  }
+
+  protected usarEnv(usar: boolean): void {
+    this.env.mudar({ usar, arquivo: this.env.escolhido().arquivo });
+  }
+
+  protected escolherArquivo(nome: string): void {
+    if (nome) this.env.mudar({ usar: true, arquivo: nome });
+  }
+
+  protected async ignorar(arquivo: string): Promise<void> {
+    await this.env.ignorar(arquivo);
+    this.ignorado.set(await this.env.ignorado(arquivo));
   }
 
   protected valor(e: Event): string {
@@ -75,6 +146,10 @@ export class OpcoesExecucaoComponent {
       e.preventDefault();
       e.stopPropagation();
       this.fechar();
+    } else if (e.altKey && e.code === 'KeyE' && this.env.arquivos().length) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.usarEnv(!this.env.escolhido().usar);
     } else if (e.key === 'Enter' && (e.ctrlKey || (e.target as HTMLElement).tagName === 'INPUT')) {
       e.preventDefault();
       void this.salvar();

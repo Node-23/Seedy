@@ -1,3 +1,4 @@
+import { EnvService } from '../execucao/env.service';
 import { computed, effect, inject, Injectable, isDevMode, signal, untracked } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
 import { EntenderService } from '../entender/entender.service';
@@ -31,6 +32,7 @@ export class TestesService {
   private readonly projeto = inject(ProjetoService);
   private readonly editor = inject(EditorService);
   private readonly mensagens = inject(MensagensService);
+  private readonly env = inject(EnvService);
   private readonly entender = inject(EntenderService);
   private readonly scripts = inject(ScriptsService);
   private readonly ia = inject(IaService);
@@ -210,6 +212,11 @@ export class TestesService {
       return;
     }
     try {
+      const env = await this.env.variaveis();
+      if (env === null) {
+        this.rodando.set(null);
+        return; // cancelou a escolha do .env
+      }
       this.preparando.set(true);
       const comando = await ponte.testes.comando(raiz, tipo, filtro).finally(() => this.preparando.set(false));
       this.comandoAtual.set(comando.join(' '));
@@ -219,6 +226,7 @@ export class TestesService {
         comando,
         (linhas) => this.saida.update((l) => [...l, ...linhas].slice(-3000)),
         (codigo) => void terminar(codigo),
+        Object.keys(env).length ? env : null,
       );
     } catch (e) {
       this.mensagens.erro(String(e));

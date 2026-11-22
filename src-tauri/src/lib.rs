@@ -20,6 +20,7 @@ mod servidor;
 mod terminal;
 mod testes;
 mod web;
+mod env;
 mod tema;
 
 pub fn run() {
@@ -68,6 +69,8 @@ pub fn run() {
             ia::memoria_global_ler,
             ia::memoria_global_gravar,
             ia::memoria_global_caminho,
+            env::env_arquivos,
+            env::env_ler,
             ia::ia_mensagem,
             ia::ia_claude_estado,
             ia::abrir_link,

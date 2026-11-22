@@ -16,6 +16,7 @@ import { ServidorService } from '../servidor/servidor.service';
 import { DockerService } from '../containers/docker.service';
 import { BancoService } from '../banco/banco.service';
 import type { FerramentasService } from './ferramentas.service';
+import { EnvService } from '../execucao/env.service';
 import { EscopoDaMemoria, MemoriaService, prepararNota } from './memoria.service';
 
 /** Definição de ferramenta (o mesmo formato de `FERRAMENTAS`). */
@@ -72,6 +73,8 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   { name: 'jdtls_reiniciar', rotulo: 'jdtls.reiniciar', description: 'Reinicia o jdtls (útil quando o classpath ou os erros estão desatualizados).', input_schema: objeto({}) },
   { name: 'jdks_listar', rotulo: 'jdk.listar', description: 'JDKs instalados na máquina (versão e pasta) e qual roda o jdtls.', input_schema: objeto({}) },
   { name: 'jdk_escolher', rotulo: 'jdk.escolher', description: 'Escolhe o JDK que roda o jdtls (precisa ser a versão mínima ou mais nova) e reinicia o jdtls. O usuário aprova.', input_schema: objeto({ pasta: texto('Pasta do JDK (jdks_listar)') }, ['pasta']) },
+  // ---------- .env ----------
+  { name: 'env_listar', rotulo: 'env.listar', description: 'Os arquivos .env da raiz do projeto, qual está em uso e os NOMES das variáveis que ele define (nunca os valores). O RUN, o DEBUG, os testes e executar_comando já usam o .env sozinhos.', input_schema: objeto({}) },
   // ---------- memória ----------
   { name: 'memoria_ler', rotulo: 'memoria.ler', description: 'As notas que já foram guardadas na memória: do projeto e globais (as globais valem para todos os projetos).', input_schema: objeto({ escopo: { type: 'string', enum: ['projeto', 'global', 'todas'], description: 'Padrão: todas' } }) },
   { name: 'memoria_salvar', rotulo: 'memoria.salvar', description: 'Guarda uma nota na memória para as próximas conversas. O usuário SEMPRE aprova antes, mesmo no modo automático. Use para o que é durável e não dá para ler do código (comando que roda o sistema, convenção, armadilha, preferência corrigida pelo usuário). Uma frase só, até 400 caracteres; nunca senhas, chaves ou tokens. Escopo "projeto" para o que vale só aqui, "global" para o que vale em qualquer projeto.', input_schema: objeto({ nota: texto('A nota, numa frase'), escopo: { type: 'string', enum: ['projeto', 'global'] } }, ['nota', 'escopo']) },
@@ -106,6 +109,7 @@ export class FerramentasIdeService {
   private readonly docker = () => this.injetor.get(DockerService);
   private readonly banco = () => this.injetor.get(BancoService);
   private readonly memoria = () => this.injetor.get(MemoriaService);
+  private readonly env = () => this.injetor.get(EnvService);
 
   conhece(nome: string): boolean {
     return FERRAMENTAS_IDE.some((f) => f.name === nome);
@@ -169,6 +173,8 @@ export class FerramentasIdeService {
         return this.jdksListar();
       case 'jdk_escolher':
         return this.jdkEscolher(str(e, 'pasta'));
+      case 'env_listar':
+        return this.envListar();
       case 'memoria_ler':
         return this.memoriaLer(opc(e, 'escopo') ?? 'todas');
       case 'memoria_salvar':
@@ -552,6 +558,20 @@ export class FerramentasIdeService {
     if (!(await this.base().autorizar('A IA QUER TROCAR O JDK DO JDTLS', 'Trocar', `Java ${jdk.versao} — ${jdk.home}\no jdtls reinicia`))) return 'o usuário recusou; o JDK ficou';
     await this.jdtls().usarJdk(jdk.home);
     return `jdtls reiniciando com o Java ${jdk.versao}`;
+  }
+
+  // ---------- .env ----------
+
+  private async envListar(): Promise<string> {
+    const e = this.env();
+    await e.carregar();
+    const lista = e.arquivos();
+    if (!lista.length) return 'nenhum arquivo .env na raiz do projeto';
+    const uso = e.emUso();
+    return [
+      ...lista.map((a) => `${a.nome}${a.modelo ? ' (modelo)' : ''} — ${a.variaveis} variáveis${uso?.nome === a.nome ? '  [em uso]' : ''}`),
+      uso ? `variáveis de ${uso.nome} (só os nomes): ${e.nomes().join(', ') || '—'}` : e.escolhido().usar ? 'nenhum escolhido ainda: o Seedy pergunta ao usuário na primeira execução' : 'o .env está desligado neste projeto',
+    ].join('\n');
   }
 
   // ---------- memória ----------
