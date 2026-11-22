@@ -21,6 +21,7 @@ export const MODELOS: InfoDoModelo[] = [
   { id: 'war', titulo: 'Java web (WAR)', descricao: 'servlet + webapp, pronto para o WildFly/Tomcat do Seedy', letra: 'W', cor: 'aviso-texto' },
   { id: 'simples', titulo: 'Java simples', descricao: 'src/ e uma classe Main, sem ferramenta de build', letra: 'J', cor: '' },
   { id: 'angular', titulo: 'Angular', descricao: 'ng new, com roteamento e estilos em CSS', letra: 'A', cor: 'rosa-texto' },
+  { id: 'react', titulo: 'React', descricao: 'Vite + React + TypeScript, com as dependências instaladas', letra: 'R', cor: 'destaque-texto' },
 ];
 
 /** Grupos de iniciadores do Spring: os mais usados primeiro, com nome em português. */
@@ -182,7 +183,7 @@ export class NovoProjetoService {
     if (!nome) return 'dê um nome ao projeto';
     if (!/^[A-Za-z][\w.-]*$/.test(nome)) return 'o nome começa com letra e tem só letras, números, - _ .';
     if (!this.pastaPai()) return 'escolha onde criar (ctrl+o)';
-    if (this.modelo() !== 'angular' && !/^[A-Za-z_][\w]*(\.[A-Za-z_][\w]*)*$/.test(this.pacote())) return 'pacote inválido';
+    if (this.modelo() !== 'angular' && this.modelo() !== 'react' && !/^[A-Za-z_][\w]*(\.[A-Za-z_][\w]*)*$/.test(this.pacote())) return 'pacote inválido';
     if (this.modelo() === 'spring' && !this.spring()) return this.erroSpring() ? 'sem o start.spring.io (precisa de internet)' : 'carregando o start.spring.io…';
     return null;
   });

@@ -13,6 +13,8 @@ import { registrarPrettier } from './prettier';
 /** O que o projeto web tem (lido da raiz). */
 export interface ProjetoWeb {
   angular: boolean;
+  /** Tem `react` nas dependências do package.json (o TypeScript atende .tsx/.jsx; não há servidor à parte). */
+  react: boolean;
   eslint: boolean;
   /** Configuração nova do ESLint (eslint.config.*), padrão desde o ESLint 9. */
   eslintPlano: boolean;
@@ -124,21 +126,24 @@ export class WebLspService {
       return;
     }
     let prettier = nomes.some((n) => PRETTIER_CONFIG.test(n));
+    let react = false;
     try {
       const pkg = JSON.parse(await ponte.lerArquivo(`${raiz.replace(/[\\/]+$/, '')}${raiz.includes('\\') ? '\\' : '/'}package.json`));
       prettier ||= !!pkg.prettier;
+      react = !!(pkg.dependencies?.react || pkg.devDependencies?.react);
     } catch {
       /* package.json inválido: segue sem */
     }
     const web: ProjetoWeb = {
       angular: nomes.includes('angular.json'),
+      react,
       eslint: nomes.some((n) => ESLINT_CONFIG.test(n)),
       eslintPlano: nomes.some((n) => n.startsWith('eslint.config.')),
       prettier,
     };
     const antes = this.web();
     this.web.set(web);
-    const mesmo = antes && antes.angular === web.angular && antes.eslint === web.eslint && Object.keys(this.servidores()).length;
+    const mesmo = antes && antes.angular === web.angular && antes.react === web.react && antes.eslint === web.eslint && Object.keys(this.servidores()).length;
     if (!mesmo && noApp()) await this.iniciar(raiz, web, geracao);
   }
 
@@ -148,13 +153,13 @@ export class WebLspService {
     if (geracao !== this.geracao) return;
     if (!estado.node) {
       this.fase.set('sem-node');
-      this.mensagens.mostrar('projeto web: instale o Node para ter TypeScript, Angular e ESLint no editor');
+      this.mensagens.mostrar(`projeto web: instale o Node para ter ${nomesDoWeb(web)} no editor`);
       return;
     }
     if (!estado.instalado) {
       this.fase.set('instalando');
       this.detalhe.set('instalando os servidores web (npm)…');
-      this.mensagens.mostrar('baixando os servidores de TypeScript, Angular e ESLint (só na primeira vez)…');
+      this.mensagens.mostrar(`baixando os servidores de ${nomesDoWeb(web)} (só na primeira vez)…`);
       try {
         await ponte.web.instalar((l) => this.detalhe.set(l.slice(0, 120)));
       } catch (e) {
@@ -390,6 +395,12 @@ export class WebLspService {
     }
     return true;
   }
+}
+
+/** "TypeScript, React e ESLint": o que este projeto web usa (para as mensagens). */
+function nomesDoWeb(web: ProjetoWeb): string {
+  const n = ['TypeScript', ...(web.react ? ['React'] : []), ...(web.angular ? ['Angular'] : []), ...(web.eslint ? ['ESLint'] : [])];
+  return n.length > 1 ? `${n.slice(0, -1).join(', ')} e ${n.at(-1)}` : n[0];
 }
 
 const NOMES: Record<TipoServidorWeb, string> = { ts: 'TypeScript', angular: 'Angular', eslint: 'ESLint' };

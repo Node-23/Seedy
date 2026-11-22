@@ -15,7 +15,7 @@ const SPRING: &str = "https://start.spring.io";
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PedidoDeProjeto {
-    /// "spring" | "maven" | "war" | "simples" | "angular"
+    /// "spring" | "maven" | "war" | "simples" | "angular" | "react"
     modelo: String,
     nome: String,
     /// Pasta final do projeto (já com o nome).
@@ -83,7 +83,7 @@ fn criar(p: &PedidoDeProjeto, avisar: &dyn Fn(&str)) -> Result<ProjetoCriado, St
         return Err(format!("a pasta {} já existe e não está vazia", pasta.display()));
     }
     let pacote = if p.pacote.trim().is_empty() { format!("{}.{}", p.grupo, pacote_do_nome(&p.nome)) } else { p.pacote.trim().to_string() };
-    if p.modelo != "angular" {
+    if !matches!(p.modelo.as_str(), "angular" | "react") {
         validar_pacote(&pacote)?;
     }
     let principal = match p.modelo.as_str() {
@@ -109,6 +109,10 @@ fn criar(p: &PedidoDeProjeto, avisar: &dyn Fn(&str)) -> Result<ProjetoCriado, St
         }
         "angular" => {
             angular(&pasta, p, avisar)?;
+            None
+        }
+        "react" => {
+            react(&pasta, p, avisar)?;
             None
         }
         outro => return Err(format!("modelo desconhecido: {outro}")),
@@ -395,7 +399,13 @@ fn angular(pasta: &Path, p: &PedidoDeProjeto, avisar: &dyn Fn(&str)) -> Result<(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    let mut filho = c.spawn().map_err(|e| format!("não consegui rodar o npx (o Node está instalado?): {e}"))?;
+    rodar_mostrando(c, avisar, "ng new")
+}
+
+/// Roda o comando mostrando a saída linha a linha; erro vira a última linha do stderr.
+fn rodar_mostrando(mut c: Command, avisar: &dyn Fn(&str), nome: &str) -> Result<(), String> {
+    c.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut filho = c.spawn().map_err(|e| format!("não consegui rodar o {nome} (o Node está instalado?): {e}"))?;
     let erro = filho.stderr.take().map(|e| {
         std::thread::spawn(move || BufReader::new(e).lines().map_while(Result::ok).collect::<Vec<_>>())
     });
@@ -410,9 +420,42 @@ fn angular(pasta: &Path, p: &PedidoDeProjeto, avisar: &dyn Fn(&str)) -> Result<(
     let erros = erro.and_then(|h| h.join().ok()).unwrap_or_default();
     if !status.success() {
         let ultimo = erros.iter().rev().find(|l| !l.trim().is_empty()).cloned().unwrap_or_default();
-        return Err(format!("ng new falhou: {ultimo}"));
+        return Err(format!("{nome} falhou: {ultimo}"));
     }
     Ok(())
+}
+
+// ---------- React (Vite) ----------
+
+fn react(pasta: &Path, p: &PedidoDeProjeto, avisar: &dyn Fn(&str)) -> Result<(), String> {
+    let pai = pasta.parent().ok_or("pasta inválida")?;
+    fs::create_dir_all(pai).map_err(|e| e.to_string())?;
+    avisar("rodando create-vite (React + TypeScript; baixa o create-vite na primeira vez)…");
+    let args = ["-y", "create-vite@latest", &p.nome, "--template", "react-ts"].map(String::from);
+    let mut c = comando_npx(&args);
+    c.current_dir(pai).env("CI", "1");
+    rodar_mostrando(c, avisar, "create-vite")?;
+    // O Vite só cria os arquivos: o npm install deixa o projeto pronto para rodar e para o editor.
+    avisar("npm install (as dependências do projeto)…");
+    let mut i = comando_npm(&["install".to_string()]);
+    i.current_dir(pasta).env("CI", "1");
+    rodar_mostrando(i, avisar, "npm install")
+}
+
+fn comando_npm(args: &[String]) -> Command {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let mut c = Command::new("cmd");
+        c.arg("/C").arg("npm").args(args).creation_flags(0x0800_0000);
+        c
+    }
+    #[cfg(not(windows))]
+    {
+        let mut c = Command::new("npm");
+        c.args(args);
+        c
+    }
 }
 
 fn comando_npx(args: &[String]) -> Command {
@@ -486,6 +529,26 @@ mod testes {
         assert!(validar_nome("1x").is_err());
         assert!(validar_pacote("br.com.feira").is_ok());
         assert!(validar_pacote("br.com.1feira").is_err());
+    }
+
+    /// Precisa de Node e internet: `cargo test --lib cria_react -- --ignored`.
+    #[test]
+    #[ignore]
+    fn cria_react_com_vite_e_instala_as_dependencias() {
+        let base = std::env::temp_dir().join(format!("seedy-react-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        let pasta = base.join("loja-web");
+        let mut p = pedido("react", &pasta);
+        p.nome = "loja-web".into();
+        let mut linhas = Vec::new();
+        let avisos = std::cell::RefCell::new(&mut linhas);
+        let r = criar(&p, &|l| avisos.borrow_mut().push(l.to_string())).unwrap();
+        assert!(r.principal.is_none());
+        assert!(pasta.join("package.json").exists() && pasta.join("src/App.tsx").exists());
+        assert!(pasta.join("node_modules").is_dir(), "o npm install deveria ter rodado");
+        let pkg = fs::read_to_string(pasta.join("package.json")).unwrap();
+        assert!(pkg.contains("\"react\"") && pkg.contains("\"name\": \"loja-web\""), "{pkg}");
+        let _ = fs::remove_dir_all(&base);
     }
 
     #[test]

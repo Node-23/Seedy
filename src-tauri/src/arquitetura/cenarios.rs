@@ -109,6 +109,8 @@ fn metodos_chamados(corpo: &str) -> Vec<String> {
 
 pub(super) fn descobrir(fontes: &[Fonte], brutos: &[Bruto]) -> Vec<TesteInfo> {
     static IT: OnceLock<Regex> = OnceLock::new();
+    // `it('título')` e `test("título")`, com aspas simples, duplas ou crase. Sem referência para trás: o regex do Rust não tem.
+    const PADRAO_IT: &str = r#"(?m)\b(?:it|test)(?:\.(?:only|skip))?\s*\(\s*(?:"([^"\n]+)"|'([^'\n]+)'|`([^`\n]+)`)"#;
     let mut por_nome: HashMap<&str, Vec<&str>> = HashMap::new();
     for b in brutos.iter().filter(|b| b.comp.papel != "teste") {
         por_nome.entry(b.comp.nome.as_str()).or_default().push(b.comp.id.as_str());
@@ -156,12 +158,12 @@ pub(super) fn descobrir(fontes: &[Fonte], brutos: &[Bruto]) -> Vec<TesteInfo> {
         let arquivo = f.relativo.rsplit('/').next().unwrap_or(&f.relativo).to_string();
         let tipo = tipo_ts(&f.relativo);
         let componentes = componentes_citados(&f.texto, &por_nome);
-        for c in re(&IT, r#"(?m)\b(?:it|test)(?:\.(?:only|skip))?\s*\(\s*(['"`])(.+?)\1"#).captures_iter(&f.texto) {
-            let titulo = c.get(2).unwrap().as_str().to_string();
+        for c in re(&IT, PADRAO_IT).captures_iter(&f.texto) {
+            let titulo = c.get(1).or_else(|| c.get(2)).or_else(|| c.get(3)).map(|m| m.as_str()).unwrap_or("").to_string();
             let inicio = c.get(0).unwrap().start();
             // O corpo vai até o próximo it/test (aproximação boa para spec de uma classe).
             let resto = &f.texto[inicio..];
-            let fim = re(&IT, r#"(?m)\b(?:it|test)(?:\.(?:only|skip))?\s*\(\s*(['"`])(.+?)\1"#).find_iter(&resto[1..]).next().map(|m| m.start() + 1).unwrap_or(resto.len());
+            let fim = re(&IT, PADRAO_IT).find_iter(&resto[1..]).next().map(|m| m.start() + 1).unwrap_or(resto.len());
             let corpo = &resto[..fim];
             saida.push(TesteInfo {
                 id: format!("{arquivo} › {titulo}"),

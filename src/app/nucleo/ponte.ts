@@ -239,7 +239,7 @@ export interface TrafegoDocker {
 
 /** Pedido da janela de novo projeto (␣ N). */
 export interface PedidoDeProjeto {
-  modelo: 'spring' | 'maven' | 'war' | 'simples' | 'angular';
+  modelo: 'spring' | 'maven' | 'war' | 'simples' | 'angular' | 'react';
   nome: string;
   pasta: string;
   grupo: string;

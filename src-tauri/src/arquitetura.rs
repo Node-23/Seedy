@@ -220,11 +220,12 @@ impl Fonte {
         let mascara = mascarar(&texto);
         let mut inicios = vec![0];
         inicios.extend(texto.bytes().enumerate().filter(|(_, b)| *b == b'\n').map(|(i, _)| i + 1));
-        let ts = relativo.ends_with(".ts");
+        let ts = relativo.ends_with(".ts") || relativo.ends_with(".tsx") || relativo.ends_with(".jsx");
         let nome = relativo.rsplit('/').next().unwrap_or("");
         let teste = relativo.contains("src/test/")
             || nome.ends_with(".spec.ts")
             || nome.ends_with(".test.ts")
+            || [".spec.tsx", ".test.tsx", ".spec.jsx", ".test.jsx", ".cy.tsx"].iter().any(|f| nome.ends_with(f))
             || nome.ends_with(".cy.ts")
             || nome.ends_with(".e2e-spec.ts")
             || (ts && (relativo.contains("/e2e/") || relativo.contains("/cypress/")) && nome.ends_with(".ts") && nome.contains("spec"))
@@ -1287,14 +1288,14 @@ fn analisar(raiz: &Path) -> Analise {
         let nome = rel.rsplit('/').next().unwrap_or("").to_string();
         let ext = caminho.extension().and_then(|e| e.to_str()).unwrap_or("");
         let xml_struts = ext == "xml" && (nome.starts_with("struts") || nome.starts_with("validation"));
-        let interessa = matches!(ext, "java" | "ts" | "html" | "jsp") || xml_struts || nome == "pom.xml" || nome.starts_with("build.gradle") || nome == "package.json";
+        let interessa = matches!(ext, "java" | "ts" | "tsx" | "jsx" | "html" | "jsp") || xml_struts || nome == "pom.xml" || nome.starts_with("build.gradle") || nome == "package.json";
         if !interessa || nome.ends_with(".d.ts") || entrada.metadata().map(|m| m.len() > TAMANHO_MAXIMO).unwrap_or(true) {
             continue;
         }
         let Ok(texto) = fs::read_to_string(caminho) else { continue };
         let absoluto = caminho.to_string_lossy().into_owned();
         match ext {
-            "java" | "ts" => fontes.push(Fonte::nova(absoluto, rel, texto)),
+            "java" | "ts" | "tsx" | "jsx" => fontes.push(Fonte::nova(absoluto, rel, texto)),
             "html" => {
                 htmls.insert(rel.clone(), (absoluto, texto));
             }
@@ -2474,6 +2475,27 @@ export class ReservaFormComponent {
         assert!(a.regras.iter().any(|r| r.tipo == "validacao" && r.componente == "ReservaFormComponent" && r.detalhe.contains("required")));
         // A chave não muda entre análises.
         assert_eq!(analise().regras[0].chave, a.regras[0].chave);
+    }
+
+    #[test]
+    fn testes_do_react_tsx_entram_na_lista() {
+        let teste = r#"import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('mostra o titulo da pagina', () => {
+  render(<App />);
+  expect(screen.getByText('Vite + React')).toBeTruthy();
+});
+
+it('nao aceita contagem negativa', () => {
+  expect(() => render(<App inicial={-1} />)).toThrow();
+});
+"#;
+        let a = montar(vec![fonte("src/App.test.tsx", teste), fonte("src/App.tsx", "export default function App() { return <h1>Vite + React</h1>; }")], &HashMap::new());
+        let nomes: Vec<&str> = a.testes.iter().map(|t| t.metodo.as_str()).collect();
+        assert_eq!(nomes, vec!["mostra o titulo da pagina", "nao aceita contagem negativa"]);
+        assert!(a.testes.iter().all(|t| t.linguagem == "ts" && t.classe == "App.test.tsx"));
+        assert!(a.testes[1].espera_erro, "toThrow é cenário de erro");
     }
 
     #[test]

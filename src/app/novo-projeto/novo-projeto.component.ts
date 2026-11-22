@@ -37,7 +37,7 @@ import { MODELOS, nomeDeClasse, NovoProjetoService } from './novo-projeto.servic
                 <button type="button" class="novo-escolher destaque-texto" (click)="np.escolherPasta()">^o escolher</button>
               </span>
             </label>
-            @if (np.modelo() !== 'angular') {
+            @if (np.modelo() !== 'angular' && np.modelo() !== 'react') {
               <label class="novo-campo"><span class="suave">grupo</span>
                 <input class="novo-entrada" type="text" spellcheck="false" [value]="np.grupo()" (input)="np.grupo.set(valor($event))" />
               </label>
@@ -96,6 +96,8 @@ import { MODELOS, nomeDeClasse, NovoProjetoService } from './novo-projeto.servic
                   @if (np.spring()) { <div class="suave">nenhum iniciador com "{{ np.filtro() }}"</div> }
                 }
               </div></div>
+            } @else if (np.modelo() === 'react') {
+              <p class="suave novo-nota novo-aviso">Roda <span class="destaque-texto">npx create-vite</span> (React + TypeScript) e depois <span class="destaque-texto">npm install</span>. Precisa do Node e de internet; a saída aparece à direita.</p>
             } @else if (np.modelo() === 'angular') {
               <p class="suave novo-nota novo-aviso">Roda <span class="destaque-texto">npx &#64;angular/cli new</span> (roteamento, CSS, sem SSR). Precisa do Node na versão que o Angular pede; a saída aparece à direita.</p>
             }
@@ -189,6 +191,9 @@ export class NovoProjetoComponent {
         break;
       case 'simples':
         linhas.push([pasta(`src/${pkg}/`)], [{ nome: '  └ ', classe: 'suave' }, java('Main.java')], [pasta('.gitignore')]);
+        break;
+      case 'react':
+        linhas.push([pasta('package.json')], [pasta('vite.config.ts')], [pasta('index.html')], [pasta('src/')], [{ nome: '  └ ', classe: 'suave' }, java('App.tsx')], [pasta('src/main.tsx')], [pasta('node_modules/')]);
         break;
       case 'angular':
         linhas.push([pasta('angular.json')], [pasta('package.json')], [pasta('src/app/')], [{ nome: '  └ ', classe: 'suave' }, java('app.ts')], [pasta('src/main.ts')], [pasta('node_modules/')]);
