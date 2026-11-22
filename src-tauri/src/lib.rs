@@ -5,6 +5,7 @@
 //! de acesso ao sistema (arquivos, busca, processos, PTY, Git, banco, servidores) mora aqui.
 
 mod arquivos;
+mod processos;
 mod atualizacao;
 mod arquitetura;
 mod banco;
@@ -39,6 +40,8 @@ pub fn run() {
         .manage(web::Tarefas::default())
         .manage(web::JsDebug::default())
         .setup(|app| {
+            // Tudo que o Seedy inicia morre com ele (jdtls, RUN/DEBUG, servidores, scripts, terminais).
+            processos::prender_filhos();
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
             {
@@ -160,6 +163,7 @@ pub fn run() {
                 app.state::<servidor::Execucoes>().encerrar_todos();
                 app.state::<web::Tarefas>().encerrar_todas();
                 app.state::<web::JsDebug>().encerrar();
+                processos::encerrar_descendentes();
             }
         });
 }

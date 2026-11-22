@@ -299,7 +299,6 @@ pub async fn atualizacao_instalar(estado: State<'_, ContaGithub>, app: AppHandle
 
 #[cfg(windows)]
 fn aplicar(instalador: &std::path::Path) -> Result<(), String> {
-    use std::os::windows::process::CommandExt;
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let script = pasta_de_download()?.join("atualizar.cmd");
     // Espera o Seedy sair, instala em silêncio, abre de novo (o Seedy reabre o último projeto) e se apaga.
@@ -309,8 +308,8 @@ fn aplicar(instalador: &std::path::Path) -> Result<(), String> {
         exe.display()
     );
     std::fs::write(&script, texto).map_err(|e| e.to_string())?;
-    // CREATE_NO_WINDOW | DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
-    std::process::Command::new("cmd").arg("/C").arg(&script).creation_flags(0x0800_0208).spawn().map_err(|e| format!("não consegui rodar o instalador: {e}"))?;
+    // CREATE_NO_WINDOW | DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP; fora do job que mata os filhos do Seedy ao fechar.
+    crate::processos::spawn_livre(std::process::Command::new("cmd").arg("/C").arg(&script), 0x0800_0208).map_err(|e| format!("não consegui rodar o instalador: {e}"))?;
     Ok(())
 }
 

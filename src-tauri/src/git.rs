@@ -330,7 +330,7 @@ pub fn abrir_no_navegador(url: String) -> Result<(), String> {
         c.arg(&url);
         c
     };
-    c.spawn().map(|_| ()).map_err(|e| format!("não consegui abrir o navegador: {e}"))
+    crate::processos::spawn_livre(&mut c, 0x0800_0000).map(|_| ()).map_err(|e| format!("não consegui abrir o navegador: {e}"))
 }
 
 #[cfg(test)]
