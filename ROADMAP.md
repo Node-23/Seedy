@@ -113,7 +113,10 @@ o resto entra como módulos internos (mockups 13 e 14):
   configuração no projeto, ao salvar)
 - ✅ Scripts do `package.json` (`␣ p`) e no RUN/DEBUG; debug no navegador (Edge/Chrome via
   js-debug, breakpoints no .ts pelos source maps)
-- Falta testar no Linux e num projeto Angular rodando `ng serve` (o Node daqui é antigo para o CLI)
+- ✅ React (Vite): reconhece o projeto, novo projeto (`create-vite` + `npm install`), `npm run dev`
+  e debug no navegador testados; testes `*.test.tsx`/`*.spec.tsx` na lista
+- Falta: arquitetura de componentes React (função + JSX, rotas, `fetch`/`axios`), resultado do
+  Vitest/Jest, e testar no Linux e num projeto Angular rodando `ng serve`
 
 ## ✅ Fase 7 — IA
 

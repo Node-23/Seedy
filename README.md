@@ -125,7 +125,8 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   terminal integrado e transforma um Postgres/MySQL do Docker em conexão do painel de banco.
   `␣ h` mostra a versão compacta embaixo do editor.
 - **Novo projeto** (mockup 12, `␣ N`): Spring Boot (com os iniciadores do start.spring.io), Java com
-  Maven, Java web (WAR, pronto para o servidor do Seedy), Java simples e Angular (`ng new`). Escolhe
+  Maven, Java web (WAR, pronto para o servidor do Seedy), Java simples, Angular (`ng new`) e React
+  (Vite + TypeScript, com `npm install`). Escolhe
   o JDK entre os instalados, faz `git init` + primeiro commit, abre o projeto e deixa o RUN na `main`.
 - **IA que opera a IDE** (Fase 7): as mesmas ferramentas servem ao painel de IA do Seedy
   (mockup 06, `␣ a`, pela API) e ao **Claude Code no terminal** pelo servidor MCP do Seedy
@@ -142,6 +143,10 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   testar, commitar e mexer em container pedem a sua aprovação (o modo automático, `␣ Y`, dispensa);
   push, apagar, `docker compose down`, PR e issue perguntam sempre. `/historico` no chat mostra o
   que foi pedido e decidido na sessão.
+- **Projetos React** (Vite): editar `.tsx`/`.jsx` com o servidor de TypeScript, rodar `npm run dev`
+  pelo painel de scripts (o Seedy pega o endereço do Vite) e depurar no Edge/Chrome com source maps.
+  Os testes `*.test.tsx` e `*.spec.tsx` entram na lista de testes. A tela de arquitetura ainda não
+  entende componentes React (função + JSX), e os resultados do Vitest/Jest não são lidos.
 - **Variáveis do `.env`** (mockup 26): o Seedy lê o `.env` da raiz do projeto e o passa para o que roda:
   a classe `main` (RUN e DEBUG), o servidor de aplicação, os scripts do `package.json`, os testes e os
   comandos da IA. Com um só `.env` ele é usado sozinho; com vários (`.env`, `.env.local`...) o Seedy

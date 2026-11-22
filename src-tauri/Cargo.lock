@@ -4841,7 +4841,7 @@ dependencies = [
 
 [[package]]
 name = "seedy"
-version = "0.5.4"
+version = "0.5.5"
 dependencies = [
  "dirs 6.0.0",
  "flate2",
