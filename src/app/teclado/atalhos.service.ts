@@ -317,6 +317,19 @@ export class AtalhosService {
 
     // Atalhos diretos (um acorde, como no IntelliJ) e o menu de atalhos em Ctrl+Shift+Espaço.
     const acorde = !modalAberto || this.liderAberto() ? this.acordeDe(e) : null;
+    // Ctrl+1 a Ctrl+9: vai para o 1º, 2º... arquivo aberto (os números aparecem nas abas de cima).
+    const numero = acorde ? /^ctrl\+([1-9])$/.exec(acorde)?.[1] : undefined;
+    if (numero) {
+      this.engolir(e);
+      const alvo = this.editor.buffers()[Number(numero) - 1];
+      if (!alvo) this.mensagens.alerta(`só há ${this.editor.buffers().length} ${this.editor.buffers().length === 1 ? 'arquivo aberto' : 'arquivos abertos'}`);
+      else {
+        if (this.layout.tela() !== 'editor') this.layout.tela.set('editor');
+        this.editor.ativo.set(alvo.caminho);
+        queueMicrotask(() => this.editor.focar());
+      }
+      return;
+    }
     if (acorde === 'ctrl+shift+space') {
       this.engolir(e);
       this.alternarLider();

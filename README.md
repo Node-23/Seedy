@@ -277,6 +277,7 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `Ctrl+F4` | fechar buffer |
 | menu de atalhos, `c` | editar o tema |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | próximo / anterior buffer |
+| `Ctrl+1` … `Ctrl+9` | ir para o 1º … 9º arquivo aberto (o número aparece na aba) |
 | `Alt+←` / `Alt+→` | voltar / avançar nos arquivos vistos (reabre o que foi fechado) |
 | `Ctrl+Shift+S` ou `:wa` | salvar todos |
 | `Ctrl+Space` | completar |
