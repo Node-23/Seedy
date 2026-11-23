@@ -2080,3 +2080,15 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .spring-perfis { display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; }
 .spring-perfis-lista { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .spring-perfis-nota { padding: 6px 10px; border-radius: 8px; background: var(--painel-elevado); line-height: 1.5; }
+
+/* Commit: nome do arquivo inteiro, pasta cortada, diff que quebra linha, botão da IA. */
+.busca.commit-janela .commit-arquivos { width: 500px; max-width: 48%; }
+.commit-arquivos .busca-rotulo { flex-shrink: 0; max-width: 78%; }
+.commit-arquivos .busca-detalhe { flex: 1 1 0; min-width: 0; max-width: none; text-align: right; }
+.commit-arquivos .espaco { display: none; }
+.commit-diff .git-diff-linha { white-space: pre-wrap; overflow-wrap: anywhere; }
+.commit-diff .git-diff-linha > span:last-child { min-width: 0; }
+.commit-linha-opcoes { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 12px 8px; }
+.commit-linha-opcoes .commit-opcao { margin: 0; }
+.commit-linha-opcoes .botao { height: 28px; font-size: 12px; white-space: nowrap; }
+.busca.commit-janela .busca-dicas { flex-wrap: wrap; row-gap: 4px; }

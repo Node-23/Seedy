@@ -6,6 +6,8 @@ import { ponte } from '../nucleo/ponte';
 import { EscolhaService } from '../escolha/escolha.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { PrateleiraService } from './prateleira.service';
+import { ConfigService } from '../config/config.service';
+import { pedirComStream } from '../ia/stream';
 
 /**
  * Commit (Ctrl+K): arquivos alterados com marca (entram no commit), mensagem e
@@ -25,7 +27,7 @@ import { PrateleiraService } from './prateleira.service';
               (keydown)="teclarLista($event)">
             @for (a of arquivos(); track a.relativo; let i = $index) {
               <li class="busca-item" role="option" [id]="'commit-arq-' + i" [class.selecionado]="i === sel()"
-                  [attr.aria-selected]="incluidos().has(a.relativo)" (click)="sel.set(i)">
+                  [attr.aria-selected]="incluidos().has(a.relativo)" [title]="a.relativo" (click)="sel.set(i)">
                 <span class="marca-escolha" [class.marcada]="incluidos().has(a.relativo)" (click)="alternar(a); $event.stopPropagation()">
                   {{ incluidos().has(a.relativo) ? '✓' : '' }}
                 </span>
@@ -40,9 +42,16 @@ import { PrateleiraService } from './prateleira.service';
             <textarea #mensagem class="commit-mensagem" spellcheck="false" aria-label="Mensagem do commit"
                       placeholder="mensagem do commit (a 1ª linha é o resumo)"
                       [value]="texto()" (input)="texto.set($any($event.target).value)"></textarea>
-            <label class="commit-opcao" title="alt+e">
-              <input type="checkbox" [checked]="emendar()" (change)="alternarEmenda()" /> emendar o último commit
-            </label>
+            <div class="commit-linha-opcoes">
+              <label class="commit-opcao" title="alt+e">
+                <input type="checkbox" [checked]="emendar()" (change)="alternarEmenda()" /> emendar o último commit
+              </label>
+              @if (iaPronta()) {
+                <button type="button" class="botao" [disabled]="gerando()" (click)="gerarMensagem()" title="a IA lê o diff dos arquivos marcados e escreve a mensagem (alt+g)">
+                  <span class="destaque-texto">✦</span> {{ gerando() ? 'escrevendo…' : 'gerar com a IA' }} <kbd>alt g</kbd>
+                </button>
+              }
+            </div>
             <div class="git-diff commit-diff">
               @for (l of diff(); track $index) {
                 <div class="git-diff-linha" [attr.data-tipo]="l.tipo">
@@ -60,6 +69,7 @@ import { PrateleiraService } from './prateleira.service';
           <span><span class="tecla">tab</span> mensagem</span>
           <span><span class="tecla">ctrl ⏎</span> commit</span>
           <span><span class="tecla">ctrl alt ⏎</span> e push</span>
+          @if (iaPronta()) { <span><span class="tecla">alt g</span> IA</span> }
           <span><span class="tecla">alt s</span> prateleira</span>
           <span><span class="tecla">alt d</span> descartar</span>
           <span><span class="tecla">esc</span> fechar</span>
@@ -74,6 +84,7 @@ export class CommitComponent {
   private readonly escolha = inject(EscolhaService);
   private readonly mensagens = inject(MensagensService);
   private readonly prateleira = inject(PrateleiraService);
+  private readonly config = inject(ConfigService);
   private readonly lista = viewChild<ElementRef<HTMLElement>>('lista');
   private readonly campoMensagem = viewChild<ElementRef<HTMLTextAreaElement>>('mensagem');
 
@@ -83,6 +94,10 @@ export class CommitComponent {
   protected readonly texto = signal('');
   protected readonly emendar = signal(false);
   protected readonly diff = signal<LinhaDeDiff[]>([]);
+  /** A IA está disponível (chave da API ou Claude Code logado): mostra o botão de gerar a mensagem. */
+  protected readonly iaPronta = signal(false);
+  protected readonly gerando = signal(false);
+  private geracao = 0;
   private mensagemAntesDaEmenda = '';
 
   constructor() {
@@ -92,6 +107,9 @@ export class CommitComponent {
       this.incluidos.set(new Set(this.git.alterados().filter((a) => a.letra !== 'C').map((a) => a.relativo)));
       this.sel.set(0);
       this.emendar.set(false);
+      this.geracao++;
+      this.gerando.set(false);
+      void ponte.ia.temChave().then((ok) => this.iaPronta.set(ok)).catch(() => this.iaPronta.set(false));
       queueMicrotask(() => this.campoMensagem()?.nativeElement.focus());
     });
 
@@ -146,6 +164,8 @@ export class CommitComponent {
       void this.alternarEmenda();
     } else if (e.altKey && e.code === 'KeyD') {
       void this.descartar();
+    } else if (e.altKey && e.code === 'KeyG') {
+      if (this.iaPronta()) void this.gerarMensagem();
     } else if (e.altKey && e.code === 'KeyS') {
       void this.guardarNaPrateleira();
     } else {
@@ -192,6 +212,56 @@ export class CommitComponent {
     if (eEnviar) await this.git.push();
   }
 
+  /** alt+g: a IA escreve a mensagem a partir do diff dos arquivos marcados (e do estilo dos últimos commits). */
+  protected async gerarMensagem(): Promise<void> {
+    if (this.gerando()) return;
+    const marcados = this.arquivos().filter((a) => this.incluidos().has(a.relativo));
+    if (!marcados.length) return void this.mensagens.erro('marque ao menos um arquivo');
+    const minha = ++this.geracao;
+    this.gerando.set(true);
+    try {
+      const LIMITE = 14000;
+      const novos = marcados.filter((a) => a.letra === '?');
+      const rastreados = marcados.filter((a) => a.letra !== '?');
+      let diff = rastreados.length ? await this.git.rodar(['diff', 'HEAD', '-M', '--', ...rastreados.flatMap((a) => (a.de ? [a.de, a.relativo] : [a.relativo]))]).catch(() => '') : '';
+      for (const n of novos.slice(0, 8)) {
+        const conteudo = (await ponte.lerArquivo(n.caminho).catch(() => '')).split(/\r?\n/).slice(0, 40).join('\n');
+        diff += `\n+++ novo arquivo: ${n.relativo}\n${conteudo}\n`;
+      }
+      if (diff.length > LIMITE) diff = `${diff.slice(0, LIMITE)}\n[... diff cortado]`;
+      const recentes = (await this.git.rodar(['log', '-8', '--format=%s']).catch(() => '')).trim();
+      const rascunho = this.texto().trim();
+      const pergunta = [
+        `Branch: ${this.git.estado()?.branch ?? 'HEAD'}`,
+        `Arquivos no commit: ${marcados.map((a) => `${a.letra === '?' ? 'A' : a.letra} ${a.relativo}`).join(', ')}`,
+        recentes ? `Últimos commits do repositório (siga o estilo e o idioma):\n${recentes}` : '',
+        rascunho ? `Rascunho do usuário (use como ponto de partida):\n${rascunho}` : '',
+        `Diff:\n${diff || '(sem diferenças de texto)'}`,
+      ].filter(Boolean).join('\n\n');
+      await pedirComStream(
+        {
+          model: this.config.atual().ia.modelo,
+          max_tokens: 500,
+          stream: true,
+          system:
+            'Você escreve mensagens de commit. Responda só com a mensagem, sem aspas, sem markdown e sem explicação. A primeira linha é o resumo, com até 72 caracteres e sem ponto final, no mesmo estilo dos últimos commits do repositório (idioma, prefixos como feat:/fix: se eles usam, maiúsculas); sem histórico, use português do Brasil no imperativo ou como "feat:"/"fix:". Se a mudança for maior que algumas linhas, pule uma linha e explique em 2 a 4 linhas o que mudou e por quê, não o que cada arquivo tem. Não invente o que o diff não mostra.',
+          messages: [{ role: 'user', content: [{ type: 'text', text: pergunta }] }],
+        },
+        (_i, texto) => {
+          if (minha === this.geracao) this.texto.set(texto.trim());
+        },
+        () => minha === this.geracao,
+      );
+    } catch (e) {
+      if (minha === this.geracao) this.mensagens.erro(`a IA não conseguiu escrever a mensagem: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      if (minha === this.geracao) {
+        this.gerando.set(false);
+        this.campoMensagem()?.nativeElement.focus();
+      }
+    }
+  }
+
   /** alt+s: guarda os arquivos marcados na prateleira (o shelf do IntelliJ). */
   private async guardarNaPrateleira(): Promise<void> {
     const arquivos = [...this.incluidos()];
@@ -225,7 +295,9 @@ export class CommitComponent {
     if (a.letra === '?') {
       // Arquivo novo, ainda fora do git: tudo é "+".
       const conteudo = await ponte.lerArquivo(a.caminho).catch(() => '');
-      return conteudo.split(/\r?\n/).map((texto, i) => ({ tipo: 'mais' as const, texto, novo: i + 1 }));
+      const linhas = conteudo.split(/\r?\n/);
+      if (linhas.length > 1 && linhas[linhas.length - 1] === '') linhas.pop(); // o \n do fim do arquivo não é uma linha
+      return linhas.map((texto, i) => ({ tipo: 'mais' as const, texto, novo: i + 1 }));
     }
     const t = await this.git.rodar(['diff', 'HEAD', '-M', '--', ...(a.de ? [a.de] : []), a.relativo]).catch(() => '');
     return lerDiffUnificado(t);

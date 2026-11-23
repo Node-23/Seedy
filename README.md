@@ -111,6 +111,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   e você marca os que quer. Vira `-Dspring.profiles.active=dev,local` no RUN e no DEBUG (se o `.env` já define
   `SPRING_PROFILES_ACTIVE`, a escolha troca o valor dele; a JVM ou as variáveis da configuração têm a palavra final). A porta
   mostrada na tela de endpoints segue o `SERVER_PORT` do `.env`, o perfil escolhido e o `application`.
+- **Commit** (Ctrl+K): lista de arquivos com marca, mensagem e o diff do arquivo selecionado (as linhas longas quebram). Com a IA conectada (chave ou Claude Code), o botão ✦ gerar com a IA (alt+g) escreve a mensagem lendo o diff dos arquivos marcados e o estilo dos últimos commits; um rascunho seu vira ponto de partida.
 - **Atualização do Seedy** (`␣ U`): ao abrir e a cada 6 horas ele olha a última release do GitHub e, havendo versão
   nova, mostra "⬆ x.y.z disponível" na barra de status; nada baixa sozinho. O quadro mostra as notas; "instalar e
   reiniciar" baixa o instalador, confere o tamanho e o SHA-256 do `SHA256SUMS.txt` da release (sem ele o Seedy não
