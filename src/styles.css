@@ -2117,3 +2117,15 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 
 .menu-lider { width: 640px; }
 .menu-lider-atalho { margin-left: auto; font-family: inherit; font-size: 10.5px; color: var(--texto-suave); white-space: nowrap; background: transparent; border: 0; padding: 0; }
+
+/* A IA ao lado das telas cheias; editar mensagem enviada; tamanhos das regiões sem teto percentual. */
+.regiao-esquerda { max-width: calc(100% - 340px); }
+.regiao-direita { max-width: calc(100% - 340px); }
+.regiao-inferior { max-height: calc(100% - 160px); }
+.regiao-direita.ia-lateral { min-width: 260px; max-width: 60%; }
+.ia-usuario { position: relative; }
+.ia-editar { position: absolute; top: 4px; right: 6px; border: 0; background: transparent; color: inherit; font-size: 12px; cursor: pointer; opacity: 0; padding: 0 4px; }
+.ia-usuario:hover .ia-editar, .ia-usuario.editando .ia-editar { opacity: 0.75; }
+.ia-editar:hover { opacity: 1 !important; }
+.ia-usuario.editando { outline: 2px dashed var(--destaque); outline-offset: 2px; }
+.ia-editando-aviso { font-size: 11px; line-height: 1.5; padding: 4px 2px 6px; color: var(--texto-suave); }

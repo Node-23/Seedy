@@ -91,7 +91,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
           @case ('servidor') { <sd-servidor /> }
           @case ('scripts') { <sd-scripts /> }
           @case ('containers') { <sd-containers-painel /> }
-          @case ('ia') { <sd-ia /> }
+          @case ('ia') { @if (layout.tela() === 'editor' || layout.tela() === 'merge') { <sd-ia /> } }
         }
       </ng-template>
 
@@ -140,6 +140,11 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (layout.tela() === 'config') { <sd-tela-configuracoes class="tela-cheia" /> }
       @if (layout.tela() === 'testes') { <sd-tela-testes class="tela-cheia" /> }
       @if (layout.tela() === 'endpoints') { <sd-tela-endpoints class="tela-cheia" /> }
+      @if (layout.tela() !== 'editor' && layout.tela() !== 'merge' && layout.disposicao().visiveis.ia) {
+        <!-- A IA acompanha todas as telas cheias, do lado direito. -->
+        <div class="divisor vertical" role="separator" aria-orientation="vertical" (pointerdown)="arrastarIa($event)"></div>
+        <div class="regiao-direita ia-lateral" [style.width.px]="layout.larguraDoPainel('ia')"><sd-ia /></div>
+      }
       <sd-diff />
       <sd-menu-gutter />
       <sd-toasts />
@@ -243,6 +248,21 @@ export class App {
         this.mensagens.mostrar(`${a.titulo} ${NOME_DA_REGIAO[a.alvo]}`);
       }
     };
+    window.addEventListener('pointermove', mover);
+    window.addEventListener('pointerup', soltar);
+  }
+
+  /** O divisor da IA ao lado das telas cheias. */
+  protected arrastarIa(inicio: PointerEvent): void {
+    inicio.preventDefault();
+    const base = this.layout.larguraDoPainel('ia');
+    const mover = (e: PointerEvent) => this.layout.redimensionarPainel('ia', base - (e.clientX - inicio.clientX));
+    const soltar = () => {
+      window.removeEventListener('pointermove', mover);
+      window.removeEventListener('pointerup', soltar);
+      document.body.classList.remove('arrastando');
+    };
+    document.body.classList.add('arrastando');
     window.addEventListener('pointermove', mover);
     window.addEventListener('pointerup', soltar);
   }

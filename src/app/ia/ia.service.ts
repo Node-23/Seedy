@@ -58,6 +58,10 @@ export class IaService {
 
   readonly itens = signal<ItemDaIa[]>([]);
   readonly pensando = signal(false);
+  /** O que está escrito no campo da conversa (fica ao trocar de tela). */
+  readonly rascunho = signal('');
+  /** Índice (em `itens`) da mensagem sua que está sendo editada para reenviar. */
+  readonly editando = signal<number | null>(null);
   /** Proposta esperando decisão nesta conversa (a statusline e o ⏎ do campo usam). */
   readonly pendente = computed(() => {
     const ids = new Set(this.itens().flatMap((i) => (i.tipo === 'proposta' ? [i.alteracao] : [])));
@@ -104,6 +108,39 @@ export class IaService {
     if (isDevMode()) Object.assign(window, { seedyIa: this });
   }
 
+  /** Começa a editar uma mensagem enviada: devolve o texto dela. A conversa só volta àquele ponto ao reenviar. */
+  iniciarEdicao(indice: number): string | null {
+    const item = this.itens()[indice];
+    if (item?.tipo !== 'usuario') return null;
+    if (this.pensando()) {
+      this.mensagens.alerta('espere a IA terminar (ou pare a resposta) para editar uma mensagem');
+      return null;
+    }
+    this.editando.set(indice);
+    return item.texto;
+  }
+
+  cancelarEdicao(): void {
+    this.editando.set(null);
+  }
+
+  /** Corta a conversa antes da mensagem editada (as mensagens de usuário depois dela decidem o ponto no histórico). */
+  private cortarAntesDe(indice: number): void {
+    const depois = this.itens().slice(indice + 1).filter((i) => i.tipo === 'usuario').length;
+    const posicoes: number[] = [];
+    this.historico.forEach((m, i) => {
+      if (m.role === 'user' && m.content.some((b) => b.type === 'text')) posicoes.push(i);
+    });
+    const corte = posicoes[posicoes.length - 1 - depois];
+    if (corte !== undefined) this.historico = this.historico.slice(0, corte);
+    this.itens.set(this.itens().slice(0, indice));
+    this.pendentesDaEdicao();
+  }
+
+  private pendentesDaEdicao(): void {
+    this.editando.set(null);
+  }
+
   /** `/clear`: zera a conversa e apaga a que estava guardada deste projeto. */
   reiniciar(): void {
     this.limparMemoria();
@@ -120,6 +157,7 @@ export class IaService {
   }
 
   private limparMemoria(): void {
+    this.editando.set(null);
     this.geracao++;
     this.historico = [];
     this.itens.set([]);
@@ -204,6 +242,8 @@ export class IaService {
     const pergunta = texto.trim() || (imagens.length ? 'o que você vê nesta imagem?' : '');
     if (!pergunta || this.pensando()) return;
     if (!(await this.garantirChave())) return;
+    const editada = this.editando();
+    if (editada !== null) this.cortarAntesDe(editada);
     const contexto = this.contexto();
     const anexos = this.anexos.lista();
     const completa = `${this.anexos.texto()}${pergunta}`;

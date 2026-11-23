@@ -36,7 +36,8 @@ import { nomeBase } from '../nucleo/ponte';
         @for (item of ia.itens(); track $index) {
           @switch (item.tipo) {
             @case ('usuario') {
-              <div class="ia-usuario">
+              <div class="ia-usuario" [class.editando]="ia.editando() === $index">
+                @if (!ia.pensando()) { <button class="ia-editar" type="button" title="editar e reenviar (a conversa volta a este ponto)" aria-label="Editar a mensagem" (click)="editar($index)">✎</button> }
                 {{ item.texto }}
                 @if (item.imagens?.length) {
                   <div class="ia-usuario-imagens">@for (m of item.imagens; track $index) { <img [src]="m" alt="imagem enviada" /> }</div>
@@ -111,6 +112,9 @@ import { nomeBase } from '../nucleo/ponte';
             }
           </div>
         }
+        @if (ia.editando() !== null) {
+          <div class="ia-editando-aviso">✎ editando a mensagem: <span class="destaque-texto">⏎</span> reenvia (a conversa volta a este ponto; o que já mudou nos arquivos continua) · <span class="destaque-texto">esc</span> cancela</div>
+        }
         <div class="ia-contexto">
           @for (c of contexto(); track c) { <span class="ia-chip ia-chip-suave">&#64;{{ c }}</span> }
         </div>
@@ -138,7 +142,8 @@ export class IaComponent {
   private readonly layout = inject(LayoutService);
   private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
   private readonly lista = viewChild<ElementRef<HTMLElement>>('lista');
-  protected readonly texto = signal('');
+  /** O rascunho mora no serviço: a conversa pode trocar de tela (a IA aparece em todas) sem perder o que foi escrito. */
+  protected readonly texto = this.ia.rascunho;
   private readonly diffs = new Map<string, ReturnType<typeof trechos>>();
 
   /** Chips do que a IA está vendo agora (arquivo ativo, log do servidor, banco do .sql). */
@@ -187,8 +192,32 @@ export class IaComponent {
     return nomeBase(caminho);
   }
 
+  /** ✎ numa mensagem enviada (ou ↑ com o campo vazio): o texto volta ao campo para editar e reenviar. */
+  protected editar(indice: number): void {
+    const t = this.ia.iniciarEdicao(indice);
+    if (t === null) return;
+    this.texto.set(t);
+    queueMicrotask(() => this.campo()?.nativeElement.focus());
+  }
+
   protected teclar(e: KeyboardEvent): void {
     const pendente = this.ia.pendente();
+    if (e.key === 'ArrowUp' && !this.texto() && !this.ia.pensando() && !e.shiftKey) {
+      const ultima = this.ia.itens().map((i, n) => (i.tipo === 'usuario' ? n : -1)).filter((n) => n >= 0).pop();
+      if (ultima !== undefined) {
+        this.editar(ultima);
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      return;
+    }
+    if (e.key === 'Escape' && this.ia.editando() !== null) {
+      this.ia.cancelarEdicao();
+      this.texto.set('');
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       if (this.texto().trim() || this.anexos.imagens().length) void this.enviar();
       else if (pendente) void this.revisao.aceitar(pendente.id);

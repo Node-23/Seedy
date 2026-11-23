@@ -173,10 +173,20 @@ export class LayoutService {
     return t?.largura ?? (id ? (LARGURA_PADRAO[id] ?? 360) : 280);
   }
 
+  /** Largura do painel de IA quando ele fica ao lado de uma tela cheia. */
+  larguraDoPainel(id: IdPainel): number {
+    return this.disposicao().tamanhos[id]?.largura ?? LARGURA_PADRAO[id] ?? 360;
+  }
+
+  redimensionarPainel(id: IdPainel, largura: number): void {
+    const valor = Math.round(Math.max(240, Math.min(1400, largura)));
+    this.atualizar((d) => ({ ...d, tamanhos: { ...d.tamanhos, [id]: { ...d.tamanhos[id], largura: valor } } }));
+  }
+
   redimensionar(regiao: Regiao, tamanho: number): void {
     const id = this.ativos()[regiao];
     if (!id) return;
-    const valor = Math.round(regiao === 'inferior' ? Math.max(120, Math.min(720, tamanho)) : Math.max(180, Math.min(760, tamanho)));
+    const valor = Math.round(regiao === 'inferior' ? Math.max(120, Math.min(1400, tamanho)) : Math.max(180, Math.min(1400, tamanho)));
     this.atualizar((d) => ({ ...d, tamanhos: { ...d.tamanhos, [id]: { ...d.tamanhos[id], [regiao === 'inferior' ? 'altura' : 'largura']: valor } } }));
   }
 

@@ -119,6 +119,8 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   instala), fecha, instala em silêncio e abre de novo no mesmo projeto. Vale para o instalador do Windows e para o
   AppImage do Linux; o portátil e os pacotes `.deb`/`.rpm` só abrem a página da release. Com o repositório privado
   usa a conta do GitHub conectada (`Alt+Shift+G`). Desliga com `atualizacao.verificar: false` no `seedy.json`.
+- **A IA em todas as telas**: o painel da IA acompanha o Git, os testes, o debug, os containers, a arquitetura e as demais telas cheias, do lado direito (arraste o divisor para mudar a largura); o que você escreveu no campo fica ao trocar de tela.
+- **Editar uma mensagem enviada**: o ✎ no balão (ou `↑` com o campo vazio) traz o texto de volta ao campo; ao reenviar, a conversa volta àquele ponto (o que já mudou nos arquivos continua). `esc` cancela.
 - **Imagem no chat da IA** (`ctrl+v` no campo, o botão 🖼 ou arrastar um arquivo): PNG, JPEG, GIF ou WebP até 5 MB, até
   4 por mensagem. O chip mostra a miniatura; imagens grandes são reduzidas a 1568 px antes de seguir. Vale para a
   chave da API e para o modo assinatura (Claude Code). A conversa guardada em `.seedy/conversa.json` fica só com as

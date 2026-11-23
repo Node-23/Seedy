@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { CommitService } from './commit.service';
 import { ArquivoAlterado, GitService } from './git.service';
 import { LinhaDeDiff, lerDiffUnificado } from './diff';
@@ -98,19 +98,27 @@ export class CommitComponent {
   protected readonly iaPronta = signal(false);
   protected readonly gerando = signal(false);
   private geracao = 0;
+  private estavaAberta = false;
   private mensagemAntesDaEmenda = '';
 
   constructor() {
     // Ao abrir: todos os arquivos marcados, foco na mensagem.
+    // Só na hora de abrir: ler git.alterados() aqui dentro faria o efeito rodar a cada atualização do git
+    // (arquivos mudando por fora), desmarcando arquivos e cancelando a mensagem que a IA estava escrevendo.
     effect(() => {
-      if (!this.servico.aberta()) return;
-      this.incluidos.set(new Set(this.git.alterados().filter((a) => a.letra !== 'C').map((a) => a.relativo)));
-      this.sel.set(0);
-      this.emendar.set(false);
-      this.geracao++;
-      this.gerando.set(false);
-      void ponte.ia.temChave().then((ok) => this.iaPronta.set(ok)).catch(() => this.iaPronta.set(false));
-      queueMicrotask(() => this.campoMensagem()?.nativeElement.focus());
+      const aberta = this.servico.aberta();
+      untracked(() => {
+        const acabouDeAbrir = aberta && !this.estavaAberta;
+        this.estavaAberta = aberta;
+        if (!acabouDeAbrir) return;
+        this.incluidos.set(new Set(this.git.alterados().filter((a) => a.letra !== 'C').map((a) => a.relativo)));
+        this.sel.set(0);
+        this.emendar.set(false);
+        this.geracao++;
+        this.gerando.set(false);
+        void ponte.ia.temChave().then((ok) => this.iaPronta.set(ok)).catch(() => this.iaPronta.set(false));
+        queueMicrotask(() => this.campoMensagem()?.nativeElement.focus());
+      });
     });
 
     // Prévia do diff do arquivo selecionado (contra o HEAD).
@@ -252,8 +260,13 @@ export class CommitComponent {
         },
         () => minha === this.geracao,
       );
+      if (minha === this.geracao && !this.texto().trim()) this.mensagens.alerta('a IA não devolveu nenhuma mensagem: tente de novo (alt+g)');
     } catch (e) {
-      if (minha === this.geracao) this.mensagens.erro(`a IA não conseguiu escrever a mensagem: ${e instanceof Error ? e.message : e}`);
+      if (minha === this.geracao) {
+        const motivo = `a IA não conseguiu escrever a mensagem: ${e instanceof Error ? e.message : e}`;
+        this.mensagens.erro(motivo);
+        this.mensagens.alerta(motivo.length > 220 ? `${motivo.slice(0, 220)}…` : motivo);
+      }
     } finally {
       if (minha === this.geracao) {
         this.gerando.set(false);
