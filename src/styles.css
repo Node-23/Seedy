@@ -2129,3 +2129,5 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .ia-editar:hover { opacity: 1 !important; }
 .ia-usuario.editando { outline: 2px dashed var(--destaque); outline-offset: 2px; }
 .ia-editando-aviso { font-size: 11px; line-height: 1.5; padding: 4px 2px 6px; color: var(--texto-suave); }
+/* A barra de cima das telas de testes e endpoints quebra linha quando a IA ao lado aperta o espaço. */
+.testes-topo { flex-wrap: wrap; height: auto; min-height: 54px; row-gap: 6px; padding-top: 8px; padding-bottom: 8px; }

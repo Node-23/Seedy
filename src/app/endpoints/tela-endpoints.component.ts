@@ -17,6 +17,9 @@ import { EndpointInfo, EndpointsService, VERBOS } from './endpoints.service';
         <button class="botao" [disabled]="!s.atual()" (click)="s.copiarCurl()">⧉ copiar curl <kbd>y</kbd></button>
         <button class="botao" (click)="s.abrirSwagger()">📖 Swagger <kbd>w</kbd></button>
         <button class="botao" (click)="s.abrirActuator()">♥ Actuator <kbd>a</kbd></button>
+        <button class="botao" [disabled]="!s.endpointDeLogin()" (click)="s.alternarLogin()" [title]="s.sessao() ? 'sair da sessão (os cookies/token somem)' : 'entrar uma vez: as chamadas protegidas usam o login'">
+          @if (s.sessao(); as ss) { <span class="sucesso-texto">🔑 {{ ss.usuario }}</span> · sair } @else { 🔑 entrar }<kbd>L</kbd>
+        </button>
         <span class="espaco"></span>
         <span class="testes-totais">
           @if (s.noAr()) { <span class="sucesso-texto">● :{{ s.porta() }} no ar</span> } @else { <span class="suave">○ :{{ s.porta() }} parado</span> }
@@ -112,6 +115,7 @@ import { EndpointInfo, EndpointsService, VERBOS } from './endpoints.service';
           <div class="painel-faixa"><span class="rotulo">CHAMAR · {{ s.base() }}</span><span class="espaco"></span>
             @if (s.chamando()) { <span class="aviso-texto">chamando…</span> }
             @else if (s.resposta(); as r) { <span class="endpoint-tag" [class.sucesso-texto]="r.status < 400" [class.erro-texto]="r.status >= 400">{{ r.status }} · {{ r.ms }} ms</span> }
+            @if (s.sessao(); as ss) { <span class="sucesso-texto">🔑 {{ ss.usuario }}</span> }
             <span class="suave">editar <kbd>e</kbd> · enviar <kbd>⌃⏎</kbd></span>
           </div>
           <div class="endpoints-chamada-corpo">
@@ -240,6 +244,7 @@ export class TelaEndpointsComponent {
       case 'y': void this.s.copiarCurl(); break;
       case 'w': this.s.abrirSwagger(); break;
       case 'a': this.s.abrirActuator(); break;
+      case 'L': void this.s.alternarLogin(); break;
       case 'i': case 't': if (this.s.atual()) this.anexos.adicionar(this.anexos.doEndpoint(this.s.atual()!)); break;
       case 'p': this.s.soProtegidos.set(!this.s.soProtegidos()); break;
       case 'v': this.s.proximoVerbo(); break;

@@ -323,6 +323,8 @@ pub struct RespostaHttp {
     pub tipo: Option<String>,
     pub corpo: String,
     pub ms: u64,
+    /// Cabeçalhos da resposta (nomes em minúsculas; o Set-Cookie vem uma vez por cookie).
+    pub cabecalhos: Vec<(String, String)>,
 }
 
 /// Requisição HTTP à aplicação local (a IA testa a tela/endpoint depois de mudar o código).
@@ -332,6 +334,8 @@ pub async fn servidor_http(metodo: String, url: String, corpo: Option<String>, t
     if !local {
         return Err("só faço requisições para a aplicação local (http://localhost:…)".into());
     }
+    // `localhost` pode tentar o IPv6 primeiro e esperar ~2 s quando o servidor só escuta no IPv4: vai direto no 127.0.0.1.
+    let url = url.replacen("http://localhost:", "http://127.0.0.1:", 1);
     let metodo = metodo.to_uppercase();
     if !matches!(metodo.as_str(), "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD") {
         return Err(format!("método não suportado: {metodo}"));
@@ -357,6 +361,11 @@ pub async fn servidor_http(metodo: String, url: String, corpo: Option<String>, t
             Err(e) => return Err(format!("sem resposta de {url}: {e}")),
         };
         let status = r.status();
+        let cabecalhos: Vec<(String, String)> = r
+            .headers_names()
+            .into_iter()
+            .flat_map(|n| r.all(&n).into_iter().map(|v| (n.clone(), v.to_string())).collect::<Vec<_>>())
+            .collect();
         let tipo = r.header("Content-Type").map(str::to_string);
         let mut texto = r.into_string().unwrap_or_default();
         if texto.len() > 20_000 {
@@ -367,7 +376,7 @@ pub async fn servidor_http(metodo: String, url: String, corpo: Option<String>, t
             texto.truncate(corte);
             texto.push_str("\n[... resposta cortada em 20 mil caracteres]");
         }
-        Ok(RespostaHttp { status, tipo, corpo: texto, ms: inicio.elapsed().as_millis() as u64 })
+        Ok(RespostaHttp { status, tipo, corpo: texto, ms: inicio.elapsed().as_millis() as u64, cabecalhos })
     })
     .await
     .map_err(|e| e.to_string())?

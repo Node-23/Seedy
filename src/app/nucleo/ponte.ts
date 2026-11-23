@@ -721,7 +721,7 @@ export const ponte = {
     abrirUrl: (url: string) => invoke<void>('servidor_abrir_url', { url }),
     /** Requisição à aplicação local (só http://localhost). */
     http: (metodo: string, url: string, corpo: string | null, tipo: string | null, cabecalhos: [string, string][] | null = null) =>
-      invoke<{ status: number; tipo: string | null; corpo: string; ms: number }>('servidor_http', { metodo, url, corpo, tipo, cabecalhos }),
+      invoke<{ status: number; tipo: string | null; corpo: string; ms: number; cabecalhos: [string, string][] }>('servidor_http', { metodo, url, corpo, tipo, cabecalhos }),
   },
 
   /** Servidor MCP do Seedy (o Claude Code opera a IDE): as ferramentas rodam na interface. */

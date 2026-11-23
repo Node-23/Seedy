@@ -8,6 +8,7 @@ import { ComponenteAnalise, MetodoAnalise, ponte, TesteInfo } from '../nucleo/po
 import { ProjetoService } from '../nucleo/projeto.service';
 import { TestesService } from '../testes/testes.service';
 import { EstadoDeTeste } from '../testes/cobertura';
+import { EscolhaService } from '../escolha/escolha.service';
 import { SpringService } from '../spring/spring.service';
 
 export type Http = NonNullable<MetodoAnalise['http']>;
@@ -33,6 +34,16 @@ export interface RespostaDaChamada {
   tipo: string | null;
   corpo: string;
   ms: number;
+  cabecalhos?: [string, string][];
+}
+
+/** Quem está logado nas chamadas desta sessão do Seedy: só em memória (a senha nunca fica guardada). */
+export interface SessaoDeEndpoints {
+  usuario: string;
+  /** Cookies que o login (ou a renovação) devolveu. */
+  cookies: Map<string, string>;
+  /** Token que o login devolveu no corpo (accessToken, token...), mandado como Authorization: Bearer. */
+  bearer: string | null;
 }
 
 const CONTROLLERS = new Set(['RestController', 'Controller']);
@@ -66,6 +77,7 @@ export class EndpointsService {
   private readonly testes = inject(TestesService);
   private readonly env = inject(EnvService);
   private readonly mensagens = inject(MensagensService);
+  private readonly escolha = inject(EscolhaService);
 
   private readonly spring = inject(SpringService);
   /** O projeto aberto é Spring Boot? Mostra o botão. */
@@ -81,6 +93,8 @@ export class EndpointsService {
   readonly fechados = signal<ReadonlySet<string>>(new Set());
 
   /** O pedido (texto no formato `.http`): primeira linha, cabeçalhos, linha em branco, corpo. */
+  /** Sessão aberta pelo login (␣ L / L): vale até sair ou fechar o Seedy. */
+  readonly sessao = signal<SessaoDeEndpoints | null>(null);
   readonly pedido = signal('');
   readonly resposta = signal<RespostaDaChamada | null>(null);
   readonly chamando = signal(false);
@@ -305,9 +319,18 @@ export class EndpointsService {
     this.erroDaChamada.set(null);
     try {
       const p = this.interpretar(await this.preencher(this.pedido()));
-      const tipo = p.cabecalhos.find(([n]) => n.toLowerCase() === 'content-type')?.[1] ?? null;
-      const resto = p.cabecalhos.filter(([n]) => n.toLowerCase() !== 'content-type');
-      const r = await ponte.servidor.http(p.metodo, p.url, p.corpo, tipo ?? (p.corpo ? 'application/json' : null), resto);
+      const protegido = !!this.atual()?.http.acesso;
+      // Endpoint protegido e ninguém logado: pede o login antes (uma vez por sessão do Seedy).
+      if (protegido && !this.sessao() && !this.temCredencial(p) && this.endpointDeLogin() && !(await this.entrar())) {
+        this.erroDaChamada.set('chamada cancelada: sem login');
+        return;
+      }
+      let r = await this.enviar(p);
+      // 401 (ou 403 sem login, num endpoint protegido): renova a sessão ou entra de novo e repete uma vez.
+      if (!this.temCredencial(p) && (r.status === 401 || (r.status === 403 && !this.sessao() && protegido)) && this.endpointDeLogin()) {
+        const renovou = this.sessao() ? (await this.renovar()) || (await this.entrar()) : await this.entrar();
+        if (renovou) r = await this.enviar(p);
+      }
       this.resposta.set(r);
     } catch (e) {
       this.resposta.set(null);
@@ -315,6 +338,135 @@ export class EndpointsService {
     } finally {
       this.chamando.set(false);
     }
+  }
+
+  /** O pedido tem o seu próprio Cookie ou Authorization (então a sessão não mexe). */
+  private temCredencial(p: { cabecalhos: [string, string][] }): boolean {
+    return p.cabecalhos.some(([n]) => ['cookie', 'authorization'].includes(n.toLowerCase()));
+  }
+
+  private async enviar(p: { metodo: string; url: string; cabecalhos: [string, string][]; corpo: string | null }): Promise<RespostaDaChamada> {
+    const tipo = p.cabecalhos.find(([n]) => n.toLowerCase() === 'content-type')?.[1] ?? null;
+    const cabecalhos = p.cabecalhos.filter(([n]) => n.toLowerCase() !== 'content-type');
+    if (!this.temCredencial(p)) cabecalhos.push(...this.cabecalhosDaSessao());
+    return ponte.servidor.http(p.metodo, p.url, p.corpo, tipo ?? (p.corpo ? 'application/json' : null), cabecalhos);
+  }
+
+  private cabecalhosDaSessao(): [string, string][] {
+    const s = this.sessao();
+    if (!s) return [];
+    const saida: [string, string][] = [];
+    if (s.cookies.size) saida.push(['Cookie', [...s.cookies].map(([n, v]) => `${n}=${v}`).join('; ')]);
+    if (s.bearer) saida.push(['Authorization', `Bearer ${s.bearer}`]);
+    return saida;
+  }
+
+  // ---------- login ----------
+
+  /** O endpoint de login do projeto: POST /auth/login, /login, /signin... */
+  endpointDeLogin(): EndpointInfo | null {
+    return this.todos().find((e) => e.verbo === 'POST' && /(^|\/)(login|signin|sign-in|authenticate|token)\/?$/i.test(e.rota)) ?? null;
+  }
+
+  private endpointDeRenovacao(): EndpointInfo | null {
+    return this.todos().find((e) => e.verbo === 'POST' && /(^|\/)(refresh|refresh-token|renew)\/?$/i.test(e.rota)) ?? null;
+  }
+
+  private guardarCookies(r: RespostaDaChamada, cookies: Map<string, string>): void {
+    for (const [n, v] of r.cabecalhos ?? []) {
+      if (n.toLowerCase() !== 'set-cookie') continue;
+      const [par] = v.split(';');
+      const i = par.indexOf('=');
+      if (i <= 0) continue;
+      const nome = par.slice(0, i).trim();
+      const valor = par.slice(i + 1).trim();
+      if (valor) cookies.set(nome, valor);
+      else cookies.delete(nome);
+    }
+  }
+
+  private tokenDoCorpo(r: RespostaDaChamada): string | null {
+    try {
+      const j = JSON.parse(r.corpo) as Record<string, unknown>;
+      for (const chave of ['accessToken', 'access_token', 'token', 'jwt', 'idToken']) if (typeof j[chave] === 'string' && j[chave]) return j[chave] as string;
+    } catch {
+      /* corpo sem JSON: o login usou só cookies */
+    }
+    return null;
+  }
+
+  /** Pergunta usuário e senha (uma vez por sessão do Seedy), faz o login e guarda os cookies/token na memória. */
+  async entrar(): Promise<boolean> {
+    const login = this.endpointDeLogin();
+    if (!login) {
+      this.mensagens.alerta('não achei o endpoint de login deste projeto (um POST /login ou /auth/login)');
+      return false;
+    }
+    const chave = `seedy.endpoints.usuario:${this.projeto.raiz()}`;
+    let lembrado = '';
+    try {
+      lembrado = localStorage.getItem(chave) ?? '';
+    } catch {
+      /* sem armazenamento */
+    }
+    const usuario = await this.escolha.perguntar('LOGIN PARA OS ENDPOINTS · USUÁRIO', { valor: lembrado, dica: `${this.urlRelativa(login)} · a senha e o token ficam só na memória, até fechar o Seedy` });
+    if (!usuario) return false;
+    const senha = await this.escolha.perguntar(`SENHA DE ${usuario.toUpperCase()}`, { senha: true });
+    if (!senha) return false;
+    // O corpo do login vem dos campos que o código declara: o do usuário (email, login...) e o da senha.
+    const campos = login.http.corpo ?? [];
+    const campoUsuario = campos.find((c) => /mail|user|login|cpf/i.test(c.nome))?.nome ?? 'email';
+    const campoSenha = campos.find((c) => /pass|senha/i.test(c.nome))?.nome ?? 'password';
+    try {
+      const r = await ponte.servidor.http('POST', `${this.base()}${this.urlRelativa(login)}`, JSON.stringify({ [campoUsuario]: usuario, [campoSenha]: senha }), 'application/json', null);
+      if (r.status < 200 || r.status >= 300) {
+        this.mensagens.alerta(`login recusado (${r.status}): ${r.corpo.slice(0, 120) || 'sem detalhe'}`);
+        return false;
+      }
+      const cookies = new Map<string, string>();
+      this.guardarCookies(r, cookies);
+      const bearer = this.tokenDoCorpo(r);
+      if (!cookies.size && !bearer) {
+        this.mensagens.alerta('o login respondeu OK, mas sem cookie nem token que eu reconheça');
+        return false;
+      }
+      this.sessao.set({ usuario, cookies, bearer });
+      try {
+        localStorage.setItem(chave, usuario);
+      } catch {
+        /* sem armazenamento */
+      }
+      this.mensagens.mostrar(`logado como ${usuario} nos endpoints`);
+      return true;
+    } catch (e) {
+      this.mensagens.alerta(`não consegui fazer o login: ${e instanceof Error ? e.message : e}`);
+      return false;
+    }
+  }
+
+  /** Renova a sessão pelo endpoint de refresh (com os cookies que já temos). */
+  private async renovar(): Promise<boolean> {
+    const s = this.sessao();
+    const ep = this.endpointDeRenovacao();
+    if (!s || !ep) return false;
+    try {
+      const r = await ponte.servidor.http('POST', `${this.base()}${this.urlRelativa(ep)}`, null, null, this.cabecalhosDaSessao());
+      if (r.status < 200 || r.status >= 300) return false;
+      const cookies = new Map(s.cookies);
+      this.guardarCookies(r, cookies);
+      this.sessao.set({ ...s, cookies, bearer: this.tokenDoCorpo(r) ?? s.bearer });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** L: entra (ou troca de usuário); com sessão aberta, sai. */
+  async alternarLogin(): Promise<void> {
+    if (this.sessao()) {
+      this.sessao.set(null);
+      this.mensagens.mostrar('saiu da sessão dos endpoints');
+    } else await this.entrar();
   }
 
   /** `curl` do pedido (o token continua como variável de ambiente, não vai para a área de transferência). */
