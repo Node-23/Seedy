@@ -1,6 +1,6 @@
 [package]
 name = "seedy"
-version = "0.5.7"
+version = "0.5.8"
 description = "Seedy — IDE Java minimalista, guiada pelo teclado"
 authors = ["Matheus Vinicius Linhares"]
 license-file = "../LICENSE.md"
