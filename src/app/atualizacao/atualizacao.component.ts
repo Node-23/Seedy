@@ -13,7 +13,7 @@ import { AtualizacaoService } from './atualizacao.service';
             <div class="suave">você está na {{ a.atual }}@if (a.tamanho) { · {{ mb(a.tamanho) }} MB }</div></div>
           <div class="atualizacao-notas">
             @for (n of notas(); track $index) { <div>• {{ n }}</div> } @empty { <div class="suave">sem notas nesta release</div> }
-            @if (!a.automatica) { <div class="aviso-texto atualizacao-nota">este Seedy não se atualiza sozinho (portátil ou pacote do sistema): baixe pela página da release</div> }
+            @if (!a.automatica) { <div class="aviso-texto atualizacao-nota">este Seedy não se atualiza sozinho (no Linux só o AppImage; no Windows só o instalador): baixe pela página da release</div> }
             @else if (!a.confere) { <div class="aviso-texto atualizacao-nota">a release não publicou o SHA256SUMS.txt: por segurança, baixe pela página</div> }
             @else { <div class="suave atualizacao-nota">o instalador não é assinado: o Windows pode avisar na primeira vez</div> }
             @if (u.erro(); as e) { <div class="erro-texto atualizacao-nota">{{ e }}</div> }
@@ -38,14 +38,15 @@ export class AtualizacaoComponent {
   private readonly quadro = viewChild<ElementRef<HTMLElement>>('quadro');
 
   /** Os itens das notas da release (linhas de lista do Markdown), sem a formatação. */
-  protected readonly notas = computed(() =>
-    (this.u.disponivel()?.notas ?? '')
-      .split(/\r?\n/)
-      .map((l) => l.trim())
+  protected readonly notas = computed(() => {
+    const linhas = (this.u.disponivel()?.notas ?? '').split(/\r?\n/).map((l) => l.trim());
+    // Só as novidades e correções: as seções de downloads e observações ficam de fora (e os _ dos nomes de arquivo ficam).
+    const fim = linhas.findIndex((l) => /^#{1,3}\s*(downloads|observa)/i.test(l));
+    return (fim < 0 ? linhas : linhas.slice(0, fim))
       .filter((l) => /^[-*•]\s+/.test(l))
-      .map((l) => l.replace(/^[-*•]\s+/, '').replace(/[*_`]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'))
-      .slice(0, 10),
-  );
+      .map((l) => l.replace(/^[-*•]\s+/, '').replace(/\*\*|`/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'))
+      .slice(0, 10);
+  });
 
   constructor() {
     effect(() => {
