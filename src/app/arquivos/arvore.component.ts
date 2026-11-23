@@ -53,6 +53,10 @@ interface No {
           >
             @if (no.entrada.pasta) {
               <span class="seta">{{ no.aberto ? '▾' : '▸' }}</span>
+              <svg class="icone-pasta" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                @if (no.aberto) { <path d="M1.8 12.8V3.6c0-.6.4-1 1-1h3l1.4 1.6h5c.6 0 1 .4 1 1v1.4M1.8 12.8l1.7-5.2c.1-.4.5-.7.9-.7h9.6c.7 0 1.1.6.9 1.2l-1.4 4.2c-.1.4-.5.7-.9.7H2.8c-.6 0-1-.4-1-1z" /> }
+                @else { <path d="M1.8 12.4V3.6c0-.6.4-1 1-1h3l1.4 1.6h6c.6 0 1 .4 1 1v7.2c0 .6-.4 1-1 1H2.8c-.6 0-1-.4-1-1z" /> }
+              </svg>
             }
             @if (!no.entrada.pasta && tipoDe(no.entrada.nome); as t) {
               @if (t === 'java') {

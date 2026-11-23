@@ -44,13 +44,6 @@ let exDefinidos = false;
   selector: 'sd-editor',
   template: `
     <section class="painel editor" [class.desfocado]="desfocado()" [attr.aria-label]="dividido() ? 'Editor, painel ' + (painel() + 1) : 'Editor'">
-      @if (temEntalhe()) {
-        <div class="entalhe">
-          <button class="botao-quadrado destaque" aria-label="Modo foco" title="Modo foco" (click)="alternarFoco()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg>
-          </button>
-        </div>
-      }
       @if (sql(); as f) {
         <div class="painel-faixa faixa-sql" [attr.data-ambiente]="f.perfil?.ambiente ?? null">
           @if (f.perfil; as p) {
@@ -130,8 +123,6 @@ export class EditorComponent {
   }
   protected readonly dividido = computed(() => !!this.editor.divisao());
   protected readonly desfocado = computed(() => this.dividido() && this.editor.painelFocado() !== this.painel());
-  /** O recorte com o botão de foco fica só no painel da direita. */
-  protected readonly temEntalhe = computed(() => this.painel() === (this.dividido() ? 1 : 0));
   private readonly focado = computed(() => this.editor.painelFocado() === this.painel());
 
   /** Instância do Monaco deste painel (vira não-nula depois de criada). */
@@ -291,17 +282,6 @@ export class EditorComponent {
       this.instancia()?.updateOptions(this.opcoesDeFonte(t));
       monaco.editor.remeasureFonts();
     });
-  }
-
-  protected alternarFoco(): void {
-    const algumAberto = this.layout.visivel('arquivos') || this.layout.visivel('terminal');
-    if (algumAberto) {
-      if (this.layout.visivel('arquivos')) this.layout.alternar('arquivos');
-      if (this.layout.visivel('terminal')) this.layout.alternar('terminal');
-    } else {
-      this.layout.alternar('arquivos');
-    }
-    this.editor.focar();
   }
 
   private opcoesDeFonte(t: ReturnType<TemaService['tema']>): monaco.editor.IEditorOptions {

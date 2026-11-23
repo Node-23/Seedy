@@ -271,20 +271,6 @@ sd-raiz > .seedy {
 .editor-vazio .logo { font-size: 44px; font-weight: 700; color: var(--destaque); letter-spacing: 0.04em; margin-bottom: 10px; }
 .editor-vazio p { margin: 0 0 6px; }
 
-/* O recorte no canto do editor, com o botão de modo foco. */
-.entalhe {
-  position: absolute;
-  top: calc(var(--espessura-borda) * -1);
-  right: -6px;
-  width: 56px;
-  height: 52px;
-  z-index: 5;
-  background: var(--fundo);
-  border-left: var(--espessura-borda) solid var(--borda);
-  border-bottom: var(--espessura-borda) solid var(--borda);
-  border-bottom-left-radius: 16px;
-}
-.entalhe .botao-quadrado { position: absolute; top: 2px; right: 6px; width: 36px; height: 36px; }
 
 .monaco-editor .cursors-layer .cursor { border-radius: 1px; }
 
@@ -2092,3 +2078,16 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .commit-linha-opcoes .commit-opcao { margin: 0; }
 .commit-linha-opcoes .botao { height: 28px; font-size: 12px; white-space: nowrap; }
 .busca.commit-janela .busca-dicas { flex-wrap: wrap; row-gap: 4px; }
+
+/* Ajustes finos: ícone de pasta, texto do commit, limites da IA na barra de status, apagar conexão. */
+.arvore-item .icone-pasta { flex-shrink: 0; color: var(--destaque); }
+.git-detalhe-mensagem, .git-detalhe-mensagem p, .git-detalhe-mensagem .forte { overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
+.git-detalhe-mensagem p { white-space: pre-wrap; }
+.barra-status sd-limites-uso, .barra-status sd-atualizacao, .barra-status sd-carregando { display: contents; }
+.barra-status .limites-uso, .barra-status .atualizacao-aviso { align-self: stretch; height: auto; margin: 0; }
+.conexao-apagar { margin-left: auto; border: 0; background: transparent; color: var(--texto-suave); cursor: pointer; font-size: 12px; padding: 0 4px; opacity: 0; }
+.conexao-item:hover .conexao-apagar, .conexao-item.selecionado .conexao-apagar { opacity: 1; }
+.conexao-apagar:hover { color: var(--erro); }
+.conexoes-dica { padding: 8px 12px; font-size: 11px; border-top: var(--espessura-borda) solid var(--borda); }
+.conexao-item.selecionado .aviso-texto, .conexao-item.selecionado .conexao-apagar { color: inherit; }
+.conexao-item.selecionado .conexao-apagar { opacity: 0.8; }

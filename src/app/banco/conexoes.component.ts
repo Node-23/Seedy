@@ -45,8 +45,10 @@ const ROTULO_DO_GRUPO = { tabelas: 'tabelas', views: 'views', funcoes: 'funçõe
                 <span class="bolinha-ambiente" [class.conectada]="banco.conectado(no.perfil.id)" aria-hidden="true">●</span>
                 <span class="nome">{{ no.perfil.nome }}</span>
                 @if (banco.conectando() === no.perfil.id) { <span class="suave">…</span> }
+                @else if (banco.falhas().get(no.perfil.id); as f) { <span class="aviso-texto" [title]="f">⚠ não conectou</span> }
                 @else if (no.perfil.ssh) { <span class="detalhe-conexao">🔒 ssh</span> }
                 @else { <span class="detalhe-conexao suave">{{ no.perfil.host }}</span> }
+                <button class="conexao-apagar" type="button" title="apagar esta conexão (del)" aria-label="Apagar a conexão" (click)="banco.apagar(no.perfil.id); $event.stopPropagation()">🗑</button>
               }
               @case ('grupo') { <span class="nome">{{ rotuloDoGrupo(no.grupo) }}</span><span class="suave">{{ no.total }}</span> }
               @case ('coluna') { <span class="nome">{{ no.nome }}</span><span class="suave detalhe-conexao">{{ no.detalhe }}</span> }
@@ -67,6 +69,7 @@ const ROTULO_DO_GRUPO = { tabelas: 'tabelas', views: 'views', funcoes: 'funçõe
           <div class="suave">porta local {{ t.portaLocal }}@if (t.identidade) { · chave {{ t.identidade }} }</div>
         </div>
       }
+      <div class="suave conexoes-dica"><span class="destaque-texto">n</span> nova · <span class="destaque-texto">e</span> editar · <span class="destaque-texto">x</span> desconectar · <span class="destaque-texto">del</span> apagar</div>
       <button class="botao conexoes-nova" (click)="banco.novo()">+ nova conexão <kbd>n</kbd></button>
     </section>
   `,

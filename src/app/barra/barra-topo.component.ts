@@ -29,37 +29,6 @@ import { DockerService } from '../containers/docker.service';
         } @else if (projeto.branch()) { <span class="suave">{{ projeto.branch() }}</span> }
       </button>
 
-      @if (layout.tela() === 'editor') {
-      <nav class="buffers" aria-label="Buffers abertos" data-tauri-drag-region>
-        @for (b of editor.buffers(); track b.caminho; let i = $index) {
-          <div class="buffer" [class.ativo]="b.caminho === editor.ativo()">
-            <button class="buffer-nome" (click)="editor.ativo.set(b.caminho)">
-              {{ i + 1 }} {{ b.nome }}@if (editor.sujo(b)) {<span class="sujo"> ●</span>}
-            </button>
-            <button class="buffer-fechar" [attr.aria-label]="'Fechar ' + b.nome" (click)="editor.fechar(b.caminho)">×</button>
-          </div>
-        }
-      </nav>
-      }
-
-      <div class="espaco" data-tauri-drag-region></div>
-
-      @if (layout.tela() === 'git') {
-        <div class="ferramentas git-acoes">
-          <button class="botao" title="Voltar ao editor (esc)" (click)="voltarAoEditor()">← editor <kbd>esc</kbd></button>
-          <button class="botao" title="Atualizar (ctrl+t)" [disabled]="!!git.ocupado()" (click)="git.pull()">↓ pull</button>
-          <button class="botao" [class.destaque]="(git.estado()?.aFrente ?? 0) > 0" title="Enviar (ctrl+shift+k)"
-                  [disabled]="!!git.ocupado()" (click)="git.push()">↑ push@if (git.estado()?.aFrente) { {{ git.estado()!.aFrente }}}</button>
-          <button class="botao" title="Commit (ctrl+k)" (click)="commit.abrir()">commit <kbd>^k</kbd></button>
-        </div>
-      }
-      @if (layout.tela() === 'containers') {
-        <div class="ferramentas git-acoes">
-          <button class="botao" title="docker compose up -d (u)" (click)="docker.compose('up')">▲ compose up <kbd>u</kbd></button>
-          <button class="botao" title="docker compose down" (click)="docker.composeDown()">▼ down</button>
-          <button class="botao" title="atualizar (r)" (click)="docker.atualizar(true)">↻ <kbd>r</kbd></button>
-        </div>
-      }
       @if (layout.tela() === 'editor' || layout.tela() === 'debug') {
         <!-- Configuração de execução + RUN / DEBUG; rodando, o botão pressionado vira o de parar (mockup 11). -->
         <div class="ferramentas execucao">
@@ -94,6 +63,38 @@ import { DockerService } from '../containers/docker.service';
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="7" width="10" height="13" rx="5"></rect><path d="M12 7V4M9 4.5l1.5 2.5M15 4.5l-1.5 2.5M7 12H3.5M20.5 12H17M7 16.5l-3 2M17 16.5l3 2M12 11v9"></path></svg>
             </button>
           }
+        </div>
+      }
+
+      @if (layout.tela() === 'editor') {
+      <nav class="buffers" aria-label="Buffers abertos" data-tauri-drag-region>
+        @for (b of editor.buffers(); track b.caminho; let i = $index) {
+          <div class="buffer" [class.ativo]="b.caminho === editor.ativo()">
+            <button class="buffer-nome" (click)="editor.ativo.set(b.caminho)">
+              {{ i + 1 }} {{ b.nome }}@if (editor.sujo(b)) {<span class="sujo"> ●</span>}
+            </button>
+            <button class="buffer-fechar" [attr.aria-label]="'Fechar ' + b.nome" (click)="editor.fechar(b.caminho)">×</button>
+          </div>
+        }
+      </nav>
+      }
+
+      <div class="espaco" data-tauri-drag-region></div>
+
+      @if (layout.tela() === 'git') {
+        <div class="ferramentas git-acoes">
+          <button class="botao" title="Voltar ao editor (esc)" (click)="voltarAoEditor()">← editor <kbd>esc</kbd></button>
+          <button class="botao" title="Atualizar (ctrl+t)" [disabled]="!!git.ocupado()" (click)="git.pull()">↓ pull</button>
+          <button class="botao" [class.destaque]="(git.estado()?.aFrente ?? 0) > 0" title="Enviar (ctrl+shift+k)"
+                  [disabled]="!!git.ocupado()" (click)="git.push()">↑ push@if (git.estado()?.aFrente) { {{ git.estado()!.aFrente }}}</button>
+          <button class="botao" title="Commit (ctrl+k)" (click)="commit.abrir()">commit <kbd>^k</kbd></button>
+        </div>
+      }
+      @if (layout.tela() === 'containers') {
+        <div class="ferramentas git-acoes">
+          <button class="botao" title="docker compose up -d (u)" (click)="docker.compose('up')">▲ compose up <kbd>u</kbd></button>
+          <button class="botao" title="docker compose down" (click)="docker.composeDown()">▼ down</button>
+          <button class="botao" title="atualizar (r)" (click)="docker.atualizar(true)">↻ <kbd>r</kbd></button>
         </div>
       }
       <div class="janela">

@@ -42,6 +42,10 @@ export class BancoService {
   /** Sessões abertas (por id do perfil). */
   readonly sessoes = signal(new Map<string, InfoConexao>());
   readonly conectando = signal<string | null>(null);
+  /** Lendo tabelas e colunas de uma conexão recém-aberta. */
+  readonly carregandoCatalogo = signal(false);
+  /** O último erro de conexão de cada perfil (a lista mostra ⚠ e a dica de apagar). */
+  readonly falhas = signal<ReadonlyMap<string, string>>(new Map());
   readonly catalogos = signal(new Map<string, SchemaBanco[]>());
   /** Colunas por perfil (do schema padrão), para a árvore e o autocompletar. */
   readonly colunas = signal(new Map<string, ColunaDeTabela[]>());
@@ -165,6 +169,11 @@ export class BancoService {
     try {
       const info = await ponte.banco.conectar(id, senha, false);
       this.sessoes.update((m) => new Map(m).set(id, info));
+      this.falhas.update((m) => {
+        const n = new Map(m);
+        n.delete(id);
+        return n;
+      });
       this.mensagens.mostrar(`conectado: ${p.nome} · ${info.versao}${p.somenteLeitura ? ' · somente leitura' : ''}`);
       void this.carregarCatalogo(id);
       return true;
@@ -175,6 +184,9 @@ export class BancoService {
         return this.pedirSenhaEConectar(p);
       }
       this.mensagens.erro(erro);
+      this.falhas.update((m) => new Map(m).set(id, erro));
+      const resumo = erro.replace(/\s+/g, ' ').trim();
+      this.mensagens.alerta(`não conectou em ${p.nome}: ${resumo.length > 140 ? `${resumo.slice(0, 140)}…` : resumo} (se o banco não existe mais, apague a conexão: del na lista)`);
       return false;
     } finally {
       if (this.conectando() === id) this.conectando.set(null);
@@ -206,12 +218,16 @@ export class BancoService {
   async carregarCatalogo(id: string): Promise<void> {
     const p = this.perfil(id);
     if (!p) return;
+    this.carregandoCatalogo.set(true);
     try {
       const [cat, cols] = await Promise.all([ponte.banco.catalogo(id), ponte.banco.colunas(id, this.schemaPadrao(p))]);
       this.catalogos.update((m) => new Map(m).set(id, cat));
       this.colunas.update((m) => new Map(m).set(id, cols));
     } catch (e) {
       this.mensagens.erro(`catálogo: ${e}`);
+      this.mensagens.alerta(`não li o catálogo de ${p.nome}: ${String(e).slice(0, 140)}`);
+    } finally {
+      this.carregandoCatalogo.set(false);
     }
   }
 
