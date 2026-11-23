@@ -51,6 +51,7 @@ import { TelaContainersComponent } from './containers/tela-containers.component'
 import { ContainersPainelComponent } from './containers/containers-painel.component';
 import { TelaTestesComponent } from './testes/tela-testes.component';
 import { TelaEndpointsComponent } from './endpoints/tela-endpoints.component';
+import { LoginEndpointsComponent } from './endpoints/login-endpoints.component';
 import { EndpointsService } from './endpoints/endpoints.service';
 import { TestesService } from './testes/testes.service';
 import { TelaConfiguracoesComponent } from './config/tela-configuracoes.component';
@@ -74,7 +75,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, LoginEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
   ],
   template: `
     <div class="seedy">
@@ -160,6 +161,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       <sd-revisao />
       <sd-novo-projeto />
       <sd-escolha />
+      <sd-login-endpoints />
       @if (todo.aberto()) { <sd-todo-painel /> }
       </div>
 

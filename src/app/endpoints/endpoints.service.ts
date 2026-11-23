@@ -8,7 +8,7 @@ import { ComponenteAnalise, MetodoAnalise, ponte, TesteInfo } from '../nucleo/po
 import { ProjetoService } from '../nucleo/projeto.service';
 import { TestesService } from '../testes/testes.service';
 import { EstadoDeTeste } from '../testes/cobertura';
-import { EscolhaService } from '../escolha/escolha.service';
+import { LoginEndpointsService } from './login-endpoints.component';
 import { SpringService } from '../spring/spring.service';
 
 export type Http = NonNullable<MetodoAnalise['http']>;
@@ -77,7 +77,7 @@ export class EndpointsService {
   private readonly testes = inject(TestesService);
   private readonly env = inject(EnvService);
   private readonly mensagens = inject(MensagensService);
-  private readonly escolha = inject(EscolhaService);
+  private readonly popupDeLogin = inject(LoginEndpointsService);
 
   private readonly spring = inject(SpringService);
   /** O projeto aberto é Spring Boot? Mostra o botão. */
@@ -395,7 +395,10 @@ export class EndpointsService {
     return null;
   }
 
-  /** Pergunta usuário e senha (uma vez por sessão do Seedy), faz o login e guarda os cookies/token na memória. */
+  /**
+   * Abre o popup de login (usuário e senha juntos), faz o login e guarda os cookies/token na memória.
+   * Se não conseguir entrar, abre o popup de novo com o último usuário e o motivo; esc desiste.
+   */
   async entrar(): Promise<boolean> {
     const login = this.endpointDeLogin();
     if (!login) {
@@ -403,44 +406,46 @@ export class EndpointsService {
       return false;
     }
     const chave = `seedy.endpoints.usuario:${this.projeto.raiz()}`;
-    let lembrado = '';
+    let usuario = '';
     try {
-      lembrado = localStorage.getItem(chave) ?? '';
+      usuario = localStorage.getItem(chave) ?? '';
     } catch {
       /* sem armazenamento */
     }
-    const usuario = await this.escolha.perguntar('LOGIN PARA OS ENDPOINTS · USUÁRIO', { valor: lembrado, dica: `${this.urlRelativa(login)} · a senha e o token ficam só na memória, até fechar o Seedy` });
-    if (!usuario) return false;
-    const senha = await this.escolha.perguntar(`SENHA DE ${usuario.toUpperCase()}`, { senha: true });
-    if (!senha) return false;
     // O corpo do login vem dos campos que o código declara: o do usuário (email, login...) e o da senha.
     const campos = login.http.corpo ?? [];
     const campoUsuario = campos.find((c) => /mail|user|login|cpf/i.test(c.nome))?.nome ?? 'email';
     const campoSenha = campos.find((c) => /pass|senha/i.test(c.nome))?.nome ?? 'password';
-    try {
-      const r = await ponte.servidor.http('POST', `${this.base()}${this.urlRelativa(login)}`, JSON.stringify({ [campoUsuario]: usuario, [campoSenha]: senha }), 'application/json', null);
-      if (r.status < 200 || r.status >= 300) {
-        this.mensagens.alerta(`login recusado (${r.status}): ${r.corpo.slice(0, 120) || 'sem detalhe'}`);
-        return false;
-      }
-      const cookies = new Map<string, string>();
-      this.guardarCookies(r, cookies);
-      const bearer = this.tokenDoCorpo(r);
-      if (!cookies.size && !bearer) {
-        this.mensagens.alerta('o login respondeu OK, mas sem cookie nem token que eu reconheça');
-        return false;
-      }
-      this.sessao.set({ usuario, cookies, bearer });
+    const destino = `POST ${this.urlRelativa(login)}`;
+    let erro: string | null = null;
+    for (;;) {
+      const cred = await this.popupDeLogin.pedir(destino, usuario, erro);
+      if (!cred) return false;
+      usuario = cred.usuario;
       try {
         localStorage.setItem(chave, usuario);
       } catch {
         /* sem armazenamento */
       }
-      this.mensagens.mostrar(`logado como ${usuario} nos endpoints`);
-      return true;
-    } catch (e) {
-      this.mensagens.alerta(`não consegui fazer o login: ${e instanceof Error ? e.message : e}`);
-      return false;
+      try {
+        const r = await ponte.servidor.http('POST', `${this.base()}${this.urlRelativa(login)}`, JSON.stringify({ [campoUsuario]: usuario, [campoSenha]: cred.senha }), 'application/json', null);
+        if (r.status < 200 || r.status >= 300) {
+          erro = `login recusado (${r.status}): ${r.corpo.replace(/\s+/g, ' ').slice(0, 140) || 'sem detalhe'}`;
+          continue;
+        }
+        const cookies = new Map<string, string>();
+        this.guardarCookies(r, cookies);
+        const bearer = this.tokenDoCorpo(r);
+        if (!cookies.size && !bearer) {
+          erro = 'o login respondeu OK, mas sem cookie nem token que eu reconheça';
+          continue;
+        }
+        this.sessao.set({ usuario, cookies, bearer });
+        this.mensagens.mostrar(`logado como ${usuario} nos endpoints`);
+        return true;
+      } catch (e) {
+        erro = `não consegui conectar em ${this.base()}: ${e instanceof Error ? e.message : e}`;
+      }
     }
   }
 

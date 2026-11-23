@@ -2131,3 +2131,8 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .ia-editando-aviso { font-size: 11px; line-height: 1.5; padding: 4px 2px 6px; color: var(--texto-suave); }
 /* A barra de cima das telas de testes e endpoints quebra linha quando a IA ao lado aperta o espaço. */
 .testes-topo { flex-wrap: wrap; height: auto; min-height: 54px; row-gap: 6px; padding-top: 8px; padding-bottom: 8px; }
+
+.login-endpoints { top: 36%; }
+.login-endpoints .busca-campo { gap: 12px; }
+.login-endpoints .login-rotulo { width: 64px; flex-shrink: 0; color: var(--texto-suave); font-size: 12px; }
+.login-endpoints .login-erro { padding: 8px 14px; font-size: 12px; line-height: 1.5; border-bottom: var(--espessura-borda) solid var(--borda); background: var(--erro-fundo); }

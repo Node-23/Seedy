@@ -31,6 +31,7 @@ import { TestesService } from '../testes/testes.service';
 import { EndpointsService } from '../endpoints/endpoints.service';
 import { AtualizacaoService } from '../atualizacao/atualizacao.service';
 import { VimAjudaService } from '../vim/vim-ajuda.component';
+import { LoginEndpointsService } from '../endpoints/login-endpoints.component';
 import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
 
@@ -148,6 +149,7 @@ export class AtalhosService {
   private readonly endpoints = inject(EndpointsService);
   private readonly atualizacao = inject(AtualizacaoService);
   private readonly vimAjuda = inject(VimAjudaService);
+  private readonly loginEndpoints = inject(LoginEndpointsService);
   private readonly automatico = inject(AutomaticoService);
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
@@ -311,7 +313,7 @@ export class AtalhosService {
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
     // A janela do Vim só mostra texto: os atalhos diretos continuam valendo com ela aberta.
-    const modalAberto = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
+    const modalAberto = !!this.loginEndpoints.pedido() || this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
     const janelaAberta = modalAberto || this.vimAjuda.aberta();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
