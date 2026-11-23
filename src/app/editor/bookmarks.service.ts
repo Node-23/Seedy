@@ -10,6 +10,8 @@ export interface Marca {
   /** Caminho relativo à raiz do projeto, com `/`. */
   caminho: string;
   linha: number;
+  /** O nome que você deu ao bookmark ao marcar (marcas antigas não têm: a lista usa o texto da linha). */
+  nome?: string;
   /** O texto da linha quando foi marcada (para achar na lista). */
   texto: string;
 }
@@ -98,8 +100,11 @@ export class BookmarksService {
 
   // ---------- ações ----------
 
-  /** Marca ou desmarca uma linha (por padrão, a do cursor; o clique na margem passa a dela). */
-  async alternar(linhaDada?: number, caminhoDado?: string): Promise<void> {
+  /**
+   * Marca ou desmarca uma linha (por padrão, a do cursor; o clique na margem passa a dela). Ao marcar, pergunta o
+   * nome do bookmark; `nomeDado` (a IA) pula a pergunta (vazio: o nome vira o texto da linha).
+   */
+  async alternar(linhaDada?: number, caminhoDado?: string, nomeDado?: string): Promise<void> {
     const caminho = caminhoDado ?? this.editor.ativo();
     const modelo = caminhoDado ? this.editor.buffers().find((b) => b.caminho === caminhoDado)?.modelo : this.editor.instancia?.getModel();
     const linha = linhaDada ?? this.editor.instancia?.getPosition()?.lineNumber;
@@ -115,9 +120,26 @@ export class BookmarksService {
       this.mensagens.mostrar(`bookmark removido (${rel}:${linha})`);
     } else {
       const texto = modelo.getLineContent(linha).trim().slice(0, 80);
-      await this.salvar([...marcas, { caminho: rel, linha, texto }]);
-      this.mensagens.mostrar(`bookmark em ${rel}:${linha}`);
+      let nome = nomeDado?.trim();
+      if (nomeDado === undefined) {
+        const digitado = await this.escolha.perguntar('NOME DO BOOKMARK', { valor: this.sugestaoDeNome(texto), dica: `${rel}:${linha} · ⏎ marca · esc cancela` });
+        if (!digitado) return;
+        nome = digitado;
+      }
+      await this.salvar([...this.marcas(), { caminho: rel, linha, nome: nome || texto || `${rel}:${linha}`, texto }]);
+      this.mensagens.mostrar(`bookmark "${nome || texto}" em ${rel}:${linha}`);
     }
+  }
+
+  /** Um nome para começar: o método ou a classe da linha, senão o começo da linha. */
+  private sugestaoDeNome(linha: string): string {
+    const m = /(?:class|interface|enum|record)\s+(\w+)|(\w+)\s*\(/.exec(linha);
+    return (m?.[1] ?? m?.[2] ?? linha).slice(0, 60);
+  }
+
+  /** O nome para mostrar (marcas antigas, sem nome, usam o texto da linha). */
+  nomeDe(m: Marca): string {
+    return m.nome || m.texto || `${m.caminho}:${m.linha}`;
   }
 
   /** Lista as marcas (ordem de arquivo e linha); escolher uma abre o arquivo na linha. */
@@ -130,7 +152,7 @@ export class BookmarksService {
     const alvo = await this.escolha.escolherUm<Marca | typeof LIMPAR>(
       'BOOKMARKS',
       [
-        ...marcas.map((m) => ({ rotulo: `${m.caminho}:${m.linha}`, detalhe: m.texto, valor: m })),
+        ...marcas.map((m) => ({ rotulo: this.nomeDe(m), detalhe: `${m.caminho.split('/').slice(-2).join('/')}:${m.linha}`, valor: m })),
         { rotulo: 'remover todos', detalhe: `${marcas.length} ${marcas.length === 1 ? 'marca' : 'marcas'}`, valor: LIMPAR },
       ],
       '⏎ vai até a linha · Ctrl+F2 na linha remove a marca',
@@ -171,10 +193,9 @@ export class BookmarksService {
       const linhas = ids.map((id) => modelo.getDecorationRange(id)?.startLineNumber).filter((l): l is number => !!l);
       const doArquivo = this.marcas().filter((m) => m.caminho === rel);
       if (linhas.length !== doArquivo.length) return;
-      const ordenadas = [...linhas].sort((a, b) => a - b);
-      const antigas = doArquivo.map((m) => m.linha).sort((a, b) => a - b);
-      if (ordenadas.every((l, i) => l === antigas[i])) return;
-      const novas = ordenadas.map((l) => ({ caminho: rel, linha: l, texto: modelo.getLineContent(l).trim().slice(0, 80) }));
+      // Cada decoração é a da marca de mesmo índice (a ordem do desenhar): o nome acompanha a linha.
+      if (doArquivo.every((m, i) => m.linha === linhas[i])) return;
+      const novas = doArquivo.map((m, i) => ({ ...m, linha: linhas[i], texto: modelo.getLineContent(linhas[i]).trim().slice(0, 80) }));
       void this.salvar([...this.marcas().filter((m) => m.caminho !== rel), ...novas]);
     }, 600);
   }

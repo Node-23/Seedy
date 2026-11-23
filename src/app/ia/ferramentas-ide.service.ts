@@ -49,8 +49,8 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   { name: 'todo_atualizar', rotulo: 'todo.atualizar', description: 'Muda o título, a nota ou o estado (feito) de um card e pode acrescentar ligações.', input_schema: objeto({ id: { type: 'integer' }, titulo: texto('Novo título'), nota: texto('Nova nota'), feito: { type: 'boolean' }, ligacoes: LIGACAO }, ['id']) },
   { name: 'todo_apagar', rotulo: 'todo.apagar', description: 'Apaga um card do TODO. Sempre pede confirmação ao usuário.', input_schema: objeto({ id: { type: 'integer' } }, ['id']) },
   // ---------- bookmarks ----------
-  { name: 'bookmarks_listar', rotulo: 'bookmarks.listar', description: 'Bookmarks do projeto (arquivo, linha e o texto da linha).', input_schema: objeto({}) },
-  { name: 'bookmark_alternar', rotulo: 'bookmark.alternar', description: 'Marca ou desmarca uma linha com bookmark.', input_schema: objeto({ caminho: texto('Relativo à raiz do projeto'), linha: { type: 'integer' } }, ['caminho', 'linha']) },
+  { name: 'bookmarks_listar', rotulo: 'bookmarks.listar', description: 'Bookmarks do projeto (nome, arquivo, linha e o texto da linha).', input_schema: objeto({}) },
+  { name: 'bookmark_alternar', rotulo: 'bookmark.alternar', description: 'Marca ou desmarca uma linha com bookmark. Ao marcar, passe um `nome` curto que diga por que a linha importa.', input_schema: objeto({ caminho: texto('Relativo à raiz do projeto'), linha: { type: 'integer' }, nome: texto('Nome do bookmark (só ao marcar)') }, ['caminho', 'linha']) },
   // ---------- navegar pelo código ----------
   { name: 'ir_para_definicao', rotulo: 'codigo.definicao', description: 'Onde está declarado o símbolo (Java, pelo jdtls) numa posição do arquivo; abre o arquivo no editor. Coluna começa em 1.', input_schema: objeto({ caminho: texto('Relativo à raiz'), linha: { type: 'integer' }, coluna: { type: 'integer' } }, ['caminho', 'linha', 'coluna']) },
   { name: 'usos_do_simbolo', rotulo: 'codigo.usos', description: 'Onde o símbolo (Java) de uma posição é usado, em todo o projeto. Coluna começa em 1.', input_schema: objeto({ caminho: texto('Relativo à raiz'), linha: { type: 'integer' }, coluna: { type: 'integer' } }, ['caminho', 'linha', 'coluna']) },
@@ -139,7 +139,7 @@ export class FerramentasIdeService {
       case 'bookmarks_listar':
         return this.bookmarksListar();
       case 'bookmark_alternar':
-        return this.bookmarkAlternar(str(e, 'caminho'), inteiro(e, 'linha'));
+        return this.bookmarkAlternar(str(e, 'caminho'), inteiro(e, 'linha'), opc(e, 'nome') ?? '');
       case 'ir_para_definicao':
         return this.definicao(str(e, 'caminho'), inteiro(e, 'linha'), inteiro(e, 'coluna'));
       case 'usos_do_simbolo':
@@ -279,16 +279,16 @@ export class FerramentasIdeService {
 
   private bookmarksListar(): string {
     const marcas = [...this.bookmarks().marcas()].sort((a, b) => a.caminho.localeCompare(b.caminho) || a.linha - b.linha);
-    return marcas.length ? marcas.map((m) => `${m.caminho}:${m.linha}  ${m.texto}`).join('\n') : 'nenhum bookmark';
+    return marcas.length ? marcas.map((m) => `${this.bookmarks().nomeDe(m)}  ${m.caminho}:${m.linha}  ${m.texto}`).join('\n') : 'nenhum bookmark';
   }
 
-  private async bookmarkAlternar(caminho: string, linha: number): Promise<string> {
+  private async bookmarkAlternar(caminho: string, linha: number, nome: string): Promise<string> {
     const abs = this.base().caminho({ caminho });
     const b = await this.editor().abrir(abs, linha);
     if (!b) throw new Error(`não consegui abrir ${caminho}`);
     if (linha > b.modelo.getLineCount()) throw new Error(`o arquivo só tem ${b.modelo.getLineCount()} linhas`);
     const antes = this.bookmarks().marcas().length;
-    await this.bookmarks().alternar(linha, abs);
+    await this.bookmarks().alternar(linha, abs, nome);
     const depois = this.bookmarks().marcas().length;
     return depois > antes ? `bookmark em ${caminho}:${linha}` : `bookmark removido de ${caminho}:${linha}`;
   }
