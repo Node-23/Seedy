@@ -13,6 +13,7 @@ import {
 import { monaco } from './monaco';
 import { initVimMode, VimMode } from '../../vendor/monaco-vim';
 import { EditorService, ModoVim } from './editor.service';
+import { VimAjudaService } from '../vim/vim-ajuda.component';
 import { BookmarksService } from './bookmarks.service';
 import { MenuGutterService } from './menu-gutter.service';
 import { TemaService } from '../tema/tema';
@@ -98,6 +99,7 @@ export class EditorComponent {
   protected readonly projeto = inject(ProjetoService);
   private readonly tema = inject(TemaService);
   private readonly atalhos = inject(AtalhosService);
+  private readonly vimAjuda = inject(VimAjudaService);
   private readonly bookmarks = inject(BookmarksService);
   private readonly menuGutter = inject(MenuGutterService);
   private readonly layout = inject(LayoutService);
@@ -329,6 +331,7 @@ export class EditorComponent {
     Vim.defineEx('bprevious', 'bp', () => this.editor.proximo(-1));
     Vim.defineEx('terminal', 'term', () => this.layout.mostrar('terminal'));
     Vim.defineEx('wall', 'wa', () => void this.editor.salvarTodos());
+    Vim.defineEx('help', 'h', () => this.vimAjuda.alternar());
     // Espaço no modo normal abre o menu do líder.
     Vim.defineEx('seedylider', 'seedylider', () => this.atalhos.abrirLider());
     Vim.map('<Space>', ':seedylider<CR>', 'normal');

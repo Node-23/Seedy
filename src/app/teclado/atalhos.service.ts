@@ -30,6 +30,7 @@ import { AutomaticoService } from '../ia/automatico.service';
 import { TestesService } from '../testes/testes.service';
 import { EndpointsService } from '../endpoints/endpoints.service';
 import { AtualizacaoService } from '../atualizacao/atualizacao.service';
+import { VimAjudaService } from '../vim/vim-ajuda.component';
 import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
 
@@ -70,6 +71,7 @@ export class AtalhosService {
   private readonly testes = inject(TestesService);
   private readonly endpoints = inject(EndpointsService);
   private readonly atualizacao = inject(AtualizacaoService);
+  private readonly vimAjuda = inject(VimAjudaService);
   private readonly automatico = inject(AutomaticoService);
   private readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
@@ -126,6 +128,7 @@ export class AtalhosService {
     { id: 'todo', tecla: 'T', rotulo: 'TODO (cards ligados ao código, regras e containers)', disponivel: true, executar: () => this.todo.alternar() },
     { id: 'entender', tecla: 'A', rotulo: 'entender o sistema (arquitetura, regras, caminho)', disponivel: true, executar: () => this.entender.alternar() },
     { id: 'testes', tecla: 'E', rotulo: 'testes: rodar, resultado e cobertura das regras', disponivel: true, executar: () => this.testes.alternar() },
+    { id: 'vim', tecla: 'V', rotulo: 'Vim: configuração, comandos e atalhos', disponivel: true, executar: () => this.vimAjuda.alternar() },
     { id: 'atualizar', tecla: 'U', rotulo: 'atualizar o Seedy (procura e instala a versão nova)', disponivel: true, executar: () => this.atualizacao.alternar() },
     { id: 'endpoints', tecla: 'H', rotulo: 'endpoints do Spring: ver, chamar e abrir o código', disponivel: true, executar: () => this.endpoints.alternar() },
     { id: 'bookmark', tecla: 'M', rotulo: 'bookmark: marcar/desmarcar a linha', disponivel: true, executar: () => void this.bookmarks.alternar() },
@@ -154,6 +157,11 @@ export class AtalhosService {
 
   abrirLider(): void {
     this.liderAberto.set(true);
+  }
+
+  /** O botão da logo: abre o menu do líder e, com ele aberto, fecha. */
+  alternarLider(): void {
+    this.liderAberto.update((v) => !v);
   }
 
   fecharLider(): void {
@@ -220,7 +228,7 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
+    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.vimAjuda.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
     if (ctrl && e.shiftKey && !e.altKey && e.code === 'KeyA') {

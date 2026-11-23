@@ -2091,3 +2091,26 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .conexoes-dica { padding: 8px 12px; font-size: 11px; border-top: var(--espessura-borda) solid var(--borda); }
 .conexao-item.selecionado .aviso-texto, .conexao-item.selecionado .conexao-apagar { color: inherit; }
 .conexao-item.selecionado .conexao-apagar { opacity: 0.8; }
+
+/* Janela do Vim (␣ V): configuração e atalhos. */
+.menu-vim {
+  position: fixed; right: 32px; bottom: 84px; width: min(920px, calc(100vw - 64px)); max-height: calc(100vh - 140px); overflow: auto;
+  padding: 14px 16px 16px; z-index: 52; outline: none; font-size: 12px;
+  border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio); background: var(--painel-elevado);
+  box-shadow: var(--deslocamento-sombra) var(--deslocamento-sombra) 0 var(--sombra);
+}
+.menu-vim-config { padding-bottom: 10px; margin-bottom: 12px; border-bottom: var(--espessura-borda) solid var(--borda); }
+.menu-vim-linhas { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); gap: 4px 14px; margin-top: 8px; }
+.menu-vim-nota { margin-top: 8px; font-size: 11px; line-height: 1.5; }
+.menu-vim-grade { columns: 3 260px; column-gap: 18px; }
+.menu-vim-grupo { break-inside: avoid; margin-bottom: 14px; }
+.menu-vim-titulo { margin-bottom: 6px; }
+.menu-vim-grupo.seedy .menu-vim-titulo { color: var(--destaque); }
+.menu-vim-item { display: flex; gap: 10px; align-items: baseline; line-height: 1.7; }
+.menu-vim-item kbd { flex: 0 0 120px; font-family: inherit; font-size: 11px; color: var(--destaque); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-vim-grupo:not(.seedy) .menu-vim-item kbd { color: var(--texto); }
+.barra-status button.modo { border: 0; font-family: inherit; font-size: inherit; cursor: pointer; }
+.menu-vim { width: min(1120px, calc(100vw - 64px)); }
+.menu-vim .menu-vim-item kbd { flex: 0 0 104px; background: transparent; border: 0; padding: 0; }
+.menu-vim-linhas { grid-template-columns: max-content minmax(0, 1fr); }
+.menu-vim-grade { columns: 3 300px; }

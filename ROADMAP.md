@@ -190,3 +190,4 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
   Angular (`ng new`); falta testar o Angular com um Node atual
 - ✅ Argumentos do programa, variáveis de ambiente e opções da JVM por configuração de execução
   (␣ r → ⚙), em `.seedy/execucao.json`; o servidor usa as do perfil dele
+- Completação inline de código (texto fantasma) sem custo: modelo pequeno local (Qwen2.5-Coder 1.5B via Ollama ou llama.cpp baixado pelo Seedy), `ia.completar` no `seedy.json`; mockup primeiro

@@ -107,6 +107,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   main do RUN/DEBUG, servidores, scripts, terminais, Claude Code) quando o processo termina, até se cair; no Linux e no macOS
   ele encerra a árvore de filhos ao sair. O navegador aberto por um link e o instalador da atualização continuam vivos.
   Containers do Docker não são mexidos.
+- **Vim** (`␣ V`, `:h` ou clicar no modo "NORMAL" da barra de status): janela com a configuração do editor que vale hoje (números relativos, tabulação, minimapa...), o que o Seedy liga no Vim (`gd`, `gr`, `gi`, `K`, `:w`, `:q`, `:vs`, `ctrl+w`...) e o essencial do Vim por grupo (mover, editar, visual, buscar, marcas e macros). O botão da logo (menu do líder) abre e fecha.
 - **Perfis do Spring** (`␣ r` → ⚙ da classe main, só em projeto Spring Boot): o Seedy acha os `application-<perfil>.yml|properties`
   e você marca os que quer. Vira `-Dspring.profiles.active=dev,local` no RUN e no DEBUG (se o `.env` já define
   `SPRING_PROFILES_ACTIVE`, a escolha troca o valor dele; a JVM ou as variáveis da configuração têm a palavra final). A porta

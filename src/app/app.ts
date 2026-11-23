@@ -3,6 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { BarraTopoComponent } from './barra/barra-topo.component';
 import { BarraStatusComponent } from './barra/barra-status.component';
 import { MenuLiderComponent } from './barra/menu-lider.component';
+import { VimAjudaComponent } from './vim/vim-ajuda.component';
 import { ArvoreComponent } from './arquivos/arvore.component';
 import { EditorComponent } from './editor/editor.component';
 import { EditorService } from './editor/editor.service';
@@ -70,7 +71,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 @Component({
   selector: 'sd-raiz',
   imports: [
-    NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, ArvoreComponent, EditorComponent, TerminalComponent,
+    NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
     ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
@@ -166,6 +167,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       </div>
 
       <sd-menu-lider />
+      <sd-vim-ajuda />
     </div>
   `,
 })

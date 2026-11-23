@@ -6,6 +6,7 @@ import { BuscaProjetoService } from '../busca/busca-projeto.service';
 import { CarregandoComponent } from './carregando.component';
 import { LimitesUsoComponent } from '../ia/limites-uso.component';
 import { AtualizacaoComponent } from '../atualizacao/atualizacao.component';
+import { VimAjudaService } from '../vim/vim-ajuda.component';
 import { JdtlsService } from '../java/jdtls.service';
 import { GitService } from '../git/git.service';
 import { LayoutService } from '../layout/layout.service';
@@ -36,7 +37,7 @@ const NOMES_MODO: Record<string, string> = {
   imports: [LimitesUsoComponent, CarregandoComponent, AtualizacaoComponent],
   template: `
     <footer class="barra-status">
-      <span class="segmento modo" [attr.data-modo]="modoDaTela()">{{ rotuloDoModo() }}</span>
+      <button class="segmento modo" [attr.data-modo]="modoDaTela()" title="Vim: configuração e atalhos (␣ V ou :h)" (click)="vimAjuda.alternar()">{{ rotuloDoModo() }}</button>
       @if (projeto.branch()) {
         <span class="segmento com-divisa">{{ projeto.branch() }}@if (git.estado(); as g) {@if (g.aFrente || naTelaGit()) { <span class="suave">↑{{ g.aFrente }}</span>}@if (g.atras || naTelaGit()) { <span class="suave">↓{{ g.atras }}</span>}}</span>
       }
@@ -216,6 +217,7 @@ export class BarraStatusComponent {
   protected nomeDoAmbiente(a: string): string {
     return NOME_DO_AMBIENTE[a] ?? a;
   }
+  protected readonly vimAjuda = inject(VimAjudaService);
   protected readonly naTelaGit = computed(() => this.layout.tela() === 'git');
   protected readonly modoDaTela = computed(() =>
     this.todo.aberto() ? 'todo' : this.layout.tela() === 'git' ? 'git' : this.layout.tela() === 'merge' ? 'merge' : this.layout.tela() === 'debug' ? 'debug' : this.layout.tela() === 'containers' ? 'docker' : this.layout.tela() === 'entender' ? 'entender' : this.layout.tela() === 'config' ? 'entender' : this.layout.tela() === 'testes' ? 'testes' : this.layout.tela() === 'endpoints' ? 'testes' : this.buscando() ? 'busca' : this.editor.modo(),
