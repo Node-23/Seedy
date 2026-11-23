@@ -459,8 +459,8 @@ export class AtalhosService {
     const acao = await this.escolha.escolherUm<'conectar' | 'clonar' | 'desconectar' | 'pr' | 'issue'>('GITHUB', [
       ...(u
         ? [
-            { rotulo: 'Criar pull request', detalhe: '␣ P', valor: 'pr' as const },
-            { rotulo: 'Criar issue', detalhe: '␣ I', valor: 'issue' as const },
+            { rotulo: 'Criar pull request', detalhe: this.rotuloDoAtalho('pull-request') ?? '', valor: 'pr' as const },
+            { rotulo: 'Criar issue', detalhe: this.rotuloDoAtalho('issue') ?? '', valor: 'issue' as const },
             { rotulo: 'Clonar um repositório', detalhe: `de @${u.login}`, valor: 'clonar' as const },
             { rotulo: 'Desconectar', detalhe: `@${u.login}`, valor: 'desconectar' as const },
           ]
