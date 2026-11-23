@@ -1,4 +1,4 @@
-//! Novo projeto (␣ N, mockup 12). Os modelos Java (Maven, WAR e simples) são gerados aqui;
+//! Novo projeto (Alt+Shift+N, mockup 12). Os modelos Java (Maven, WAR e simples) são gerados aqui;
 //! o Spring Boot vem do start.spring.io (um .tgz extraído na pasta) e o Angular do `ng new`
 //! (via npx). No fim, `git init` e o primeiro commit.
 

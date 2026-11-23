@@ -37,7 +37,7 @@ const NOMES_MODO: Record<string, string> = {
   imports: [LimitesUsoComponent, CarregandoComponent, AtualizacaoComponent],
   template: `
     <footer class="barra-status">
-      <button class="segmento modo" [attr.data-modo]="modoDaTela()" title="Vim: configuração e atalhos (␣ V ou :h)" (click)="vimAjuda.alternar()">{{ rotuloDoModo() }}</button>
+      <button class="segmento modo" [attr.data-modo]="modoDaTela()" title="Vim: configuração e atalhos (Alt+Shift+V ou :h)" (click)="vimAjuda.alternar()">{{ rotuloDoModo() }}</button>
       @if (projeto.branch()) {
         <span class="segmento com-divisa">{{ projeto.branch() }}@if (git.estado(); as g) {@if (g.aFrente || naTelaGit()) { <span class="suave">↑{{ g.aFrente }}</span>}@if (g.atras || naTelaGit()) { <span class="suave">↓{{ g.atras }}</span>}}</span>
       }
@@ -46,7 +46,7 @@ const NOMES_MODO: Record<string, string> = {
           <span><span class="tecla">]c</span> próximo</span> <span><span class="tecla">[c</span> anterior</span>
           <span><span class="tecla">dp</span> pegar o seu</span> <span><span class="tecla">do</span> pegar o deles</span>
           <span><span class="tecla">:w</span> concluir merge</span>
-          <span><span class="tecla">␣ a</span> IA</span>
+          <span><span class="tecla">Alt+A</span> IA</span>
         </span>
         <span class="espaco"></span>
         @if (ia.pensando()) {
@@ -165,7 +165,7 @@ export class BarraStatusComponent {
   });
   protected readonly tituloJdtls = computed(() => {
     const fase = this.jdtls.estado().fase;
-    return fase === 'erro' ? 'O jdtls parou ou deu erro: ␣ l reinicia' : fase === 'navegador' ? 'O jdtls só roda dentro do app (npm run dev)' : 'Eclipse JDT Language Server';
+    return fase === 'erro' ? 'O jdtls parou ou deu erro: reinicie pelo menu de atalhos (Ctrl+Shift+Espaço), tecla l' : fase === 'navegador' ? 'O jdtls só roda dentro do app (npm run dev)' : 'Eclipse JDT Language Server';
   });
   protected readonly git = inject(GitService);
   protected readonly layout = inject(LayoutService);
@@ -190,7 +190,7 @@ export class BarraStatusComponent {
   /** O que a IA está fazendo, para o segmento da statusline (mockup 06). */
   protected textoDaIa(): string | null {
     if (this.iaGeral.pensando()) return '✦ IA trabalhando…';
-    if (this.revisao.pendentes()) return `✦ IA aguardando você (␣ y)`;
+    if (this.revisao.pendentes()) return `✦ IA aguardando você (Alt+Y)`;
     const m = this.mcp.ultima();
     if (m && Date.now() - m.quando < 60_000) return `✦ Claude Code: ${m.rotulo}`;
     return null;

@@ -198,9 +198,9 @@ export class App {
     inject(McpService); // o Claude Code (MCP) usa as ferramentas do Seedy
     inject(ExecucaoService); // RUN/DEBUG: acha as classes main quando o jdtls fica pronto
     inject(WebLspService); // projeto web: TypeScript, Angular, ESLint e Prettier
-    inject(TestesService); // testes: tela (␣ E) e a cobertura das regras
-    inject(EndpointsService); // endpoints do Spring: tela (␣ H), só em projeto Spring Boot
-    inject(BookmarksService); // bookmarks no código (␣ M, ␣ B)
+    inject(TestesService); // testes: tela (Alt+Shift+T) e a cobertura das regras
+    inject(EndpointsService); // endpoints do Spring: tela (Alt+Shift+E), só em projeto Spring Boot
+    inject(BookmarksService); // bookmarks no código (Ctrl+F2, Alt+2)
     inject(DivisoresService); // arrastar o vão entre painéis em qualquer tela cheia
     inject(EntenderService); // Fase 9: arquitetura, regras e o "acompanhar método" (ctrl+.)
     void inject(GithubService).iniciar();
@@ -211,7 +211,7 @@ export class App {
 
   /**
    * Arrastar a faixa de título de um painel: depois de uns pixels aparecem as três regiões;
-   * soltar numa delas muda o painel de lugar (␣ L faz o mesmo pelo teclado).
+   * soltar numa delas muda o painel de lugar (Alt+Shift+L faz o mesmo pelo teclado).
    */
   protected pegarPainel(inicio: PointerEvent, regiao: Regiao): void {
     const alvo = inicio.target as HTMLElement;

@@ -54,7 +54,7 @@ export function lerTodo(texto: string): Card[] {
 }
 
 export function escreverTodo(cards: Card[]): string {
-  const partes = ['# TODO', '', 'Cards do Seedy (␣ T). Edite à vontade; as linhas `->` ligam o card ao código, regras, diagramas e containers.', ''];
+  const partes = ['# TODO', '', 'Cards do Seedy (Alt+6). Edite à vontade; as linhas `->` ligam o card ao código, regras, diagramas e containers.', ''];
   const ordem = [...cards.filter((c) => !c.feito), ...cards.filter((c) => c.feito)];
   for (const c of ordem) {
     partes.push(`- [${c.feito ? 'x' : ' '}] ${c.titulo.replace(/\s+/g, ' ').trim()}`);

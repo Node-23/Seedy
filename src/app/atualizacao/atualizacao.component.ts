@@ -1,12 +1,12 @@
 import { Component, computed, effect, ElementRef, inject, untracked, viewChild } from '@angular/core';
 import { AtualizacaoService } from './atualizacao.service';
 
-/** O aviso "⬆ 0.5.6 disponível" na barra de status (␣ U) e o quadro com as notas e o botão de instalar. */
+/** O aviso "⬆ 0.5.6 disponível" na barra de status (Alt+Shift+U) e o quadro com as notas e o botão de instalar. */
 @Component({
   selector: 'sd-atualizacao',
   template: `
     @if (u.disponivel(); as a) {
-      <button class="segmento com-divisa-esq atualizacao-aviso" (click)="u.aberto.set(!u.aberto())" [title]="'Seedy ' + a.versao + ' disponível (␣ U)'">⬆ {{ a.versao }} disponível <kbd>␣ U</kbd></button>
+      <button class="segmento com-divisa-esq atualizacao-aviso" (click)="u.aberto.set(!u.aberto())" [title]="'Seedy ' + a.versao + ' disponível (Alt+Shift+U)'">⬆ {{ a.versao }} disponível <kbd>Alt+Shift+U</kbd></button>
       @if (u.aberto()) {
         <div #quadro class="painel-atualizacao" role="dialog" aria-label="Atualização do Seedy" tabindex="-1" (keydown)="teclar($event)">
           <div class="atualizacao-topo"><span class="rotulo destaque-texto">Seedy {{ a.versao }}</span>

@@ -53,7 +53,7 @@ export class BuscaService {
     this.filtro.set(filtro);
     this.consulta.set(consulta);
     this.aberta.set(true);
-    if (!this.projeto.raiz()) this.mensagens.alerta('abra um projeto para buscar nos arquivos (␣ o)');
+    if (!this.projeto.raiz()) this.mensagens.alerta('abra um projeto para buscar nos arquivos (Alt+Shift+O)');
     else void this.indexar();
   }
 

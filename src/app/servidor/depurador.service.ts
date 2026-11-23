@@ -50,7 +50,7 @@ export interface AlvoMain {
   nome: string;
   mainClass: string;
   projectName: string;
-  /** Da configuração de execução (␣ r → argumentos, ambiente e JVM). */
+  /** Da configuração de execução (Alt+Shift+F10 → argumentos, ambiente e JVM). */
   /** Texto: o java-debug separa por espaço e respeita aspas duplas. */
   argumentos?: string;
   jvm?: string;

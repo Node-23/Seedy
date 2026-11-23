@@ -54,7 +54,7 @@ export const FERRAMENTAS_IDE: DefinicaoIde[] = [
   // ---------- navegar pelo código ----------
   { name: 'ir_para_definicao', rotulo: 'codigo.definicao', description: 'Onde está declarado o símbolo (Java, pelo jdtls) numa posição do arquivo; abre o arquivo no editor. Coluna começa em 1.', input_schema: objeto({ caminho: texto('Relativo à raiz'), linha: { type: 'integer' }, coluna: { type: 'integer' } }, ['caminho', 'linha', 'coluna']) },
   { name: 'usos_do_simbolo', rotulo: 'codigo.usos', description: 'Onde o símbolo (Java) de uma posição é usado, em todo o projeto. Coluna começa em 1.', input_schema: objeto({ caminho: texto('Relativo à raiz'), linha: { type: 'integer' }, coluna: { type: 'integer' } }, ['caminho', 'linha', 'coluna']) },
-  { name: 'refatorar_java', rotulo: 'java.refatorar', description: 'Refactors de Java pelo jdtls: `renomear` um símbolo (classe, método, campo ou variável) em todo o projeto, ou `organizar_imports` de um arquivo. Cada arquivo alterado vira um diff para o usuário aceitar ou recusar (revisão ␣ y), e a resposta diz o que foi decidido. Prefira isto a editar vários arquivos à mão. Linha e coluna começam em 1 e apontam para o nome do símbolo.', input_schema: objeto({ acao: { type: 'string', enum: ['renomear', 'organizar_imports'] }, caminho: texto('Relativo à raiz'), linha: { type: 'integer', description: 'Só para renomear' }, coluna: { type: 'integer', description: 'Só para renomear' }, novo_nome: texto('Só para renomear') }, ['acao', 'caminho']) },
+  { name: 'refatorar_java', rotulo: 'java.refatorar', description: 'Refactors de Java pelo jdtls: `renomear` um símbolo (classe, método, campo ou variável) em todo o projeto, ou `organizar_imports` de um arquivo. Cada arquivo alterado vira um diff para o usuário aceitar ou recusar (revisão Alt+Y), e a resposta diz o que foi decidido. Prefira isto a editar vários arquivos à mão. Linha e coluna começam em 1 e apontam para o nome do símbolo.', input_schema: objeto({ acao: { type: 'string', enum: ['renomear', 'organizar_imports'] }, caminho: texto('Relativo à raiz'), linha: { type: 'integer', description: 'Só para renomear' }, coluna: { type: 'integer', description: 'Só para renomear' }, novo_nome: texto('Só para renomear') }, ['acao', 'caminho']) },
   { name: 'buscar_simbolo', rotulo: 'codigo.simbolo', description: 'Procura classes, métodos e campos Java pelo nome em todo o projeto (jdtls).', input_schema: objeto({ nome: texto('Parte do nome') }, ['nome']) },
   // ---------- arquitetura e regras ----------
   { name: 'arquitetura_resumo', rotulo: 'arquitetura.resumo', description: 'A arquitetura do projeto lida do código: tecnologias, quantos componentes por papel (tela, entrada, serviço, repositório, entidade...) e por domínio, e a lista deles com o arquivo.', input_schema: objeto({ papel: { type: 'string', description: 'Opcional: só este papel (tela, front, entrada, job, servico, repositorio, entidade, excecao, tratador, teste, outro)' }, dominio: texto('Opcional: só este domínio') }) },
@@ -566,7 +566,7 @@ export class FerramentasIdeService {
 
   private async githubPr(titulo: string, corpo: string, base: string | null, rascunho: boolean): Promise<string> {
     this.repo();
-    if (!this.github().usuario()) throw new Error('conecte a conta do GitHub no Seedy primeiro (␣ G)');
+    if (!this.github().usuario()) throw new Error('conecte a conta do GitHub no Seedy primeiro (Alt+Shift+G)');
     if (!(await this.base().autorizar('A IA QUER ABRIR UM PULL REQUEST', 'Abrir PR', `${titulo}\nde ${this.git().estado()?.branch} ${base ? `para ${base}` : ''}`, true))) return 'o usuário recusou; nenhum PR foi aberto';
     const f = this.githubForm();
     await f.abrir('pr');
@@ -583,7 +583,7 @@ export class FerramentasIdeService {
 
   private async githubIssue(titulo: string, corpo: string): Promise<string> {
     this.repo();
-    if (!this.github().usuario()) throw new Error('conecte a conta do GitHub no Seedy primeiro (␣ G)');
+    if (!this.github().usuario()) throw new Error('conecte a conta do GitHub no Seedy primeiro (Alt+Shift+G)');
     if (!(await this.base().autorizar('A IA QUER ABRIR UMA ISSUE', 'Abrir issue', titulo, true))) return 'o usuário recusou; nenhuma issue foi aberta';
     const f = this.githubForm();
     await f.abrir('issue');

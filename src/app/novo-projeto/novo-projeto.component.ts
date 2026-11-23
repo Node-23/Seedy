@@ -2,7 +2,7 @@ import { Component, computed, effect, ElementRef, inject, untracked, viewChild }
 import { MODELOS, nomeDeClasse, NovoProjetoService } from './novo-projeto.service';
 
 /**
- * Janela de novo projeto (mockup 12, ␣ N): modelos à esquerda (j k), campos e iniciadores
+ * Janela de novo projeto (mockup 12, Alt+Shift+N): modelos à esquerda (j k), campos e iniciadores
  * do Spring no meio (tab anda, espaço marca, / filtra) e a prévia do que vai ser criado.
  * ctrl+⏎ cria; esc fecha.
  */
@@ -11,7 +11,7 @@ import { MODELOS, nomeDeClasse, NovoProjetoService } from './novo-projeto.servic
   template: `
     @if (np.aberta()) {
       <section class="painel novo-projeto" role="dialog" aria-label="Novo projeto" (keydown)="teclar($event)">
-        <div class="painel-faixa"><span class="rotulo">NOVO PROJETO</span><span class="espaco"></span><kbd>␣ N</kbd></div>
+        <div class="painel-faixa"><span class="rotulo">NOVO PROJETO</span><span class="espaco"></span><kbd>Alt+Shift+N</kbd></div>
 
         <div class="novo-corpo">
           <div #modelos class="novo-modelos" tabindex="0" role="listbox" aria-label="Modelos" (keydown)="teclarModelos($event)">

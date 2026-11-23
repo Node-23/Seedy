@@ -169,7 +169,7 @@ export class PrateleiraService {
     }
     if (comConflito) {
       this.merge.origemDeles.set(`prateleira: ${item.nome}`);
-      this.mensagens.mostrar(`${comConflito} ${comConflito === 1 ? 'arquivo ficou' : 'arquivos ficaram'} em conflito: ␣ m abre o merge`);
+      this.mensagens.mostrar(`${comConflito} ${comConflito === 1 ? 'arquivo ficou' : 'arquivos ficaram'} em conflito: Alt+Shift+M abre o merge`);
     } else if (falhas.length) {
       this.mensagens.erro(`não consegui devolver ${falhas.map((f) => f.split('/').pop()).join(', ')} (continua na prateleira)`);
     } else {

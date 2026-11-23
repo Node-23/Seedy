@@ -12,7 +12,7 @@ const COR = { depends: 'var(--texto)', trafego: 'var(--destaque)', config: 'var(
 const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } as const;
 
 /**
- * Containers em tela cheia (mockup 15, ␣ D): lista à esquerda, mapa das conexões no meio,
+ * Containers em tela cheia (mockup 15, Alt+Shift+8): lista à esquerda, mapa das conexões no meio,
  * detalhe do escolhido à direita e logs ao vivo embaixo.
  */
 @Component({
@@ -38,7 +38,7 @@ const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } a
 
       <div class="docker-grade">
         <section class="painel docker-lista" aria-label="Containers">
-          <div class="painel-faixa"><span class="rotulo">CONTAINERS</span><span class="espaco"></span><kbd>␣ D</kbd></div>
+          <div class="painel-faixa"><span class="rotulo">CONTAINERS</span><span class="espaco"></span><kbd>Alt+Shift+8</kbd></div>
           <div #lista class="debug-lista" tabindex="0" role="listbox" aria-label="Containers" (focus)="parte.set('lista')" (keydown)="teclarLista($event)">
             @for (g of d.grupos(); track g.titulo) {
               <div class="docker-grupo">{{ g.titulo }}</div>

@@ -24,7 +24,7 @@ const NOME_DO_NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DE
         @if (mainEscolhida(); as cfg) {
           <!-- A configuração de execução é uma classe main: o painel mostra a saída dela. -->
           <span class="rotulo">EXECUÇÃO</span>
-          <button class="servidor-nome" title="trocar o que roda (␣ r)" (click)="exec.escolherConfig()">{{ cfg.nome }}</button>
+          <button class="servidor-nome" title="trocar o que roda (Alt+Shift+F10)" (click)="exec.escolherConfig()">{{ cfg.nome }}</button>
           <span class="servidor-estado" [attr.data-fase]="exec.main()?.config?.id === cfg.id ? exec.main()!.fase : 'parado'"><span class="ponto"></span>{{ textoDoEstado() }}</span>
           <span class="espaco"></span>
           @if (fonte(); as e) {
@@ -74,7 +74,7 @@ const NOME_DO_NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DE
             @if (!fonte()) {
               <div class="servidor-vazio">
                 <p>{{ cfg.mainClass }}</p>
-                <p class="suave">shift+F10 roda, shift+F9 depura; a saída do programa aparece aqui. ␣ r troca o que roda.</p>
+                <p class="suave">shift+F10 roda, shift+F9 depura; a saída do programa aparece aqui. Alt+Shift+F10 troca o que roda.</p>
                 <button class="botao destaque" (click)="exec.rodar(false)">▶ rodar <kbd>⇧F10</kbd></button>
               </div>
             }

@@ -2,7 +2,7 @@ import { Component, effect, ElementRef, inject, viewChild } from '@angular/core'
 import { GithubFormService } from './github-form.service';
 import { GithubService } from './github.service';
 
-/** Janela de criar pull request / issue (␣ P / ␣ I), no visual da janela de commit. */
+/** Janela de criar pull request / issue (Alt+Shift+P / Alt+Shift+Q), no visual da janela de commit. */
 @Component({
   selector: 'sd-github-form',
   template: `

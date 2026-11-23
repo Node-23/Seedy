@@ -19,10 +19,10 @@ import { DockerService } from '../containers/docker.service';
   selector: 'sd-barra-topo',
   template: `
     <header class="barra-topo" data-tauri-drag-region>
-      <button class="botao-quadrado destaque grande logo" aria-label="Menu de atalhos" title="Atalhos (␣)" (click)="atalhos.alternarLider()">
+      <button class="botao-quadrado destaque grande logo" aria-label="Menu de atalhos" title="Atalhos (Ctrl+Shift+Espaço)" (click)="atalhos.alternarLider()">
         <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" [attr.d]="logo"></path></svg>
       </button>
-      <button class="chip-projeto" title="Abrir outro projeto (␣ o)" (click)="projeto.escolher()">
+      <button class="chip-projeto" title="Abrir outro projeto (Alt+Shift+O)" (click)="projeto.escolher()">
         <span class="forte">{{ projeto.nome() ?? 'abrir projeto' }}</span>
         @if (layout.tela() === 'merge') {
           <span class="suave">merge: {{ merge.deles() || git.estado()?.operacao }} → {{ projeto.branch() }}</span>
@@ -32,7 +32,7 @@ import { DockerService } from '../containers/docker.service';
       @if (layout.tela() === 'editor' || layout.tela() === 'debug') {
         <!-- Configuração de execução + RUN / DEBUG; rodando, o botão pressionado vira o de parar (mockup 11). -->
         <div class="ferramentas execucao">
-          <button class="botao execucao-config" title="o que o RUN/DEBUG roda (␣ r)" (click)="exec.escolherConfig()">
+          <button class="botao execucao-config" title="o que o RUN/DEBUG roda (Alt+Shift+F10)" (click)="exec.escolherConfig()">
             @if (exec.atual()?.tipo === 'script') {
               <span class="destaque-texto forte">{{ '{}' }}</span>
             } @else if (exec.atual()?.tipo === 'main') {
@@ -54,12 +54,12 @@ import { DockerService } from '../containers/docker.service';
             </button>
           }
           @if (exec.rodando() && exec.depurando()) {
-            <!-- Depurando: o botão de depurar vira o de parar (a tela de debug: ␣ x). -->
-            <button class="botao-quadrado parar" aria-label="Parar" title="Parar (ctrl+F2) · tela de debug: ␣ x" (click)="exec.parar()">
+            <!-- Depurando: o botão de depurar vira o de parar (a tela de debug: Alt+5). -->
+            <button class="botao-quadrado parar" aria-label="Parar" title="Parar (ctrl+F2) · tela de debug: Alt+5" (click)="exec.parar()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
             </button>
           } @else {
-            <button class="botao-quadrado depurar" [disabled]="exec.rodando()" [class.ativo]="layout.tela() === 'debug'" aria-label="Depurar" title="Depurar (shift+F9) · tela de debug: ␣ x" (click)="depurar()">
+            <button class="botao-quadrado depurar" [disabled]="exec.rodando()" [class.ativo]="layout.tela() === 'debug'" aria-label="Depurar" title="Depurar (shift+F9) · tela de debug: Alt+5" (click)="depurar()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="7" width="10" height="13" rx="5"></rect><path d="M12 7V4M9 4.5l1.5 2.5M15 4.5l-1.5 2.5M7 12H3.5M20.5 12H17M7 16.5l-3 2M17 16.5l3 2M12 11v9"></path></svg>
             </button>
           }

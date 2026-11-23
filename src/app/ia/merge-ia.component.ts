@@ -11,7 +11,7 @@ interface LinhaDaProposta {
 
 /**
  * Chat da IA ao lado do merge em três colunas (mockup 10). ⏎ manda a mensagem (com o
- * campo vazio, aplica a proposta), esc recusa, ctrl+r pede outra; ␣ a abre e fecha.
+ * campo vazio, aplica a proposta), esc recusa, ctrl+r pede outra; Alt+A abre e fecha.
  */
 @Component({
   selector: 'sd-merge-ia',
@@ -22,7 +22,7 @@ interface LinhaDaProposta {
         <span class="rotulo destaque-texto">✦ IA</span>
         @if (conflitoAtual(); as n) { <span class="suave">· conflito {{ n }} de {{ totalDeConflitos() }}</span> }
         <span class="espaco"></span>
-        <kbd>␣ a</kbd>
+        <kbd>Alt+A</kbd>
       </div>
 
       <div #lista class="merge-ia-conversa" aria-live="polite">

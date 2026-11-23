@@ -67,7 +67,7 @@ const NUMERICO = /^(int|integer|bigint|smallint|tinyint|mediumint|int2|int4|int8
           }
         } @else {
           <div class="resultado-vazio suave">
-            <kbd>ctrl ⏎</kbd> executa a instrução sob o cursor (ou a seleção) · <kbd>␣ d</kbd> conexões
+            <kbd>ctrl ⏎</kbd> executa a instrução sob o cursor (ou a seleção) · <kbd>Alt+Shift+D</kbd> conexões
           </div>
         }
       </div>

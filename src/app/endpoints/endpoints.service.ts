@@ -53,7 +53,7 @@ function exemploDe(tipo: string): string | number | boolean | null | unknown[] {
 }
 
 /**
- * Tela Endpoints (␣ H), só em projeto Spring Boot: lista os endpoints que o Seedy leu do código
+ * Tela Endpoints (Alt+Shift+E), só em projeto Spring Boot: lista os endpoints que o Seedy leu do código
  * (controller, verbo, caminho, parâmetros, corpo, acesso), os testes que passam por cada um e
  * chama o endpoint na aplicação local. Aproveita a análise da tela "entender o sistema".
  */

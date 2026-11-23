@@ -1,12 +1,12 @@
 import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { AtalhosService } from '../teclado/atalhos.service';
+import { ACORDES_NATIVOS, ACORDES_PADRAO, AtalhosService, rotuloDoAcorde } from '../teclado/atalhos.service';
 import { ConfigService } from './config.service';
 import { ConfiguracoesService, AbaConfig } from './configuracoes.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { ponte } from '../nucleo/ponte';
 import { EditorService } from '../editor/editor.service';
 
-interface LinhaAtalho { id: string; rotulo: string; tecla: string; padrao: string; trocada: boolean }
+interface LinhaAtalho { id: string; rotulo: string; tecla: string; padrao: string; trocada: boolean; fixo: boolean; desligado: boolean }
 interface LinhaEditor { chave: string; rotulo: string; dica: string; tipo: 'bool' | 'num' | 'texto' }
 
 const MODELOS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-2'];
@@ -22,7 +22,7 @@ const LINHAS_EDITOR: LinhaEditor[] = [
 ];
 
 /**
- * Configurações em tela cheia (␣ ,, mockup 21): Atalhos (1), IA (2), Editor e terminal (3).
+ * Configurações em tela cheia (Ctrl+,, mockup 21): Atalhos (1), IA (2), Editor e terminal (3).
  * Tudo grava no seedy.json global, o mesmo arquivo que dá para editar à mão (tecla e).
  */
 @Component({
@@ -45,13 +45,14 @@ const LINHAS_EDITOR: LinhaEditor[] = [
               <section class="config-aba">
                 <div class="config-filtro"><span class="destaque-texto">/</span>
                   <input #filtro type="text" spellcheck="false" placeholder="filtrar ação ou tecla…" [value]="filtro_()" (input)="filtro_.set(valor($event)); selecionado.set(0)" (keydown)="aoFiltrar($event)" /></div>
-                <div class="config-cabeca suave"><span class="acao">AÇÃO</span><span class="espaco">PADRÃO</span><span>TECLA DO LÍDER</span></div>
+                <div class="config-cabeca suave"><span class="acao">AÇÃO</span><span class="espaco">PADRÃO</span><span>ATALHO</span></div>
                 <div class="config-lista" role="listbox">
                   @for (l of linhas(); track l.id; let i = $index) {
                     <div class="config-linha" role="option" [class.sel]="i === selecionado()" [id]="'cfg-' + i" (click)="selecionado.set(i); capturar()">
                       <span class="acao">{{ l.rotulo }}</span>
-                      <span class="espaco suave">@if (l.trocada) { ␣ {{ l.padrao }} }</span>
-                      <kbd class="tecla-lider" [class.trocada]="l.trocada">{{ l.tecla ? '␣ ' + l.tecla : '—' }}</kbd>
+                      <span class="espaco suave">@if (l.trocada) { {{ l.padrao || '—' }} }</span>
+                      <kbd class="tecla-lider" [class.trocada]="l.trocada">{{ l.tecla || '—' }}</kbd>
+                      @if (l.fixo) { <span class="suave" title="este atalho é fixo no Seedy">fixo</span> } @else if (l.desligado) { <span class="suave">desligado</span> }
                     </div>
                   }
                   @if (!linhas().length) { <p class="suave config-vazio">nenhuma ação com “{{ filtro_() }}”</p> }
@@ -59,12 +60,12 @@ const LINHAS_EDITOR: LinhaEditor[] = [
                 @if (capturando(); as l) {
                   <div class="config-captura">
                     <span class="rotulo">REATRIBUINDO · {{ l.rotulo.toUpperCase() }}</span><br />
-                    aperte a nova tecla (a que vem depois do <kbd>␣</kbd>)…
+                    aperte o novo atalho (ex.: <kbd>Alt+9</kbd>, <kbd>Ctrl+Shift+F</kbd>)…
                     @if (conflito()) { <span class="aviso-texto">{{ conflito() }}</span> }<br />
-                    <span class="suave">esc cancela · só uma tecla, sem ctrl nem alt</span>
+                    <span class="suave">esc cancela · use Ctrl, Alt ou Shift com uma tecla (sem Ctrl+Alt: é o AltGr do teclado) · F1 a F12 valem sozinhas</span>
                   </div>
                 }
-                <div class="config-rodape suave">j k · <span class="destaque-texto">⏎</span> trocar a tecla · <span class="destaque-texto">r</span> volta ao padrão · <span class="destaque-texto">/</span> filtrar · {{ totalTrocadas() }} {{ totalTrocadas() === 1 ? 'trocada' : 'trocadas' }}</div>
+                <div class="config-rodape suave">j k · <span class="destaque-texto">⏎</span> trocar o atalho · <span class="destaque-texto">x</span> desligar · <span class="destaque-texto">r</span> volta ao padrão · <span class="destaque-texto">/</span> filtrar · {{ totalTrocadas() }} {{ totalTrocadas() === 1 ? 'trocada' : 'trocadas' }}</div>
               </section>
             }
             @case ('ia') {
@@ -150,12 +151,13 @@ export class TelaConfiguracoesComponent {
   protected readonly nomeDaAba = computed(() => ({ atalhos: 'Atalhos', ia: 'IA', editor: 'Editor e terminal' })[this.c.aba()]);
 
   private readonly todas = computed<LinhaAtalho[]>(() => {
-    const trocas = this.config.atual().atalhos.lider ?? {};
+    const teclas = this.config.atual().atalhos.teclas ?? {};
     return this.atalhos.acoes.map((a) => {
-      const padrao = a.padrao ?? a.tecla;
-      const t = trocas[a.id];
-      const tecla = typeof t === 'string' && [...t].length === 1 ? t : padrao;
-      return { id: a.id, rotulo: a.rotulo, tecla, padrao, trocada: tecla !== padrao };
+      const fixo = !!ACORDES_NATIVOS[a.id] && !ACORDES_PADRAO[a.id];
+      const padrao = fixo ? rotuloDoAcorde(ACORDES_NATIVOS[a.id]) : ACORDES_PADRAO[a.id] ? rotuloDoAcorde(ACORDES_PADRAO[a.id]) : '';
+      const desligado = !fixo && a.id in teclas && (teclas[a.id] === null || teclas[a.id] === '');
+      const tecla = this.atalhos.rotuloDoAtalho(a.id) ?? '';
+      return { id: a.id, rotulo: a.rotulo, tecla, padrao, trocada: !fixo && tecla !== padrao, fixo, desligado };
     });
   });
   protected readonly linhas = computed(() => {
@@ -214,7 +216,8 @@ export class TelaConfiguracoesComponent {
     if (e.key === 'j' || e.key === 'ArrowDown') mover(1);
     else if (e.key === 'k' || e.key === 'ArrowUp') mover(-1);
     else if (e.key === 'Enter') this.capturar();
-    else if (e.key === 'r') void this.trocarTecla(this.linhas()[this.selecionado()]?.id, null);
+    else if (e.key === 'r') void this.trocarTecla(this.linhas()[this.selecionado()]?.id, undefined);
+    else if (e.key === 'x') void this.trocarTecla(this.linhas()[this.selecionado()]?.id, null);
     else if (e.key === '/') this.campoFiltro()?.nativeElement.focus();
     else return;
     e.preventDefault();
@@ -231,6 +234,7 @@ export class TelaConfiguracoesComponent {
   protected capturar(): void {
     const l = this.linhas()[this.selecionado()];
     if (!l) return;
+    if (l.fixo) return void this.mensagens.alerta('este atalho é fixo no Seedy; só os atalhos diretos podem ser trocados');
     this.conflito.set('');
     this.capturandoId.set(l.id);
     this.raiz().nativeElement.focus();
@@ -240,21 +244,26 @@ export class TelaConfiguracoesComponent {
     e.preventDefault();
     e.stopPropagation();
     if (e.key === 'Escape') return this.capturandoId.set(null);
-    if (e.key.length !== 1 || e.key === ' ' || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+    const acorde = this.atalhos.acordeDe(e);
+    if (!acorde) return this.conflito.set('essa tecla não entra em atalhos');
     const id = this.capturandoId()!;
-    const dono = this.todas().find((l) => l.tecla === e.key && l.id !== id);
-    if (dono) return this.conflito.set(`␣ ${e.key} já é “${dono.rotulo}”`);
+    if (e.ctrlKey && e.altKey) return this.conflito.set('Ctrl+Alt é o AltGr do teclado ABNT2: use Alt, Ctrl ou Shift');
+    if (!/(^|\+)(ctrl|alt)(\+|$)/.test(acorde) && !/^f\d+$/.test(acorde.split('+').pop()!)) return this.conflito.set('use Ctrl ou Alt junto (ou uma tecla F)');
+    const dono = this.atalhos.donoDoAcorde(acorde, id);
+    if (dono) return this.conflito.set(`${rotuloDoAcorde(acorde)} já é “${dono}”`);
     this.capturandoId.set(null);
-    void this.trocarTecla(id, e.key);
+    void this.trocarTecla(id, acorde);
   }
 
-  /** tecla null = volta ao padrão da ação. */
-  private async trocarTecla(id: string | undefined, tecla: string | null): Promise<void> {
-    if (!id) return;
-    const lider = { ...(this.config.atual().atalhos.lider ?? {}) };
-    if (tecla === null) delete lider[id];
-    else lider[id] = tecla;
-    await this.config.gravar({ atalhos: { lider } });
+  /** acorde: troca; undefined: volta ao padrão; null: desliga o atalho direto. */
+  private async trocarTecla(id: string | undefined, acorde: string | null | undefined): Promise<void> {
+    if (!id || ACORDES_NATIVOS[id] && !ACORDES_PADRAO[id]) return;
+    const atalhos = this.config.atual().atalhos;
+    const teclas = { ...(atalhos.teclas ?? {}) };
+    if (acorde === undefined) delete teclas[id];
+    else teclas[id] = acorde;
+    await this.config.gravar({ atalhos: { ...atalhos, teclas } });
   }
 
   // ---------- IA ----------

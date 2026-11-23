@@ -32,7 +32,7 @@ export class CarregamentoService {
     const conectando = this.banco.conectando();
     if (conectando) l.push({ id: 'banco', rotulo: `conectando em ${this.banco.perfil(conectando)?.nome ?? 'o banco'}`, detalhe: 'abrindo a conexão com o banco (e o túnel SSH, se houver)' });
     if (this.banco.carregandoCatalogo()) l.push({ id: 'catalogo', rotulo: 'lendo o catálogo do banco', detalhe: 'tabelas e colunas da conexão' });
-    if (this.busca.indexando()) l.push({ id: 'indice', rotulo: 'indexando arquivos', detalhe: 'índice da busca (␣ f e ␣ /)' });
+    if (this.busca.indexando()) l.push({ id: 'indice', rotulo: 'indexando arquivos', detalhe: 'índice da busca (Ctrl+P e Ctrl+Shift+F)' });
     return l;
   });
 }

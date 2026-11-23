@@ -41,7 +41,7 @@ Quando pedirem para rodar o sistema: leia o README e os arquivos de build, veja 
 
 Responda em português do Brasil, curto e direto, citando arquivo:linha. Diga o que descobriu e o que propõe; não repita o conteúdo das ferramentas.`;
 
-/** Painel de IA do mockup 06 (␣ a fora do merge): conversa que opera a IDE. */
+/** Painel de IA do mockup 06 (Alt+A fora do merge): conversa que opera a IDE. */
 @Injectable({ providedIn: 'root' })
 export class IaService {
   private readonly config = inject(ConfigService);

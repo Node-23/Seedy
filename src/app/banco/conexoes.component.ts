@@ -26,7 +26,7 @@ const ROTULO_DO_GRUPO = { tabelas: 'tabelas', views: 'views', funcoes: 'funçõe
     <section class="painel arvore conexoes" aria-label="Conexões">
       <div class="painel-faixa">
         <span class="rotulo">CONEXÕES</span>
-        <kbd>␣ d</kbd>
+        <kbd>Alt+Shift+D</kbd>
       </div>
       <div #lista class="arvore-lista" role="tree" tabindex="0" (keydown)="teclar($event)"
            [attr.aria-activedescendant]="'con-' + selecionado()">

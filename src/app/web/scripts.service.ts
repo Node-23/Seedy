@@ -31,7 +31,7 @@ const URL_LOCAL = /(https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)(?::
 export const ID_INSTALAR = '__install__';
 
 /**
- * Scripts do package.json (mockup 13, ␣ p): roda, para, mostra a saída e descobre o
+ * Scripts do package.json (mockup 13, Alt+Shift+J): roda, para, mostra a saída e descobre o
  * endereço do servidor de desenvolvimento para abrir no navegador (e depurar).
  */
 @Injectable({ providedIn: 'root' })

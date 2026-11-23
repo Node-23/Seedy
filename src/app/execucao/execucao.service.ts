@@ -64,7 +64,7 @@ const CHAVE = 'seedy.execucao';
 
 /**
  * Configurações de execução (como no IntelliJ): RUN (shift+F10) e DEBUG (shift+F9) rodam a
- * escolhida (␣ r troca). Classe `main`: o java-debug sobe a JVM com o classpath do jdtls;
+ * escolhida (Alt+Shift+F10 troca). Classe `main`: o java-debug sobe a JVM com o classpath do jdtls;
  * servidor: sobe o WildFly/Tomcat do perfil. ctrl+F2 para.
  */
 @Injectable({ providedIn: 'root' })
@@ -185,7 +185,7 @@ export class ExecucaoService {
     if (raiz) gravarEscolha(raiz, id);
   }
 
-  /** ␣ r: escolhe o que o RUN/DEBUG roda. */
+  /** Alt+Shift+F10: escolhe o que o RUN/DEBUG roda. */
   async escolherConfig(): Promise<void> {
     await this.procurarMains();
     const lista = this.configs();
@@ -263,7 +263,7 @@ export class ExecucaoService {
     await this.procurarMains();
     const c = this.atual();
     if (!c) {
-      this.mensagens.alerta(this.jdtls.pronto() ? 'nenhuma classe com main nem servidor no projeto (␣ r)' : 'o jdtls ainda está carregando o projeto');
+      this.mensagens.alerta(this.jdtls.pronto() ? 'nenhuma classe com main nem servidor no projeto (Alt+Shift+F10)' : 'o jdtls ainda está carregando o projeto');
       return;
     }
     if (c.tipo === 'script') {
@@ -340,7 +340,7 @@ export class ExecucaoService {
     this.registrarNoNavegador(`esperando ${nome} anunciar o endereço…`, 'seedy');
     const url = await this.scripts.esperarUrl(nome);
     if (!url) {
-      this.mensagens.erro(`${nome} não anunciou um endereço (veja o painel de scripts, ␣ p)`);
+      this.mensagens.erro(`${nome} não anunciou um endereço (veja o painel de scripts, Alt+Shift+J)`);
       return;
     }
     const navegador = this.navegadorEscolhido();

@@ -7,7 +7,7 @@ import { SpringService } from '../spring/spring.service';
 
 /**
  * Argumentos do programa, variáveis de ambiente e opções da JVM de uma configuração de
- * execução (␣ r → ⚙). Ficam em `.seedy/execucao.json`; o RUN e o DEBUG usam.
+ * execução (Alt+Shift+F10 → ⚙). Ficam em `.seedy/execucao.json`; o RUN e o DEBUG usam.
  */
 @Component({
   selector: 'sd-opcoes-execucao',

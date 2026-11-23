@@ -25,7 +25,7 @@ interface No {
         <span class="rotulo">ARQUIVOS</span>
         <span class="faixa-acoes">
           <button class="botao-icone" aria-label="Recarregar" title="Recarregar" (click)="projeto.recarregar()">↻</button>
-          <kbd>␣ e</kbd>
+          <kbd>Alt+1</kbd>
         </span>
       </div>
       <div

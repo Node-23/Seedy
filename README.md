@@ -15,7 +15,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Árvore de arquivos** navegável pelo teclado (`j`/`k`, `l`/`Enter`, `h`).
 - **Terminal integrado** com abas: shell de verdade (PowerShell no Windows, seu `$SHELL` no Linux).
 - **Tema editável** (cores, fontes e forma), aplicado na hora em que você salva o arquivo.
-- **Tecla líder** (`␣`) com menu de atalhos, como o which-key do nvim.
+- **Atalhos diretos**, um acorde só como no IntelliJ (`Alt+9` Git, `Alt+5` debug, `Alt+Shift+T` testes...), trocáveis em `Ctrl+,` ou no `seedy.json`; o menu de atalhos (`Ctrl+Shift+Espaço` ou o botão da logo) lista todos.
 - **Três buscas**, como no IntelliJ:
   - `Ctrl+F` — **no arquivo aberto** (a caixa de busca do editor): `↓` / `⏎` / `F3` vão para o
     próximo, `↑` / `shift+⏎` / `shift+F3` para o anterior. Ao fechar (`esc`), o cursor fica no
@@ -46,17 +46,17 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   editor (git, build, outro programa) aparecem sozinhos; buffer sem edição recarrega.
   Só as definições ganham cor (Alabaster), via tokens semânticos. O Seedy baixa o jdtls sozinho
   na primeira vez que abre um projeto Java; o status aparece na statusline (`jdtls ✓`).
-- **Git**: tela do Git (`␣ g`) com branches, stash, log com o grafo das branches e detalhe do
+- **Git**: tela do Git (`Alt+9`) com branches, stash, log com o grafo das branches e detalhe do
   commit; commit (`Ctrl+K`) com prévia do diff, push, pull, merge, cherry-pick, reverter, blame
-  (`␣ n`), marcas de mudança na margem e na árvore. Conflitos abrem no merge em 3 colunas com
+  (`Alt+Shift+K`), marcas de mudança na margem e na árvore. Conflitos abrem no merge em 3 colunas com
   **resolver simples**, `dp`/`do` e `:w` para gravar e concluir.
-- **Prateleira** (o *shelf* do IntelliJ): guarde mudanças com um nome (`␣ S`, ou `alt+s` no
+- **Prateleira** (o *shelf* do IntelliJ): guarde mudanças com um nome (`Alt+Shift+S`, ou `alt+s` no
   commit para escolher os arquivos) e devolva depois, inteiras ou arquivo a arquivo, em qualquer
   branch. Se o arquivo mudou nesse meio-tempo, o Seedy junta em três vias; conflitos abrem no
   merge em 3 colunas. Fica dentro da pasta `.git` (nunca vai num commit).
-- **Pull request e issue** sem sair da IDE (`␣ P` / `␣ I`): o PR vai da branch atual (o Seedy
+- **Pull request e issue** sem sair da IDE (`Alt+Shift+P` / `Alt+Shift+Q`): o PR vai da branch atual (o Seedy
   faz o push antes, se faltar) para a base escolhida, com título e descrição sugeridos pelos commits.
-- **Banco de dados** (mockup 03, `␣ d`): conexões PostgreSQL, MySQL/MariaDB e Oracle com perfis
+- **Banco de dados** (mockup 03, `Alt+Shift+D`): conexões PostgreSQL, MySQL/MariaDB e Oracle com perfis
   Local / Homolog / Produção (cor por ambiente; Produção nasce somente leitura e, liberada, pede
   confirmação antes de alterar). Senhas no cofre do sistema (Gerenciador de Credenciais do
   Windows, Secret Service no Linux). Túnel SSH com usuário e senha ou chave (cliente embutido) ou pelo `ssh` do sistema (usa `~/.ssh/config`,
@@ -64,7 +64,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   console SQL por conexão ou qualquer `.sql` do projeto, com autocompletar (tabelas, colunas e
   apelidos); `Ctrl+Enter` executa a instrução sob o cursor; grade **somente leitura**, explain,
   exportar CSV (o resultado inteiro) e histórico por conexão.
-- **Servidores de aplicação** (mockup 06, `␣ j`): JBoss/WildFly e Tomcat atrás do mesmo adaptador.
+- **Servidores de aplicação** (mockup 06, `Alt+4`): JBoss/WildFly e Tomcat atrás do mesmo adaptador.
   O Seedy monta a aplicação explodida a partir do projeto, sem Maven/Gradle: a pasta web, as
   classes que o jdtls compila ao salvar e os jars das dependências (os da API do servidor ficam de
   fora). Cada perfil roda numa pasta de servidor própria (a instalação não é tocada). Enquanto roda,
@@ -72,9 +72,9 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   de ERROR/WARN, filtro por nível, stack trace clicável (frames de framework recolhidos) e a linha
   da última exceção marcada no editor (`◆ NullPointerException`).
 - **RUN e DEBUG** (mockup 11), como no IntelliJ: a barra de cima mostra a configuração de execução
-  (`␣ r` troca) — uma classe com `main` (o jdtls acha todas) ou um servidor do projeto — e os botões
+  (`Alt+Shift+F10` troca) — uma classe com `main` (o jdtls acha todas) ou um servidor do projeto — e os botões
   ▶ (`shift+F10`), 🐞 (`shift+F9`) e ■ (`ctrl+F2`). A saída da `main` aparece no painel de baixo.
-- **Debug em tela cheia** (mockup 11, `␣ x`; abre sozinho quando a execução para): pilha com as
+- **Debug em tela cheia** (mockup 11, `Alt+5`; abre sozinho quando a execução para): pilha com as
   threads, breakpoints (com condição, silenciar e parar em exceções), o código na linha pausada com
   os valores das variáveis ao lado, variáveis, expressões vigiadas, avaliar (`alt+F8`), até o cursor
   (`alt+F9`) e o console do processo. Hot code replace: a classe alterada entra no processo sem
@@ -84,7 +84,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   renomear, ações rápidas, erros de template); avisos do ESLint no editor; Prettier para formatar
   (e ao salvar, quando o projeto tem configuração dele). Os servidores são instalados com o npm na
   primeira vez (precisa do Node).
-- **Scripts do package.json** (`␣ p`): rodar, parar, ver a saída com os arquivos clicáveis e abrir
+- **Scripts do package.json** (`Alt+Shift+J`): rodar, parar, ver a saída com os arquivos clicáveis e abrir
   o endereço no navegador; os scripts também entram no RUN/DEBUG.
 - **Debug no navegador** (mockup 14): o DEBUG de um script sobe o servidor de desenvolvimento,
   abre o Edge/Chrome com o js-debug e para nos breakpoints do `.ts` (source maps), na mesma tela
@@ -92,13 +92,13 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Barra de ícones à esquerda**: arquivos, busca, git, TODO, terminal, servidor, scripts, banco,
   containers, debug, entender o sistema e IA (a barra de cima ficou com o projeto, os buffers e o
   RUN/DEBUG).
-- **seedy.json** (`␣ ,`) e **layout editável** (`␣ L`, ou arrastar a faixa de um painel): ver a
+- **seedy.json** (`Ctrl+,`) e **layout editável** (`Alt+Shift+L`, ou arrastar a faixa de um painel): ver a
   seção [seedy.json](#seedyjson).
-- **TODO** (mockup 20, `␣ T` ou o botão na barra de ícones à esquerda): um painel por cima das
+- **TODO** (mockup 20, `Alt+6` ou o botão na barra de ícones à esquerda): um painel por cima das
   telas com cards ligados a linhas de código, regras, caminhos, blocos da arquitetura, containers
   e conexões de banco. `l` liga ao card o que está aberto embaixo; a linha ligada ganha a marca
   "☐ TODO" no editor. Os cards ficam em `.seedy/todo.md` (vai para o git, dá para editar à mão).
-- **Testes** (mockup 21, `␣ E` ou o frasco na barra de ícones): os testes do projeto lidos do código,
+- **Testes** (mockup 21, `Alt+Shift+T` ou o frasco na barra de ícones): os testes do projeto lidos do código,
   por tipo (unitários, integração, API e e2e), rodados pelo Maven (surefire e failsafe) ou Gradle, com
   o resultado dos relatórios, a falha explicada (`a`, com a IA) e a saída do comando. Os do front
   (`.spec.ts`, Cypress, Playwright) aparecem na lista e rodam pelo painel de scripts. Cenários que
@@ -107,23 +107,23 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   main do RUN/DEBUG, servidores, scripts, terminais, Claude Code) quando o processo termina, até se cair; no Linux e no macOS
   ele encerra a árvore de filhos ao sair. O navegador aberto por um link e o instalador da atualização continuam vivos.
   Containers do Docker não são mexidos.
-- **Vim** (`␣ V`, `:h` ou clicar no modo "NORMAL" da barra de status): janela com a configuração do editor que vale hoje (números relativos, tabulação, minimapa...), o que o Seedy liga no Vim (`gd`, `gr`, `gi`, `K`, `:w`, `:q`, `:vs`, `ctrl+w`...) e o essencial do Vim por grupo (mover, editar, visual, buscar, marcas e macros). O botão da logo (menu do líder) abre e fecha.
-- **Perfis do Spring** (`␣ r` → ⚙ da classe main, só em projeto Spring Boot): o Seedy acha os `application-<perfil>.yml|properties`
+- **Vim** (`Alt+Shift+V`, `:h` ou clicar no modo "NORMAL" da barra de status): janela com a configuração do editor que vale hoje (números relativos, tabulação, minimapa...), o que o Seedy liga no Vim (`gd`, `gr`, `gi`, `K`, `:w`, `:q`, `:vs`, `ctrl+w`...) e o essencial do Vim por grupo (mover, editar, visual, buscar, marcas e macros). O botão da logo (menu do líder) abre e fecha.
+- **Perfis do Spring** (`Alt+Shift+F10` → ⚙ da classe main, só em projeto Spring Boot): o Seedy acha os `application-<perfil>.yml|properties`
   e você marca os que quer. Vira `-Dspring.profiles.active=dev,local` no RUN e no DEBUG (se o `.env` já define
   `SPRING_PROFILES_ACTIVE`, a escolha troca o valor dele; a JVM ou as variáveis da configuração têm a palavra final). A porta
   mostrada na tela de endpoints segue o `SERVER_PORT` do `.env`, o perfil escolhido e o `application`.
 - **Commit** (Ctrl+K): lista de arquivos com marca, mensagem e o diff do arquivo selecionado (as linhas longas quebram). Com a IA conectada (chave ou Claude Code), o botão ✦ gerar com a IA (alt+g) escreve a mensagem lendo o diff dos arquivos marcados e o estilo dos últimos commits; um rascunho seu vira ponto de partida.
-- **Atualização do Seedy** (`␣ U`): ao abrir e a cada 6 horas ele olha a última release do GitHub e, havendo versão
+- **Atualização do Seedy** (`Alt+Shift+U`): ao abrir e a cada 6 horas ele olha a última release do GitHub e, havendo versão
   nova, mostra "⬆ x.y.z disponível" na barra de status; nada baixa sozinho. O quadro mostra as notas; "instalar e
   reiniciar" baixa o instalador, confere o tamanho e o SHA-256 do `SHA256SUMS.txt` da release (sem ele o Seedy não
   instala), fecha, instala em silêncio e abre de novo no mesmo projeto. Vale para o instalador do Windows e para o
   AppImage do Linux; o portátil e os pacotes `.deb`/`.rpm` só abrem a página da release. Com o repositório privado
-  usa a conta do GitHub conectada (`␣ G`). Desliga com `atualizacao.verificar: false` no `seedy.json`.
+  usa a conta do GitHub conectada (`Alt+Shift+G`). Desliga com `atualizacao.verificar: false` no `seedy.json`.
 - **Imagem no chat da IA** (`ctrl+v` no campo, o botão 🖼 ou arrastar um arquivo): PNG, JPEG, GIF ou WebP até 5 MB, até
   4 por mensagem. O chip mostra a miniatura; imagens grandes são reduzidas a 1568 px antes de seguir. Vale para a
   chave da API e para o modo assinatura (Claude Code). A conversa guardada em `.seedy/conversa.json` fica só com as
   miniaturas, nunca com a imagem inteira.
-- **Endpoints do Spring** (mockup 28, `␣ H` ou o globo na barra de ícones, só em projeto Spring Boot): os
+- **Endpoints do Spring** (mockup 28, `Alt+Shift+E` ou o globo na barra de ícones, só em projeto Spring Boot): os
   endpoints lidos do código por controller, com verbo, caminho, parâmetros, corpo (campos e validações),
   acesso (`@PreAuthorize`) e os testes que passam por cada um. `c` chama o endpoint na aplicação local
   (o pedido é editável, `{{NOME}}` vem do `.env`), `y` copia o curl, `w` abre o Swagger, `a` o Actuator.
@@ -134,37 +134,37 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   um teste passa pelo código da regra, lido do código; não é cobertura de linhas.
 - **Uso da assinatura do Claude** (mockup 24): no modo assinatura, a barra de status mostra a janela de
   5 horas e a semana, lidas do Claude Code depois de cada resposta (clique para os detalhes).
-- **Entender o sistema** (Fase 9, mockups 17 a 19, `␣ A`): a arquitetura do projeto em blocos
+- **Entender o sistema** (Fase 9, mockups 17 a 19, `Alt+7`): a arquitetura do projeto em blocos
   (domínios × camadas, da tela do Angular até a tabela), as regras de negócio achadas no código
   (guardadas em `.seedy/regras.md`, reescritas pela IA) e o caminho de um método — `ctrl+.` →
   "acompanhar método" mostra de onde a chamada vem (até o botão da tela), para onde vai (até o
   banco) e onde ela pode ser barrada. Spring Boot, Java EE/Jakarta, Struts 1/2 com JSP e Angular
   (com as rotas: qual rota abre qual tela e para onde cada tela vai).
-- **Configuração de execução** (`␣ r` → ⚙): argumentos do programa, variáveis de ambiente e opções
+- **Configuração de execução** (`Alt+Shift+F10` → ⚙): argumentos do programa, variáveis de ambiente e opções
   da JVM da classe `main` ou do script escolhido, em `.seedy/execucao.json`.
-- **Containers** (Fase 8, mockups 15 e 16): `␣ D` abre a tela do Docker com os containers do
+- **Containers** (Fase 8, mockups 15 e 16): `Alt+Shift+8` abre a tela do Docker com os containers do
   projeto e os outros, um mapa de quem fala com quem (rede, `depends_on`, tráfego TCP medido
   agora, variável de ambiente que aponta para outro container e portas no host), o detalhe e os
   logs ao vivo. Inicia/para/reinicia, compose up/down, abre um shell dentro do container no
   terminal integrado e transforma um Postgres/MySQL do Docker em conexão do painel de banco.
-  `␣ h` mostra a versão compacta embaixo do editor.
-- **Novo projeto** (mockup 12, `␣ N`): Spring Boot (com os iniciadores do start.spring.io), Java com
+  `Alt+8` mostra a versão compacta embaixo do editor.
+- **Novo projeto** (mockup 12, `Alt+Shift+N`): Spring Boot (com os iniciadores do start.spring.io), Java com
   Maven, Java web (WAR, pronto para o servidor do Seedy), Java simples, Angular (`ng new`) e React
   (Vite + TypeScript, com `npm install`). Escolhe
   o JDK entre os instalados, faz `git init` + primeiro commit, abre o projeto e deixa o RUN na `main`.
 - **IA que opera a IDE** (Fase 7): as mesmas ferramentas servem ao painel de IA do Seedy
-  (mockup 06, `␣ a`, pela API) e ao **Claude Code no terminal** pelo servidor MCP do Seedy
-  (`␣ i` copia o comando `claude mcp add …` para registrar uma vez). A IA abre e lê código, busca
+  (mockup 06, `Alt+A`, pela API) e ao **Claude Code no terminal** pelo servidor MCP do Seedy
+  (menu de atalhos, `i`, copia o comando `claude mcp add …` para registrar uma vez). A IA abre e lê código, busca
   no projeto, vê os erros do jdtls, sobe/derruba o servidor, lê o log, faz requisições à
   aplicação local e consulta os bancos (só leitura). Toda edição vira diff na **revisão**
-  (`␣ y`): propostas esperam você aceitar ou recusar (a IA recebe a decisão); edições que o
+  (`Alt+Y`): propostas esperam você aceitar ou recusar (a IA recebe a decisão); edições que o
   Claude Code faz direto no disco num arquivo aberto aparecem já aplicadas, com desfazer.
   A IA também **roda e depura** (`rodar`, `parar`, breakpoints, passos, avaliar), **roda os testes**
   e lê a cobertura das regras, mexe nos **containers** e no `docker compose`, usa o **TODO** e os
   **bookmarks**, navega pelo código (definição, usos, símbolos), lê a **arquitetura** e as
   **regras de negócio**, opera o **Git** e o **GitHub** (commit, push, branches, PR, issue), o
   **jdtls e o JDK**, edita o **servidor de aplicação** e liga um container ao **banco**. Rodar,
-  testar, commitar e mexer em container pedem a sua aprovação (o modo automático, `␣ Y`, dispensa);
+  testar, commitar e mexer em container pedem a sua aprovação (o modo automático, `Alt+Shift+Y`, dispensa);
   push, apagar, `docker compose down`, PR e issue perguntam sempre. `/historico` no chat mostra o
   que foi pedido e decidido na sessão.
 - **Projetos React** (Vite): editar `.tsx`/`.jsx` com o servidor de TypeScript, rodar `npm run dev`
@@ -180,7 +180,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Variáveis do `.env`** (mockup 26): o Seedy lê o `.env` da raiz do projeto e o passa para o que roda:
   a classe `main` (RUN e DEBUG), o servidor de aplicação, os scripts do `package.json`, os testes e os
   comandos da IA. Com um só `.env` ele é usado sozinho; com vários (`.env`, `.env.local`...) o Seedy
-  pergunta qual usar na primeira execução e guarda a escolha por projeto (`␣ r` → ⚙ muda ou desliga,
+  pergunta qual usar na primeira execução e guarda a escolha por projeto (`Alt+Shift+F10` → ⚙ muda ou desliga,
   `alt+e`). O arquivo é lido de novo a cada execução, as "variáveis de ambiente" da configuração valem
   por cima, valores com cara de senha aparecem mascarados e a IA só vê os nomes (`env_listar`). Se o
   arquivo não está no `.gitignore`, as opções avisam e dão o botão "adicionar".
@@ -194,13 +194,13 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   (`.seedy/memoria.md`) e globais (`memoria.md` na pasta de configuração); `/memoria` lista e
   `/memoria editar` abre o arquivo. O Seedy põe só a conversa e a memória do projeto no .gitignore
   (o resto de `.seedy/` continua para o time).
-- **IA no merge** (mockup 10): `␣ a` abre um chat ao lado das três colunas para conversar
+- **IA no merge** (mockup 10): `Alt+A` abre um chat ao lado das três colunas para conversar
   sobre os conflitos. A IA (Claude) lê o código relacionado e o histórico do arquivo e propõe a
   resolução, que aparece como prévia no resultado: `⏎` aplica, `esc` recusa, `ctrl+r` pede outra.
   Na primeira mensagem o Seedy pede a chave da API da Anthropic (fica no arquivo `ia.chave` da
   pasta de configuração, ou use `ANTHROPIC_API_KEY`); a chave nunca passa pela interface.
 - **Conta do GitHub**: entre como no IntelliJ (pelo navegador, via Git Credential Manager, ou com
-  um token) com `␣ G` ou pelo botão da tela do Git; clone os seus repositórios de lá. O token fica no
+  um token) com `Alt+Shift+G` ou pelo botão da tela do Git; clone os seus repositórios de lá. O token fica no
   núcleo e no cofre do sistema, nunca na interface.
 - Painéis redimensionáveis (arraste os divisores) e modo foco.
 
@@ -231,7 +231,7 @@ npm run dev          # abre o Seedy em modo desenvolvimento (recarrega ao salvar
 npm run empacotar    # gera o instalador (.msi/.exe no Windows, .deb/.AppImage no Linux)
 ```
 
-Para abrir já num projeto: `seedy /caminho/do/projeto` (ou `␣ o` dentro do app).
+Para abrir já num projeto: `seedy /caminho/do/projeto` (ou `Alt+Shift+O` dentro do app).
 
 Só o visual, sem compilar o Rust: `npm start` e abra http://localhost:4200
 (modo navegador, com arquivos e conexões de exemplo; o terminal não funciona aqui).
@@ -261,21 +261,21 @@ cd src-tauri && cargo test --lib -- --include-ignored
 
 | Tecla | Ação |
 |---|---|
-| `␣` (modo normal / fora do editor) | menu do líder |
+| `Ctrl+Shift+Espaço` ou o botão da logo | menu de atalhos (as letras valem lá dentro; `"espacoAbreMenu": true` faz o Espaço abrir também) |
 | `Ctrl+F` | buscar no arquivo aberto |
-| `Ctrl+P` ou `␣ f` | buscar arquivo (`␣ ␣` abre a mesma janela em "Tudo"; `␣ s` em "Símbolos") |
-| `Ctrl+Shift+F` ou `␣ /` | buscar no projeto |
-| `Ctrl+Shift+R` ou `␣ R` | substituir no projeto |
+| `Ctrl+P` | buscar arquivo (`Ctrl+Shift+P` abre a mesma janela em "Tudo"; `Ctrl+Shift+O` em "Símbolos") |
+| `Ctrl+Shift+F` | buscar no projeto |
+| `Ctrl+Shift+R` | substituir no projeto |
 | `Ctrl+\` ou `:vs` | dividir o editor (de novo: junta) |
 | `Ctrl+W` `h` / `l` / `w` | painel da esquerda / da direita / o outro |
 | `Ctrl+W` `q` ou `:q` | fechar o painel (`Ctrl+W o` ou `:only`: fica só este) |
-| `␣ e` | mostrar/esconder arquivos |
-| `␣ t` ou `Alt+F12` | mostrar/esconder terminal |
-| `␣ o` | abrir projeto |
-| `␣ N` | novo projeto: `j`/`k` modelo, `tab` campos, `espaço` marca, `/` filtra iniciadores, `ctrl+o` pasta, `ctrl+⏎` cria |
-| `␣ w` ou `Ctrl+S` | salvar |
-| `␣ q` | fechar buffer |
-| `␣ c` | editar o tema |
+| `Alt+1` | mostrar/esconder arquivos |
+| `Alt+F12` | mostrar/esconder terminal |
+| `Alt+Shift+O` | abrir projeto |
+| `Alt+Shift+N` | novo projeto: `j`/`k` modelo, `tab` campos, `espaço` marca, `/` filtra iniciadores, `ctrl+o` pasta, `ctrl+⏎` cria |
+| `Ctrl+S` | salvar |
+| `Ctrl+F4` | fechar buffer |
+| menu de atalhos, `c` | editar o tema |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | próximo / anterior buffer |
 | `Alt+←` / `Alt+→` | voltar / avançar nos arquivos vistos (reabre o que foi fechado) |
 | `Ctrl+Shift+S` ou `:wa` | salvar todos |
@@ -289,31 +289,31 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `Ctrl+Alt+O` / `Ctrl+Alt+L` | organizar imports / formatar |
 | `Ctrl+F12` | estrutura do arquivo |
 | `Alt+Insert` | gerar: getters/setters, construtor, toString, equals/hashCode, sobrescrever métodos |
-| `␣ l` | reiniciar o jdtls |
-| `␣ v` | escolher o JDK que roda o jdtls |
-| `␣ g` | tela do Git (de novo: volta ao editor) |
-| `Ctrl+K` ou `␣ k` | commit (`ctrl+⏎` commita, `ctrl+alt+⏎` commita e faz push) |
+| menu de atalhos, `l` | reiniciar o jdtls |
+| menu de atalhos, `v` | escolher o JDK que roda o jdtls |
+| `Alt+9` | tela do Git (de novo: volta ao editor) |
+| `Ctrl+K` | commit (`ctrl+⏎` commita, `ctrl+alt+⏎` commita e faz push) |
 | `Ctrl+Shift+K` / `Ctrl+T` | push / pull |
-| `␣ b` | trocar de branch (ou criar uma) |
-| `␣ n` | blame no arquivo aberto |
-| `␣ m` | resolver conflitos (merge em 3 colunas) |
-| `␣ a` | painel de IA (no merge: o chat do conflito); no campo, `⏎` envia ou aplica a proposta, `esc` recusa, `ctrl+l` nova conversa |
-| `␣ y` | revisar as alterações da IA: `⏎` aceita/mantém, `d` recusa/desfaz, `D` diff completo |
+| `Alt+Shift+B` | trocar de branch (ou criar uma) |
+| `Alt+Shift+K` | blame no arquivo aberto |
+| `Alt+Shift+M` | resolver conflitos (merge em 3 colunas) |
+| `Alt+A` | painel de IA (no merge: o chat do conflito); no campo, `⏎` envia ou aplica a proposta, `esc` recusa, `ctrl+l` nova conversa |
+| `Alt+Y` | revisar as alterações da IA: `⏎` aceita/mantém, `d` recusa/desfaz, `D` diff completo |
 | `ctrl+shift+a` | mandar para o chat da IA o que está em foco; `ctrl+shift+backspace` limpa os anexos |
-| `␣ i` | copiar o comando que liga o Claude Code ao Seedy (MCP) |
-| `␣ j` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
+| menu de atalhos, `i` | copiar o comando que liga o Claude Code ao Seedy (MCP) |
+| `Alt+4` | painel do servidor: `i` inicia, `d` debug, `x` para, `r` redeploy, `o` abre no navegador, `e`/`w`/`a` filtro (erros, avisos, tudo), `⏎` num frame abre o código, `s` troca de servidor, `n` novo, `E` editar |
 | `shift+F10` / `shift+F9` / `ctrl+F2` / `ctrl+F10` | rodar / depurar a configuração escolhida / parar / redeploy do servidor (como no IntelliJ) |
-| `␣ D` · `␣ h` | containers (tela com o mapa · painel): `j`/`k`, `s` inicia/para, `R` reinicia, `l` logs, `t` terminal no container, `b` ligar ao banco, `u` compose up, `m` mapa (`h j k l` entre os nós, `+`/`−` zoom, `0` encaixa) |
-| `␣ p` | scripts do package.json: `j`/`k`, `⏎` roda, `x` para, `o` abre no navegador, `d` debug, `i` npm install, `c` limpa |
-| `␣ r` · `␣ x` | escolher o que o RUN/DEBUG roda · tela de debug (`p`/`b`/`v`/`c` focam pilha, breakpoints, variáveis e console; na lista de breakpoints `e` edita a condição e `d` apaga; `esc` volta) |
+| `Alt+Shift+8` · `Alt+8` | containers (tela com o mapa · painel): `j`/`k`, `s` inicia/para, `R` reinicia, `l` logs, `t` terminal no container, `b` ligar ao banco, `u` compose up, `m` mapa (`h j k l` entre os nós, `+`/`−` zoom, `0` encaixa) |
+| `Alt+Shift+J` | scripts do package.json: `j`/`k`, `⏎` roda, `x` para, `o` abre no navegador, `d` debug, `i` npm install, `c` limpa |
+| `Alt+Shift+F10` · `Alt+5` | escolher o que o RUN/DEBUG roda · tela de debug (`p`/`b`/`v`/`c` focam pilha, breakpoints, variáveis e console; na lista de breakpoints `e` edita a condição e `d` apaga; `esc` volta) |
 | `ctrl+F8` · `F8` · `F7` · `shift+F8` · `F9` · `alt+F9` · `alt+F8` | breakpoint · passar · entrar · sair · continuar · até o cursor · avaliar |
-| `␣ d` | conexões (banco): `j`/`k`, `l`/`⏎` abre/conecta, `⏎` numa tabela consulta, `c` console, `n` nova, `e` editar, `x` desconectar, `r` recarregar, `del` apagar |
+| `Alt+Shift+D` | conexões (banco): `j`/`k`, `l`/`⏎` abre/conecta, `⏎` numa tabela consulta, `c` console, `n` nova, `e` editar, `x` desconectar, `r` recarregar, `del` apagar |
 | `Ctrl+Enter` / `Ctrl+Shift+Enter` (num .sql) | executa a instrução sob o cursor (ou a seleção) / explain |
 | grade do resultado | `j`/`k`/`h`/`l` andam, `y` copia a célula, `Y` copia a linha, `esc` volta ao editor |
-| `␣ a` (no merge) | chat da IA: `⏎` envia (vazio: aplica a proposta), `esc` recusa, `ctrl+r` outra |
-| `␣ G` | GitHub: conectar, clonar, criar PR ou issue, desconectar |
-| `␣ P` / `␣ I` | criar pull request / issue (`ctrl+⏎` cria, `alt+b` troca a base, `alt+r` rascunho) |
-| `␣ S` | guardar as mudanças na prateleira (no commit: `alt+s` com os arquivos marcados) |
+| `Alt+A` (no merge) | chat da IA: `⏎` envia (vazio: aplica a proposta), `esc` recusa, `ctrl+r` outra |
+| `Alt+Shift+G` | GitHub: conectar, clonar, criar PR ou issue, desconectar |
+| `Alt+Shift+P` / `Alt+Shift+Q` | criar pull request / issue (`ctrl+⏎` cria, `alt+b` troca a base, `alt+r` rascunho) |
+| `Alt+Shift+S` | guardar as mudanças na prateleira (no commit: `alt+s` com os arquivos marcados) |
 | tela do Git, prateleira: `⏎`, `r`, `d` | devolver (escolhendo os arquivos), renomear, apagar |
 | tela do Git: `h`/`l`, `j`/`k`, `⏎` | painéis, commits, diff; `c` checkout, `b` branch aqui, `p` cherry-pick, `r` reverter, `m` merge, `d` apagar, `/` filtrar |
 | merge: `]c` / `[c`, `dp` / `do`, `:w` | próximo/anterior conflito, pegar o seu/o deles, gravar e concluir |
@@ -324,13 +324,13 @@ Os atalhos ficam em `src/app/teclado/atalhos.service.ts`.
 
 Os avisos que o jdtls mostra (import, variável ou campo não usado...) vêm de
 `jdtls.prefs`, na mesma pasta do tema (formato `.prefs` do Eclipse). O Seedy cria o
-arquivo na primeira vez; depois de editar, reinicie o jdtls com `␣ l`.
+arquivo na primeira vez; depois de editar, reinicie o jdtls pelo menu de atalhos (`Ctrl+Shift+Espaço`, `l`).
 Detalhe do compilador do Java: num arquivo com erro de compilação, "import não usado"
 só aparece depois que o erro é corrigido.
 
 ## Tema
 
-O tema é um arquivo JSON que você edita (no próprio Seedy: `␣ c`):
+O tema é um arquivo JSON que você edita (no próprio Seedy: menu de atalhos, `c`):
 
 - **Linux:** `~/.config/seedy/tema.json`
 - **Windows:** `%APPDATA%\seedy\tema.json`
@@ -363,7 +363,7 @@ O tema vira variáveis CSS (`--fundo`, `--destaque`, `--raio`...) usadas em
 ## seedy.json
 
 Configurações em arquivo, ao lado do `tema.json` (`%APPDATA%\seedy\seedy.json` no Windows,
-`~/.config/seedy/seedy.json` no Linux). Abra com `␣ ,`; salvou, vale na hora. Um
+`~/.config/seedy/seedy.json` no Linux). Abra com `Ctrl+,`; salvou, vale na hora. Um
 `.seedy/seedy.json` no projeto sobrepõe o global (bom para o time combinar a tabulação, por
 exemplo).
 
@@ -381,7 +381,7 @@ exemplo).
   "atalhos": { "lider": { "todo": "t" } },           // id da ação → tecla do líder
   "ia": { "modelo": "claude-opus-5-5" },
   "atualizacao": { "verificar": true },              // false desliga a procura de versão nova
-  "layout": { ... }                                  // gravado pelo Seedy (␣ L)
+  "layout": { ... }                                  // gravado pelo Seedy (Alt+Shift+L)
 }
 ```
 
@@ -390,13 +390,26 @@ Ids das ações do líder: `buscar-tudo`, `buscar-arquivo`, `buscar-no-projeto`,
 `tema`, `reiniciar-jdtls`, `jdk`, `execucao`, `debug`, `git`, `commit`, `branch`, `blame`,
 `banco`, `servidor`, `scripts`, `containers-painel`, `containers`, `todo`, `entender`, `merge`,
 `github`, `prateleira`, `pull-request`, `issue`, `ia`, `revisar-ia`, `layout`, `config`, `mcp`.
-A ação que perde a tecla para outra fica sem atalho (continua na busca, `␣ ␣`).
+A ação que perde a tecla para outra fica sem atalho (continua na busca, `Ctrl+Shift+P`).
+
+### Atalhos diretos
+
+Cada ação do menu tem um atalho direto (um acorde só, como no IntelliJ); o menu mostra o de cada uma e `Ctrl+,` → Atalhos lista e troca (`⏎` troca, `x` desliga, `r` volta ao padrão). No `seedy.json`:
+
+```json
+"atalhos": {
+  "teclas": { "git": "alt+9", "testes": "alt+shift+t", "vim": null },   // null desliga
+  "espacoAbreMenu": false                                           // true: o Espaço também abre o menu
+}
+```
+
+Nenhum atalho usa Ctrl+Alt (no teclado ABNT2 é o AltGr). As letras do menu (`lider`) continuam valendo dentro do menu.
 
 ### Layout
 
 Cada painel (arquivos, terminal, servidor, scripts, containers, banco, IA) mora numa região:
 à esquerda, embaixo ou à direita, um por região. Arraste a faixa de título de um painel para
-outra região, ou use `␣ L` → mover. Os divisores mudam o tamanho (de cada painel). `␣ L` também
+outra região, ou use `Alt+Shift+L` → mover. Os divisores mudam o tamanho (de cada painel). `Alt+Shift+L` também
 salva a disposição atual com um nome e troca entre as salvas; tudo fica no `seedy.json`.
 
 ## Estrutura

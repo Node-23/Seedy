@@ -144,7 +144,7 @@ export class AnexosService {
       return false;
     }
     this.lista.update((l) => [...l, a]);
-    this.mensagens.mostrar(`mandado para a IA: ${a.rotulo} (␣ a abre o chat)`);
+    this.mensagens.mostrar(`mandado para a IA: ${a.rotulo} (Alt+A abre o chat)`);
     return true;
   }
 

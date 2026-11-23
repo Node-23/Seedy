@@ -100,7 +100,7 @@ export class EnvService {
         ...reais.map((a) => ({ rotulo: a.nome + (a.modelo ? ' (modelo)' : ''), detalhe: `${a.variaveis} variáveis`, valor: a.nome })),
         { rotulo: 'Rodar sem .env', detalhe: 'desliga a opção neste projeto', valor: SEM_ENV },
       ],
-      'achei mais de um na raiz do projeto; a escolha fica guardada (␣ r → ⚙ muda)',
+      'achei mais de um na raiz do projeto; a escolha fica guardada (Alt+Shift+F10 → ⚙ muda)',
     );
     if (!r) return false;
     this.mudar(r === SEM_ENV ? { usar: false, arquivo: null } : { usar: true, arquivo: r });

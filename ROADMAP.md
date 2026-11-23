@@ -65,11 +65,11 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
 
 ## ✅ Fase 4 — Git
 
-- ✅ Tela do Git (mockup 04, `␣ g`): branches locais/remotas, tags e stash; log com o grafo das
+- ✅ Tela do Git (mockup 04, `Alt+9`): branches locais/remotas, tags e stash; log com o grafo das
   branches, filtro e "todas as branches"; detalhe do commit com arquivos e diff
 - ✅ Commit (`Ctrl+K`): escolher arquivos, prévia do diff, emendar, commit e push, descartar
-- ✅ Push (`Ctrl+Shift+K`), pull (`Ctrl+T`), trocar/criar/apagar branch (`␣ b`), merge,
-  cherry-pick, reverter, stash (guardar/aplicar/apagar), blame (`␣ n`)
+- ✅ Push (`Ctrl+Shift+K`), pull (`Ctrl+T`), trocar/criar/apagar branch (`Alt+Shift+B`), merge,
+  cherry-pick, reverter, stash (guardar/aplicar/apagar), blame (`Alt+Shift+K`)
 - ✅ Marcas de mudança na margem do editor e letra do Git na árvore
 - ✅ Diff em tela cheia (editor de diff do Monaco, `]c`/`[c` entre mudanças)
 - ✅ Merge de conflitos em 3 colunas (mockup 05), com **resolver simples** (diff3: aplica o que
@@ -79,7 +79,7 @@ bordas grossas com sombra dura, Alabaster, tudo no teclado).
   token; clonar os seus repositórios. O token fica no núcleo e no cofre do sistema
 - ✅ Prateleira (shelf do IntelliJ): guardar mudanças com nome, devolver em partes, juntar em
   três vias com conflitos no merge de 3 colunas
-- ✅ Criar pull request e issue direto da IDE (`␣ P` / `␣ I`), com push antes se faltar
+- ✅ Criar pull request e issue direto da IDE (`Alt+Shift+P` / `Alt+Shift+Q`), com push antes se faltar
 - Sugestão de resolução por IA (fica para a fase de IA)
 
 ## ✅ Fase 5 — Servidores de aplicação: JBoss/WildFly **e** Tomcat
@@ -111,7 +111,7 @@ o resto entra como módulos internos (mockups 13 e 14):
   usos, renomear, ações rápidas, erros de template); instalados com o npm na primeira vez
 - ✅ ESLint (avisos no editor e correções nas ações rápidas) e Prettier (formatar e, com
   configuração no projeto, ao salvar)
-- ✅ Scripts do `package.json` (`␣ p`) e no RUN/DEBUG; debug no navegador (Edge/Chrome via
+- ✅ Scripts do `package.json` (`Alt+Shift+J`) e no RUN/DEBUG; debug no navegador (Edge/Chrome via
   js-debug, breakpoints no .ts pelos source maps)
 - ✅ React (Vite): reconhece o projeto, novo projeto (`create-vite` + `npm install`), `npm run dev`
   e debug no navegador testados; testes `*.test.tsx`/`*.spec.tsx` na lista
@@ -123,8 +123,8 @@ o resto entra como módulos internos (mockups 13 e 14):
 1. Claude Code no terminal integrado (já funciona hoje)
 2. ✅ Servidor MCP do Seedy (HTTP em 127.0.0.1, com token): o Claude Code abre arquivos, busca,
    lê erros do jdtls, sobe/derruba o servidor, lê o log, faz requisições à aplicação e consulta
-   bancos (só leitura); as mesmas ferramentas servem ao painel de IA do mockup 06 (`␣ a`)
-3. ✅ Painel de revisão (`␣ y`): toda proposta vira diff para aceitar ou recusar (a IA recebe a
+   bancos (só leitura); as mesmas ferramentas servem ao painel de IA do mockup 06 (`Alt+A`)
+3. ✅ Painel de revisão (`Alt+Y`): toda proposta vira diff para aceitar ou recusar (a IA recebe a
    decisão); edições feitas direto no disco num arquivo aberto ficam registradas, com desfazer
 3b. ✅ A IA opera quase tudo: rodar, parar e depurar (breakpoints, passos, avaliar), testes e
    cobertura das regras, containers e compose, TODO, bookmarks, navegação pelo código, arquitetura e
@@ -133,15 +133,15 @@ o resto entra como módulos internos (mockups 13 e 14):
 3c. ✅ Mandar itens para o chat (mockup 25): `ctrl+shift+a` e botão direito, chips removíveis;
    `/historico` lista as aprovações; a conversa é guardada por projeto (`.seedy/conversa.json`);
    memória da IA (`.seedy/memoria.md` e global): ela propõe, o usuário aprova cada nota
-4. ✅ Chat da IA no merge de conflitos (mockup 10, `␣ a`): Claude lê o código e o histórico,
+4. ✅ Chat da IA no merge de conflitos (mockup 10, `Alt+A`): Claude lê o código e o histórico,
    propõe a resolução como prévia no resultado e o usuário aplica ou recusa
 
 ## ✅ Fase 8 — Containers (Docker)
 
 Mockups 15 e 16. Tudo pelo CLI do Docker (Docker Desktop no Windows, docker no Linux):
 
-- ✅ Tela de containers (`␣ D`): lista por compose, mapa das conexões, detalhe e logs ao vivo;
-  painel compacto embaixo do editor (`␣ h`)
+- ✅ Tela de containers (`Alt+Shift+8`): lista por compose, mapa das conexões, detalhe e logs ao vivo;
+  painel compacto embaixo do editor (`Alt+8`)
 - ✅ Conexões no mapa: redes Docker, `depends_on` do compose, tráfego TCP medido agora (lido de
   /proc/net/tcp dentro de cada container), dependência pela configuração (variável de ambiente
   que aponta para outro container, ex.: `DATABASE_URL=...@db:5432`) e portas publicadas no host
@@ -151,7 +151,7 @@ Mockups 15 e 16. Tudo pelo CLI do Docker (Docker Desktop no Windows, docker no L
 
 ## ✅ Fase 9 — Entender o sistema
 
-Mockups 17, 18 e 19, em tela cheia (`␣ A`) com três abas. Lê o código direto (sem compilar),
+Mockups 17, 18 e 19, em tela cheia (`Alt+7`) com três abas. Lê o código direto (sem compilar),
 então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 
 - ✅ Arquitetura em blocos: domínios × camadas (telas e serviços do Angular, controllers/recursos
@@ -173,21 +173,21 @@ então funciona logo ao abrir o projeto e junta o front e o back no mesmo grafo:
 
 ## Depois
 
-- ✅ TODO por cima das telas (mockup 20, `␣ T`): barra de ícones à esquerda, cards em
+- ✅ TODO por cima das telas (mockup 20, `Alt+6`): barra de ícones à esquerda, cards em
   `.seedy/todo.md` ligados a código, regras, caminhos, blocos, containers e bancos
 
-- ✅ Layout editável (`␣ L`): arrastar a faixa de um painel para outra região, tamanho por
+- ✅ Layout editável (`Alt+Shift+L`): arrastar a faixa de um painel para outra região, tamanho por
   painel e disposições salvas com nome no `seedy.json`
 - ✅ Barra de ícones à esquerda com todos os botões que abrem janelas e painéis
 - ✅ Watcher de arquivos: árvore, busca e jdtls se atualizam com mudanças feitas fora do
   editor (git checkout, build); buffers sem edição recarregam sozinhos
 - ✅ Voltar/avançar nos arquivos vistos (alt+← / alt+→), com cursor e rolagem guardados por arquivo
-- ✅ Configurações em arquivo (`seedy.json`, `␣ ,`): editor, shell do terminal, teclas do líder,
+- ✅ Configurações em arquivo (`seedy.json`, `Ctrl+,`): editor, shell do terminal, teclas do líder,
   modelo da IA e o layout; `.seedy/seedy.json` no projeto sobrepõe o global
 - ✅ Botões RUN e DEBUG na barra de cima (mockup 11): rodam/depuram a classe `main` (pelo java-debug)
-  ou o servidor de aplicação escolhido (`␣ r`), com a tela de debug em tela cheia (`␣ x`)
-- ✅ Criar novo projeto (mockup 12, `␣ N`): Spring Boot (start.spring.io), Maven, WAR, Java simples e
+  ou o servidor de aplicação escolhido (`Alt+Shift+F10`), com a tela de debug em tela cheia (`Alt+5`)
+- ✅ Criar novo projeto (mockup 12, `Alt+Shift+N`): Spring Boot (start.spring.io), Maven, WAR, Java simples e
   Angular (`ng new`); falta testar o Angular com um Node atual
 - ✅ Argumentos do programa, variáveis de ambiente e opções da JVM por configuração de execução
-  (␣ r → ⚙), em `.seedy/execucao.json`; o servidor usa as do perfil dele
+  (Alt+Shift+F10 → ⚙), em `.seedy/execucao.json`; o servidor usa as do perfil dele
 - Completação inline de código (texto fantasma) sem custo: modelo pequeno local (Qwen2.5-Coder 1.5B via Ollama ou llama.cpp baixado pelo Seedy), `ia.completar` no `seedy.json`; mockup primeiro

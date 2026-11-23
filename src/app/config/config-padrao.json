@@ -13,7 +13,9 @@
     "argumentos": []
   },
   "atalhos": {
-    "lider": {}
+    "lider": {},
+    "teclas": {},
+    "espacoAbreMenu": false
   },
   "atualizacao": {
     "verificar": true

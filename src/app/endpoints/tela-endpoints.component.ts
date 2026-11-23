@@ -3,7 +3,7 @@ import { AnexosService } from '../ia/anexos.service';
 import { EndpointInfo, EndpointsService, VERBOS } from './endpoints.service';
 
 /**
- * Tela de endpoints do Spring (␣ H, mockup 28): a lista por controller, o detalhe do que o Seedy leu
+ * Tela de endpoints do Spring (Alt+Shift+E, mockup 28): a lista por controller, o detalhe do que o Seedy leu
  * do código (parâmetros, corpo, acesso, testes que passam pelo endpoint) e o painel de chamada.
  */
 @Component({

@@ -1,7 +1,7 @@
 //! Atualização do próprio Seedy: olha a última release do GitHub, baixa o instalador, confere o
 //! tamanho e o SHA-256 publicado (`SHA256SUMS.txt` na release), fecha o app, instala e abre de novo.
 //! Nada baixa sozinho: a interface avisa e o usuário decide. Com o repositório privado, usa a conta
-//! do GitHub conectada (␣ G); com ele público, funciona sem conta.
+//! do GitHub conectada (Alt+Shift+G); com ele público, funciona sem conta.
 
 use crate::git::ContaGithub;
 use serde::Serialize;
@@ -106,7 +106,7 @@ fn ultima_release(token: Option<&str>) -> Result<Release, String> {
             return Err(if token.is_some() {
                 "o GitHub não achou nenhuma release do Seedy (ou esta conta não vê o repositório)".into()
             } else {
-                "o repositório do Seedy ainda é privado: conecte a conta do GitHub (␣ G) para atualizar".into()
+                "o repositório do Seedy ainda é privado: conecte a conta do GitHub (Alt+Shift+G) para atualizar".into()
             })
         }
         Err(ureq::Error::Status(c, _)) => return Err(format!("o GitHub respondeu {c} ao procurar atualização")),

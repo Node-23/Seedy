@@ -89,7 +89,7 @@ pub async fn ia_mensagem(
             .await
             .map_err(|e| e.to_string())?;
     }
-    let chave = chave().ok_or("configure a chave da API da Anthropic (␣ a)")?;
+    let chave = chave().ok_or("configure a chave da API da Anthropic (Alt+A)")?;
     corpo["stream"] = serde_json::Value::Bool(true);
     tauri::async_runtime::spawn_blocking(move || {
         let agente = ureq::AgentBuilder::new()
@@ -616,7 +616,7 @@ fn erro_da_api(codigo: u16, corpo: &str) -> String {
     let json: serde_json::Value = serde_json::from_str(corpo).unwrap_or_default();
     let msg = json["error"]["message"].as_str().unwrap_or("erro");
     match codigo {
-        401 => "a API recusou a chave (inválida ou revogada): ␣ a para trocar".into(),
+        401 => "a API recusou a chave (inválida ou revogada): Alt+A para trocar".into(),
         429 => format!("limite de uso da API atingido, tente de novo em instantes ({msg})"),
         529 => "a API está sobrecarregada agora, tente de novo em instantes".into(),
         _ => format!("API {codigo}: {msg}"),

@@ -16,7 +16,13 @@ export interface Config {
   };
   terminal: { shell: string | null; argumentos: string[] };
   /** id da ação do líder → tecla (ex.: { "todo": "T" }). */
-  atalhos: { lider: Record<string, string> };
+  atalhos: {
+    lider: Record<string, string>;
+    /** Atalhos diretos: id da ação → acorde ("alt+9"); null desliga. */
+    teclas?: Record<string, string | null>;
+    /** Espaço (fora de campos de texto e no modo normal do Vim) abre o menu de atalhos. Desligado por padrão. */
+    espacoAbreMenu?: boolean;
+  };
   ia: { modelo: string; modo: 'chave' | 'assinatura'; /** Sem confirmar edições e comandos da IA. */ automatico?: boolean };
   /** Atualização do Seedy: `verificar: false` desliga a procura (ao abrir e a cada 6 horas). */
   atualizacao?: { verificar?: boolean };
@@ -40,7 +46,7 @@ export function mesclar<T>(base: T, porCima: unknown): T {
 }
 
 /**
- * `seedy.json` (␣ ,): configurações em arquivo, na pasta de configuração do Seedy, ao lado do
+ * `seedy.json` (Ctrl+,): configurações em arquivo, na pasta de configuração do Seedy, ao lado do
  * tema.json. Um `.seedy/seedy.json` no projeto sobrepõe o global (o time pode combinar a
  * tabulação, por exemplo). Salvou o arquivo, vale na hora.
  */

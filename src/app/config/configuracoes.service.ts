@@ -4,7 +4,7 @@ import { LayoutService } from '../layout/layout.service';
 
 export type AbaConfig = 'atalhos' | 'ia' | 'editor';
 
-/** Tela de configurações (␣ ,): atalhos do líder, IA (assinatura ou chave) e editor/terminal. */
+/** Tela de configurações (Ctrl+,): atalhos do líder, IA (assinatura ou chave) e editor/terminal. */
 @Injectable({ providedIn: 'root' })
 export class ConfiguracoesService {
   private readonly layout = inject(LayoutService);

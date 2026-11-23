@@ -237,7 +237,7 @@ export interface TrafegoDocker {
   conexoes: number;
 }
 
-/** Pedido da janela de novo projeto (␣ N). */
+/** Pedido da janela de novo projeto (Alt+Shift+N). */
 export interface PedidoDeProjeto {
   modelo: 'spring' | 'maven' | 'war' | 'simples' | 'angular' | 'react';
   nome: string;
@@ -799,7 +799,7 @@ export const ponte = {
     parar: (id: string) => invoke<void>('tarefa_parar', { id }),
   },
 
-  /** Novo projeto (␣ N): modelos Java, Spring Boot (start.spring.io) e Angular (ng new). */
+  /** Novo projeto (Alt+Shift+N): modelos Java, Spring Boot (start.spring.io) e Angular (ng new). */
   novoProjeto: {
     async criar(pedido: PedidoDeProjeto, aoProgresso: (texto: string) => void): Promise<ProjetoCriado> {
       if (!noApp()) return exemplo.criarProjeto(pedido, aoProgresso);

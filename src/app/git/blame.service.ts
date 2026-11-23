@@ -17,7 +17,7 @@ const LARGURA_AUTOR = 12;
 
 /**
  * Anotações do git (blame), como o "Annotate" do IntelliJ: autor e data no começo
- * de cada bloco de linhas do mesmo commit, e o commit no hover. Alterna com ␣ n.
+ * de cada bloco de linhas do mesmo commit, e o commit no hover. Alterna com Alt+Shift+K.
  * Usa o texto do buffer (com o que ainda não foi salvo).
  */
 @Injectable({ providedIn: 'root' })

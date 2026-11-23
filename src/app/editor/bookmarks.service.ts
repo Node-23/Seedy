@@ -18,7 +18,7 @@ const LIMPAR = Symbol('limpar');
 
 /**
  * Bookmarks no código: marcam uma linha (barra rosa na margem) para voltar a ela depois.
- * `␣ M` marca/desmarca a linha, `ctrl+F2` também, `␣ B` lista e vai até uma marca.
+ * `Ctrl+F2` marca/desmarca a linha, `ctrl+F2` também, `Alt+2` lista e vai até uma marca.
  * Ficam em `.seedy/bookmarks.json` (vai para o git; dá para editar à mão) e acompanham a
  * linha quando o código muda acima dela.
  */
@@ -124,7 +124,7 @@ export class BookmarksService {
   async listar(): Promise<void> {
     const marcas = [...this.marcas()].sort((a, b) => a.caminho.localeCompare(b.caminho) || a.linha - b.linha);
     if (!marcas.length) {
-      this.mensagens.alerta('nenhum bookmark ainda: ␣ M marca a linha do cursor');
+      this.mensagens.alerta('nenhum bookmark ainda: Ctrl+F2 marca a linha do cursor');
       return;
     }
     const alvo = await this.escolha.escolherUm<Marca | typeof LIMPAR>(
@@ -133,7 +133,7 @@ export class BookmarksService {
         ...marcas.map((m) => ({ rotulo: `${m.caminho}:${m.linha}`, detalhe: m.texto, valor: m })),
         { rotulo: 'remover todos', detalhe: `${marcas.length} ${marcas.length === 1 ? 'marca' : 'marcas'}`, valor: LIMPAR },
       ],
-      '⏎ vai até a linha · ␣ M na linha remove a marca',
+      '⏎ vai até a linha · Ctrl+F2 na linha remove a marca',
     );
     if (alvo === LIMPAR) await this.salvar([]);
     else if (alvo) await this.editor.abrir(this.absoluto(alvo.caminho), alvo.linha);

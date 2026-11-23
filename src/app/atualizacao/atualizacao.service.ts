@@ -6,7 +6,7 @@ import { AtualizacaoInfo, noApp, ponte } from '../nucleo/ponte';
 const A_CADA = 6 * 60 * 60 * 1000;
 
 /**
- * Atualização do Seedy (␣ U): vê a última release do GitHub ao abrir e a cada 6 horas e avisa na barra
+ * Atualização do Seedy (Alt+Shift+U): vê a última release do GitHub ao abrir e a cada 6 horas e avisa na barra
  * de status; nada baixa sozinho. O núcleo baixa o instalador, confere o tamanho e o SHA-256 publicado,
  * fecha o app, instala e abre de novo. Desligável em `seedy.json` (`atualizacao.verificar`).
  */
@@ -41,7 +41,7 @@ export class AtualizacaoService {
     });
   }
 
-  /** `manual`: foi o usuário que pediu (␣ U): responde "em dia" e mostra os erros. */
+  /** `manual`: foi o usuário que pediu (Alt+Shift+U): responde "em dia" e mostra os erros. */
   async verificar(manual: boolean): Promise<void> {
     if (!noApp()) return void this.mensagens.alerta('atualização: só no app instalado');
     try {
@@ -56,7 +56,7 @@ export class AtualizacaoService {
     }
   }
 
-  /** ␣ U: abre o aviso se há atualização; senão, procura agora. */
+  /** Alt+Shift+U: abre o aviso se há atualização; senão, procura agora. */
   alternar(): void {
     if (this.aberto()) return this.fechar();
     if (this.disponivel()) this.aberto.set(true);

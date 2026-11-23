@@ -24,7 +24,7 @@ export interface RegraVisivel extends RegraEscrita {
 const CMD_ACOMPANHAR = 'seedy.acompanharMetodo';
 
 /**
- * Fase 9 — Entender o sistema (␣ A): arquitetura em blocos, regras de negócio e o caminho
+ * Fase 9 — Entender o sistema (Alt+7): arquitetura em blocos, regras de negócio e o caminho
  * de um método (ctrl+. "acompanhar método"). A análise vem do núcleo (leitura do código);
  * as regras ficam em `.seedy/regras.md`; a IA reescreve as regras e explica o caminho.
  */

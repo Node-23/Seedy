@@ -5,7 +5,7 @@ import { ConfigService } from '../config/config.service';
  * Painéis do Seedy e onde cada um fica: a base do layout editável.
  *
  * Cada painel mora numa região (esquerda, embaixo ou direita) e cada região mostra um painel
- * por vez. Arrastar a faixa de título de um painel (ou ␣ L → mover) troca a região; arrastar
+ * por vez. Arrastar a faixa de título de um painel (ou Alt+Shift+L → mover) troca a região; arrastar
  * o divisor muda o tamanho. A disposição atual e as salvas com nome ficam no seedy.json
  * (`layout`), então valem em qualquer projeto e dá para editar à mão.
  */
@@ -22,13 +22,13 @@ export interface Painel {
 }
 
 export const PAINEIS: Painel[] = [
-  { id: 'arquivos', titulo: 'Arquivos', regiao: 'esquerda', atalho: '␣ e' },
-  { id: 'conexoes', titulo: 'Conexões (banco)', regiao: 'direita', atalho: '␣ d' },
+  { id: 'arquivos', titulo: 'Arquivos', regiao: 'esquerda', atalho: 'Alt+1' },
+  { id: 'conexoes', titulo: 'Conexões (banco)', regiao: 'direita', atalho: 'Alt+Shift+D' },
   { id: 'terminal', titulo: 'Terminal', regiao: 'inferior', atalho: 'alt f12' },
-  { id: 'servidor', titulo: 'Servidor', regiao: 'inferior', atalho: '␣ j' },
-  { id: 'scripts', titulo: 'Scripts', regiao: 'inferior', atalho: '␣ p' },
-  { id: 'containers', titulo: 'Containers', regiao: 'inferior', atalho: '␣ h' },
-  { id: 'ia', titulo: 'IA', regiao: 'direita', atalho: '␣ a' },
+  { id: 'servidor', titulo: 'Servidor', regiao: 'inferior', atalho: 'Alt+4' },
+  { id: 'scripts', titulo: 'Scripts', regiao: 'inferior', atalho: 'Alt+Shift+J' },
+  { id: 'containers', titulo: 'Containers', regiao: 'inferior', atalho: 'Alt+8' },
+  { id: 'ia', titulo: 'IA', regiao: 'direita', atalho: 'Alt+A' },
 ];
 
 export const NOME_DA_REGIAO: Record<Regiao, string> = { esquerda: 'à esquerda', inferior: 'embaixo', direita: 'à direita' };

@@ -82,10 +82,10 @@ let exDefinidos = false;
             <div class="logo">seedy</div>
             @if (projeto.raiz()) {
               <p>Nenhum arquivo aberto.</p>
-              <p class="suave"><kbd>␣</kbd> menu de atalhos · <kbd>␣ e</kbd> arquivos · <kbd>alt f12</kbd> terminal</p>
+              <p class="suave"><kbd>Ctrl+Shift+Espaço</kbd> menu de atalhos · <kbd>Alt+1</kbd> arquivos · <kbd>alt f12</kbd> terminal</p>
             } @else {
               <p>Nenhum projeto aberto.</p>
-              <button class="botao destaque" (click)="projeto.escolher()">abrir pasta <kbd>␣ o</kbd></button>
+              <button class="botao destaque" (click)="projeto.escolher()">abrir pasta <kbd>Alt+Shift+O</kbd></button>
             }
           </div>
         }
@@ -333,7 +333,10 @@ export class EditorComponent {
     Vim.defineEx('wall', 'wa', () => void this.editor.salvarTodos());
     Vim.defineEx('help', 'h', () => this.vimAjuda.alternar());
     // Espaço no modo normal abre o menu do líder.
-    Vim.defineEx('seedylider', 'seedylider', () => this.atalhos.abrirLider());
+    Vim.defineEx('seedylider', 'seedylider', () => {
+      if (this.config.atual().atalhos.espacoAbreMenu === true) this.atalhos.abrirLider();
+      else setTimeout(() => this.editor.instancia?.trigger('vim', 'cursorRight', null)); // sem líder no espaço: anda para a direita, como no Vim
+    });
     Vim.map('<Space>', ':seedylider<CR>', 'normal');
 
     // Navegação de código no jeito do vim (gd, gr, gi, K), via jdtls.
@@ -370,7 +373,7 @@ export class EditorComponent {
     ligar(M.CtrlCmd | M.Alt | K.KeyL, 'editor.action.formatDocument');
     ligar(M.CtrlCmd | M.Alt | K.KeyO, 'editor.action.organizeImports');
     ligar(M.CtrlCmd | K.F12, 'editor.action.quickOutline');
-    // Bookmark na linha do cursor (␣ M); ␣ B lista as marcas.
+    // Bookmark na linha do cursor (Ctrl+F2); Alt+2 lista as marcas.
     instancia.addCommand(M.CtrlCmd | K.F2, () => void this.bookmarks.alternar());
     // Gerar... (getters/setters, construtor, toString, equals/hashCode, sobrescrever).
     ligar(M.Alt | K.Insert, 'editor.action.sourceAction');

@@ -355,7 +355,7 @@ export class JdtlsService {
     this.servidor = null;
     this.abertos.clear();
     this.estado.set({ fase: 'erro', detalhe: 'parou' });
-    this.mensagens.erro('jdtls parou (␣ l reinicia)');
+    this.mensagens.erro('jdtls parou (reinicie: Ctrl+Shift+Espaço, l)');
   }
 
   private ouvir(cliente: ClienteLsp, geracao: number): void {

@@ -1,4 +1,4 @@
-/** Grupos de comandos do Vim para a janela "␣ V": o que é do Seedy primeiro, depois o essencial do Vim. */
+/** Grupos de comandos do Vim para a janela "Alt+Shift+V": o que é do Seedy primeiro, depois o essencial do Vim. */
 export interface GrupoDeVim {
   titulo: string;
   /** Do Seedy (aparece destacado) ou do Vim em geral. */
@@ -11,7 +11,7 @@ export const GRUPOS_DE_VIM: GrupoDeVim[] = [
     titulo: 'SEEDY NO MODO NORMAL',
     seedy: true,
     itens: [
-      ['␣', 'menu do líder (atalhos do Seedy)'],
+      ['Ctrl+Shift+Espaço', 'menu de atalhos (e o botão da logo)'],
       ['gd', 'ir para a definição (jdtls)'],
       ['gr', 'ver os usos'],
       ['gi', 'ir para a implementação'],

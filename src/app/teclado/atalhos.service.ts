@@ -34,10 +34,86 @@ import { VimAjudaService } from '../vim/vim-ajuda.component';
 import { BookmarksService } from '../editor/bookmarks.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
 
+/**
+ * Atalhos diretos (um acorde só, como no IntelliJ): id da ação → acorde. Os que o Seedy já tratava
+ * antes (Ctrl+K, Ctrl+P...) ficam em ACORDES_NATIVOS, só para aparecerem nas dicas. Nada com
+ * Ctrl+Alt: no teclado ABNT2 o AltGr é Ctrl+Alt e digita caracteres. Troca no seedy.json:
+ * `"atalhos": { "teclas": { "git": "alt+9", "testes": null } }` (null desliga).
+ */
+export const ACORDES_PADRAO: Record<string, string> = {
+  'buscar-tudo': 'ctrl+shift+p',
+  simbolos: 'ctrl+shift+o',
+  arquivos: 'alt+1',
+  bookmarks: 'alt+2',
+  servidor: 'alt+4',
+  debug: 'alt+5',
+  todo: 'alt+6',
+  entender: 'alt+7',
+  'containers-painel': 'alt+8',
+  containers: 'alt+shift+8',
+  git: 'alt+9',
+  banco: 'alt+shift+d',
+  scripts: 'alt+shift+j',
+  testes: 'alt+shift+t',
+  endpoints: 'alt+shift+e',
+  vim: 'alt+shift+v',
+  atualizar: 'alt+shift+u',
+  'novo-projeto': 'alt+shift+n',
+  'abrir-projeto': 'alt+shift+o',
+  'fechar-buffer': 'ctrl+f4',
+  execucao: 'alt+shift+f10',
+  branch: 'alt+shift+b',
+  blame: 'alt+shift+k',
+  merge: 'alt+shift+m',
+  github: 'alt+shift+g',
+  prateleira: 'alt+shift+s',
+  'pull-request': 'alt+shift+p',
+  issue: 'alt+shift+q',
+  ia: 'alt+a',
+  'ia-automatico': 'alt+shift+y',
+  'revisar-ia': 'alt+y',
+  layout: 'alt+shift+l',
+  config: 'ctrl+,',
+};
+
+/** Já funcionavam antes dos atalhos diretos (cada um no seu lugar do código); aqui só para mostrar. */
+export const ACORDES_NATIVOS: Record<string, string> = {
+  'buscar-arquivo': 'ctrl+p',
+  'buscar-no-projeto': 'ctrl+shift+f',
+  substituir: 'ctrl+shift+r',
+  terminal: 'alt+f12',
+  salvar: 'ctrl+s',
+  commit: 'ctrl+k',
+  bookmark: 'ctrl+f2',
+};
+
+/** "Ctrl+Shift+F", "Alt+9", "F12": o acorde como aparece nas dicas. */
+export function rotuloDoAcorde(acorde: string): string {
+  return acorde
+    .split('+')
+    .map((p) => (p === 'space' ? 'Espaço' : /^f\d+$/.test(p) ? p.toUpperCase() : p.length === 1 ? p.toUpperCase() : p[0].toUpperCase() + p.slice(1)))
+    .join('+');
+}
+
+/** Normaliza o texto do seedy.json ("Shift+Alt+9") para a forma interna ("alt+shift+9"). */
+export function normalizarAcorde(texto: string): string | null {
+  const partes = texto.toLowerCase().split('+').map((p) => p.trim()).filter(Boolean);
+  const tecla = partes.filter((p) => !['ctrl', 'control', 'alt', 'shift', 'cmd', 'meta'].includes(p));
+  if (tecla.length !== 1) return null;
+  const mods = [
+    partes.some((p) => ['ctrl', 'control', 'cmd', 'meta'].includes(p)) && 'ctrl',
+    partes.includes('alt') && 'alt',
+    partes.includes('shift') && 'shift',
+  ].filter(Boolean) as string[];
+  return [...mods, tecla[0] === 'espaço' ? 'space' : tecla[0]].join('+');
+}
+
 export interface AcaoLider {
   /** Nome da ação no seedy.json (atalhos.lider: { "todo": "T" }). */
   id: string;
   tecla: string;
+  /** Atalho direto (acorde) que vale agora: o de fábrica ou o do seedy.json. */
+  atalho?: string;
   /** Tecla de fábrica (a do seedy.json pode trocar a `tecla`). */
   padrao?: string;
   rotulo: string;
@@ -97,6 +173,8 @@ export class AtalhosService {
   private readonly config = inject(ConfigService);
 
   readonly liderAberto = signal(false);
+  /** acorde → ação (atalhos diretos). */
+  private porAcorde = new Map<string, AcaoLider>();
   private readonly injetor = inject(Injector);
 
   readonly acoes: AcaoLider[] = [
@@ -149,7 +227,11 @@ export class AtalhosService {
   iniciar(): void {
     effect(() => {
       const trocas = this.config.atual().atalhos.lider ?? {};
-      untracked(() => this.aplicarTeclas(trocas));
+      const teclas = this.config.atual().atalhos.teclas ?? {};
+      untracked(() => {
+        this.aplicarTeclas(trocas);
+        this.aplicarAcordes(teclas);
+      });
     }, { injector: this.injetor });
     // Fase de captura: o menu do líder pega a tecla antes do editor e do terminal.
     window.addEventListener('keydown', (e) => this.aoTeclar(e), { capture: true });
@@ -228,8 +310,25 @@ export class AtalhosService {
     const ctrl = e.ctrlKey || e.metaKey;
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
-    const janelaAberta = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.vimAjuda.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
+    // A janela do Vim só mostra texto: os atalhos diretos continuam valendo com ela aberta.
+    const modalAberto = this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
+    const janelaAberta = modalAberto || this.vimAjuda.aberta();
     const livre = !janelaAberta && !this.noTerminal(e.target);
+
+    // Atalhos diretos (um acorde, como no IntelliJ) e o menu de atalhos em Ctrl+Shift+Espaço.
+    const acorde = !modalAberto || this.liderAberto() ? this.acordeDe(e) : null;
+    if (acorde === 'ctrl+shift+space') {
+      this.engolir(e);
+      this.alternarLider();
+      return;
+    }
+    const direta = acorde ? this.porAcorde.get(acorde) : undefined;
+    if (direta) {
+      this.engolir(e);
+      if (this.vimAjuda.aberta() && direta.id !== 'vim') this.vimAjuda.fechar();
+      this.executar(direta);
+      return;
+    }
 
     if (ctrl && e.shiftKey && !e.altKey && e.code === 'KeyA') {
       this.engolir(e);
@@ -291,7 +390,7 @@ export class AtalhosService {
     } else if (ctrl && e.key === 'Tab') {
       e.preventDefault();
       this.editor.proximo(e.shiftKey ? -1 : 1);
-    } else if (e.key === ' ' && !ctrl && !e.altKey && !janelaAberta && this.foraDeCampoDeTexto(e.target)) {
+    } else if (e.key === ' ' && !ctrl && !e.altKey && !janelaAberta && this.config.atual().atalhos.espacoAbreMenu === true && this.foraDeCampoDeTexto(e.target)) {
       // No editor, quem cuida do espaço é o vim (só no modo normal).
       e.preventDefault();
       this.abrirLider();
@@ -553,6 +652,50 @@ export class AtalhosService {
       if (troca) a.tecla = troca[1];
       else if (usadas.has(a.tecla)) a.tecla = '';
     }
+  }
+
+  /** Os acordes de fábrica mais as trocas do seedy.json (`atalhos.teclas`). */
+  private aplicarAcordes(teclas: Record<string, string | null>): void {
+    this.porAcorde = new Map();
+    for (const a of this.acoes) {
+      const troca = teclas[a.id];
+      const acorde = troca === null || troca === '' ? undefined : typeof troca === 'string' ? (normalizarAcorde(troca) ?? undefined) : ACORDES_PADRAO[a.id];
+      a.atalho = acorde;
+      if (acorde && !this.porAcorde.has(acorde)) this.porAcorde.set(acorde, a);
+    }
+  }
+
+  /** Quem já usa o acorde (ação do menu ou atalho fixo do Seedy), para avisar conflito. */
+  donoDoAcorde(acorde: string, exceto: string): string | null {
+    const a = this.porAcorde.get(acorde);
+    if (a && a.id !== exceto) return a.rotulo;
+    const nativo = Object.entries(ACORDES_NATIVOS).find(([id, c]) => c === acorde && id !== exceto);
+    if (nativo) return this.acoes.find((x) => x.id === nativo[0])?.rotulo ?? nativo[0];
+    return null;
+  }
+
+  /** O atalho da ação para mostrar nas dicas ("Alt+9"), ou null. */
+  rotuloDoAtalho(id: string): string | null {
+    const a = this.acoes.find((x) => x.id === id);
+    const acorde = a?.atalho ?? (a && !('atalho' in a) ? ACORDES_PADRAO[id] : undefined) ?? ACORDES_NATIVOS[id];
+    return acorde ? rotuloDoAcorde(acorde) : null;
+  }
+
+  /** O acorde de um KeyboardEvent na forma interna ("ctrl+shift+f"), ou null para teclas que não entram. */
+  acordeDe(e: KeyboardEvent): string | null {
+    const c = e.code;
+    let tecla: string | null = null;
+    if (/^Key[A-Z]$/.test(c)) tecla = c.slice(3).toLowerCase();
+    else if (/^Digit\d$/.test(c)) tecla = c.slice(5);
+    else if (/^F\d{1,2}$/.test(c)) tecla = c.toLowerCase();
+    else if (c === 'Comma') tecla = ',';
+    else if (c === 'Period') tecla = '.';
+    else if (c === 'Slash') tecla = '/';
+    else if (c === 'Backslash') tecla = '\\';
+    else if (c === 'Space') tecla = 'space';
+    if (!tecla) return null;
+    const mods = [(e.ctrlKey || e.metaKey) && 'ctrl', e.altKey && 'alt', e.shiftKey && 'shift'].filter(Boolean) as string[];
+    return [...mods, tecla].join('+');
   }
 
   private abrirTema(): void {

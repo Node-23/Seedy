@@ -12,7 +12,7 @@ import { nomeCurto } from '../entender/desenho';
 import { Card, escreverTodo, Ligacao, lerTodo } from './todo';
 
 /**
- * TODO do projeto (mockup 20, ␣ T): um painel por cima das telas com cards que se ligam a
+ * TODO do projeto (mockup 20, Alt+6): um painel por cima das telas com cards que se ligam a
  * código, regras, caminhos, blocos da arquitetura, containers e conexões de banco. Os cards
  * ficam em `.seedy/todo.md`. `l` liga ao card o que está em foco na tela de baixo.
  */

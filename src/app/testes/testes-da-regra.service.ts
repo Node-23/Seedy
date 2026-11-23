@@ -128,7 +128,7 @@ export class TestesDaRegraService {
 
   async irParaTeste(r: RegraVisivel, doMetodo = false): Promise<void> {
     const lista = doMetodo || !this.testesDaRegra(r).length ? this.testesDoMetodo(r) : this.testesDaRegra(r);
-    if (!lista.length) return this.mensagens.alerta('esta regra ainda não tem teste: ␣ t cria um');
+    if (!lista.length) return this.mensagens.alerta('esta regra ainda não tem teste: Alt+F12 cria um');
     const alvo =
       lista.length === 1
         ? lista[0]
@@ -193,7 +193,7 @@ export class TestesDaRegraService {
     try {
       const { caminho, linha } = comp.linguagem === 'ts' ? await this.escreverSpec(comp, existente?.caminho ?? null, nome, cenario, r) : await this.escreverJunit(comp, existente?.caminho ?? null, nome, cenario, r);
       this.entender.abrirNoEditor(caminho, linha);
-      this.mensagens.mostrar(`teste ${nome} criado: escreva o cenário e rode com ␣ E`);
+      this.mensagens.mostrar(`teste ${nome} criado: escreva o cenário e rode com Alt+Shift+T`);
     } catch (e) {
       this.mensagens.erro(String(e));
     }

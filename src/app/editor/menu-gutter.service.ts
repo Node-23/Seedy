@@ -30,7 +30,7 @@ export class MenuGutterService {
     const temBookmark = this.bookmarks.marcas().some((x) => x.caminho === rel && x.linha === m.linha);
     const temBreakpoint = (this.depurador.breakpoints().get(m.caminho) ?? []).includes(m.linha);
     return [
-      { id: 'bookmark', rotulo: temBookmark ? 'remover bookmark' : 'adicionar bookmark', dica: '␣ M', ativo: temBookmark, desabilitado: false },
+      { id: 'bookmark', rotulo: temBookmark ? 'remover bookmark' : 'adicionar bookmark', dica: 'Ctrl+F2', ativo: temBookmark, desabilitado: false },
       { id: 'breakpoint', rotulo: temBreakpoint ? 'remover breakpoint' : 'adicionar breakpoint', dica: 'ctrl F8', ativo: temBreakpoint, desabilitado: !aceitaBreakpoint(m.caminho) },
     ];
   });

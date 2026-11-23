@@ -63,7 +63,7 @@ pub struct Iniciado {
 /// Preferências do compilador Java que o jdtls usa (formato `.prefs` do Eclipse).
 /// Fica na pasta de configuração do Seedy, para o usuário editar como o tema.
 const PREFERENCIAS_PADRAO: &str = "# Preferências do compilador Java usadas pelo jdtls (formato .prefs do Eclipse).
-# Valores: error, warning, info, ignore. Depois de mudar, reinicie o jdtls (␣ l).
+# Valores: error, warning, info, ignore. Depois de mudar, reinicie o jdtls (Ctrl+Shift+Espaço, l).
 org.eclipse.jdt.core.compiler.problem.unusedImport=warning
 org.eclipse.jdt.core.compiler.problem.unusedLocal=warning
 org.eclipse.jdt.core.compiler.problem.unusedPrivateMember=warning

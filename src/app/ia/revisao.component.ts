@@ -14,7 +14,7 @@ const ROTULO_DO_ESTADO: Record<Alteracao['estado'], string> = {
 };
 
 /**
- * Revisão das alterações da IA (␣ y): à esquerda a lista, à direita o diff. ⏎ aceita (ou
+ * Revisão das alterações da IA (Alt+Y): à esquerda a lista, à direita o diff. ⏎ aceita (ou
  * mantém, se já estava no disco), d recusa (ou desfaz), D abre o diff completo.
  */
 @Component({

@@ -18,7 +18,7 @@ const EH_PALAVRA = new RegExp(`^(?:${PALAVRAS})$`);
 type Parte = 'diagrama' | 'metodos';
 
 /**
- * Entender o sistema em tela cheia (␣ A, mockups 17–19): Arquitetura (1), Regras de negócio
+ * Entender o sistema em tela cheia (Alt+7, mockups 17–19): Arquitetura (1), Regras de negócio
  * (2) e Caminho do método (3). Tudo pelo teclado; o detalhe de cada aba fica à direita.
  */
 @Component({

@@ -79,7 +79,7 @@ function pastaCurta(relativo: string): string {
 /**
  * Buscar arquivo (Ctrl+P, abre no filtro Arquivos) — é o Search Everywhere
  * do mockup 02: classes, arquivos, símbolos, texto e ações num lugar só,
- * com prévia do código à direita. ␣␣ abre a mesma janela no filtro Tudo.
+ * com prévia do código à direita. Ctrl+Shift+P abre a mesma janela no filtro Tudo.
  */
 @Component({
   selector: 'sd-busca',
@@ -277,7 +277,7 @@ export class BuscaComponent {
           id: `a:${acao.id}`,
           tipo: 'acao',
           pedacos: marcar(acao.rotulo, c.posicoes),
-          detalhe: acao.tecla ? `␣ ${acao.tecla}` : '',
+          detalhe: this.atalhos.rotuloDoAtalho(acao.id) ?? (acao.tecla ? `menu ${acao.tecla}` : ''),
           pontos: c.pontos + PESO.acao,
           executar: () => this.atalhos.executar(acao),
         });
@@ -312,7 +312,7 @@ export class BuscaComponent {
   });
 
   protected readonly mensagemVazia = computed(() => {
-    if (!this.projeto.raiz()) return 'nenhum projeto aberto (␣ o)';
+    if (!this.projeto.raiz()) return 'nenhum projeto aberto (Alt+Shift+O)';
     if (this.busca.filtro() === 'texto' && this.busca.consulta().trim().length < 2) return 'digite ao menos 2 letras';
     return this.busca.indexando() && !this.busca.indice() ? 'indexando o projeto…' : 'nada encontrado';
   });

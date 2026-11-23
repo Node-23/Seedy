@@ -10,7 +10,7 @@ type Parte = { texto: string; arquivo?: { caminho: string; linha: number; coluna
 const REF = /((?:[\w@.-]+[\\/])*[\w.-]+\.(?:ts|tsx|js|jsx|mjs|html|scss|css|json)):(\d+)(?::(\d+))?/g;
 
 /**
- * Painel de scripts do package.json (mockup 13, ␣ p): à esquerda os scripts, à direita a
+ * Painel de scripts do package.json (mockup 13, Alt+Shift+J): à esquerda os scripts, à direita a
  * saída do escolhido. ⏎ roda, x para, o abre no navegador, d depura, i npm install.
  */
 @Component({
@@ -36,7 +36,7 @@ const REF = /((?:[\w@.-]+[\\/])*[\w.-]+\.(?:ts|tsx|js|jsx|mjs|html|scss|css|json
             <button class="botao destaque" (click)="s.rodar(nome)">▶ rodar <kbd>⏎</kbd></button>
           }
         }
-        <kbd>␣ p</kbd>
+        <kbd>Alt+Shift+J</kbd>
       </div>
       <div class="scripts-corpo">
         <div #lista class="scripts-lista" tabindex="0" role="listbox" aria-label="Scripts" (keydown)="teclar($event)">

@@ -71,7 +71,7 @@ export function escreverRegras(arquivo: ArquivoRegras): string {
     '# Regras de negócio',
     '',
     `<!-- seedy: escritas ${arquivo.pelaIa ? 'pela IA' : 'do código'} em ${arquivo.escritasEm ?? agora()} -->`,
-    'Gerado pelo Seedy a partir do código (␣ A, aba Regras). Edite à vontade: o título e o texto',
+    'Gerado pelo Seedy a partir do código (Alt+7, aba Regras). Edite à vontade: o título e o texto',
     'são seus; o comentário `seedy` de cada regra liga a regra ao código e guarda a revisão.',
   ];
   const dominios = [...new Set(arquivo.regras.map((r) => r.dominio))];

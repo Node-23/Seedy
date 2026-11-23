@@ -205,7 +205,7 @@ export class BuscaProjetoComponent {
   });
 
   protected readonly mensagemVazia = computed(() => {
-    if (!this.projeto.raiz()) return 'nenhum projeto aberto (␣ o)';
+    if (!this.projeto.raiz()) return 'nenhum projeto aberto (Alt+Shift+O)';
     if (!this.servico.consulta()) return 'digite o texto a buscar';
     return this.buscando() ? 'buscando…' : 'nada encontrado';
   });

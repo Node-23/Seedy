@@ -42,7 +42,7 @@ const GRUPOS_SPRING: [string, string][] = [
 
 const CHAVE = 'seedy.novoProjeto';
 
-/** Janela de novo projeto (mockup 12, ␣ N). */
+/** Janela de novo projeto (mockup 12, Alt+Shift+N). */
 @Injectable({ providedIn: 'root' })
 export class NovoProjetoService {
   private readonly projeto = inject(ProjetoService);

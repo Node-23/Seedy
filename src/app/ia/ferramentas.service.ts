@@ -484,7 +484,7 @@ export class FerramentasService {
 
   private estadoDoServidor(): string {
     const perfis = this.servidor.doProjeto();
-    if (!perfis.length) return 'nenhum servidor configurado neste projeto (o usuário cria com ␣ j → n)';
+    if (!perfis.length) return 'nenhum servidor configurado neste projeto (o usuário cria com Alt+4 → n)';
     return perfis
       .map((p) => {
         const e = this.servidor.execucoes().get(p.id);
@@ -910,7 +910,7 @@ export class FerramentasService {
 
   private conexoes(): string {
     const perfis = this.banco.perfis();
-    if (!perfis.length) return 'nenhuma conexão configurada (o usuário cria com ␣ d → n)';
+    if (!perfis.length) return 'nenhuma conexão configurada (o usuário cria com Alt+Shift+D → n)';
     return perfis
       .map((p) => `${p.nome} — ${NOME_DO_AMBIENTE[p.ambiente] ?? p.ambiente}, ${p.tipo}, ${p.banco}${p.somenteLeitura ? ', somente leitura' : ''}${this.banco.conectado(p.id) ? ', conectada' : ''}`)
       .join('\n');

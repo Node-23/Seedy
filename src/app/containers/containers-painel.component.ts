@@ -6,8 +6,8 @@ import { EditorService } from '../editor/editor.service';
 const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } as const;
 
 /**
- * Painel de containers embaixo do editor (mockup 16, ␣ h): a lista com o que cada um usa
- * e os logs do escolhido. ␣ D abre o mapa em tela cheia.
+ * Painel de containers embaixo do editor (mockup 16, Alt+8): a lista com o que cada um usa
+ * e os logs do escolhido. Alt+Shift+8 abre o mapa em tela cheia.
  */
 @Component({
   selector: 'sd-containers-painel',
@@ -29,8 +29,8 @@ const NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DEBUG' } a
           <button class="botao" [class.perigo]="c.estado === 'running'" (click)="d.iniciarOuParar(c.nome)">{{ c.estado === 'running' ? '■ parar' : '▶ iniciar' }} <kbd>s</kbd></button>
           <button class="botao" (click)="d.abrirTerminal(c.nome)">&gt;_ terminal <kbd>t</kbd></button>
         }
-        <button class="botao" (click)="layout.tela.set('containers')">◇ mapa <kbd>␣ D</kbd></button>
-        <kbd>␣ h</kbd>
+        <button class="botao" (click)="layout.tela.set('containers')">◇ mapa <kbd>Alt+Shift+8</kbd></button>
+        <kbd>Alt+8</kbd>
       </div>
       <div class="scripts-corpo docker-painel-corpo">
         <div #lista class="scripts-lista" tabindex="0" role="listbox" aria-label="Containers" (keydown)="teclar($event)">

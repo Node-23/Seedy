@@ -2114,3 +2114,6 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .menu-vim .menu-vim-item kbd { flex: 0 0 104px; background: transparent; border: 0; padding: 0; }
 .menu-vim-linhas { grid-template-columns: max-content minmax(0, 1fr); }
 .menu-vim-grade { columns: 3 300px; }
+
+.menu-lider { width: 640px; }
+.menu-lider-atalho { margin-left: auto; font-family: inherit; font-size: 10.5px; color: var(--texto-suave); white-space: nowrap; background: transparent; border: 0; padding: 0; }

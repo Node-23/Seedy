@@ -256,7 +256,7 @@ pub async fn github_api(
     caminho: String,
     corpo: Option<serde_json::Value>,
 ) -> Result<serde_json::Value, String> {
-    let token = estado.0.lock().unwrap().clone().ok_or("conecte a conta do GitHub primeiro (␣ G)")?;
+    let token = estado.0.lock().unwrap().clone().ok_or("conecte a conta do GitHub primeiro (Alt+Shift+G)")?;
     if !caminho_permitido(&caminho) {
         return Err(format!("caminho da API não permitido: {caminho}"));
     }

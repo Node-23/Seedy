@@ -3,7 +3,7 @@ import { ConfigService } from '../config/config.service';
 import { EditorService } from '../editor/editor.service';
 import { GRUPOS_DE_VIM } from './vim-ajuda';
 
-/** A janela do Vim (␣ V, `:h` ou o clique no modo da barra de status): configuração e atalhos. */
+/** A janela do Vim (Alt+Shift+V, `:h` ou o clique no modo da barra de status): configuração e atalhos. */
 @Injectable({ providedIn: 'root' })
 export class VimAjudaService {
   readonly aberta = signal(false);
@@ -30,14 +30,14 @@ export class VimAjudaService {
       <div #quadro class="menu-vim" role="dialog" aria-label="Vim: configuração e atalhos" tabindex="-1" (keydown)="teclar($event)">
         <div class="menu-lider-topo">
           <span class="rotulo destaque">VIM · modo {{ modo() }}</span>
-          <span class="suave">esc, q ou ␣ V fecha</span>
+          <span class="suave">esc, q ou Alt+Shift+V fecha</span>
         </div>
         <div class="menu-vim-config">
           <span class="rotulo">CONFIGURAÇÃO</span>
           <div class="menu-vim-linhas">
             @for (c of configuracao(); track c[0]) { <span class="suave">{{ c[0] }}</span><span>{{ c[1] }}</span> }
           </div>
-          <div class="suave menu-vim-nota">O Vim do Seedy é o monaco-vim: ainda não lê um .vimrc. O que o Seedy liga está nas listas coloridas; as opções do editor ficam no <span class="destaque-texto">seedy.json</span> (␣ ,).</div>
+          <div class="suave menu-vim-nota">O Vim do Seedy é o monaco-vim: ainda não lê um .vimrc. O que o Seedy liga está nas listas coloridas; as opções do editor ficam no <span class="destaque-texto">seedy.json</span> (Ctrl+,).</div>
         </div>
         <div class="menu-vim-grade">
           @for (g of grupos; track g.titulo) {
@@ -71,7 +71,7 @@ export class VimAjudaComponent {
       ['quebra de linha', e.quebraDeLinha ? 'ligada' : 'desligada'],
       ['minimapa', e.minimapa ? 'ligado' : 'desligado'],
       ['formatar ao salvar', e.formatarAoSalvar ? 'sim (Prettier, nos projetos que usam)' : 'não'],
-      ['tecla líder', '␣ (espaço) no modo normal'],
+      ['menu de atalhos', 'Ctrl+Shift+Espaço (o Espaço só com atalhos.espacoAbreMenu)'],
     ];
   });
 

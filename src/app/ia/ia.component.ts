@@ -13,7 +13,7 @@ import { LayoutService } from '../layout/layout.service';
 import { nomeBase } from '../nucleo/ponte';
 
 /**
- * Painel de IA (mockup 06, ␣ a): a conversa opera a IDE pelas ferramentas; propostas de
+ * Painel de IA (mockup 06, Alt+A): a conversa opera a IDE pelas ferramentas; propostas de
  * edição viram cartões de diff (⏎ aplica, esc recusa). Com o campo vazio, ⏎ aplica a
  * proposta pendente; ctrl+l começa outra conversa.
  */
@@ -25,11 +25,11 @@ import { nomeBase } from '../nucleo/ponte';
       <div class="painel-faixa">
         <span class="rotulo destaque-texto">✦ IA</span>
         <span class="espaco"></span>
-        <label class="ia-automatico" [class.ligado]="auto.ligado()" title="Modo automático: a IA aplica edições e roda comandos sem pedir confirmação (␣ Y). O que ela muda fica em ␣ y para revisar.">
+        <label class="ia-automatico" [class.ligado]="auto.ligado()" title="Modo automático: a IA aplica edições e roda comandos sem pedir confirmação (Alt+Shift+Y). O que ela muda fica em Alt+Y para revisar.">
           <input type="checkbox" [checked]="auto.ligado()" (change)="auto.definir($any($event.target).checked)" /> automático
         </label>
         <button class="botao-icone ia-mcp" title="copiar o comando que liga o Claude Code (terminal) às ferramentas do Seedy" (click)="mcp.copiarComandoDoClaudeCode()">MCP</button>
-        <kbd>␣ a</kbd>
+        <kbd>Alt+A</kbd>
       </div>
 
       <div #lista class="ia-conversa" aria-live="polite">

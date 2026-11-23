@@ -17,7 +17,7 @@ const NOME_DO_NIVEL = { erro: 'ERROR', aviso: 'WARN ', info: 'INFO ', debug: 'DE
 const ROTULO_DAS_EXCECOES = { nenhuma: 'não para em exceções', naoTratadas: 'para nas não tratadas', todas: 'para em todas' } as const;
 
 /**
- * Depurador em tela cheia (mockup 11, ␣ x): pilha e breakpoints à esquerda, o código na
+ * Depurador em tela cheia (mockup 11, Alt+5): pilha e breakpoints à esquerda, o código na
  * linha pausada (com os valores ao lado), variáveis e expressões vigiadas à direita e o
  * console do processo embaixo. p / b / v / c focam cada parte; esc volta ao editor.
  */

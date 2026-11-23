@@ -18,7 +18,7 @@ interface Criado {
 }
 
 /**
- * Criar pull request e issue no GitHub sem sair do Seedy (␣ P / ␣ I), com a conta
+ * Criar pull request e issue no GitHub sem sair do Seedy (Alt+Shift+P / Alt+Shift+Q), com a conta
  * conectada. O PR vai da branch atual (enviada antes, se preciso) para a base escolhida.
  */
 @Injectable({ providedIn: 'root' })
@@ -138,7 +138,7 @@ export class GithubFormService {
     const caminho = `/repos/${repo.dono}/${repo.nome}`;
     const info = await ponte.github.api<{ default_branch: string }>('GET', caminho);
     if (branch === info.default_branch) {
-      this.mensagens.erro(`você está na ${branch}: crie uma branch (␣ b) para o pull request`);
+      this.mensagens.erro(`você está na ${branch}: crie uma branch (Alt+Shift+B) para o pull request`);
       return false;
     }
 

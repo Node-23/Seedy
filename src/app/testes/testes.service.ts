@@ -25,7 +25,7 @@ export type LinhaDaArvore =
   | { tipo: 'teste'; chave: string; teste: TesteInfo; estado: EstadoDeTeste; segundos: number };
 
 /**
- * Tela de testes (␣ E): lista os testes lidos do código (unitários, integração, API e e2e), roda
+ * Tela de testes (Alt+Shift+T): lista os testes lidos do código (unitários, integração, API e e2e), roda
  * pelo Maven/Gradle e mostra o resultado dos relatórios. As regras de negócio usam a mesma
  * leitura para dizer o que está coberto, inclusive os cenários que dão errado.
  */
@@ -323,7 +323,7 @@ export class TestesService {
     }
     this.layout.mostrar('scripts');
     await this.scripts.rodar(nome);
-    this.mensagens.mostrar(`rodando "npm run ${nome}" no painel de scripts (␣ p)`);
+    this.mensagens.mostrar(`rodando "npm run ${nome}" no painel de scripts (Alt+Shift+J)`);
   }
 
   // ---------- ações do detalhe ----------

@@ -49,7 +49,7 @@ const ROTULO: Record<string, string> = { seu: '« seu', deles: 'deles »', ambos
         <button class="botao" (click)="aceitarTudo('seu')">aceitar tudo seu</button>
         <button class="botao" (click)="aceitarTudo('deles')">aceitar tudo deles</button>
         <button class="botao destaque-texto merge-botao-ia" [class.ligado]="ia.aberto()" title="Conversar com a IA sobre os conflitos" (click)="ia.alternar()">
-          ✦ IA <kbd>␣ a</kbd>
+          ✦ IA <kbd>Alt+A</kbd>
         </button>
         <button class="botao destaque" (click)="resolverTudoSimples()">✦ resolver simples</button>
       </div>

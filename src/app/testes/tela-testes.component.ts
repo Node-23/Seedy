@@ -7,7 +7,7 @@ import { TesteInfo, TipoDeTeste } from '../nucleo/ponte';
 const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
 
 /**
- * Tela de testes em tela cheia (␣ E): a árvore de testes (unitários, integração, API e e2e), o
+ * Tela de testes em tela cheia (Alt+Shift+T): a árvore de testes (unitários, integração, API e e2e), o
  * detalhe do que falhou, a saída do comando e o resumo das regras de negócio cobertas.
  */
 @Component({
@@ -106,7 +106,7 @@ const TIPOS: FiltroDeTipo[] = ['todos', 'unitario', 'integracao', 'api', 'e2e'];
         </section>
 
         <section class="painel testes-regras-resumo" aria-label="Regras de negócio">
-          <div class="painel-faixa"><span class="rotulo">REGRAS DE NEGÓCIO</span><span class="espaco"></span><kbd>␣ A 2</kbd></div>
+          <div class="painel-faixa"><span class="rotulo">REGRAS DE NEGÓCIO</span><span class="espaco"></span><kbd>Alt+7 · 2</kbd></div>
           @if (resumo(); as r) {
             <div class="testes-resumo">
               <div class="testes-grande"><b class="destaque-texto">{{ r.comTeste }}</b><span class="suave">de {{ r.regras }} regras com teste ({{ r.regras ? ((r.comTeste / r.regras) * 100).toFixed(0) : 0 }}%)</span></div>

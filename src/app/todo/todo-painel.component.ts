@@ -4,7 +4,7 @@ import { TodoService } from './todo.service';
 import { Card, COR, ICONE, Ligacao } from './todo';
 
 /**
- * Painel do TODO por cima das telas (mockup 20, ␣ T): novo card, cards abertos com as
+ * Painel do TODO por cima das telas (mockup 20, Alt+6): novo card, cards abertos com as
  * ligações, os feitos embaixo e o que `l` vai ligar ao card. Tudo pelo teclado.
  */
 @Component({
@@ -13,7 +13,7 @@ import { Card, COR, ICONE, Ligacao } from './todo';
     <section class="painel todo-painel" aria-label="TODO" (keydown)="teclar($event)">
       <div class="painel-faixa">
         <span class="rotulo">TODO</span><span class="suave">{{ t.abertos().length }} {{ t.abertos().length === 1 ? 'aberto' : 'abertos' }} · {{ t.feitos().length }} {{ t.feitos().length === 1 ? 'feito' : 'feitos' }}</span>
-        <span class="espaco"></span><span class="suave">.seedy/todo.md</span><kbd>␣ T</kbd>
+        <span class="espaco"></span><span class="suave">.seedy/todo.md</span><kbd>Alt+6</kbd>
       </div>
 
       <div class="todo-novo">
