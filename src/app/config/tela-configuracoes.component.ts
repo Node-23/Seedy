@@ -1,5 +1,6 @@
 import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { ACORDES_NATIVOS, ACORDES_PADRAO, AtalhosService, rotuloDoAcorde } from '../teclado/atalhos.service';
+import { AtualizacaoService } from '../atualizacao/atualizacao.service';
 import { ConfigService } from './config.service';
 import { ConfiguracoesService, AbaConfig } from './configuracoes.service';
 import { MensagensService } from '../nucleo/mensagens.service';
@@ -30,7 +31,7 @@ const LINHAS_EDITOR: LinhaEditor[] = [
   template: `
     <div class="config-tela" tabindex="0" #raiz (keydown)="teclar($event)">
       <div class="janela-tela">
-        <div class="painel-faixa"><span class="rotulo">CONFIGURAÇÕES</span><span class="suave">{{ nomeDaAba() }}</span><span class="espaco"></span><kbd>esc</kbd></div>
+        <div class="painel-faixa"><span class="rotulo">CONFIGURAÇÕES</span><span class="suave">{{ nomeDaAba() }}</span><span class="espaco"></span>@if (atualizacao.versao()) { <span class="suave" title="versão do Seedy">Seedy {{ atualizacao.versao() }}@if (atualizacao.disponivel(); as nova) { · <span class="sucesso-texto">⬆ {{ nova.versao }} disponível</span> }</span> }<kbd>esc</kbd></div>
         <div class="config-corpo">
           <nav class="config-nav">
             <button [class.ativa]="c.aba() === 'atalhos'" (click)="c.aba.set('atalhos')"><span class="destaque-texto">⌨</span> Atalhos <kbd>1</kbd></button>
@@ -127,6 +128,7 @@ const LINHAS_EDITOR: LinhaEditor[] = [
 export class TelaConfiguracoesComponent {
   protected readonly c = inject(ConfiguracoesService);
   protected readonly config = inject(ConfigService);
+  protected readonly atualizacao = inject(AtualizacaoService);
   private readonly atalhos = inject(AtalhosService);
   private readonly mensagens = inject(MensagensService);
   private readonly editor = inject(EditorService);
