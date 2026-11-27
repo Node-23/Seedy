@@ -1,6 +1,6 @@
 [package]
 name = "seedy"
-version = "0.5.8"
+version = "0.5.9"
 description = "Seedy — IDE minimalista para Java, Angular e React"
 authors = ["Matheus Vinicius Linhares"]
 license-file = "../LICENSE.md"
