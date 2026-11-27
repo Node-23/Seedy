@@ -8,7 +8,7 @@ import { GitService } from '../git/git.service';
 import { MergeService } from '../git/merge.service';
 import { CommitService } from '../git/commit.service';
 import { ExecucaoService } from '../execucao/execucao.service';
-import { CAMINHO_DO_LOGO } from '../marca/logo';
+import { CAMINHO_DO_LOGO, VIEWBOX_DO_LOGO } from '../marca/logo';
 import { DockerService } from '../containers/docker.service';
 
 /**
@@ -20,7 +20,7 @@ import { DockerService } from '../containers/docker.service';
   template: `
     <header class="barra-topo" data-tauri-drag-region>
       <button class="botao-quadrado destaque grande logo" aria-label="Menu de atalhos" title="Atalhos (Ctrl+Shift+Espaço)" (click)="atalhos.alternarLider()">
-        <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" [attr.d]="logo"></path></svg>
+        <svg width="28" height="28" [attr.viewBox]="viewBoxDoLogo" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" [attr.d]="logo"></path></svg>
       </button>
       <button class="chip-projeto" title="Abrir outro projeto (Alt+Shift+O)" (click)="projeto.escolher()">
         <span class="forte">{{ projeto.nome() ?? 'abrir projeto' }}</span>
@@ -115,6 +115,7 @@ export class BarraTopoComponent {
   protected readonly commit = inject(CommitService);
   protected readonly janela = ponte.janela;
   protected readonly logo = CAMINHO_DO_LOGO;
+  protected readonly viewBoxDoLogo = VIEWBOX_DO_LOGO;
   protected readonly docker = inject(DockerService);
   protected readonly exec = inject(ExecucaoService);
 
