@@ -1,6 +1,6 @@
 {
   "name": "seedy",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
