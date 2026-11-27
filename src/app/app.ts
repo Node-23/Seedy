@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { BarraTopoComponent } from './barra/barra-topo.component';
 import { BarraStatusComponent } from './barra/barra-status.component';
@@ -84,7 +84,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, LoginEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, ErroComponent, ListaDeNotificacoesComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent, InicioComponent,
   ],
   template: `
-    <div class="seedy">
+    <div class="seedy" [class.so-inicio]="semProjeto()">
       <!-- Sem projeto: a tela de início toma o lugar das barras e do editor (mockup 30). -->
       @if (!semProjeto()) { <sd-barra-topo /> }
 
@@ -232,6 +232,13 @@ export class App {
         `o Seedy fechou com um erro: ${resumoDoPanico(f.detalhe)}`,
         `No Seedy ${f.versao}, em ${quando}.\n${f.detalhe}`,
       );
+    });
+    // Antes do acompanhamento da abertura: a janela já aparece no tamanho certo.
+    effect(() => {
+      // Enquanto o projeto não está pronto não se sabe qual das duas é.
+      if (!this.projeto.pronto()) return;
+      // O novo projeto não cabe no cartão: enquanto está aberto, a janela volta ao tamanho de trabalho.
+      void ponte.janela.inicio(this.semProjeto() && !this.novoProjeto.aberta());
     });
     inject(AberturaService).acompanhar();
   }

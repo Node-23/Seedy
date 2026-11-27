@@ -897,6 +897,10 @@ export const ponte = {
   },
 
   janela: {
+    /** Na tela de início a janela fica do tamanho do cartão; fora dela volta ao que era. */
+    async inicio(ativa: boolean) {
+      if (noApp()) await invoke<void>('janela_inicio', { ativa });
+    },
     async minimizar() {
       if (noApp()) (await import('@tauri-apps/api/window')).getCurrentWindow().minimize();
     },

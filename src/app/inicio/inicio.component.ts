@@ -37,22 +37,19 @@ const PASSOS = [
   host: { '(window:keydown)': 'teclar($event)' },
   template: `
     <div class="inicio">
-      <div class="inicio-topo" data-tauri-drag-region>
-        <span data-tauri-drag-region>Seedy</span>
+      <main class="painel inicio-painel">
+        <!-- A janela é o próprio cartão: o topo dele arrasta e tem os botões da janela. -->
+        <div class="inicio-arrasto" data-tauri-drag-region></div>
         <div class="inicio-direita">
           <sd-sino />
           <div class="janela">
             <button aria-label="Minimizar" (click)="janela.minimizar()">–</button>
-            <button aria-label="Maximizar" (click)="janela.maximizar()">□</button>
             <button aria-label="Fechar" (click)="janela.fechar()">×</button>
           </div>
         </div>
-      </div>
-
-      <main class="painel inicio-painel">
-        <div class="inicio-marca">
-          <img src="marca/icone.png" alt="">
-          <div><b>Seedy</b><span class="suave">{{ versao() ? 'versão ' + versao() : '' }}</span></div>
+        <div class="inicio-marca" data-tauri-drag-region>
+          <img src="marca/icone.png" alt="" data-tauri-drag-region>
+          <div data-tauri-drag-region><b data-tauri-drag-region>Seedy</b><span class="suave" data-tauri-drag-region>{{ versao() ? 'versão ' + versao() : '' }}</span></div>
         </div>
         <p class="inicio-sub suave">Crie um projeto do zero, abra uma pasta ou clone um repositório.</p>
 

@@ -27,6 +27,7 @@ mod env;
 mod falhas;
 mod relatorio;
 mod icone;
+mod janela;
 mod tema;
 
 pub fn run() {
@@ -93,6 +94,7 @@ pub fn run() {
             ia::ia_mensagem,
             ia::ia_claude_estado,
             ia::abrir_link,
+            janela::janela_inicio,
             falhas::falha_anterior,
             relatorio::relatorio_enviar,
             ia::ia_uso,
