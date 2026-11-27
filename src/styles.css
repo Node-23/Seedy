@@ -253,6 +253,7 @@ sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda { display: con
 /* ---------- editor ---------- */
 
 .editor { overflow: visible; }
+.painel.editor, .merge-resultado { position: relative; }
 .migalhas { justify-content: flex-start; gap: 8px; padding-right: 70px; color: var(--texto-suave); }
 .migalhas .atual { color: var(--texto); }
 /* Painel estreito (editor dividido): some o começo do caminho, o nome do arquivo fica. */
@@ -339,32 +340,18 @@ sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda { display: con
 .barra-status .jdtls[data-fase='erro'], .barra-status .jdtls[data-fase='sem-java'] { color: var(--erro); }
 .barra-status .jdtls[data-fase='navegador'] { color: var(--texto-suave); }
 
-/* Linha do Vim (":"): dentro da margem de baixo da janela, sem tirar altura do editor. */
-.linha-de-comando {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 0;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 6px;
-  line-height: 14px;
-  font-size: 11px;
-  color: var(--texto-suave);
-}
-.vim-linha { display: flex; align-items: center; min-width: 0; }
+/* O que o vim digita (":", "/", avisos): caixa no canto de cima, à direita, do painel do arquivo. */
+.vim-linha { position: absolute; top: 0; right: 8px; z-index: 6; height: 36px; max-width: calc(100% - 16px); display: flex; align-items: center; pointer-events: none; }
 .vim-linha input {
   background: transparent;
   border: 0;
   outline: none;
   color: var(--texto);
   font-family: inherit;
-  font-size: 11px;
-  height: 14px;
+  font-size: 12px;
+  height: 18px;
   padding: 0;
-  width: 60vw;
+  width: 240px;
 }
 
 /* ---------- menu do líder ---------- */
@@ -403,10 +390,12 @@ sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda { display: con
 .menu-lider-item > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .menu-lider-item .em-breve { margin-left: auto; font-size: 10px; opacity: 0.8; white-space: nowrap; }
 
-/* O modo já aparece na statusline; na linha de comando fica só o que o vim digita. */
-.vim-linha .vim-painel { display: flex; align-items: center; min-width: 0; }
-.vim-linha .vim-painel[hidden] { display: none; }
-.vim-linha .vim-painel > span:first-child { display: none; }
+/* O modo já aparece na statusline; a caixa só existe quando o vim tem algo a mostrar.
+   (o monaco-vim põe display no próprio elemento, por isso o !important) */
+.vim-linha .vim-painel { display: none !important; align-items: center; gap: 8px; min-width: 0; height: 26px; padding: 0 10px; pointer-events: auto; white-space: nowrap; overflow: hidden; border: var(--espessura-borda) solid var(--destaque); border-radius: var(--raio-pequeno); background: var(--fundo); color: var(--texto); font-size: 12px; }
+.vim-linha .vim-painel:has(input), .vim-linha .vim-painel:has(.vim-notification:not(:empty)), .vim-linha .vim-painel:has(> span:last-child:not(:empty)) { display: flex !important; }
+.vim-linha .vim-painel > span:first-child, .vim-linha .vim-painel > span:empty { display: none; }
+.vim-linha .vim-painel > span { display: flex; align-items: center; gap: 4px; min-width: 0; }
 /* Editor dividido: o painel sem foco fica apagado. */
 .painel.editor.desfocado .migalhas { opacity: 0.55; }
 .painel.editor.desfocado .editor-corpo { opacity: 0.85; }

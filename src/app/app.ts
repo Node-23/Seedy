@@ -172,10 +172,6 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       </div>
 
       @if (!semProjeto()) { <sd-barra-status /> }
-      <div class="linha-de-comando">
-        <div id="vim-linha-de-comando" class="vim-linha"></div>
-      </div>
-
       <!-- Avisos: fora da região principal, para valerem por cima de qualquer janela aberta. -->
       <sd-notificacoes />
       <sd-erro />

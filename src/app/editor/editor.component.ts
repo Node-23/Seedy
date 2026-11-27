@@ -69,6 +69,8 @@ let exDefinidos = false;
           }
         </div>
       }
+      <!-- O que o vim digita (":", "/", avisos) aparece aqui, no canto de cima do painel. -->
+      <div #linhaVim class="vim-linha"></div>
       <div class="editor-corpo">
         <div #hospedeiro class="editor-monaco" [class.oculto]="!buffer()"></div>
         @if (sql()) {
@@ -107,6 +109,7 @@ export class EditorComponent {
   private readonly layout = inject(LayoutService);
   private readonly merge = inject(MergeService);
   private readonly hospedeiro = viewChild.required<ElementRef<HTMLDivElement>>('hospedeiro');
+  private readonly linhaVim = viewChild.required<ElementRef<HTMLDivElement>>('linhaVim');
 
   /** Qual painel este é (0 = esquerda; 1 = direita, quando o editor está dividido). */
   readonly painel = input<0 | 1>(0);
@@ -144,7 +147,6 @@ export class EditorComponent {
 
   /** Instância do Monaco deste painel (vira não-nula depois de criada). */
   private readonly instancia = signal<monaco.editor.IStandaloneCodeEditor | null>(null);
-  private barraVim: HTMLElement | null = null;
 
   protected readonly migalhas = computed(() => {
     const b = this.buffer();
@@ -211,12 +213,10 @@ export class EditorComponent {
       this.instancia.set(instancia);
       instancia.setModel(this.buffer()?.modelo ?? null);
 
-      // Cada painel tem o seu vim, com a sua linha de comando no rodapé
-      // (só a do painel focado aparece).
+      // Cada painel tem o seu vim, com a sua linha de comando.
       const barraVim = document.createElement('span');
       barraVim.className = 'vim-painel';
-      document.getElementById('vim-linha-de-comando')?.appendChild(barraVim);
-      this.barraVim = barraVim;
+      this.linhaVim().nativeElement.appendChild(barraVim);
       const vim = initVimMode(instancia, barraVim);
       vim.on('vim-mode-change', (e: { mode: ModoVim }) => {
         if (this.focado()) this.editor.modo.set(e.mode);
@@ -275,12 +275,6 @@ export class EditorComponent {
         this.editor.mostrarModelo(b?.modelo ?? null, true, instancia);
         if (b && this.focado()) queueMicrotask(() => instancia.focus());
       }
-    });
-
-    // Só a linha de comando do vim do painel focado aparece no rodapé.
-    effect(() => {
-      const focado = this.focado();
-      if (this.instancia() && this.barraVim) this.barraVim.hidden = !focado;
     });
 
     // Opções do editor vêm do seedy.json (editor.*).

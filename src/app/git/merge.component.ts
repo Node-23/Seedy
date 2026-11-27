@@ -60,6 +60,7 @@ const ROTULO: Record<string, string> = { seu: '« seu', deles: 'deles »', ambos
         </section>
         <section class="painel merge-coluna merge-resultado">
           <div class="painel-faixa"><span class="rotulo">RESULTADO</span><span>será gravado</span></div>
+          <div #linhaVim class="vim-linha"></div>
           <div #hostResultado class="merge-monaco"></div>
         </section>
         <section class="painel merge-coluna">
@@ -81,6 +82,7 @@ export class MergeComponent {
   private readonly escolha = inject(EscolhaService);
   private readonly mensagens = inject(MensagensService);
   private readonly hostSeu = viewChild.required<ElementRef<HTMLDivElement>>('hostSeu');
+  private readonly linhaVim = viewChild.required<ElementRef<HTMLDivElement>>('linhaVim');
   private readonly hostResultado = viewChild.required<ElementRef<HTMLDivElement>>('hostResultado');
   private readonly hostDeles = viewChild.required<ElementRef<HTMLDivElement>>('hostDeles');
 
@@ -128,10 +130,10 @@ export class MergeComponent {
       this.eResultado = monaco.editor.create(this.hostResultado().nativeElement, opcoes(false));
       this.eDeles = monaco.editor.create(this.hostDeles().nativeElement, opcoes(true));
 
-      // Vim no resultado, com a linha de comando dele no rodapé.
+      // Vim no resultado, com a linha de comando no canto de cima da coluna.
       const barra = document.createElement('span');
       barra.className = 'vim-painel';
-      document.getElementById('vim-linha-de-comando')?.appendChild(barra);
+      this.linhaVim().nativeElement.appendChild(barra);
       const vim = initVimMode(this.eResultado, barra);
       vim.on('vim-mode-change', (e: { mode: 'normal' | 'insert' | 'visual' | 'replace' }) => this.editor.modo.set(e.mode));
       // dp / do: o "d" do vim é operador e engole o mapeamento; então, com "d" pendente,
@@ -146,7 +148,8 @@ export class MergeComponent {
           ev.preventDefault();
           ev.stopImmediatePropagation();
           (vim as unknown as { state: { vim: { inputState: unknown } } }).state.vim.inputState = new (estado.inputState.constructor as new () => unknown)();
-          barra.textContent = '';
+          // Só o que estava pendente (o último elemento); o resto da linha o vim continua usando.
+          if (barra.lastElementChild) barra.lastElementChild.textContent = '';
           this.servico.acoes?.pegar(ev.key === 'p' ? 'seu' : 'deles');
         },
         true,
