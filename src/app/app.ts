@@ -60,6 +60,7 @@ import { MenuRegraComponent } from './testes/menu-regra.component';
 import { ToastsComponent } from './nucleo/toasts.component';
 import { ErroComponent } from './notificacoes/erro.component';
 import { ListaDeNotificacoesComponent } from './notificacoes/lista.component';
+import { resumoDoPanico } from './notificacoes/relatorio';
 import { ponte } from './nucleo/ponte';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
 import { MenuAnexoComponent } from './ia/menu-anexo.component';
@@ -226,7 +227,16 @@ export class App {
     void inject(ConfigService).iniciar();
     void this.projeto.iniciar();
     // O núcleo avisa quando algo quebra nele (pânico no Rust).
-    void ponte.aoFalhar((detalhe) => this.mensagens.falha('o núcleo do Seedy falhou', detalhe));
+    void ponte.aoFalhar((detalhe) => this.mensagens.falha(`o núcleo do Seedy falhou: ${resumoDoPanico(detalhe)}`, detalhe));
+    // E se o pânico derrubou o app, o aviso fica para esta abertura.
+    void ponte.falhaAnterior().then((f) => {
+      if (!f) return;
+      const quando = new Date(f.quando).toLocaleString('pt-BR');
+      this.mensagens.falha(
+        `o Seedy fechou com um erro: ${resumoDoPanico(f.detalhe)}`,
+        `No Seedy ${f.versao}, em ${quando}.\n${f.detalhe}`,
+      );
+    });
     inject(AberturaService).acompanhar();
   }
 

@@ -483,6 +483,18 @@ export const ponte = {
     if (noApp()) await listen<string>('seedy://falha', (e) => quando(e.payload));
   },
 
+  /** Manda um relatório de falha do Seedy ao Sentry. */
+  async enviarRelatorio(evento: object): Promise<void> {
+    if (noApp()) return invoke<void>('relatorio_enviar', { evento });
+    await new Promise((r) => setTimeout(r, 600));
+    console.info('relatório (modo navegador, nada foi enviado)', evento);
+  },
+
+  /** O erro que derrubou o Seedy da última vez, se houve (só é entregue uma vez). */
+  async falhaAnterior(): Promise<{ versao: string; quando: number; detalhe: string } | null> {
+    return noApp() ? invoke('falha_anterior') : null;
+  },
+
   async abrirLink(url: string): Promise<void> {
     if (noApp()) return invoke<void>('abrir_link', { url });
     window.open(url, '_blank', 'noopener');

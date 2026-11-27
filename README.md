@@ -94,8 +94,9 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
   containers, debug, entender o sistema e IA (a barra de cima ficou com o projeto, os buffers e o
   RUN/DEBUG).
 - **Avisos e erros** em toasts, com o sino (`Alt+Shift+H`) guardando o que passou; clicar mostra o texto
-  inteiro. Falha do próprio Seedy pode ser enviada por e-mail para análise: abre o seu programa de e-mail
-  com o relatório pronto (sem código nem senhas), e quem envia é você.
+  inteiro. Falha do próprio Seedy pode ser enviada para análise (Sentry) com um clique: você vê o texto
+  antes, vai sem código nem senhas, e nada é enviado sozinho. Se o erro derrubar o
+  Seedy, o aviso aparece na próxima abertura.
 - **seedy.json** (`Ctrl+,`) e **layout editável** (`Alt+Shift+L`, ou arrastar a faixa de um painel): ver a
   seção [seedy.json](#seedyjson).
 - **TODO** (mockup 20, `Alt+6` ou o botão na barra de ícones à esquerda): um painel por cima das

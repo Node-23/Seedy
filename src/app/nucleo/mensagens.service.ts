@@ -13,7 +13,7 @@ export interface Notificacao {
   /** Falha do próprio Seedy: o popup oferece enviar para análise. */
   doSeedy: boolean;
   vista: boolean;
-  /** O e-mail com o relatório já foi aberto. */
+  /** O relatório já foi enviado. */
   enviada: boolean;
 }
 

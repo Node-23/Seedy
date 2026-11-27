@@ -5,13 +5,13 @@ import { AtualizacaoService } from '../atualizacao/atualizacao.service';
 import { RecentesService } from '../inicio/recentes.service';
 import { LayoutService } from '../layout/layout.service';
 import { ponte } from '../nucleo/ponte';
-import { hora, limpar, linkDeEmail, montarRelatorio } from './relatorio';
+import { DadosDoRelatorio, eventoDoSentry, hora, montarRelatorio } from './relatorio';
 
 const ROTULO = { info: 'MENSAGEM', aviso: 'AVISO', erro: 'ERRO' };
 
 /**
  * A notificação inteira (mockup 35). Nas falhas do Seedy, o desenvolvedor pode contar o que fazia
- * e mandar o relatório por e-mail, vendo antes o texto exato.
+ * e enviar o relatório ao Sentry do projeto, vendo antes o texto exato.
  * Teclado: Ctrl+⏎ envia, c copia, v mostra o texto, esc fecha.
  */
 @Component({
@@ -41,7 +41,7 @@ const ROTULO = { info: 'MENSAGEM', aviso: 'AVISO', erro: 'ERRO' };
             </label>
             <div class="erro-junto">
               <b>Vai junto, e só isto:</b>
-              <span class="suave">{{ resumo() }}<br>Sem código, sem senhas; o nome do seu usuário é trocado por “~” nos caminhos.</span>
+              <span class="suave">{{ resumo() }}<br>Sem código, sem senhas; o nome do seu usuário é trocado por “~” nos caminhos.<br>Vai para o painel de erros do Seedy (Sentry), só quando você apertar enviar.</span>
               <button class="erro-ver" (click)="verTexto.set(!verTexto())"><kbd>v</kbd> {{ verTexto() ? 'voltar a ver só o erro' : 'ver o texto exato antes de enviar' }}</button>
             </div>
           }
@@ -50,7 +50,11 @@ const ROTULO = { info: 'MENSAGEM', aviso: 'AVISO', erro: 'ERRO' };
           <button class="botao" (click)="copiar()">copiar <kbd>c</kbd></button>
           <span class="espaco"></span>
           <button class="botao" (click)="fechar()">fechar <kbd>esc</kbd></button>
-          @if (n.doSeedy) { <button class="botao destaque" (click)="enviar()">enviar para análise <kbd>Ctrl+⏎</kbd></button> }
+          @if (n.doSeedy) {
+            <button class="botao destaque" [disabled]="enviando() || n.enviada" (click)="enviar()">
+              @if (n.enviada) { enviado ✓ } @else if (enviando()) { enviando… } @else { enviar para análise <kbd>Ctrl+⏎</kbd> }
+            </button>
+          }
         </div>
       </div>
     }
@@ -67,6 +71,7 @@ export class ErroComponent {
 
   protected readonly oQueFazia = signal('');
   protected readonly verTexto = signal(false);
+  protected readonly enviando = signal(false);
 
   protected readonly rotulo = computed(() => {
     const n = this.m.aberta();
@@ -126,7 +131,11 @@ export class ErroComponent {
   }
 
   protected relatorio(): string {
-    return montarRelatorio({
+    return montarRelatorio(this.dados());
+  }
+
+  private dados(): DadosDoRelatorio {
+    return {
       erro: this.m.aberta()!,
       oQueFazia: this.oQueFazia(),
       versao: this.atualizacao.versao() || '?',
@@ -134,7 +143,7 @@ export class ErroComponent {
       projeto: this.tipoDoProjeto(),
       tela: this.tela(),
       ultimas: this.m.historico().slice(0, 10),
-    });
+    };
   }
 
   protected fechar(): void {
@@ -148,22 +157,25 @@ export class ErroComponent {
     else this.m.alerta('não consegui copiar');
   }
 
-  /** Abre o e-mail pronto; quem envia é o desenvolvedor, no programa de e-mail dele. */
+  /** Envia na hora. Se não der, o relatório fica copiado e o popup continua aberto para tentar de novo. */
   protected async enviar(): Promise<void> {
     const n = this.m.aberta();
-    if (!n?.doSeedy) return;
-    const relatorio = this.relatorio();
-    const copiou = await this.paraAAreaDeTransferencia(relatorio);
-    const assunto = limpar(`[Seedy ${this.atualizacao.versao() || '?'}] ${n.titulo}`).slice(0, 120);
+    if (!n?.doSeedy || n.enviada || this.enviando()) return;
+    const dados = this.dados();
+    this.enviando.set(true);
     try {
-      await ponte.abrirLink(linkDeEmail(assunto, relatorio));
+      await ponte.enviarRelatorio(eventoDoSentry(dados));
     } catch (e) {
-      this.m.erro(`não consegui abrir o e-mail${copiou ? ' (o relatório está copiado)' : ''}: ${e}`);
+      const copiou = await this.paraAAreaDeTransferencia(montarRelatorio(dados));
+      this.m.erro(`não consegui enviar o relatório${copiou ? ' (ele está copiado)' : ''}: ${e}`);
       return;
+    } finally {
+      this.enviando.set(false);
     }
     this.m.marcarEnviada(n.id);
-    this.fechar();
-    this.m.mostrar(`confira o e-mail e clique em enviar${copiou ? ' · relatório copiado' : ''}`);
+    // O desenvolvedor pode ter fechado, ou aberto outra, enquanto enviava.
+    if (this.m.aberta()?.id === n.id) this.fechar();
+    this.m.mostrar('relatório enviado · obrigado');
   }
 
   private async paraAAreaDeTransferencia(texto: string): Promise<boolean> {

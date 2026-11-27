@@ -1,11 +1,5 @@
 import { Notificacao } from '../nucleo/mensagens.service';
 
-/** Para onde os relatórios de erro vão (o e-mail do projeto). */
-export const EMAIL_DOS_RELATORIOS = 'matheus.dev@hotmail.com';
-
-/** O limite do `abrir_link` do núcleo (e de vários programas de e-mail). */
-const LIMITE_DO_LINK = 2000;
-
 export interface DadosDoRelatorio {
   erro: Notificacao;
   oQueFazia: string;
@@ -17,6 +11,12 @@ export interface DadosDoRelatorio {
 }
 
 export const hora = (d: Date): string => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+/** A mensagem de um pânico ("panicked at arquivo:linha:coluna:" vem antes dela). */
+export const resumoDoPanico = (detalhe: string): string => {
+  const [primeira, segunda] = detalhe.split('\n');
+  return (segunda || primeira).slice(0, 80);
+};
 
 /** Tira o nome do usuário dos caminhos e o que parecer senha ou token. */
 export function limpar(texto: string): string {
@@ -44,18 +44,18 @@ export function montarRelatorio(d: DadosDoRelatorio): string {
   return limpar(linhas.join('\n'));
 }
 
-/** `mailto:` com o relatório; se não couber, corta e avisa que o inteiro está copiado. */
-export function linkDeEmail(assunto: string, relatorio: string): string {
-  const montar = (corpo: string) => `mailto:${EMAIL_DOS_RELATORIOS}?subject=${codificar(assunto)}&body=${codificar(corpo.replace(/\n/g, '\r\n'))}`;
-  const inteiro = montar(relatorio);
-  if (inteiro.length <= LIMITE_DO_LINK) return inteiro;
-  const aviso = 'O relatório completo está copiado: apague este texto e cole com Ctrl+V.\n\n';
-  let tamanho = relatorio.length;
-  while (tamanho > 0 && montar(aviso + relatorio.slice(0, tamanho)).length > LIMITE_DO_LINK) tamanho -= 50;
-  return montar(aviso + relatorio.slice(0, Math.max(0, tamanho)));
-}
-
-/** encodeURIComponent que não quebra num par substituto cortado ao meio. */
-function codificar(texto: string): string {
-  return encodeURIComponent(texto.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, ''));
+/** O evento que vai ao Sentry: tudo passa por `limpar`. Falhas iguais são agrupadas pelo título. */
+export function eventoDoSentry(d: DadosDoRelatorio): object {
+  const titulo = limpar(d.erro.titulo);
+  return {
+    event_id: crypto.randomUUID().replace(/-/g, ''),
+    timestamp: d.erro.quando.getTime() / 1000,
+    platform: 'other',
+    level: 'error',
+    release: `seedy@${d.versao}`,
+    message: { formatted: titulo },
+    fingerprint: [titulo],
+    tags: { sistema: d.sistema, projeto: d.projeto, tela: d.tela },
+    extra: { o_que_fazia: limpar(d.oQueFazia.trim()) || '(não contou)', relatorio: montarRelatorio(d) },
+  };
 }

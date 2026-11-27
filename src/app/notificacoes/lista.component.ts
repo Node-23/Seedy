@@ -70,7 +70,7 @@ export class ListaDeNotificacoesComponent {
 
   protected detalhe(n: Notificacao): string {
     const partes = [hora(n.quando)];
-    if (n.doSeedy) partes.push('erro do Seedy', n.enviada ? 'e-mail aberto' : 'não enviado');
+    if (n.doSeedy) partes.push('erro do Seedy', n.enviada ? 'enviado' : 'não enviado');
     else if (n.tipo === 'erro') partes.push('erro do projeto');
     return partes.join(' · ');
   }

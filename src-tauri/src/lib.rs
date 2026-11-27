@@ -25,10 +25,12 @@ mod testes;
 mod web;
 mod env;
 mod falhas;
+mod relatorio;
 mod icone;
 mod tema;
 
 pub fn run() {
+    falhas::registrar();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(terminal::Terminais::default())
@@ -91,6 +93,8 @@ pub fn run() {
             ia::ia_mensagem,
             ia::ia_claude_estado,
             ia::abrir_link,
+            falhas::falha_anterior,
+            relatorio::relatorio_enviar,
             ia::ia_uso,
             banco::banco_perfis,
             banco::banco_salvar_perfil,
@@ -171,6 +175,7 @@ pub fn run() {
                 app.state::<web::Tarefas>().encerrar_todas();
                 app.state::<web::JsDebug>().encerrar();
                 processos::encerrar_descendentes();
+                falhas::saiu_bem();
             }
         });
 }
