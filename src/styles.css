@@ -2136,3 +2136,5 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .login-endpoints .busca-campo { gap: 12px; }
 .login-endpoints .login-rotulo { width: 64px; flex-shrink: 0; color: var(--texto-suave); font-size: 12px; }
 .login-endpoints .login-erro { padding: 8px 14px; font-size: 12px; line-height: 1.5; border-bottom: var(--espessura-borda) solid var(--borda); background: var(--erro-fundo); }
+/* Botão dos atalhos como na arte da marca: broto verde sobre fundo escuro (as nervuras mostram o fundo). */
+.barra-topo .botao-quadrado.logo { background: var(--painel); color: var(--destaque); }

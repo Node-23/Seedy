@@ -19,7 +19,7 @@ import { DockerService } from '../containers/docker.service';
   selector: 'sd-barra-topo',
   template: `
     <header class="barra-topo" data-tauri-drag-region>
-      <button class="botao-quadrado destaque grande logo" aria-label="Menu de atalhos" title="Atalhos (Ctrl+Shift+Espaço)" (click)="atalhos.alternarLider()">
+      <button class="botao-quadrado grande logo" aria-label="Menu de atalhos" title="Atalhos (Ctrl+Shift+Espaço)" (click)="atalhos.alternarLider()">
         <svg width="28" height="28" [attr.viewBox]="viewBoxDoLogo" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" [attr.d]="logo"></path></svg>
       </button>
       <button class="chip-projeto" title="Abrir outro projeto (Alt+Shift+O)" (click)="projeto.escolher()">
