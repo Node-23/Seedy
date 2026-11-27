@@ -79,10 +79,12 @@ let exDefinidos = false;
         }
         @if (!buffer()) {
           <div class="editor-vazio">
-            <div class="logo">seedy</div>
+            <div class="editor-vazio-marca"><img src="marca/icone.png" alt=""><span>Seedy</span></div>
             @if (projeto.raiz()) {
-              <p>Nenhum arquivo aberto.</p>
-              <p class="suave"><kbd>Ctrl+Shift+Espaço</kbd> menu de atalhos · <kbd>Alt+1</kbd> arquivos · <kbd>alt f12</kbd> terminal</p>
+              <p class="suave">Nenhum arquivo aberto.</p>
+              <div class="editor-vazio-atalhos">
+                @for (a of atalhosDoVazio(); track a.rotulo) { <div><span>{{ a.rotulo }}</span><kbd>{{ a.tecla }}</kbd></div> }
+              </div>
             } @else {
               <p>Nenhum projeto aberto.</p>
               <button class="botao destaque" (click)="projeto.escolher()">abrir pasta <kbd>Alt+Shift+O</kbd></button>
@@ -118,6 +120,19 @@ export class EditorComponent {
     const id = this.banco.associacoes().get(b.caminho);
     const perfil = this.banco.perfis().find((p) => p.id === id) ?? null;
     return { perfil, conectado: !!perfil && this.banco.sessoes().has(perfil.id) };
+  });
+
+  /** Os atalhos da tela sem arquivo aberto, já com as teclas que o usuário trocou (mockup 31). */
+  protected readonly atalhosDoVazio = computed(() => {
+    this.config.atual(); // as teclas trocadas vêm do seedy.json
+    const acao = (rotulo: string, id: string) => ({ rotulo, tecla: this.atalhos.rotuloDoAtalho(id) });
+    return [
+      acao('buscar arquivo', 'buscar-arquivo'),
+      acao('buscar no projeto', 'buscar-no-projeto'),
+      acao('árvore de arquivos', 'arquivos'),
+      acao('terminal', 'terminal'),
+      { rotulo: 'menu de atalhos', tecla: 'Ctrl+Shift+Espaço' },
+    ].filter((a) => a.tecla);
   });
 
   protected nomeDoAmbiente(a: string): string {

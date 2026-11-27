@@ -16,7 +16,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Terminal integrado** com abas: shell de verdade (PowerShell no Windows, seu `$SHELL` no Linux).
 - **Tema editável** (cores, fontes e forma), aplicado na hora em que você salva o arquivo.
 - **Atalhos diretos**, um acorde só como no IntelliJ (`Alt+9` Git, `Alt+5` debug, `Alt+Shift+T` testes...), trocáveis em `Ctrl+,` ou no `seedy.json`; o menu de atalhos (`Ctrl+Shift+Espaço` ou o botão da logo) lista todos.
-- **Abertura e tela de início** (mockups 29 e 30): janela de carregamento enquanto o projeto abre; sem projeto aberto, a tela de início cria (`n`), abre (`o`) ou clona (`c`, do GitHub ou por endereço git) e lista os recentes (`/` busca, `del` tira da lista).
+- **Abertura e tela de início** (mockups 29 e 30): janela de carregamento enquanto o projeto abre; sem projeto aberto, a tela de início cria (`n`), abre (`o`) ou clona (`c`, do GitHub ou por endereço git) e lista os recentes (`/` busca, `del` tira da lista). O Seedy abre nessa tela; para pular direto para o último projeto, ligue "abrir o último projeto ao iniciar" em `Ctrl+,`, aba 3 (`inicio.abrirUltimoProjeto` no `seedy.json`).
 - **Três buscas**, como no IntelliJ:
   - `Ctrl+F` — **no arquivo aberto** (a caixa de busca do editor): `↓` / `⏎` / `F3` vão para o
     próximo, `↑` / `shift+⏎` / `shift+F3` para o anterior. Ao fechar (`esc`), o cursor fica no

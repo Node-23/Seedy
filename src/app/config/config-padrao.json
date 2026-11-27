@@ -17,6 +17,9 @@
     "teclas": {},
     "espacoAbreMenu": false
   },
+  "inicio": {
+    "abrirUltimoProjeto": false
+  },
   "atualizacao": {
     "verificar": true
   },

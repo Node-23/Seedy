@@ -2,9 +2,9 @@ import { inject, Injectable, signal } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
 import { LayoutService } from '../layout/layout.service';
 
-export type AbaConfig = 'atalhos' | 'ia' | 'editor';
+export type AbaConfig = 'atalhos' | 'ia' | 'editor' | 'sobre';
 
-/** Tela de configurações (Ctrl+,): atalhos do líder, IA (assinatura ou chave) e editor/terminal. */
+/** Tela de configurações (Ctrl+,): atalhos do líder, IA (assinatura ou chave), editor/terminal e sobre. */
 @Injectable({ providedIn: 'root' })
 export class ConfiguracoesService {
   private readonly layout = inject(LayoutService);

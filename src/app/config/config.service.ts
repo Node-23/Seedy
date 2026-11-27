@@ -24,6 +24,8 @@ export interface Config {
     espacoAbreMenu?: boolean;
   };
   ia: { modelo: string; modo: 'chave' | 'assinatura'; /** Sem confirmar edições e comandos da IA. */ automatico?: boolean };
+  /** `abrirUltimoProjeto: true` pula a tela de início e reabre o último projeto. Só vale no seedy.json global. */
+  inicio?: { abrirUltimoProjeto?: boolean };
   /** Atualização do Seedy: `verificar: false` desliga a procura (ao abrir e a cada 6 horas). */
   atualizacao?: { verificar?: boolean };
   /** Barra de ícones: ordem dos botões (arraste para reorganizar). */

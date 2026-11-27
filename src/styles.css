@@ -264,12 +264,35 @@ sd-raiz > .seedy {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  justify-content: safe center;
+  overflow: auto;
+  padding: 12px;
+  background: var(--painel-elevado);
   text-align: center;
+  container-type: size;
 }
-.editor-vazio .logo { font-size: 44px; font-weight: 700; color: var(--destaque); letter-spacing: 0.04em; margin-bottom: 10px; }
-.editor-vazio p { margin: 0 0 6px; }
+.editor-vazio > * { flex-shrink: 0; }
+.editor-vazio p { margin: 8px 0 26px; }
+.editor-vazio-marca { display: flex; align-items: center; gap: 12px; max-width: 100%; font-size: 54px; font-weight: 700; letter-spacing: -0.05em; }
+.editor-vazio-marca img { width: 128px; height: 128px; mix-blend-mode: lighten; }
+.editor-vazio-atalhos { width: 360px; max-width: 100%; font-size: 12px; text-align: left; }
+.editor-vazio-atalhos div { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; border-top: 1px solid var(--selecao); }
+/* Editor estreito (dividido ou com muitos painéis): a marca encolhe para caber. */
+@container (max-width: 420px) {
+  .editor-vazio-marca { gap: 8px; font-size: 30px; }
+  .editor-vazio-marca img { width: 64px; height: 64px; }
+}
+/* Editor baixo (painel de baixo aberto): primeiro encolhe, depois fica só a marca. */
+@container (max-height: 430px) {
+  .editor-vazio-marca { gap: 8px; font-size: 30px; }
+  .editor-vazio-marca img { width: 64px; height: 64px; }
+  .editor-vazio p { margin: 4px 0 10px; }
+  .editor-vazio-atalhos div { min-height: 26px; }
+}
+@container (max-height: 260px) {
+  .editor-vazio-atalhos { display: none; }
+  .editor-vazio p { margin: 2px 0; }
+}
 
 
 .monaco-editor .cursors-layer .cursor { border-radius: 1px; }
@@ -1761,6 +1784,9 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .config-cabeca .acao, .config-linha .acao { width: 300px; flex-shrink: 0; }
 .config-lista { flex: 1; min-height: 0; overflow: auto; }
 .config-vazio { padding: 12px 16px; }
+/* A dica de cada linha fica numa linha só (com a IA ao lado ela quebrava e subia nas outras). */
+.config-linha .espaco { align-self: center; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.config-linha .config-entrada { width: 130px; flex-shrink: 0; }
 .tecla-lider { font-size: 12px; padding: 2px 9px; }
 .tecla-lider.trocada { color: var(--destaque); border-color: var(--destaque); }
 .config-entrada { width: 220px; color: var(--texto); font-family: inherit; }
@@ -1779,6 +1805,28 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .config-modelo { display: flex; align-items: center; gap: 12px; font-size: 12px; }
 .config-modelo input { width: 300px; color: var(--texto); font-family: inherit; }
 .config-resultado { font-size: 12px; }
+/* Aba Sobre (mockup 32). */
+.config-sobre { padding: 24px 28px 0; overflow: auto; container-type: inline-size; }
+.config-sobre > * { flex-shrink: 0; }
+.config-sobre > .espaco { flex: 1; min-height: 16px; }
+.config-sobre .config-rodape { margin: 0 -28px; padding: 10px 16px; }
+.sobre-cartao { position: relative; overflow: hidden; display: flex; align-items: center; gap: 24px; margin-bottom: 18px; padding: 28px; border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio); background: var(--fundo); box-shadow: var(--deslocamento-sombra) var(--deslocamento-sombra) 0 var(--sombra); }
+.sobre-fita { position: absolute; right: 0; top: 0; height: 100%; fill: var(--destaque); opacity: 0.9; pointer-events: none; }
+.sobre-fita .clara { opacity: 0.35; }
+.sobre-cartao img { width: 120px; height: 120px; mix-blend-mode: lighten; }
+.sobre-cartao > div { position: relative; min-width: 0; }
+.sobre-cartao b { display: block; margin-bottom: 6px; font-size: 40px; letter-spacing: -0.04em; }
+.sobre-cartao span { display: block; font-size: 12px; line-height: 1.8; }
+.sobre-linha { display: flex; align-items: center; gap: 16px; padding: 14px 4px; border-bottom: 1px solid var(--selecao); font-size: 12px; }
+.sobre-linha > div { flex: 1; min-width: 0; }
+.sobre-linha small { display: block; margin-top: 6px; font-size: 11px; }
+.sobre-linha .botao { flex-shrink: 0; white-space: nowrap; }
+/* Com a IA aberta ao lado a fita passaria por cima do texto. */
+@container (max-width: 760px) {
+  .sobre-fita { display: none; }
+  .sobre-cartao { gap: 16px; padding: 20px; }
+  .sobre-cartao img { width: 88px; height: 88px; }
+}
 .link { border: 0; background: transparent; color: var(--destaque); font-family: inherit; cursor: pointer; padding: 0; }
 
 /* Menu de contexto do Monaco (botão direito): fundo sólido, borda e sombra do tema. */

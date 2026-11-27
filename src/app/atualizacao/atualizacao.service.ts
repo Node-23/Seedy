@@ -21,6 +21,9 @@ export class AtualizacaoService {
   readonly baixando = signal(false);
   readonly progresso = signal<{ lido: number; total: number } | null>(null);
   readonly erro = signal<string | null>(null);
+  /** Quando a última procura deu resposta (null = ainda não procurou desde que abriu). */
+  readonly procuradaEm = signal<number | null>(null);
+  readonly procurando = signal(false);
   private iniciou = false;
 
   constructor() {
@@ -44,15 +47,19 @@ export class AtualizacaoService {
   /** `manual`: foi o usuário que pediu (Alt+Shift+U): responde "em dia" e mostra os erros. */
   async verificar(manual: boolean): Promise<void> {
     if (!noApp()) return void this.mensagens.alerta('atualização: só no app instalado');
+    this.procurando.set(true);
     try {
       const a = await ponte.atualizacao.verificar();
       this.disponivel.set(a);
+      this.procuradaEm.set(Date.now());
       if (manual) {
         if (a) this.aberto.set(true);
         else this.mensagens.mostrar(`Seedy ${this.versao()} está em dia`);
       }
     } catch (e) {
       if (manual) this.mensagens.erro(String(e));
+    } finally {
+      this.procurando.set(false);
     }
   }
 

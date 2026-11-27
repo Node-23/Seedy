@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { ACORDES_NATIVOS, ACORDES_PADRAO, AtalhosService, rotuloDoAcorde } from '../teclado/atalhos.service';
 import { AtualizacaoService } from '../atualizacao/atualizacao.service';
 import { ConfigService } from './config.service';
@@ -6,13 +6,16 @@ import { ConfiguracoesService, AbaConfig } from './configuracoes.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { ponte } from '../nucleo/ponte';
 import { EditorService } from '../editor/editor.service';
+import { TemaService } from '../tema/tema';
 
 interface LinhaAtalho { id: string; rotulo: string; tecla: string; padrao: string; trocada: boolean; fixo: boolean; desligado: boolean }
 interface LinhaEditor { chave: string; rotulo: string; dica: string; tipo: 'bool' | 'num' | 'texto' }
 
 const MODELOS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-2'];
-const ABAS: AbaConfig[] = ['atalhos', 'ia', 'editor'];
+const ABAS: AbaConfig[] = ['atalhos', 'ia', 'editor', 'sobre'];
+const NOVIDADES = 'https://github.com/Node-23/Seedy/releases';
 const LINHAS_EDITOR: LinhaEditor[] = [
+  { chave: 'inicio.abrirUltimoProjeto', rotulo: 'abrir o último projeto ao iniciar', dica: 'pula a tela de início', tipo: 'bool' },
   { chave: 'editor.formatarAoSalvar', rotulo: 'formatar ao salvar', dica: 'Prettier, google-java-format…', tipo: 'bool' },
   { chave: 'editor.minimapa', rotulo: 'minimapa', dica: '', tipo: 'bool' },
   { chave: 'editor.numerosRelativos', rotulo: 'números de linha relativos', dica: 'bom para o modo vim (5j, 3dd)', tipo: 'bool' },
@@ -23,7 +26,8 @@ const LINHAS_EDITOR: LinhaEditor[] = [
 ];
 
 /**
- * Configurações em tela cheia (Ctrl+,, mockup 21): Atalhos (1), IA (2), Editor e terminal (3).
+ * Configurações em tela cheia (Ctrl+,, mockup 21): Atalhos (1), IA (2), Editor e terminal (3),
+ * Sobre (4, mockup 32).
  * Tudo grava no seedy.json global, o mesmo arquivo que dá para editar à mão (tecla e).
  */
 @Component({
@@ -31,12 +35,13 @@ const LINHAS_EDITOR: LinhaEditor[] = [
   template: `
     <div class="config-tela" tabindex="0" #raiz (keydown)="teclar($event)">
       <div class="janela-tela">
-        <div class="painel-faixa"><span class="rotulo">CONFIGURAÇÕES</span><span class="suave">{{ nomeDaAba() }}</span><span class="espaco"></span>@if (atualizacao.versao()) { <span class="suave" title="versão do Seedy">Seedy {{ atualizacao.versao() }}@if (atualizacao.disponivel(); as nova) { · <span class="sucesso-texto">⬆ {{ nova.versao }} disponível</span> }</span> }<kbd>esc</kbd></div>
+        <div class="painel-faixa"><span class="rotulo">CONFIGURAÇÕES</span><span class="suave">{{ nomeDaAba() }}</span><span class="espaco"></span>@if (c.aba() !== 'sobre' && atualizacao.versao()) { <span class="suave" title="versão do Seedy">Seedy {{ atualizacao.versao() }}@if (atualizacao.disponivel(); as nova) { · <span class="sucesso-texto">⬆ {{ nova.versao }} disponível</span> }</span> }<kbd>esc</kbd></div>
         <div class="config-corpo">
           <nav class="config-nav">
             <button [class.ativa]="c.aba() === 'atalhos'" (click)="c.aba.set('atalhos')"><span class="destaque-texto">⌨</span> Atalhos <kbd>1</kbd></button>
             <button [class.ativa]="c.aba() === 'ia'" (click)="c.aba.set('ia')"><span class="destaque-texto">✦</span> IA <kbd>2</kbd></button>
             <button [class.ativa]="c.aba() === 'editor'" (click)="c.aba.set('editor')"><span class="destaque-texto">≡</span> Editor e terminal <kbd>3</kbd></button>
+            <button [class.ativa]="c.aba() === 'sobre'" (click)="c.aba.set('sobre')"><span class="destaque-texto">◈</span> Sobre <kbd>4</kbd></button>
             <span class="espaco"></span>
             <span class="suave config-nota">tab troca de aba<br />grava no seedy.json<br /><span class="destaque-texto">e</span> abre o arquivo</span>
           </nav>
@@ -109,7 +114,7 @@ const LINHAS_EDITOR: LinhaEditor[] = [
                   @for (l of linhasEditor; track l.chave; let i = $index) {
                     <div class="config-linha" [class.sel]="i === selEditor()" (click)="selEditor.set(i); ativarEditor()">
                       <span class="acao">{{ l.rotulo }}</span>
-                      <span class="espaco suave">{{ l.dica }}</span>
+                      <span class="espaco suave" [title]="l.dica">{{ l.dica }}</span>
                       @if (l.tipo === 'bool') { <kbd class="tecla-lider" [class.trocada]="valorEditor(l) === true">{{ valorEditor(l) ? 'ligado' : 'desligado' }}</kbd> }
                       @else { <input class="config-entrada" type="text" spellcheck="false" [id]="'ed-' + i" [value]="valorEditor(l) ?? ''" [placeholder]="l.tipo === 'num' ? 'auto' : 'padrão'" (keydown)="aoEntradaEditor($event, l)" (click)="$event.stopPropagation()" /> }
                     </div>
@@ -117,6 +122,23 @@ const LINHAS_EDITOR: LinhaEditor[] = [
                 </div>
                 <span class="espaco"></span>
                 <div class="config-rodape suave">j k · <span class="destaque-texto">⏎</span> liga/desliga ou edita · <span class="destaque-texto">e</span> abre o seedy.json · vale na hora</div>
+              </section>
+            }
+            @case ('sobre') {
+              <section class="config-aba config-sobre">
+                <div class="sobre-cartao">
+                  <svg class="sobre-fita" width="260" viewBox="0 0 190 100" preserveAspectRatio="none" aria-hidden="true"><path d="M60 100 L190 22 L190 62 L128 100 Z"/><path class="clara" d="M118 0 C122 26 146 46 190 54 L190 0 Z"/></svg>
+                  <img src="marca/icone.png" alt="">
+                  <div><b>Seedy</b><span class="suave">{{ atualizacao.versao() ? 'versão ' + atualizacao.versao() : 'modo navegador' }}</span><span class="suave">IDE Java guiada pelo teclado · Windows e Linux</span></div>
+                </div>
+                <div class="sobre-linha"><div>Atualização<small [class.sucesso-texto]="atualizacao.disponivel()" [class.suave]="!atualizacao.disponivel()">{{ estadoDaAtualizacao() }}</small></div>
+                  <button class="botao" (click)="atualizacao.verificar(true)">procurar agora <kbd>u</kbd></button></div>
+                <div class="sobre-linha"><div>Novidades<small class="suave">as notas das versões publicadas</small></div>
+                  <button class="botao" (click)="abrirNovidades()">abrir no GitHub <kbd>g</kbd></button></div>
+                <div class="sobre-linha"><div>Arquivos do Seedy<small class="suave">seedy.json e tema.json deste computador</small></div>
+                  <button class="botao" (click)="abrirTema()">abrir o tema <kbd>c</kbd></button></div>
+                <span class="espaco"></span>
+                <div class="config-rodape suave"><span class="destaque-texto">u</span> procurar atualização · <span class="destaque-texto">g</span> novidades · <span class="destaque-texto">c</span> tema · <span class="destaque-texto">e</span> seedy.json</div>
               </section>
             }
           }
@@ -132,6 +154,7 @@ export class TelaConfiguracoesComponent {
   private readonly atalhos = inject(AtalhosService);
   private readonly mensagens = inject(MensagensService);
   private readonly editor = inject(EditorService);
+  private readonly tema = inject(TemaService);
   private readonly raiz = viewChild.required<ElementRef<HTMLDivElement>>('raiz');
   private readonly campoFiltro = viewChild<ElementRef<HTMLInputElement>>('filtro');
   private readonly campoChave = viewChild<ElementRef<HTMLInputElement>>('chave');
@@ -150,7 +173,21 @@ export class TelaConfiguracoesComponent {
   protected readonly resultado = signal<{ ok: boolean; texto: string } | null>(null);
   protected readonly modo = computed(() => (this.config.atual().ia.modo === 'assinatura' ? 'assinatura' : 'chave'));
 
-  protected readonly nomeDaAba = computed(() => ({ atalhos: 'Atalhos', ia: 'IA', editor: 'Editor e terminal' })[this.c.aba()]);
+  protected readonly nomeDaAba = computed(() => ({ atalhos: 'Atalhos', ia: 'IA', editor: 'Editor e terminal', sobre: 'Sobre' })[this.c.aba()]);
+
+  /** Relógio do "procurada há N min". */
+  private readonly agora = signal(Date.now());
+  protected readonly estadoDaAtualizacao = computed(() => {
+    const u = this.atualizacao;
+    const nova = u.disponivel();
+    if (u.procurando()) return 'procurando…';
+    if (nova) return `⬆ a versão ${nova.versao} está disponível`;
+    const quando = u.procuradaEm();
+    if (!quando) return 'ainda não procurei desde que o Seedy abriu';
+    const min = Math.max(0, Math.floor((this.agora() - quando) / 60_000));
+    const ha = min < 1 ? 'agora há pouco' : min < 60 ? `há ${min} min` : `há ${Math.floor(min / 60)} h`;
+    return `você está na versão mais nova · procurada ${ha}`;
+  });
 
   private readonly todas = computed<LinhaAtalho[]>(() => {
     const teclas = this.config.atual().atalhos.teclas ?? {};
@@ -171,6 +208,8 @@ export class TelaConfiguracoesComponent {
 
   constructor() {
     queueMicrotask(() => this.raiz().nativeElement.focus());
+    const relogio = setInterval(() => this.agora.set(Date.now()), 30_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(relogio));
     void ponte.ia.claudeEstado().then((v) => this.claude.set(v)).catch(() => this.claude.set(null));
     void this.atualizarChave();
   }
@@ -190,6 +229,27 @@ export class TelaConfiguracoesComponent {
     void this.editor.abrir(caminho);
   }
 
+  // ---------- sobre ----------
+
+  protected abrirNovidades(): void {
+    void ponte.abrirLink(NOVIDADES).catch((e) => this.mensagens.erro(String(e)));
+  }
+
+  protected abrirTema(): void {
+    const caminho = this.tema.caminho();
+    if (!caminho) return this.mensagens.alerta('o tema.json só existe dentro do app');
+    this.c.fechar();
+    void this.editor.abrir(caminho);
+  }
+
+  private teclarSobre(e: KeyboardEvent): void {
+    if (e.key === 'u') void this.atualizacao.verificar(true);
+    else if (e.key === 'g') this.abrirNovidades();
+    else if (e.key === 'c') this.abrirTema();
+    else return;
+    e.preventDefault();
+  }
+
   // ---------- teclado geral ----------
 
   protected teclar(e: KeyboardEvent): void {
@@ -199,11 +259,12 @@ export class TelaConfiguracoesComponent {
     const aba = this.c.aba();
     if (e.key === 'Escape') this.c.fechar();
     else if (e.key === 'e') this.abrirArquivo();
-    else if (e.key === 'Tab') this.c.aba.set(ABAS[(ABAS.indexOf(aba) + (e.shiftKey ? 2 : 1)) % 3]);
-    else if (e.key === '3' || (e.key === '1' && aba !== 'ia') || (e.key === '2' && aba !== 'ia')) this.c.aba.set(ABAS[Number(e.key) - 1]);
+    else if (e.key === 'Tab') this.c.aba.set(ABAS[(ABAS.indexOf(aba) + (e.shiftKey ? ABAS.length - 1 : 1)) % ABAS.length]);
+    else if (e.key === '3' || e.key === '4' || (e.key === '1' && aba !== 'ia') || (e.key === '2' && aba !== 'ia')) this.c.aba.set(ABAS[Number(e.key) - 1]);
     else if (aba === 'atalhos') return this.teclarAtalhos(e);
     else if (aba === 'ia') return this.teclarIa(e);
-    else return this.teclarEditor(e);
+    else if (aba === 'editor') return this.teclarEditor(e);
+    else return this.teclarSobre(e);
     e.preventDefault();
   }
 

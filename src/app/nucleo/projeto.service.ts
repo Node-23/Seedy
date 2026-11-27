@@ -24,7 +24,7 @@ export class ProjetoService {
   async iniciar(): Promise<void> {
     await ponte.aoAlterarArquivos((m) => this.aoMudarNoDisco(m));
     const daLinhaDeComando = await ponte.pastaInicial();
-    const ultimo = localStorage.getItem(CHAVE_ULTIMO);
+    const ultimo = (await abrirUltimoAoIniciar()) ? localStorage.getItem(CHAVE_ULTIMO) : null;
     const pasta = daLinhaDeComando ?? ultimo;
     try {
       if (pasta) await this.abrir(pasta);
@@ -78,5 +78,19 @@ export class ProjetoService {
   recarregar(): void {
     this.versao.update((v) => v + 1);
     void this.atualizarBranch();
+  }
+}
+
+/**
+ * A opção `inicio.abrirUltimoProjeto` do seedy.json global (desligada por padrão: o Seedy abre na
+ * tela de início). Lida aqui direto: o ConfigService depende deste serviço e ainda não carregou
+ * quando o Seedy abre.
+ */
+async function abrirUltimoAoIniciar(): Promise<boolean> {
+  try {
+    const arquivo = await ponte.configCarregar();
+    return !!arquivo && JSON.parse(arquivo.conteudo)?.inicio?.abrirUltimoProjeto === true;
+  } catch {
+    return false;
   }
 }
