@@ -92,9 +92,20 @@ export class TerminalComponent {
 
     // O painel só é escondido (não destruído), para os shells continuarem vivos.
     effect(() => {
-      if (!this.layout.disposicao().visiveis.terminal || !this.projeto.pronto()) return;
+      // Sem projeto (tela de início) não abre shell: ele nasceria na pasta errada.
+      if (!this.layout.disposicao().visiveis.terminal || !this.projeto.pronto() || !this.projeto.raiz()) return;
       if (untracked(this.abas).length === 0) void this.novo();
       queueMicrotask(() => this.ajustarAtiva());
+    });
+
+    // Fechou o projeto: os shells dele fecham junto.
+    effect(() => {
+      if (this.projeto.raiz() || !this.projeto.pronto()) return;
+      untracked(() => {
+        for (const aba of this.abas()) this.descartar(aba);
+        this.abas.set([]);
+        this.ativa.set(null);
+      });
     });
 
     effect(() => {

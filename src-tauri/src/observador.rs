@@ -138,3 +138,9 @@ mod testes {
         assert!(lote.git);
     }
 }
+
+/// Fechou o projeto: derruba o observador (a thread dele acaba junto).
+#[tauri::command]
+pub fn projeto_parar_de_observar(estado: State<'_, Observador>) {
+    *estado.0.lock().unwrap() = None;
+}

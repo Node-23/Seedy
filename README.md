@@ -16,6 +16,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Terminal integrado** com abas: shell de verdade (PowerShell no Windows, seu `$SHELL` no Linux).
 - **Tema editável** (cores, fontes e forma), aplicado na hora em que você salva o arquivo.
 - **Atalhos diretos**, um acorde só como no IntelliJ (`Alt+9` Git, `Alt+5` debug, `Alt+Shift+T` testes...), trocáveis em `Ctrl+,` ou no `seedy.json`; o menu de atalhos (`Ctrl+Shift+Espaço` ou o botão da logo) lista todos.
+- **Abertura e tela de início** (mockups 29 e 30): janela de carregamento enquanto o projeto abre; sem projeto aberto, a tela de início cria (`n`), abre (`o`) ou clona (`c`, do GitHub ou por endereço git) e lista os recentes (`/` busca, `del` tira da lista).
 - **Três buscas**, como no IntelliJ:
   - `Ctrl+F` — **no arquivo aberto** (a caixa de busca do editor): `↓` / `⏎` / `F3` vão para o
     próximo, `↑` / `shift+⏎` / `shift+F3` para o anterior. Ao fechar (`esc`), o cursor fica no
@@ -276,6 +277,7 @@ cd src-tauri && cargo test --lib -- --include-ignored
 | `Alt+1` | mostrar/esconder arquivos |
 | `Alt+F12` | mostrar/esconder terminal |
 | `Alt+Shift+O` | abrir projeto |
+| `Ctrl+Shift+Espaço`, `Q` | fechar o projeto e voltar à tela de início |
 | `Alt+Shift+N` | novo projeto: `j`/`k` modelo, `tab` campos, `espaço` marca, `/` filtra iniciadores, `ctrl+o` pasta, `ctrl+⏎` cria |
 | `Ctrl+S` | salvar |
 | `Ctrl+F4` | fechar buffer |

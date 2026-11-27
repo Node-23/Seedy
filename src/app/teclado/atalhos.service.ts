@@ -188,6 +188,7 @@ export class AtalhosService {
     { id: 'arquivos', tecla: 'e', rotulo: 'árvore de arquivos', disponivel: true, executar: () => this.layout.alternar('arquivos') },
     { id: 'terminal', tecla: 't', rotulo: 'terminal', disponivel: true, executar: () => this.layout.alternar('terminal') },
     { id: 'abrir-projeto', tecla: 'o', rotulo: 'abrir projeto', disponivel: true, executar: () => void this.projeto.escolher() },
+    { id: 'fechar-projeto', tecla: 'Q', rotulo: 'fechar projeto (tela de início)', disponivel: true, executar: () => this.fecharProjeto() },
     { id: 'novo-projeto', tecla: 'N', rotulo: 'novo projeto', disponivel: true, executar: () => void this.novoProjeto.abrir() },
     { id: 'salvar', tecla: 'w', rotulo: 'salvar', disponivel: true, executar: () => void this.editor.salvar() },
     { id: 'fechar-buffer', tecla: 'q', rotulo: 'fechar buffer', disponivel: true, executar: () => this.editor.fechar() },
@@ -413,6 +414,22 @@ export class AtalhosService {
   }
 
   private esperandoJanela = false;
+
+  /** Fecha os arquivos e volta para a tela de início; nada se perde sem salvar. */
+  private fecharProjeto(): void {
+    if (!this.projeto.raiz()) return;
+    if (this.editor.buffers().some((b) => this.editor.sujo(b))) {
+      this.mensagens.alerta('há arquivos não salvos: salve (ctrl+shift+s) antes de fechar o projeto');
+      return;
+    }
+    if (this.execucao.rodando()) {
+      this.mensagens.alerta('pare a aplicação (ctrl+F2) antes de fechar o projeto');
+      return;
+    }
+    for (const b of [...this.editor.buffers()]) this.editor.fechar(b.caminho);
+    this.layout.tela.set('editor');
+    this.projeto.fechar();
+  }
 
   private alternarContainers(): void {
     this.layout.tela.set(this.layout.tela() === 'containers' ? 'editor' : 'containers');

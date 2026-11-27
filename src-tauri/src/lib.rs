@@ -10,6 +10,7 @@ mod atualizacao;
 mod arquitetura;
 mod banco;
 mod busca;
+mod carregamento;
 mod containers;
 mod depurador;
 mod git;
@@ -54,10 +55,13 @@ pub fn run() {
                     icone::definir(&janela);
                 }
             }
+            carregamento::iniciar(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             arquivos::pasta_inicial,
+            carregamento::carregamento_etapa,
+            carregamento::carregamento_pronto,
             arquivos::ler_pasta,
             arquivos::ler_arquivo,
             arquivos::gravar_arquivo,
@@ -137,6 +141,7 @@ pub fn run() {
             containers::docker_uso,
             containers::docker_acao,
             observador::projeto_observar,
+            observador::projeto_parar_de_observar,
             java::java_estado,
             java::java_jdks,
             java::java_jdk_do_projeto,

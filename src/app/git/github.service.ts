@@ -97,6 +97,45 @@ export class GithubService {
     }
   }
 
+  /** Da tela de início: um repositório seu do GitHub ou qualquer endereço git. */
+  async clonarDeOndeQuiser(): Promise<void> {
+    const origem = await this.escolha.escolherUm('CLONAR REPOSITÓRIO', [
+      { rotulo: 'Dos meus repositórios do GitHub', detalhe: this.usuario() ? `@${this.usuario()!.login}` : 'conecta a conta', valor: 'github' as const },
+      { rotulo: 'Por um endereço git', detalhe: 'https ou ssh', valor: 'endereco' as const },
+    ]);
+    if (origem === 'github') await this.clonar();
+    else if (origem === 'endereco') await this.clonarDeEndereco();
+  }
+
+  private async clonarDeEndereco(): Promise<void> {
+    const endereco = await this.escolha.perguntar('CLONAR DE UM ENDEREÇO', {
+      placeholder: 'https://… ou git@servidor:grupo/repositorio.git',
+      dica: 'depois, a pasta onde ele vai ficar',
+    });
+    if (!endereco) return;
+    const nome = endereco.replace(/[\\/]+$/, '').split(/[\\/:]/).pop()?.replace(/\.git$/, '');
+    if (!nome || nome === '.' || nome === '..') {
+      this.mensagens.erro('clone: não entendi o endereço');
+      return;
+    }
+    await this.clonarPara(endereco, nome, nome);
+  }
+
+  private async clonarPara(endereco: string, nome: string, rotulo: string): Promise<void> {
+    const pasta = await ponte.escolherPasta('Onde clonar');
+    if (!pasta) return;
+    const destino = `${pasta}${pasta.includes('\\') ? '\\' : '/'}${nome}`;
+    this.mensagens.mostrar(`clonando ${rotulo}…`);
+    // "--": um endereço começando com "-" não vira opção do git.
+    const r = await ponte.git(null, ['clone', '--', endereco, destino]);
+    if (r.codigo !== 0) {
+      this.mensagens.erro(`clone: ${(r.erro || r.saida).trim().split('\n').pop()}`);
+      return;
+    }
+    this.mensagens.mostrar(`${nome} clonado`);
+    await this.projeto.abrir(destino);
+  }
+
   /** Clonar um dos seus repositórios (como o "Get from VCS" do IntelliJ) e abrir. */
   async clonar(): Promise<void> {
     if (!this.usuario()) {
@@ -121,16 +160,6 @@ export class GithubService {
       'escolha o repositório; depois, a pasta onde ele vai ficar',
     );
     if (!repo) return;
-    const pasta = await ponte.escolherPasta();
-    if (!pasta) return;
-    const destino = `${pasta}${pasta.includes('\\') ? '\\' : '/'}${repo.nome}`;
-    this.mensagens.mostrar(`clonando ${repo.dono}/${repo.nome}…`);
-    const r = await ponte.git(null, ['clone', repo.url_clone, destino]);
-    if (r.codigo !== 0) {
-      this.mensagens.erro(`clone: ${(r.erro || r.saida).trim().split('\n').pop()}`);
-      return;
-    }
-    this.mensagens.mostrar(`${repo.nome} clonado`);
-    await this.projeto.abrir(destino);
+    await this.clonarPara(repo.url_clone, repo.nome, `${repo.dono}/${repo.nome}`);
   }
 }

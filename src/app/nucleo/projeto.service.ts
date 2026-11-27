@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Mudancas, nomeBase, ponte } from './ponte';
 import { MensagensService } from './mensagens.service';
+import { RecentesService } from '../inicio/recentes.service';
 
 const CHAVE_ULTIMO = 'seedy.ultimoProjeto';
 
@@ -8,6 +9,7 @@ const CHAVE_ULTIMO = 'seedy.ultimoProjeto';
 @Injectable({ providedIn: 'root' })
 export class ProjetoService {
   private readonly mensagens = inject(MensagensService);
+  private readonly recentes = inject(RecentesService);
 
   readonly raiz = signal<string | null>(null);
   readonly nome = computed(() => (this.raiz() ? nomeBase(this.raiz()!) : null));
@@ -48,6 +50,16 @@ export class ProjetoService {
     localStorage.setItem(CHAVE_ULTIMO, pasta);
     void ponte.observarProjeto(pasta).catch((e) => this.mensagens.erro(String(e)));
     await this.atualizarBranch();
+    this.versao.update((v) => v + 1);
+    void this.recentes.registrar(pasta);
+  }
+
+  /** Volta para a tela de início; o próximo Seedy também abre nela. */
+  fechar(): void {
+    this.raiz.set(null);
+    this.branch.set(null);
+    localStorage.removeItem(CHAVE_ULTIMO);
+    void ponte.pararDeObservar();
     this.versao.update((v) => v + 1);
   }
 

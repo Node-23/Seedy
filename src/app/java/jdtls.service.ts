@@ -80,7 +80,7 @@ export class JdtlsService {
   private geracao = 0;
 
   /** Projeto de Java? Decide pelo índice da busca (pom.xml, build.gradle ou .java). */
-  private readonly ehJava = computed(() => !!this.busca.indice()?.arquivos.some((a) => MARCAS_DE_JAVA.test(a.relativo)));
+  readonly ehJava = computed(() => !!this.busca.indice()?.arquivos.some((a) => MARCAS_DE_JAVA.test(a.relativo)));
 
   constructor() {
     // Liga/desliga conforme o projeto aberto.

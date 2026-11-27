@@ -1,0 +1,35 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Tela de carregamento — Seedy</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #101012; }
+  /* A área de trabalho atrás é só contexto: a janela de carregamento é a do meio (720 × 440). */
+  .mesa { width: 1440px; height: 900px; display: flex; align-items: center; justify-content: center; font-family: 'Martian Mono', ui-monospace, monospace; color: #E9E2D3; }
+  .janela { position: relative; width: 720px; height: 440px; overflow: hidden; background: #19191B; border: 2px solid #0B0B0C; border-radius: 18px; box-shadow: 6px 6px 0 #0B0B0C, 0 30px 80px rgba(0,0,0,.55); }
+  .fita { position: absolute; right: 0; top: 0; width: 330px; height: 174px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 140px, transparent); mix-blend-mode: lighten; }
+  .fita img { position: absolute; width: 963.6px; left: -628px; top: 0; }
+  .marca { position: absolute; left: 30px; top: 130px; display: flex; align-items: center; gap: 22px; }
+  .marca img { width: 190px; height: 190px; mix-blend-mode: lighten; }
+  .nome { font-size: 82px; font-weight: 700; letter-spacing: -0.05em; line-height: 1; }
+  .carga { position: absolute; left: 52px; right: 52px; bottom: 66px; }
+  .etapa { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 10px; }
+  .etapa span:last-child { color: #A29D93; }
+  .barra { height: 8px; border-radius: 4px; background: #2A2A2D; border: 1px solid #0B0B0C; overflow: hidden; }
+  .barra i { display: block; width: 62%; height: 100%; background: #9CD7BA; border-radius: 4px; }
+  .rodape { position: absolute; left: 52px; right: 52px; bottom: 26px; display: flex; justify-content: space-between; font-size: 10.5px; color: #A29D93; }
+</style></head><body>
+<div class="mesa">
+  <div class="janela">
+    <!-- A fita e o broto da identidade (recorte da folha da marca), no canto de cima. -->
+    <div class="fita"><img src="../marca/identidade.webp" alt=""></div>
+    <div class="marca">
+      <img src="../marca/icone-1024.png" alt="">
+      <span class="nome">Seedy</span>
+    </div>
+    <div class="carga">
+      <div class="etapa"><span>iniciando o jdtls…</span><span>Feirinha-Backend</span></div>
+      <div class="barra"><i></i></div>
+    </div>
+    <div class="rodape"><span>versão 0.5.9</span></div>
+  </div>
+</div>
+</body></html>

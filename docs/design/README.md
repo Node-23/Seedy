@@ -30,6 +30,8 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Uso da assinatura do Claude na barra de status (5 horas e semana) | [24-limites-de-uso.jpg](24-limites-de-uso.jpg) | ✅ |
 | Depurar um teste só, Spring Boot (perfis e endpoints), imagem no chat da IA e atualização automática — **implementada** (`fontes/Ideias.dc.html`) | [27-ideias.png](27-ideias.png) | ✅ (depurar teste, imagem no chat, atualização; Spring: perfis aqui, endpoints no 28) |
 | Tela **Endpoints** do Spring Boot (botão só em projetos Spring): lista por controller, detalhe, testes que cobrem, chamar e copiar curl — **implementada (Alt+Shift+E)** (`fontes/Endpoints.dc.html`) | [28-endpoints.png](28-endpoints.png) | ✅ |
+| Tela de **carregamento** (janela de 720 × 440 ao abrir o app) (`fontes/Carregamento.dc.html`) | [29-carregamento.png](29-carregamento.png) | ✅ |
+| Tela de **início** (sem projeto aberto: ações e projetos recentes) (`fontes/Inicio.dc.html`) | [30-inicio.png](30-inicio.png) | ✅ |
 | Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
 

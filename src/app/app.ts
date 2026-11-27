@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { BarraTopoComponent } from './barra/barra-topo.component';
 import { BarraStatusComponent } from './barra/barra-status.component';
@@ -67,6 +67,8 @@ import { BarraIconesComponent } from './todo/barra-icones.component';
 import { TodoPainelComponent } from './todo/todo-painel.component';
 import { TodoService } from './todo/todo.service';
 import { ConfigService } from './config/config.service';
+import { InicioComponent } from './inicio/inicio.component';
+import { AberturaService } from './inicio/abertura';
 import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
 @Component({
@@ -75,14 +77,15 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, LoginEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, LoginEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent, InicioComponent,
   ],
   template: `
     <div class="seedy">
-      <sd-barra-topo />
+      <!-- Sem projeto: a tela de início toma o lugar das barras e do editor (mockup 30). -->
+      @if (!semProjeto()) { <sd-barra-topo /> }
 
       <div class="regiao-principal" [class.esmaecida]="busca.aberta() || buscaProjeto.aberta() || !!escolha.pedido() || commit.aberta() || !!banco.editando() || !!servidor.editando() || revisao.aberta() || novoProjeto.aberta() || !!execucao.editandoOpcoes()">
-      <sd-barra-icones />
+      @if (semProjeto()) { <sd-inicio /> } @else { <sd-barra-icones /> }
       <!-- Painel de cada região (o terminal fica vivo, só escondido, na região dele). -->
       <ng-template #painel let-regiao>
         @if (layout.terminalEm(regiao)) { <sd-terminal [class.oculto]="!layout.disposicao().visiveis.terminal" /> }
@@ -96,7 +99,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
         }
       </ng-template>
 
-      <div #area class="area-principal" [class.oculto]="layout.tela() !== 'editor'">
+      <div #area class="area-principal" [class.oculto]="layout.tela() !== 'editor' || semProjeto()">
         <div class="regiao-esquerda" [class.oculto]="!layout.ativos().esquerda" [style.width.px]="layout.tamanho('esquerda')" (pointerdown)="pegarPainel($event, 'esquerda')">
           <ng-container *ngTemplateOutlet="painel; context: { $implicit: 'esquerda' }" />
         </div>
@@ -165,7 +168,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (todo.aberto()) { <sd-todo-painel /> }
       </div>
 
-      <sd-barra-status />
+      @if (!semProjeto()) { <sd-barra-status /> }
       <div class="linha-de-comando">
         <div id="vim-linha-de-comando" class="vim-linha"></div>
         @if (mensagens.atual(); as m) {
@@ -196,6 +199,10 @@ export class App {
   private readonly area = viewChild.required<ElementRef<HTMLElement>>('area');
   protected readonly arrastandoPainel = signal<{ id: IdPainel; titulo: string; alvo: Regiao | null } | null>(null);
 
+  private readonly projeto = inject(ProjetoService);
+  /** Sem pasta aberta, na tela do editor: mostra a tela de início. */
+  protected readonly semProjeto = computed(() => this.projeto.pronto() && !this.projeto.raiz() && this.layout.tela() === 'editor');
+
   constructor() {
     inject(AtalhosService).iniciar();
     inject(JdtlsService); // liga o jdtls quando o projeto é de Java
@@ -213,7 +220,8 @@ export class App {
     void inject(GithubService).iniciar();
     void inject(TemaService).iniciar();
     void inject(ConfigService).iniciar();
-    void inject(ProjetoService).iniciar();
+    void this.projeto.iniciar();
+    inject(AberturaService).acompanhar();
   }
 
   /**

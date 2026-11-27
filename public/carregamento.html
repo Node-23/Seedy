@@ -1,0 +1,46 @@
+<!doctype html>
+<!-- Janela de carregamento (mockup 29), mostrada antes da janela principal. É a arte da marca:
+     aparece antes de o tema ser lido, por isso usa as cores da identidade direto. -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Seedy</title>
+<style>
+  @font-face { font-family: 'Martian Mono'; font-weight: 400; src: url('marca/martian-mono-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Martian Mono'; font-weight: 700; src: url('marca/martian-mono-latin-700-normal.woff2') format('woff2'); }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #19191B; color: #E9E2D3; font-family: 'Martian Mono', ui-monospace, monospace; user-select: none; cursor: default; }
+  .janela { position: fixed; inset: 0; overflow: hidden; border: 2px solid #0B0B0C; box-sizing: border-box; background: #19191B; }
+  .fita { position: absolute; right: 0; top: 0; width: 330px; height: 174px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 140px, transparent); mix-blend-mode: lighten; }
+  .fita img { position: absolute; width: 963.6px; left: -628px; top: 0; }
+  .marca { position: absolute; left: 28px; top: 128px; display: flex; align-items: center; gap: 22px; }
+  .marca img { width: 190px; height: 190px; mix-blend-mode: lighten; }
+  .nome { font-size: 82px; font-weight: 700; letter-spacing: -0.05em; line-height: 1; }
+  .carga { position: absolute; left: 50px; right: 50px; bottom: 64px; }
+  .etapa { display: flex; justify-content: space-between; gap: 16px; font-size: 11.5px; margin-bottom: 10px; white-space: nowrap; }
+  .etapa span:last-child { color: #A29D93; overflow: hidden; text-overflow: ellipsis; }
+  .barra { height: 8px; border-radius: 4px; background: #2A2A2D; border: 1px solid #0B0B0C; overflow: hidden; }
+  .barra i { display: block; width: 8%; height: 100%; background: #9CD7BA; border-radius: 4px; transition: width .4s ease; }
+  .rodape { position: absolute; left: 50px; right: 50px; bottom: 24px; font-size: 10.5px; color: #A29D93; }
+</style>
+</head>
+<body>
+<div class="janela">
+  <div class="fita"><img src="marca/identidade.webp" alt=""></div>
+  <div class="marca"><img src="marca/icone.png" alt=""><span class="nome">Seedy</span></div>
+  <div class="carga">
+    <div class="etapa" role="status"><span id="etapa">abrindo…</span><span id="projeto"></span></div>
+    <div class="barra"><i id="barra"></i></div>
+  </div>
+  <div class="rodape" id="versao"></div>
+</div>
+<script>
+  // O núcleo chama isto a cada passo da abertura.
+  window.etapa = (e) => {
+    document.getElementById('etapa').textContent = e.texto;
+    document.getElementById('projeto').textContent = e.projeto || '';
+    document.getElementById('versao').textContent = 'versão ' + e.versao;
+    document.getElementById('barra').style.width = e.percentual + '%';
+  };
+</script>
+</body>
+</html>

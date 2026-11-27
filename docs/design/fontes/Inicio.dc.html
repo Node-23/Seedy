@@ -1,0 +1,84 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Tela de início — Seedy</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #19191B; }
+  .tela { width: 980px; height: 720px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px; }
+  .janela { border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+  .topo { display: flex; align-items: center; justify-content: space-between; height: 30px; flex-shrink: 0; color: #A29D93; font-size: 11px; padding: 0 6px; }
+  .topo .botoes { display: flex; gap: 22px; font-size: 13px; }
+  .corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .corpo > main { flex: 1; }
+  kbd { font-family: inherit; font-size: 10.5px; padding: 1px 6px; border-radius: 5px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C; }
+  .suave { color: #A29D93; }
+  .marca { display: flex; align-items: center; gap: 16px; margin-left: -6px; }
+  .marca img { width: 72px; height: 72px; }
+  .marca b { font-size: 28px; letter-spacing: -0.04em; display: block; }
+  .marca span { font-size: 10.5px; color: #A29D93; }
+  .nav { display: flex; flex-direction: column; gap: 4px; padding: 4px 10px; }
+  .item { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 9px; border: 2px solid transparent; }
+  .item .k { margin-left: auto; }
+  .item.on { background: #9CD7BA; color: #16171C; font-weight: 700; border-color: #0B0B0C; box-shadow: 3px 3px 0 #0B0B0C; }
+  .item.on kbd { background: transparent; color: #16171C; border-color: #16171C; }
+  svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .principal { position: relative; padding: 26px 34px 0; }
+  h1 { margin: 0; font-size: 25px; letter-spacing: -0.03em; }
+  .sub { margin: 14px 0 0; color: #A29D93; line-height: 1.7; }
+  .acoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
+  .acao { display: flex; align-items: center; gap: 14px; padding: 14px; border: 2px solid #0B0B0C; border-radius: 12px; background: #222225; box-shadow: 3px 3px 0 #0B0B0C; }
+  .acao .q { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #19191B; color: #9CD7BA; border: 2px solid #0B0B0C; flex-shrink: 0; }
+  .acao .q svg { width: 22px; height: 22px; }
+  .acao b { display: block; font-size: 12.5px; margin-bottom: 4px; }
+  .acao small { color: #A29D93; font-size: 10.5px; line-height: 1.5; display: block; }
+  .acao kbd { margin-left: auto; align-self: flex-start; }
+  .acao.on { box-shadow: 0 0 0 2px #9CD7BA, 3px 3px 0 #0B0B0C; background: #333337; }
+  .titulo { display: flex; align-items: center; justify-content: space-between; margin: 26px 0 8px; }
+  .rotulo { font-size: 11px; letter-spacing: .14em; color: #A29D93; }
+  .busca { width: 260px; height: 28px; box-sizing: border-box; padding: 0 10px; border: 2px solid #0B0B0C; border-radius: 8px; background: #19191B; display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+  .proj { display: grid; grid-template-columns: 34px minmax(0, 1fr) 130px 90px 86px; align-items: center; gap: 12px; height: 50px; padding: 0 12px; border-radius: 10px; }
+  .proj.sel { background: #333337; box-shadow: inset 3px 0 0 #9CD7BA; }
+  .sigla { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; border: 2px solid #0B0B0C; color: #16171C; }
+  .proj b { display: block; font-size: 12.5px; }
+  .proj small { display: block; color: #A29D93; font-size: 10.5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-top: 2px; }
+  .tag { justify-self: start; font-size: 10.5px; padding: 2px 8px; border-radius: 6px; border: 1px solid currentColor; }
+  .cartao { position: absolute; left: 34px; right: 34px; bottom: 20px; display: flex; align-items: center; gap: 18px; padding: 14px 18px; border: 2px solid #0B0B0C; border-radius: 12px; background: #222225; overflow: hidden; }
+  .cartao svg.fita { position: absolute; right: 0; top: 0; height: 100%; }
+  .cartao img { width: 60px; height: 60px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; box-shadow: 2px 2px 0 #0B0B0C; font-size: 11px; white-space: nowrap; }
+  .btn.p { background: #9CD7BA; color: #16171C; font-weight: 700; }
+  .btn.p kbd { background: transparent; color: #16171C; border-color: #16171C; }
+  .status { height: 30px; flex-shrink: 0; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; display: flex; align-items: stretch; overflow: hidden; white-space: nowrap; }
+  .status > span { display: flex; align-items: center; padding: 0 12px; gap: 6px; }
+  .status b { color: #9CD7BA; }
+</style></head><body>
+<div class="tela">
+  <div class="topo"><span>Seedy</span><span class="botoes"><span>–</span><span>□</span><span>×</span></span></div>
+  <div class="corpo">
+    <main class="janela principal">
+      <div class="marca"><img src="../marca/icone-1024.png" alt=""><div><b>Seedy</b><span>versão 0.5.9</span></div></div>
+      <p class="sub">Crie um projeto do zero, abra uma pasta ou clone um repositório.</p>
+      <div class="acoes">
+        <div class="acao on"><span class="q"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><div><b>Novo projeto</b><small>Spring, Maven,<br>Angular e React</small></div><kbd>n</kbd></div>
+        <div class="acao"><span class="q"><svg class="i" viewBox="0 0 24 24"><path d="M3 18V6a1 1 0 0 1 1-1h5l2 2.5h9a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg></span><div><b>Abrir pasta</b><small>um projeto que já<br>está no computador</small></div><kbd>o</kbd></div>
+        <div class="acao"><span class="q"><svg class="i" viewBox="0 0 24 24"><circle cx="7" cy="6" r="2.2"/><circle cx="7" cy="18" r="2.2"/><circle cx="17" cy="8" r="2.2"/><path d="M7 8.2v7.6M17 10.2c0 3.6-5 3.2-10 5.6"/></svg></span><div><b>Clonar repositório</b><small>do GitHub ou por<br>um endereço git</small></div><kbd>c</kbd></div>
+      </div>
+
+      <div class="titulo"><span class="rotulo">PROJETOS RECENTES</span><span class="busca"><span class="suave">/ buscar projeto…</span><kbd>/</kbd></span></div>
+      <div class="proj sel"><span class="sigla" style="background:#9CD7BA">FB</span><div><b>Feirinha-Backend</b><small>C:\Matheus\Projects\Feirinha-Backend</small></div><span class="tag" style="color:#9CD7BA">Spring Boot</span><span class="suave">⎇ master</span><span class="suave">agora</span></div>
+      <div class="proj"><span class="sigla" style="background:#E8C979">LB</span><div><b>Lemos-Bank</b><small>C:\Matheus\Projects\Lemos-Bank</small></div><span class="tag" style="color:#E8C979">Java · Maven</span><span class="suave">⎇ main</span><span class="suave">ontem</span></div>
+      <div class="proj"><span class="sigla" style="background:#E3A9CC">RT</span><div><b>react-teste</b><small>C:\Matheus\Projects\react-teste</small></div><span class="tag" style="color:#E3A9CC">React · Vite</span><span class="suave">⎇ main</span><span class="suave">há 3 dias</span></div>
+      <div class="proj"><span class="sigla" style="background:#B7D39C">SD</span><div><b>Seedy</b><small>C:\Matheus\Projects\Seedy</small></div><span class="tag" style="color:#B7D39C">Angular · Tauri</span><span class="suave">⎇ main</span><span class="suave">há 5 dias</span></div>
+
+      <div class="cartao">
+        <svg class="fita" width="190" viewBox="0 0 190 100" preserveAspectRatio="none" aria-hidden="true"><path d="M60 100 L190 22 L190 62 L128 100 Z" fill="#9CD7BA" opacity=".9"/><path d="M118 0 C122 26 146 46 190 54 L190 0 Z" fill="#9CD7BA" opacity=".35"/></svg>
+        <img src="../marca/simbolo.svg" alt="">
+        <div style="flex:1">
+          <b style="font-size:12.5px">Primeira vez por aqui?</b>
+          <div class="suave" style="margin-top:6px;line-height:1.7;font-size:11px">Um passeio de 2 minutos pelos atalhos, a IA e o servidor de aplicação.</div>
+        </div>
+        <span class="btn p" style="position:relative">começar o passeio <kbd>t</kbd></span>
+        <span class="btn" style="position:relative">fechar <kbd>x</kbd></span>
+      </div>
+    </main>
+  </div>
+</div>
+</body></html>

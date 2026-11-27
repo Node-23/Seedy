@@ -47,6 +47,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "martian-mono-latin-{400,700}-normal.woff2",
+                "input": "node_modules/@fontsource/martian-mono/files",
+                "output": "marca"
               }
             ],
             "styles": [

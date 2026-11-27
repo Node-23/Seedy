@@ -564,6 +564,16 @@ export const ponte = {
     return invoke<ArrayBuffer>('fonte_bytes', { caminho });
   },
 
+  /** A janela de carregamento (só dentro do app). */
+  carregamento: {
+    etapa: (texto: string, projeto: string | null, percentual: number) => invoke<void>('carregamento_etapa', { texto, projeto, percentual }),
+    pronto: () => invoke<void>('carregamento_pronto'),
+  },
+
+  async pararDeObservar(): Promise<void> {
+    if (noApp()) await invoke('projeto_parar_de_observar');
+  },
+
   /** Passa a observar a pasta do projeto (para de observar o anterior). */
   async observarProjeto(raiz: string): Promise<void> {
     if (noApp()) await invoke('projeto_observar', { raiz });

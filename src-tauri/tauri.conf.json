@@ -21,6 +21,19 @@
         "resizable": true,
         "decorations": false,
         "dragDropEnabled": false,
+        "backgroundColor": "#19191B",
+        "visible": false
+      },
+      {
+        "label": "carregamento",
+        "url": "carregamento.html",
+        "title": "Seedy",
+        "width": 720,
+        "height": 440,
+        "center": true,
+        "resizable": false,
+        "maximizable": false,
+        "decorations": false,
         "backgroundColor": "#19191B"
       }
     ],
