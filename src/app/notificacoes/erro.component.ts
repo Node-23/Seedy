@@ -30,9 +30,9 @@ const ROTULO = { info: 'MENSAGEM', aviso: 'AVISO', erro: 'ERRO' };
         <div class="erro-corpo">
           <b>{{ n.titulo }}</b>
           @if (verTexto()) {
-            <pre class="erro-texto">{{ relatorio() }}</pre>
+            <pre class="erro-mensagem">{{ relatorio() }}</pre>
           } @else if (detalhe()) {
-            <pre class="erro-texto">{{ detalhe() }}</pre>
+            <pre class="erro-mensagem">{{ detalhe() }}</pre>
           }
           @if (n.doSeedy) {
             <label class="erro-conta">O que você estava fazendo? <span class="suave">(opcional)</span>

@@ -2031,7 +2031,7 @@ sd-raiz > .seedy > sd-toasts, sd-raiz > .seedy > sd-erro, sd-raiz > .seedy > sd-
 .erro-popup .painel-faixa .rotulo { color: var(--cor-do-aviso); }
 .erro-corpo { display: flex; flex-direction: column; align-items: stretch; gap: 10px; min-height: 0; padding: 18px 20px; overflow: auto; font-size: 11.5px; line-height: 1.7; overflow-wrap: anywhere; }
 .erro-corpo > * { flex-shrink: 0; }
-.erro-texto { max-height: 190px; margin: 0 0 6px; padding: 12px 14px; overflow: auto; border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--fundo); font-family: inherit; font-size: 11px; color: var(--cor-do-aviso); white-space: pre-wrap; user-select: text; }
+.erro-mensagem { max-height: 190px; margin: 0 0 6px; padding: 12px 14px; overflow: auto; border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--fundo); font-family: inherit; font-size: 11px; color: var(--cor-do-aviso); white-space: pre-wrap; user-select: text; }
 .erro-conta { display: block; }
 .erro-conta textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 10px 12px; resize: vertical; border: var(--espessura-borda) solid var(--destaque); border-radius: var(--raio-pequeno); background: var(--fundo); color: var(--texto); font: inherit; outline: none; }
 .erro-junto { padding: 10px 14px; border: var(--espessura-borda) dashed var(--borda); border-radius: var(--raio-pequeno); font-size: 11px; }
