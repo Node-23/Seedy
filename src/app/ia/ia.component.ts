@@ -1,3 +1,4 @@
+import { CAMINHO_DO_LOGO, VIEWBOX_DO_LOGO } from '../marca/logo';
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { IaService } from './ia.service';
 import { RevisaoService } from './revisao.service';
@@ -17,6 +18,8 @@ import { nomeBase } from '../nucleo/ponte';
  * edição viram cartões de diff (⏎ aplica, esc recusa). Com o campo vazio, ⏎ aplica a
  * proposta pendente; ctrl+l começa outra conversa.
  */
+const EXEMPLOS = ['explique este arquivo', 'por que o servidor deu erro?', 'escreva testes para esta classe', 'revise o que mudei antes do commit'];
+
 @Component({
   selector: 'sd-ia',
   imports: [MarkdownComponent],
@@ -89,10 +92,20 @@ import { nomeBase } from '../nucleo/ponte';
             @case ('erro') { <div class="ia-erro">{{ item.texto }}</div> }
           }
         } @empty {
-          <div class="ia-vazio suave">
-            Peça o que quiser no projeto: "sobe o servidor e reproduz o erro do armazenamento", "por que esse JSP dá 500?",
-            "quantas bancas a feira 3 tem no Homolog?". A IA abre o código, lê o log, testa a aplicação e consulta o banco;
-            mudanças de código chegam como diff para você aplicar ou recusar.
+          <!-- Sem conversa (mockup 33): ↑↓ no campo escolhem um exemplo e ⏎ leva o texto para ele. -->
+          <div class="ia-inicio">
+            <svg class="ia-inicio-broto" [attr.viewBox]="viewBoxDoLogo" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" [attr.d]="logo"/></svg>
+            <b>O que vamos fazer?</b>
+            <p class="suave">Eu leio o código e o log, testo a aplicação e consulto o banco.</p>
+            <ul role="listbox" aria-label="Exemplos de pedido">
+              @for (x of exemplos; track x; let i = $index) {
+                <li role="option" [class.sel]="i === exemplo()" [attr.aria-selected]="i === exemplo()" (click)="usarExemplo(i)">
+                  <span>{{ x }}</span>@if (i === exemplo()) { <kbd>⏎</kbd> }
+                </li>
+              }
+            </ul>
+            <p class="suave"><kbd>↑↓</kbd> escolher <kbd>⏎</kbd> levar para o campo</p>
+            <p class="suave ia-inicio-fim">Mudanças de código chegam como diff, para você aplicar ou recusar.</p>
           </div>
         }
         @if (ia.pensando()) { <div class="ia-pensando destaque-texto">✦ trabalhando…</div> }
@@ -120,7 +133,7 @@ import { nomeBase } from '../nucleo/ponte';
         </div>
         <label class="ia-campo ia-campo-grande" (dragover)="$event.preventDefault()" (drop)="soltar($event)">
           <input #campo type="text" spellcheck="false" aria-label="Mensagem para a IA" (paste)="colar($event)"
-                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça, pergunte ou cole uma imagem (ctrl+v)…'"
+                 [placeholder]="ia.pendente() ? '⏎ aplica · esc recusa · ou escreva…' : 'peça algo ou cole uma imagem…'"
                  [value]="texto()" (input)="texto.set($any($event.target).value)" (keydown)="teclar($event)" />
           <button class="ia-imagem" aria-label="Anexar imagem" title="anexar imagem (ou cole com ctrl+v)" (click)="escolherImagem.click()">🖼</button>
           <input #escolherImagem type="file" hidden multiple accept="image/png,image/jpeg,image/gif,image/webp" (change)="escolhidas($event)" />
@@ -188,6 +201,18 @@ export class IaComponent {
     return d;
   }
 
+  protected readonly exemplos = EXEMPLOS;
+  protected readonly exemplo = signal(0);
+  protected readonly logo = CAMINHO_DO_LOGO;
+  protected readonly viewBoxDoLogo = VIEWBOX_DO_LOGO;
+
+  /** Põe o exemplo no campo, sem enviar: dá para completar antes. */
+  protected usarExemplo(indice: number): void {
+    this.exemplo.set(indice);
+    this.texto.set(EXEMPLOS[indice]);
+    queueMicrotask(() => this.campo()?.nativeElement.focus());
+  }
+
   protected nome(caminho: string): string {
     return nomeBase(caminho);
   }
@@ -202,6 +227,14 @@ export class IaComponent {
 
   protected teclar(e: KeyboardEvent): void {
     const pendente = this.ia.pendente();
+    const semConversa = !this.ia.itens().length && !this.texto() && !this.anexos.imagens().length;
+    if (semConversa && !e.shiftKey && ['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
+      if (e.key === 'Enter') this.usarExemplo(this.exemplo());
+      else this.exemplo.set((this.exemplo() + (e.key === 'ArrowDown' ? 1 : EXEMPLOS.length - 1)) % EXEMPLOS.length);
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (e.key === 'ArrowUp' && !this.texto() && !this.ia.pensando() && !e.shiftKey) {
       const ultima = this.ia.itens().map((i, n) => (i.tipo === 'usuario' ? n : -1)).filter((n) => n >= 0).pop();
       if (ultima !== undefined) {

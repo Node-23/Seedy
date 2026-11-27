@@ -1,7 +1,7 @@
 [package]
 name = "seedy"
 version = "0.5.8"
-description = "Seedy — IDE Java minimalista, guiada pelo teclado"
+description = "Seedy — IDE minimalista para Java, Angular e React"
 authors = ["Matheus Vinicius Linhares"]
 license-file = "../LICENSE.md"
 repository = "https://github.com/Node-23/seedy"

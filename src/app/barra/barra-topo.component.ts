@@ -10,6 +10,7 @@ import { CommitService } from '../git/commit.service';
 import { ExecucaoService } from '../execucao/execucao.service';
 import { CAMINHO_DO_LOGO, VIEWBOX_DO_LOGO } from '../marca/logo';
 import { DockerService } from '../containers/docker.service';
+import { SinoComponent } from '../notificacoes/sino.component';
 
 /**
  * Barra de cima: menu, projeto, buffers abertos, RUN/DEBUG, ações da tela atual e controles
@@ -17,6 +18,7 @@ import { DockerService } from '../containers/docker.service';
  */
 @Component({
   selector: 'sd-barra-topo',
+  imports: [SinoComponent],
   template: `
     <header class="barra-topo" data-tauri-drag-region>
       <button class="botao-quadrado grande logo" aria-label="Menu de atalhos" title="Atalhos (Ctrl+Shift+Espaço)" (click)="atalhos.alternarLider()">
@@ -97,6 +99,7 @@ import { DockerService } from '../containers/docker.service';
           <button class="botao" title="atualizar (r)" (click)="docker.atualizar(true)">↻ <kbd>r</kbd></button>
         </div>
       }
+      <sd-sino />
       <div class="janela">
         <button aria-label="Minimizar" (click)="janela.minimizar()">–</button>
         <button aria-label="Maximizar" (click)="janela.maximizar()">□</button>

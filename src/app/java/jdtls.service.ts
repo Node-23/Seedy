@@ -311,7 +311,7 @@ export class JdtlsService {
       this.preferencias = preferencias;
       // O debug (Fase 5) é um plugin do jdtls: sem ele o resto funciona igual.
       const debug = await ponte.java.debugPlugin().catch((e) => {
-        this.mensagens.erro(`java-debug: ${e}`);
+        this.mensagens.falha('o depurador Java (java-debug) não carregou', e);
         return null;
       });
       const resultado = await cliente.pedir('initialize', parametrosDeInicio(raiz, pid, preferencias, this.runtimes, debug ? [debug] : [], this.semBuild));
@@ -326,7 +326,7 @@ export class JdtlsService {
     } catch (e) {
       if (!atual()) return;
       this.estado.set({ fase: 'erro', detalhe: 'erro' });
-      this.mensagens.erro(`jdtls: ${e}`);
+      this.mensagens.falha('não consegui iniciar o jdtls', e);
     }
   }
 

@@ -65,9 +65,17 @@ pub fn migrar_destaque_lavanda(texto: &str) -> Option<String> {
     (novo != texto).then_some(novo)
 }
 
+/// O Bloco de Notas e o PowerShell gravam UTF-8 com BOM, que o JSON da interface não aceita.
+fn sem_bom(texto: String) -> String {
+    match texto.strip_prefix('﻿') {
+        Some(resto) => resto.to_string(),
+        None => texto,
+    }
+}
+
 fn ler_config() -> Result<Tema, String> {
     let caminho = pasta_config().join(ARQUIVO_CONFIG);
-    let conteudo = fs::read_to_string(&caminho).map_err(|e| format!("não consegui ler o seedy.json: {e}"))?;
+    let conteudo = fs::read_to_string(&caminho).map(sem_bom).map_err(|e| format!("não consegui ler o seedy.json: {e}"))?;
     Ok(Tema { caminho: caminho.to_string_lossy().into_owned(), conteudo })
 }
 
@@ -85,7 +93,7 @@ pub fn config_padrao() -> String {
 
 fn ler_tema() -> Result<Tema, String> {
     let caminho = caminho_tema();
-    let conteudo = fs::read_to_string(&caminho).map_err(|e| format!("não consegui ler o tema: {e}"))?;
+    let conteudo = fs::read_to_string(&caminho).map(sem_bom).map_err(|e| format!("não consegui ler o tema: {e}"))?;
     Ok(Tema {
         caminho: caminho.to_string_lossy().into_owned(),
         conteudo,
@@ -174,6 +182,12 @@ mod testes {
         assert!(novo.contains(r##""definicao": "#9CD7BA""##));
         // O azul do ANSI do terminal não é o destaque: continua.
         assert!(novo.contains(r##""#92A9E1"]"##));
+    }
+
+    #[test]
+    fn bom_do_inicio_e_tirado() {
+        assert_eq!(sem_bom("﻿{}".into()), "{}");
+        assert_eq!(sem_bom("{}".into()), "{}");
     }
 
     #[test]

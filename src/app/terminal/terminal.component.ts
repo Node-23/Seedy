@@ -201,7 +201,7 @@ export class TerminalComponent {
         this.abas.update((l) => [...l]);
       });
     } catch (e) {
-      this.mensagens.erro(`não consegui abrir o terminal: ${e}`);
+      this.mensagens.falha('não consegui abrir o terminal', e);
       aba.terminal.writeln(`Erro ao abrir o shell: ${e}`);
     }
   }

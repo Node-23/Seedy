@@ -34,6 +34,10 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Tela de **início** (sem projeto aberto: ações e projetos recentes) (`fontes/Inicio.dc.html`) | [30-inicio.png](30-inicio.png) | ✅ |
 | **Editor vazio** com a marca e os atalhos principais (`fontes/EditorVazio.dc.html`) | [31-editor-vazio.png](31-editor-vazio.png) | ✅ |
 | Configurações, aba **Sobre** (`fontes/Sobre.dc.html`) | [32-sobre.png](32-sobre.png) | ✅ |
+| Painel da **IA sem conversa** com o broto e exemplos (`fontes/IaVazia.dc.html`) | [33-ia-vazia.png](33-ia-vazia.png) | ✅ |
+| **Toasts** no lugar das mensagens do rodapé, e o sino na barra de cima (`fontes/Toasts.dc.html`) | [34-toasts.png](34-toasts.png) | ✅ |
+| **Erro completo** e envio para análise (`fontes/ErroDoSeedy.dc.html`) | [35-erro-do-seedy.png](35-erro-do-seedy.png) | ✅ |
+| Lista de **notificações** (`Alt+Shift+H`) (`fontes/Notificacoes.dc.html`) | [36-notificacoes.png](36-notificacoes.png) | ✅ |
 | Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
 

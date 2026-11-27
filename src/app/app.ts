@@ -58,6 +58,9 @@ import { TelaConfiguracoesComponent } from './config/tela-configuracoes.componen
 import { BookmarksService } from './editor/bookmarks.service';
 import { MenuRegraComponent } from './testes/menu-regra.component';
 import { ToastsComponent } from './nucleo/toasts.component';
+import { ErroComponent } from './notificacoes/erro.component';
+import { ListaDeNotificacoesComponent } from './notificacoes/lista.component';
+import { ponte } from './nucleo/ponte';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
 import { MenuAnexoComponent } from './ia/menu-anexo.component';
 import { DivisoresService } from './layout/divisores.service';
@@ -77,7 +80,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
-    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, LoginEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent, InicioComponent,
+    ServidorComponent, PerfilServidorComponent, IaComponent, RevisaoComponent, TelaDebugComponent, NovoProjetoComponent, ScriptsComponent, TelaContainersComponent, ContainersPainelComponent, TelaEntenderComponent, TelaConfiguracoesComponent, TelaTestesComponent, TelaEndpointsComponent, LoginEndpointsComponent, MenuGutterComponent, MenuAnexoComponent, MenuRegraComponent, ToastsComponent, ErroComponent, ListaDeNotificacoesComponent, BarraIconesComponent, TodoPainelComponent, OpcoesExecucaoComponent, InicioComponent,
   ],
   template: `
     <div class="seedy">
@@ -151,7 +154,6 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       }
       <sd-diff />
       <sd-menu-gutter />
-      <sd-toasts />
       <sd-menu-regra />
       <sd-menu-anexo />
       <sd-busca />
@@ -171,10 +173,12 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (!semProjeto()) { <sd-barra-status /> }
       <div class="linha-de-comando">
         <div id="vim-linha-de-comando" class="vim-linha"></div>
-        @if (mensagens.atual(); as m) {
-          <span class="mensagem" [class.erro]="m.erro">{{ m.texto }}</span>
-        }
       </div>
+
+      <!-- Avisos: fora da região principal, para valerem por cima de qualquer janela aberta. -->
+      <sd-notificacoes />
+      <sd-erro />
+      <sd-toasts />
 
       <sd-menu-lider />
       <sd-vim-ajuda />
@@ -221,6 +225,8 @@ export class App {
     void inject(TemaService).iniciar();
     void inject(ConfigService).iniciar();
     void this.projeto.iniciar();
+    // O núcleo avisa quando algo quebra nele (pânico no Rust).
+    void ponte.aoFalhar((detalhe) => this.mensagens.falha('o núcleo do Seedy falhou', detalhe));
     inject(AberturaService).acompanhar();
   }
 

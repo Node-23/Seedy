@@ -24,6 +24,7 @@ mod terminal;
 mod testes;
 mod web;
 mod env;
+mod falhas;
 mod icone;
 mod tema;
 
@@ -43,6 +44,7 @@ pub fn run() {
         .setup(|app| {
             // Tudo que o Seedy inicia morre com ele (jdtls, RUN/DEBUG, servidores, scripts, terminais).
             processos::prender_filhos();
+            falhas::observar(app.handle().clone());
             tema::garantir_tema_padrao().map_err(|e| e.to_string())?;
             tema::observar(app.handle().clone());
             {

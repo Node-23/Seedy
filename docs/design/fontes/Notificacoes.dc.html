@@ -1,0 +1,93 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Notificações — Seedy</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #19191B; }
+  .tela { width: 1440px; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px; }
+  .janela { border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .faixa { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0; }
+  .rotulo { font-size: 11px; letter-spacing: .14em; color: #A29D93; }
+  .suave { color: #A29D93; } .dest { color: #9CD7BA; } .e { flex: 1; }
+  kbd { font-family: inherit; font-size: 10.5px; padding: 1px 6px; border-radius: 5px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C; white-space: nowrap; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .topo { display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0; }
+  .quad { width: 40px; height: 40px; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #A29D93; }
+  .quad.on { background: #333337; color: #9CD7BA; }
+  .chip { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; font-size: 13px; }
+  .meio { flex: 1; min-height: 0; display: flex; gap: 12px; }
+  .icones { display: flex; flex-direction: column; gap: 10px; }
+  .arv div { height: 26px; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .status { height: 30px; flex-shrink: 0; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; display: flex; align-items: stretch; overflow: hidden; white-space: nowrap; }
+  .status span { display: flex; align-items: center; padding: 0 12px; gap: 6px; border-right: 2px solid #0B0B0C; }
+  .status .modo { background: #9CD7BA; color: #16171C; font-weight: 700; letter-spacing: .08em; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; box-shadow: 2px 2px 0 #0B0B0C; font-size: 11px; white-space: nowrap; }
+  
+  .vazio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #222225; }
+  .marca { display: flex; align-items: center; gap: 12px; font-size: 54px; font-weight: 700; letter-spacing: -0.05em; }
+  .marca img { width: 128px; height: 128px; mix-blend-mode: lighten; }
+  .vazio p { margin: 8px 0 26px; }
+  .lista { width: 360px; display: flex; flex-direction: column; }
+  .at { display: flex; justify-content: space-between; align-items: center; height: 34px; border-top: 1px solid #333337; }
+
+  .tela { position: relative; }
+  .sino { position: relative; width: 40px; margin-right: 8px; }
+  .sino b { position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 9px; background: #EE8C84; color: #16171C; font-size: 9px; line-height: 13px; text-align: center; }
+  .toasts { position: absolute; right: 24px; bottom: 56px; width: 400px; display: flex; flex-direction: column; gap: 10px; }
+  .toast { display: flex; gap: 12px; padding: 11px 12px 11px 14px; border: 2px solid var(--c); border-radius: 10px; background: #222225; box-shadow: 3px 3px 0 #0B0B0C; font-size: 11.5px; line-height: 1.6; }
+  .toast i { font-style: normal; color: var(--c); }
+  .toast .t { flex: 1; min-width: 0; }
+  .toast .t b { display: block; }
+  .toast .t small { display: block; font-size: 10.5px; color: #A29D93; margin-top: 3px; }
+  .toast .x { color: #A29D93; }
+  .veu { position: absolute; inset: 0; background: rgba(11,11,12,.55); }
+  .pop { position: absolute; left: 340px; top: 110px; width: 760px; }
+  .pop .corpo { padding: 18px 20px; line-height: 1.7; font-size: 11.5px; }
+  .pop pre { margin: 10px 0 16px; padding: 12px 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #19191B; font: inherit; font-size: 11px; color: #EE8C84; white-space: pre-wrap; }
+  .pop .caixa { margin-top: 8px; padding: 10px 12px; height: 70px; border: 2px solid #9CD7BA; border-radius: 10px; background: #19191B; color: #A29D93; box-sizing: border-box; }
+  .pop .junto { margin: 12px 0 0; padding: 10px 14px; border: 2px dashed #0B0B0C; border-radius: 10px; font-size: 11px; }
+  .pop .acoes { display: flex; gap: 10px; padding: 12px 20px; border-top: 2px solid #0B0B0C; align-items: center; }
+  .btn.p { background: #9CD7BA; color: #16171C; font-weight: 700; }
+  .lista-n { position: absolute; right: 56px; top: 62px; width: 470px; }
+  .n { display: flex; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #333337; font-size: 11.5px; line-height: 1.6; }
+  .n.on { background: #333337; box-shadow: inset 3px 0 0 #9CD7BA; }
+  .n i { font-style: normal; color: var(--c); }
+  .n .t { flex: 1; min-width: 0; }
+  .n small { display: block; font-size: 10.5px; color: #A29D93; }
+  .n kbd { align-self: center; }
+  .pe-n { padding: 10px 14px; border-top: 2px solid #0B0B0C; font-size: 10.5px; color: #A29D93; }
+
+</style></head><body>
+<div class="tela">
+  <div class="topo"><span class="quad"><svg width="28" height="28" viewBox="1011 150 614 614"><path fill="#9CD7BA" fill-rule="evenodd" d="M1011 326C1055 322 1105 322 1145 335C1215 358 1262 420 1283 486C1289 430 1310 375 1340 322C1385 245 1460 200 1625 188C1620 262 1596 345 1546 400C1503 448 1455 465 1400 478C1355 492 1322 515 1313 552C1311 595 1315 640 1315 678C1305 700 1286 712 1263 726C1270 690 1274 640 1272 590C1258 540 1228 528 1178 520C1130 512 1095 490 1060 440C1030 398 1017 362 1011 326ZM1488 311C1425 335 1375 375 1345 425C1320 468 1311 505 1313 550C1320 520 1330 490 1345 465C1378 405 1425 355 1488 311ZM1137 405C1190 425 1235 460 1257 505C1268 527 1272 553 1272 580C1262 545 1250 525 1232 503C1205 465 1175 430 1137 405Z"/></svg></span><span class="chip"><b>Feirinha-Backend</b><span class="suave">master</span></span><span class="e"></span><span class="quad sino on"><svg class="i" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg><b>3</b></span><span class="suave" style="display:flex;gap:22px;font-size:13px;padding-right:6px"><span>–</span><span>□</span><span>×</span></span></div>
+  <div class="meio">
+    <div class="icones"><span class="quad on"><svg class="i" viewBox="0 0 24 24"><path d="M3 18V6a1 1 0 0 1 1-1h5l2 2.5h9a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="11" rx="4"/><path d="M12 8V5M8 12H4M20 12h-4M8 17l-3 2M16 17l3 2"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><circle cx="7" cy="6" r="2.2"/><circle cx="7" cy="18" r="2.2"/><circle cx="17" cy="8" r="2.2"/><path d="M7 8.2v7.6M17 10.2c0 3.6-5 3.2-10 5.6"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg></span><span style="height:2px;margin:0 8px;background:#333337"></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><path d="M5 8l4 4-4 4M12 17h6"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="6" rx="2"/><rect x="4" y="13" width="16" height="6" rx="2"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.5 3 2.8 7 2.8s7-1.3 7-2.8V6M5 12c0 1.5 3 2.8 7 2.8s7-1.3 7-2.8"/></svg></span></div>
+    <div class="janela" style="width:260px">
+  <div class="faixa"><span class="rotulo">ARQUIVOS</span><span class="e"></span><kbd>Alt+1</kbd></div>
+  <div class="arv" style="padding-top:8px"><div>▸ .github</div><div>▸ .mvn</div><div>▸ scripts</div><div>▸ src</div><div class="suave">.env</div><div>docker-compose.yml</div><div>pom.xml</div><div>README.md</div></div>
+</div>
+<div class="janela e">
+  <div class="faixa"><span class="suave">Feirinha-Backend</span></div>
+  <div class="vazio">
+    <div class="marca"><img src="../marca/icone-1024.png" alt=""><span>Seedy</span></div>
+    <p class="suave">Nenhum arquivo aberto.</p>
+    <div class="lista">
+      <div class="at"><span>buscar arquivo</span><kbd>Ctrl+P</kbd></div>
+      <div class="at"><span>buscar no projeto</span><kbd>Ctrl+Shift+F</kbd></div>
+      <div class="at"><span>árvore de arquivos</span><kbd>Alt+1</kbd></div>
+      <div class="at"><span>terminal</span><kbd>Alt+F12</kbd></div>
+      <div class="at"><span>menu de atalhos</span><kbd>Ctrl+Shift+Espaço</kbd></div>
+    </div>
+  </div>
+</div>
+  </div>
+  <div class="status"><span class="modo">NORMAL</span><span>master</span><b class="e"></b><span style="border-left:2px solid #0B0B0C">jdtls ✓</span><span style="border:0">seedy</span></div>
+<div class="janela lista-n">
+  <div class="faixa"><span class="rotulo">NOTIFICAÇÕES</span><span class="suave">desde que o Seedy abriu</span><span class="e"></span><kbd>Alt+Shift+H</kbd></div>
+  <div class="n on" style="--c:#EE8C84"><i>✗</i><span class="t"><b>não consegui iniciar o jdtls</b><small>05:14 · erro do Seedy · não enviado</small></span><kbd>⏎</kbd></div>
+  <div class="n" style="--c:#E8C979"><i>⚠</i><span class="t"><b>abra um projeto para usar o terminal</b><small>05:11</small></span></div>
+  <div class="n" style="--c:#EE8C84"><i>✗</i><span class="t"><b>git push recusado: o remoto tem commits novos</b><small>05:02 · erro do projeto</small></span></div>
+  <div class="n" style="--c:#9CD7BA"><i>✓</i><span class="t"><b>seedy.json aplicado</b><small>04:58</small></span></div>
+  <div class="n" style="--c:#9CD7BA"><i>✓</i><span class="t"><b>Seedy 0.5.9 está em dia</b><small>04:55</small></span></div>
+  <div class="pe-n"><span class="dest">↑↓</span> escolher · <span class="dest">⏎</span> abrir · <span class="dest">x</span> apagar · <span class="dest">l</span> limpar tudo · <span class="dest">esc</span> fechar</div>
+</div>
+</div>
+</body></html>

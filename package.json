@@ -37,6 +37,6 @@
     "prettier": "^3.8.1",
     "typescript": "~6.0.2"
   },
-  "description": "Seedy — IDE Java minimalista, guiada pelo teclado",
+  "description": "Seedy — IDE minimalista para Java, Angular e React",
   "license": "SEE LICENSE IN LICENSE.md"
 }

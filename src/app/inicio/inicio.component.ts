@@ -6,6 +6,7 @@ import { GithubService } from '../git/github.service';
 import { haQuanto } from '../git/tempo';
 import { nomeBase, noApp, ponte } from '../nucleo/ponte';
 import { CAMINHO_DO_LOGO, VIEWBOX_DO_LOGO } from '../marca/logo';
+import { SinoComponent } from '../notificacoes/sino.component';
 
 const CHAVE_CARTAO = 'seedy.inicio.semPasseio';
 
@@ -32,15 +33,19 @@ const PASSOS = [
 /** Tela de início (mockup 30): aparece quando não há projeto aberto. */
 @Component({
   selector: 'sd-inicio',
+  imports: [SinoComponent],
   host: { '(window:keydown)': 'teclar($event)' },
   template: `
     <div class="inicio">
       <div class="inicio-topo" data-tauri-drag-region>
         <span data-tauri-drag-region>Seedy</span>
-        <div class="janela">
-          <button aria-label="Minimizar" (click)="janela.minimizar()">–</button>
-          <button aria-label="Maximizar" (click)="janela.maximizar()">□</button>
-          <button aria-label="Fechar" (click)="janela.fechar()">×</button>
+        <div class="inicio-direita">
+          <sd-sino />
+          <div class="janela">
+            <button aria-label="Minimizar" (click)="janela.minimizar()">–</button>
+            <button aria-label="Maximizar" (click)="janela.maximizar()">□</button>
+            <button aria-label="Fechar" (click)="janela.fechar()">×</button>
+          </div>
         </div>
       </div>
 
@@ -80,16 +85,17 @@ const PASSOS = [
             <li class="inicio-projeto" role="option" [class.selecionado]="i === indice()" [attr.aria-selected]="i === indice()"
                 [style]="'--cor: var(' + cor(r.tipo) + ')'" (mousemove)="indice.set(i)" (click)="abrir(r)">
               <span class="inicio-sigla" aria-hidden="true">{{ sigla(r) }}</span>
-              <span class="inicio-nome"><b>{{ nome(r) }}</b><small class="suave">{{ r.caminho }}</small></span>
+              <span class="inicio-nome"><b>{{ nome(r) }}@if (i === 0 && !filtro()) { <span class="inicio-continuar">continuar</span> }</b><small class="suave">{{ r.caminho }}</small></span>
               <span><span class="inicio-tag">{{ r.tipo }}</span></span>
               <span class="suave inicio-branch">{{ branches()[r.caminho] ? '⎇ ' + branches()[r.caminho] : '' }}</span>
               <span class="suave">{{ quando(r) }}</span>
+              <span class="inicio-numero">@if (i < 9) { <kbd>{{ i + 1 }}</kbd> }</span>
             </li>
           } @empty {
             <li class="inicio-vazio suave">{{ filtro() ? 'nenhum projeto com esse nome' : 'os projetos que você abrir aparecem aqui' }}</li>
           }
         </ul>
-        @if (visiveis().length) { <div class="inicio-dica suave"><kbd>↑↓</kbd> escolher <kbd>⏎</kbd> abrir <kbd>del</kbd> tirar da lista</div> }
+        @if (visiveis().length) { <div class="inicio-dica suave"><kbd>1–9</kbd> abrir direto <kbd>↑↓</kbd> escolher <kbd>⏎</kbd> abrir <kbd>del</kbd> tirar da lista</div> }
 
         @if (cartao()) {
           <div class="inicio-cartao">
@@ -223,6 +229,10 @@ export class InicioComponent {
       const r = this.visiveis()[this.indice()];
       if (r) this.recentes.esquecer(r.caminho);
       this.indice.set(Math.max(0, Math.min(this.indice(), this.visiveis().length - 1)));
+    } else if (/^[1-9]$/.test(e.key)) {
+      const r = this.visiveis()[Number(e.key) - 1];
+      if (!r) return;
+      this.abrir(r);
     } else if (e.key === '/') this.campo().nativeElement.focus();
     else if (e.key === 'n') this.novo();
     else if (e.key === 'o') this.abrirPasta();

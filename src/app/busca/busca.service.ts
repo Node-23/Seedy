@@ -81,7 +81,7 @@ export class BuscaService {
       const indice = await ponte.indexar(raiz);
       if (this.projeto.raiz() === raiz) this.indice.set(indice);
     } catch (e) {
-      this.mensagens.erro(`não consegui indexar o projeto: ${e}`);
+      this.mensagens.falha('não consegui indexar o projeto', e);
     } finally {
       this.indexando.set(false);
     }

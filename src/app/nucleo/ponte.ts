@@ -478,6 +478,11 @@ async function ignorarArquivoSeedy(caminho: string): Promise<void> {
 
 export const ponte = {
   /** Abre um link (http, https, mailto) no navegador do sistema. */
+  /** Pânico no núcleo (Rust), para virar uma falha do Seedy. */
+  async aoFalhar(quando: (detalhe: string) => void): Promise<void> {
+    if (noApp()) await listen<string>('seedy://falha', (e) => quando(e.payload));
+  },
+
   async abrirLink(url: string): Promise<void> {
     if (noApp()) return invoke<void>('abrir_link', { url });
     window.open(url, '_blank', 'noopener');

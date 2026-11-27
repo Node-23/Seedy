@@ -1,6 +1,6 @@
 # Seedy
 
-IDE Java minimalista, guiada pelo teclado, com o visual sob controle de quem usa.
+IDE minimalista para Java, Angular e React, guiada pelo teclado, com o visual sob controle de quem usa.
 Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 
 > Status: **v0.1 em andamento**. Editor com modo vim, árvore de arquivos, terminal,
@@ -16,7 +16,7 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Terminal integrado** com abas: shell de verdade (PowerShell no Windows, seu `$SHELL` no Linux).
 - **Tema editável** (cores, fontes e forma), aplicado na hora em que você salva o arquivo.
 - **Atalhos diretos**, um acorde só como no IntelliJ (`Alt+9` Git, `Alt+5` debug, `Alt+Shift+T` testes...), trocáveis em `Ctrl+,` ou no `seedy.json`; o menu de atalhos (`Ctrl+Shift+Espaço` ou o botão da logo) lista todos.
-- **Abertura e tela de início** (mockups 29 e 30): janela de carregamento enquanto o projeto abre; sem projeto aberto, a tela de início cria (`n`), abre (`o`) ou clona (`c`, do GitHub ou por endereço git) e lista os recentes (`/` busca, `del` tira da lista). O Seedy abre nessa tela; para pular direto para o último projeto, ligue "abrir o último projeto ao iniciar" em `Ctrl+,`, aba 3 (`inicio.abrirUltimoProjeto` no `seedy.json`).
+- **Abertura e tela de início** (mockups 29 e 30): janela de carregamento enquanto o projeto abre; sem projeto aberto, a tela de início cria (`n`), abre (`o`) ou clona (`c`, do GitHub ou por endereço git) e lista os recentes (`1` a `9` abrem direto, o mais recente vem marcado como "continuar", `/` busca, `del` tira da lista). O Seedy abre nessa tela; para pular direto para o último projeto, ligue "abrir o último projeto ao iniciar" em `Ctrl+,`, aba 3 (`inicio.abrirUltimoProjeto` no `seedy.json`).
 - **Três buscas**, como no IntelliJ:
   - `Ctrl+F` — **no arquivo aberto** (a caixa de busca do editor): `↓` / `⏎` / `F3` vão para o
     próximo, `↑` / `shift+⏎` / `shift+F3` para o anterior. Ao fechar (`esc`), o cursor fica no
@@ -93,6 +93,9 @@ Feita com **Tauri 2 + Angular + Monaco**, roda em **Windows e Linux**.
 - **Barra de ícones à esquerda**: arquivos, busca, git, TODO, terminal, servidor, scripts, banco,
   containers, debug, entender o sistema e IA (a barra de cima ficou com o projeto, os buffers e o
   RUN/DEBUG).
+- **Avisos e erros** em toasts, com o sino (`Alt+Shift+H`) guardando o que passou; clicar mostra o texto
+  inteiro. Falha do próprio Seedy pode ser enviada por e-mail para análise: abre o seu programa de e-mail
+  com o relatório pronto (sem código nem senhas), e quem envia é você.
 - **seedy.json** (`Ctrl+,`) e **layout editável** (`Alt+Shift+L`, ou arrastar a faixa de um painel): ver a
   seção [seedy.json](#seedyjson).
 - **TODO** (mockup 20, `Alt+6` ou o botão na barra de ícones à esquerda): um painel por cima das
@@ -343,7 +346,7 @@ O tema é um arquivo JSON que você edita (no próprio Seedy: menu de atalhos, `
 - **Windows:** `%APPDATA%\seedy\tema.json`
 
 Ao salvar, a IDE inteira muda na hora. Se o JSON tiver erro, o Seedy mantém o
-tema anterior e avisa no rodapé. O que você apagar do arquivo volta ao padrão.
+tema anterior e avisa num toast. O que você apagar do arquivo volta ao padrão.
 
 ```jsonc
 {

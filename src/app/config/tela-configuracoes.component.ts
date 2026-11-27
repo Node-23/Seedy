@@ -129,7 +129,7 @@ const LINHAS_EDITOR: LinhaEditor[] = [
                 <div class="sobre-cartao">
                   <svg class="sobre-fita" width="260" viewBox="0 0 190 100" preserveAspectRatio="none" aria-hidden="true"><path d="M60 100 L190 22 L190 62 L128 100 Z"/><path class="clara" d="M118 0 C122 26 146 46 190 54 L190 0 Z"/></svg>
                   <img src="marca/icone.png" alt="">
-                  <div><b>Seedy</b><span class="suave">{{ atualizacao.versao() ? 'versão ' + atualizacao.versao() : 'modo navegador' }}</span><span class="suave">IDE Java guiada pelo teclado · Windows e Linux</span></div>
+                  <div><b>Seedy</b><span class="suave">{{ atualizacao.versao() ? 'versão ' + atualizacao.versao() : 'modo navegador' }}</span><span class="suave">IDE para Java, Angular e React · Windows e Linux</span></div>
                 </div>
                 <div class="sobre-linha"><div>Atualização<small [class.sucesso-texto]="atualizacao.disponivel()" [class.suave]="!atualizacao.disponivel()">{{ estadoDaAtualizacao() }}</small></div>
                   <button class="botao" (click)="atualizacao.verificar(true)">procurar agora <kbd>u</kbd></button></div>
