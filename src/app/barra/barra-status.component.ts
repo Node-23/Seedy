@@ -7,6 +7,7 @@ import { CarregandoComponent } from './carregando.component';
 import { LimitesUsoComponent } from '../ia/limites-uso.component';
 import { AtualizacaoComponent } from '../atualizacao/atualizacao.component';
 import { VimAjudaService } from '../vim/vim-ajuda.component';
+import { ProblemasService } from '../problemas/problemas.service';
 import { JdtlsService } from '../java/jdtls.service';
 import { CompletarService } from '../completar/completar.service';
 import { ConfiguracoesService } from '../config/configuracoes.service';
@@ -117,6 +118,11 @@ const NOMES_MODO: Record<string, string> = {
       }
       <span class="espaco"></span>
       <sd-carregando />
+      @if (problemas.erros() || problemas.avisos()) {
+        <button class="segmento com-divisa-esq problemas-status" title="problemas do projeto (Alt+3 · F8 próximo)" (click)="layout.alternar('problemas')">
+          <span class="erro-texto">✕ {{ problemas.erros() }}</span><span class="aviso-texto">▲ {{ problemas.avisos() }}</span>
+        </button>
+      }
       @if (jdtls.estado().fase !== 'inativo') {
         <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase" [title]="tituloJdtls()">{{ textoJdtls() }}</span>
       }
@@ -184,6 +190,7 @@ export class BarraStatusComponent {
   protected readonly busca = inject(BuscaService);
   private readonly buscaProjeto = inject(BuscaProjetoService);
   protected readonly jdtls = inject(JdtlsService);
+  protected readonly problemas = inject(ProblemasService);
   protected readonly textoJdtls = computed(() => {
     const e = this.jdtls.estado();
     return e.fase === 'pronto' ? 'jdtls ✓' : e.fase === 'erro' || e.fase === 'sem-java' ? `jdtls ✗ ${e.detalhe ?? ''}` : `jdtls ${e.detalhe ?? '…'}`;

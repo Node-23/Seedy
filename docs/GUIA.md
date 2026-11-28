@@ -17,6 +17,13 @@ Para conhecer o projeto e instalar, comece pelo [README](../README.md).
 - **Markdown ao vivo:** um `.md` aparece formatado no próprio editor (títulos, negrito, listas, caixas de
   tarefa, código, citações, links e tabelas); a linha do cursor mostra os símbolos. `Alt+Shift+R` (ou
   `ao vivo | fonte` no topo) alterna para o texto puro.
+- **Arquivos recentes** (`Ctrl+E`): os últimos vistos no projeto, com filtro; `2` a `9` abrem direto, `^v` abre
+  ao lado, `del` tira da lista. No Vim, a rolagem fica com `Ctrl+D`.
+- **Problemas** (`Alt+3` ou o contador na barra de status): erros e avisos do projeto por arquivo; `⏎` vai até a
+  linha, `.` abre as ações rápidas. `F8` / `Shift+F8` vão ao próximo e ao anterior (no debug pausado, continuam
+  passando e saindo). Os da web aparecem para os arquivos já abertos.
+- **Rodar pela margem:** `▶` em cada teste e `main` de um arquivo Java (`▶▶` na classe de teste, vermelho se
+  falhou no último run). `Ctrl+Shift+F10` roda e `Ctrl+Shift+F9` depura o que está sob o cursor.
 - **Árvore de arquivos** navegável pelo teclado (`j`/`k`, `l`/`Enter`, `h`). Botão direito (ou a tecla de menu)
   abre **Novo**, copiar, colar, renomear, apagar e abrir no explorador de arquivos. `n` ou `Alt+Insert` criam: classe Java (com o
   `package` da pasta), arquivo com o nome que quiser (`/` cria pastas), pasta, TypeScript, componente React

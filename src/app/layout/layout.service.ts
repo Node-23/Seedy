@@ -9,7 +9,7 @@ import { ConfigService } from '../config/config.service';
  * o divisor muda o tamanho. A disposição atual e as salvas com nome ficam no seedy.json
  * (`layout`), então valem em qualquer projeto e dá para editar à mão.
  */
-export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor' | 'scripts' | 'containers' | 'ia';
+export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor' | 'scripts' | 'containers' | 'problemas' | 'ia';
 /** Tela que ocupa a área principal: o editor (com os painéis) ou uma tela cheia. */
 export type Tela = 'editor' | 'git' | 'merge' | 'debug' | 'containers' | 'entender' | 'config' | 'testes' | 'endpoints';
 export type Regiao = 'esquerda' | 'inferior' | 'direita';
@@ -28,6 +28,7 @@ export const PAINEIS: Painel[] = [
   { id: 'servidor', titulo: 'Servidor', regiao: 'inferior', atalho: 'Alt+4' },
   { id: 'scripts', titulo: 'Scripts', regiao: 'inferior', atalho: 'Alt+Shift+J' },
   { id: 'containers', titulo: 'Containers', regiao: 'inferior', atalho: 'Alt+8' },
+  { id: 'problemas', titulo: 'Problemas', regiao: 'inferior', atalho: 'Alt+3' },
   { id: 'ia', titulo: 'IA', regiao: 'direita', atalho: 'Alt+A' },
 ];
 
@@ -52,7 +53,7 @@ const CHAVE = 'seedy.layout';
 export const NOME_PADRAO = 'padrão';
 
 export const PADRAO: Disposicao = {
-  visiveis: { arquivos: true, conexoes: false, terminal: false, servidor: false, scripts: false, containers: false, ia: false },
+  visiveis: { arquivos: true, conexoes: false, terminal: false, servidor: false, scripts: false, containers: false, problemas: false, ia: false },
   regioes: Object.fromEntries(PAINEIS.map((p) => [p.id, p.regiao])) as Record<IdPainel, Regiao>,
   tamanhos: {},
 };

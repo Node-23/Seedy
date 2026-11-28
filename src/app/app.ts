@@ -64,6 +64,9 @@ import { CompletarService } from './completar/completar.service';
 import { PerguntaDoCompletarComponent } from './completar/pergunta.component';
 import { MenuArvoreComponent } from './arquivos/menu-arvore.component';
 import { NovoArquivoComponent } from './arquivos/novo-arquivo.component';
+import { RecentesComponent } from './arquivos/recentes.component';
+import { ProblemasComponent } from './problemas/problemas.component';
+import { MenuRodarComponent } from './editor/menu-rodar.component';
 import { resumoDoPanico } from './notificacoes/relatorio';
 import { ponte } from './nucleo/ponte';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
@@ -81,7 +84,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
 @Component({
   selector: 'sd-raiz',
-  imports: [MenuArvoreComponent, NovoArquivoComponent, PerguntaDoCompletarComponent, 
+  imports: [RecentesComponent, ProblemasComponent, MenuRodarComponent, MenuArvoreComponent, NovoArquivoComponent, PerguntaDoCompletarComponent, 
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
@@ -103,6 +106,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
           @case ('servidor') { <sd-servidor /> }
           @case ('scripts') { <sd-scripts /> }
           @case ('containers') { <sd-containers-painel /> }
+          @case ('problemas') { <sd-problemas /> }
           @case ('ia') { @if (layout.tela() === 'editor' || layout.tela() === 'merge') { <sd-ia /> } }
         }
       </ng-template>
@@ -159,6 +163,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       }
       <sd-diff />
       <sd-menu-gutter />
+      <sd-menu-rodar />
       <sd-menu-regra />
       <sd-menu-anexo />
       <sd-busca />
@@ -178,6 +183,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (!semProjeto()) { <sd-barra-status /> }
       <!-- Avisos: fora da região principal, para valerem por cima de qualquer janela aberta. -->
       <sd-menu-arvore />
+      <sd-recentes />
       <sd-novo-arquivo />
       <sd-completar-pergunta />
       <sd-notificacoes />

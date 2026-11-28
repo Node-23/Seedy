@@ -11,6 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ligarMarkdownVivo } from './markdown-vivo';
+import { RodarMargemService } from './rodar-margem.service';
 import { monaco } from './monaco';
 import { initVimMode, VimMode } from '../../vendor/monaco-vim';
 import { CompletarService } from '../completar/completar.service';
@@ -230,9 +231,19 @@ export class EditorComponent {
         if (ev.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
         const b = this.buffer();
         const linha = ev.target.position?.lineNumber;
+        // Clique no ▶: o menu de rodar; no resto da margem, o breakpoint.
+        if (ev.target.element?.classList.contains('rodar-glifo')) {
+          const alvo = linha ? this.executaveis?.em(linha) : null;
+          if (alvo) {
+            this.editor.focarPainel(painel);
+            this.margem.abrir(ev.event.posx + 10, ev.event.posy + 6, alvo);
+          }
+          return;
+        }
         if (b && linha && !b.somenteLeitura && aceitaBreakpoint(b.caminho)) this.depurador.alternar(b.caminho, linha);
       });
       this.markdown = ligarMarkdownVivo(instancia, () => this.editor.markdownAoVivo() && this.editor.ehMarkdown(this.editor.bufferDoPainel(painel)));
+      this.executaveis = this.margem.ligar(instancia);
       this.instancia.set(instancia);
       instancia.setModel(this.buffer()?.modelo ?? null);
 
@@ -292,6 +303,7 @@ export class EditorComponent {
         vim.dispose?.();
         dica.dispose();
         this.markdown?.dispose();
+        this.executaveis?.dispose();
         instancia.dispose();
         barraVim.remove();
       });
@@ -329,6 +341,13 @@ export class EditorComponent {
       if (this.instancia()) queueMicrotask(() => this.markdown?.atualizar());
     });
 
+    // Os ▶ da margem: ao trocar de arquivo e quando o resultado dos testes muda.
+    effect(() => {
+      this.buffer();
+      this.margem.versao();
+      if (this.instancia()) queueMicrotask(() => this.executaveis?.atualizar());
+    });
+
     // Fonte do código vem do tema.
     effect(() => {
       const t = this.tema.tema();
@@ -338,6 +357,8 @@ export class EditorComponent {
   }
 
   private markdown: ReturnType<typeof ligarMarkdownVivo> | null = null;
+  private readonly margem = inject(RodarMargemService);
+  private executaveis: ReturnType<RodarMargemService['ligar']> | null = null;
 
   private opcoesDeFonte(t: ReturnType<TemaService['tema']>): monaco.editor.IEditorOptions {
     const f = t.fontes.codigo;
@@ -440,5 +461,15 @@ export class EditorComponent {
     instancia.addCommand(M.CtrlCmd | K.F2, () => void this.bookmarks.alternar());
     // Gerar... (getters/setters, construtor, toString, equals/hashCode, sobrescrever).
     ligar(M.Alt | K.Insert, 'editor.action.sourceAction');
+    // O mesmo no botão direito, numa classe Java (o "Generate..." do IntelliJ).
+    instancia.addAction({
+      id: 'seedy.gerar',
+      label: 'Gerar…',
+      keybindings: [M.Alt | K.Insert],
+      precondition: 'editorLangId == java && !editorReadonly',
+      contextMenuGroupId: '1_modification',
+      contextMenuOrder: 0,
+      run: (ed) => ed.trigger('menu', 'editor.action.sourceAction', null),
+    });
   }
 }

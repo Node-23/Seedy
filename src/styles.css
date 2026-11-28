@@ -57,7 +57,7 @@ sd-raiz > .seedy {
   padding: 14px;
 }
 /* Só mostram janelas flutuantes: não podem ocupar lugar (nem espaçamento) na coluna. */
-sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda, sd-raiz > .seedy > sd-menu-arvore, sd-raiz > .seedy > sd-novo-arquivo, sd-raiz > .seedy > sd-completar-pergunta { display: contents; }
+sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda, sd-raiz > .seedy > sd-menu-arvore, sd-raiz > .seedy > sd-novo-arquivo, sd-raiz > .seedy > sd-completar-pergunta, sd-raiz > .seedy > sd-recentes { display: contents; }
 
 .area-principal { position: relative; flex: 1; min-height: 0; min-width: 0; display: flex; }
 .regiao-principal { position: relative; flex: 1; min-height: 0; display: flex; }
@@ -2374,3 +2374,45 @@ sd-raiz > .seedy.so-inicio { padding: 0; gap: 0; }
 }
 
 sd-inicio { flex: 1; min-width: 0; min-height: 0; display: flex; }
+
+/* ---------- Arquivos recentes (mockup 44) ---------- */
+
+.painel.recentes { position: fixed; z-index: 60; left: 50%; top: 18vh; transform: translateX(-50%); width: min(640px, 92vw); display: flex; flex-direction: column; }
+.recentes-filtro { margin: 14px 14px 8px; }
+.recentes-lista { max-height: 46vh; overflow: auto; padding: 0 14px 8px; }
+.recentes-item { display: flex; align-items: center; gap: 12px; min-height: 30px; padding: 0 12px; border-radius: var(--raio-pequeno); cursor: pointer; white-space: nowrap; }
+.recentes-item.sel, .recentes-item:hover { background: var(--selecao); }
+.recentes-item.sel { box-shadow: inset 3px 0 0 var(--destaque); }
+.recentes-item .espaco { flex: 1; }
+.recentes-item .onde { font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+.recentes-item .marca-sujo { color: var(--aviso); }
+.recentes-item[data-git="A"] .nome { color: var(--destaque); }
+.recentes-item[data-git="M"] .nome, .recentes-item[data-git="R"] .nome { color: var(--modificado); }
+.recentes-item[data-git="?"] .nome, .recentes-item[data-git="C"] .nome { color: var(--erro); }
+.recentes-item[data-git="ignorado"] .nome { opacity: 0.45; }
+.recentes-vazio { padding: 8px 12px; }
+.painel.recentes .completar-acoes { gap: 16px; font-size: 11px; flex-wrap: wrap; }
+
+/* ---------- Problemas (mockup 45) ---------- */
+
+.aviso-texto { color: var(--aviso); }
+.painel.problemas { flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.problemas-lista { flex: 1; min-height: 0; overflow: auto; padding: 6px 0; outline: none; }
+.problema { display: flex; align-items: center; gap: 12px; min-height: 26px; padding: 0 14px 0 38px; white-space: nowrap; cursor: pointer; }
+.problema.arquivo { padding-left: 14px; }
+.problema .mensagem { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.problema .posicao { margin-left: auto; font-size: 11px; }
+.problema:hover, .problemas-lista:not(:focus) .problema.sel { background: var(--selecao); }
+.problemas-lista:focus .problema.sel { background: var(--selecao); box-shadow: inset 3px 0 0 var(--destaque); }
+.problemas-vazio { padding: 4px 14px; }
+.problemas-rodape { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 6px 14px; border-top: var(--espessura-borda) solid var(--borda); font-size: 11px; white-space: nowrap; }
+.problemas-rodape .espaco { flex: 1; }
+.barra-status .problemas-status { display: flex; align-items: center; gap: 10px; border-top: 0; border-bottom: 0; border-right: 0; background: transparent; cursor: pointer; font: inherit; }
+
+/* ---------- ▶ na margem (mockup 46) ---------- */
+
+.monaco-editor .rodar-glifo { cursor: pointer; display: flex !important; align-items: center; justify-content: center; }
+.monaco-editor .rodar-glifo::before { content: '▶'; font-size: 10px; color: var(--sucesso); }
+.monaco-editor .rodar-glifo.classe::before { content: '▶▶'; font-size: 8px; letter-spacing: -1px; }
+.monaco-editor .rodar-glifo.falhou::before { color: var(--erro); }
+.menu-rodar { min-width: 380px; }

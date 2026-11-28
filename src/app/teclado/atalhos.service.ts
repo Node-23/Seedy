@@ -1,3 +1,6 @@
+import { RecentesDeArquivosService } from '../arquivos/recentes-arquivos.service';
+import { ProblemasService } from '../problemas/problemas.service';
+import { RodarMargemService } from '../editor/rodar-margem.service';
 import { AnexosService } from '../ia/anexos.service';
 import { Injectable, Injector, effect, inject, signal, untracked } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
@@ -80,6 +83,7 @@ export const ACORDES_PADRAO: Record<string, string> = {
   completar: 'alt+shift+c',
   'arquivo-na-arvore': 'alt+f1',
   markdown: 'alt+shift+r',
+  problemas: 'alt+3',
   config: 'ctrl+,',
 };
 
@@ -92,6 +96,10 @@ export const ACORDES_NATIVOS: Record<string, string> = {
   salvar: 'ctrl+s',
   commit: 'ctrl+k',
   bookmark: 'ctrl+f2',
+  recentes: 'ctrl+e',
+  'proximo-problema': 'f8',
+  'rodar-no-cursor': 'ctrl+shift+f10',
+  'depurar-no-cursor': 'ctrl+shift+f9',
 };
 
 /** "Ctrl+Shift+F", "Alt+9", "F12": o acorde como aparece nas dicas. */
@@ -181,6 +189,9 @@ export class AtalhosService {
   private readonly entender = inject(EntenderService);
   private readonly todo = inject(TodoService);
   private readonly config = inject(ConfigService);
+  private readonly recentes = inject(RecentesDeArquivosService);
+  private readonly problemas = inject(ProblemasService);
+  private readonly margem = inject(RodarMargemService);
 
   readonly liderAberto = signal(false);
   /** acorde → ação (atalhos diretos). */
@@ -235,6 +246,11 @@ export class AtalhosService {
     { id: 'novo-arquivo', tecla: 'F', rotulo: 'novo arquivo (na pasta selecionada na árvore)', disponivel: true, executar: () => this.arquivos.novoPeloTeclado() },
     { id: 'arquivo-na-arvore', tecla: 'O', rotulo: 'mostrar na árvore o arquivo aberto', disponivel: true, executar: () => this.arquivos.mostrarArquivoAberto() },
     { id: 'markdown', tecla: 'W', rotulo: 'Markdown: ao vivo ou fonte', disponivel: true, executar: () => this.editor.alternarMarkdown() },
+    { id: 'recentes', tecla: 'u', rotulo: 'arquivos recentes', disponivel: true, executar: () => this.recentes.abrir() },
+    { id: 'problemas', tecla: 'X', rotulo: 'problemas do projeto (erros e avisos)', disponivel: true, executar: () => this.layout.alternar('problemas') },
+    { id: 'proximo-problema', tecla: 'K', rotulo: 'ir para o próximo erro', disponivel: true, executar: () => void this.problemas.proximo(1) },
+    { id: 'rodar-no-cursor', tecla: 'Z', rotulo: 'rodar o teste ou a main do cursor', disponivel: true, executar: () => void this.margem.noCursor(false) },
+    { id: 'depurar-no-cursor', tecla: 'J', rotulo: 'depurar o teste ou a main do cursor', disponivel: true, executar: () => void this.margem.noCursor(true) },
     { id: 'completar', tecla: 'C', rotulo: 'completar código enquanto digita: liga/desliga', disponivel: true, executar: () => void this.completar.alternar() },
     { id: 'notificacoes', tecla: 'z', rotulo: 'notificações: os avisos e erros que passaram', disponivel: true, executar: () => this.mensagens.alternarLista() },
     { id: 'mcp', tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },
@@ -327,7 +343,7 @@ export class AtalhosService {
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
     // A janela do Vim só mostra texto: os atalhos diretos continuam valendo com ela aberta.
-    const modalAberto = this.arquivos.aberto() || this.completar.perguntando() || !!this.mensagens.aberta() || !!this.loginEndpoints.pedido() || this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
+    const modalAberto = this.recentes.aberto() || this.arquivos.aberto() || this.completar.perguntando() || !!this.mensagens.aberta() || !!this.loginEndpoints.pedido() || this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
     const janelaAberta = modalAberto || this.vimAjuda.aberta();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 
@@ -379,6 +395,13 @@ export class AtalhosService {
       // Voltar/avançar nos arquivos vistos.
       this.engolir(e);
       void this.editor.navegar(e.key === 'ArrowLeft' ? -1 : 1);
+    } else if (soCtrl && e.code === 'KeyE' && livre) {
+      // Ctrl+E: arquivos recentes, como no IntelliJ (no vim, Ctrl+D continua rolando).
+      this.engolir(e);
+      this.recentes.abrir();
+    } else if (!janelaAberta && ctrl && e.shiftKey && !e.altKey && (e.key === 'F10' || e.key === 'F9')) {
+      this.engolir(e);
+      void this.margem.noCursor(e.key === 'F9');
     } else if (!janelaAberta && this.teclaDoServidor(e, ctrl)) {
       // Servidor e debug com as teclas do IntelliJ (ver teclaDoServidor).
       this.engolir(e);
@@ -391,6 +414,9 @@ export class AtalhosService {
       this.engolir(e);
       if (e.shiftKey) void this.git.push();
       else void this.commit.abrir();
+    } else if (e.key === 'F8' && !ctrl && !e.altKey && livre && this.layout.tela() === 'editor') {
+      this.engolir(e);
+      void this.problemas.proximo(e.shiftKey ? -1 : 1);
     } else if (soCtrl && e.code === 'KeyT' && livre) {
       // Ctrl+T atualiza o projeto (pull), como no IntelliJ.
       this.engolir(e);

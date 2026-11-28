@@ -68,6 +68,8 @@ export class JdtlsService {
   private servidor: { id: number; cliente: ClienteLsp; raiz: string } | null = null;
   private readonly abertos = new Map<string, Aberto>();
   private readonly diagnosticos = new Map<string, DiagnosticoLsp[]>();
+  /** Muda a cada leva de diagnósticos (o painel de problemas relê). */
+  readonly versaoDosDiagnosticos = signal(0);
   private readonly urisOriginais = new Map<string, string>();
   /** Decorações de dica (◆) por modelo. */
   private readonly dicas = new Map<string, string[]>();
@@ -365,6 +367,7 @@ export class JdtlsService {
       if (!atual()) return;
       const uri = uriMonaco(p.uri);
       this.diagnosticos.set(uri.toString(), p.diagnostics);
+      this.versaoDosDiagnosticos.update((v) => v + 1);
       const modelo = monaco.editor.getModel(uri);
       if (modelo) {
         monaco.editor.setModelMarkers(modelo, 'jdtls', p.diagnostics.map(paraMarcador));
@@ -478,6 +481,7 @@ export class JdtlsService {
       }
     }
     this.diagnosticos.clear();
+    this.versaoDosDiagnosticos.update((v) => v + 1);
   }
 
   /**

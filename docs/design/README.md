@@ -45,6 +45,9 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | Nova **classe Java** (nome e tipo) (`fontes/NovoJava.dc.html`) | [41-novo-java.png](41-novo-java.png) | ✅ |
 | Novo **arquivo em branco** (nome e extensão) (`fontes/NovoEmBranco.dc.html`) | [42-novo-em-branco.png](42-novo-em-branco.png) | ✅ |
 | **Markdown ao vivo** no editor, como no Obsidian (`fontes/Markdown.dc.html`) | [43-markdown.png](43-markdown.png) | ✅ |
+| **Arquivos recentes** (`Ctrl+E`) (`fontes/Recentes.dc.html`) | [44-recentes.png](44-recentes.png) | ✅ |
+| **Problemas do projeto**: painel, contador na barra de status e próximo erro (`fontes/Problemas.dc.html`) | [45-problemas.png](45-problemas.png) | ✅ |
+| **Rodar e depurar pela margem** (teste e `main`) (`fontes/RodarMargem.dc.html`) | [46-rodar-margem.png](46-rodar-margem.png) | ✅ |
 | Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
 
