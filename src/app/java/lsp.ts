@@ -16,7 +16,25 @@ export class ErroLsp extends Error {
     mensagem: string,
   ) {
     super(mensagem);
+    this.name = 'ErroLsp';
+    // No começo da pilha: o Monaco reembrulha o erro e só o texto da pilha sobrevive.
+    this.stack = `ErroLsp: ${mensagem}
+${this.stack ?? ''}`;
   }
+}
+
+/** Pedido que o servidor largou porque foi cancelado ou o texto mudou (acontece o tempo todo ao digitar). */
+const CODIGOS_DE_CANCELAMENTO = [-32800, -32801, -32802];
+
+/**
+ * O erro de uma resposta. Cancelamento vira o "Canceled" que o Monaco reconhece e engole: sem isso
+ * ele aparecia como falha do Seedy.
+ */
+export function erroDaResposta(codigo: number, mensagem: string): Error {
+  if (!CODIGOS_DE_CANCELAMENTO.includes(codigo) && !/has been cancell?ed|document changed|content modified/i.test(mensagem)) return new ErroLsp(codigo, mensagem);
+  const cancelado = new Error('Canceled');
+  cancelado.name = 'Canceled';
+  return cancelado;
 }
 
 export class ClienteLsp {
@@ -68,7 +86,7 @@ export class ClienteLsp {
       const p = this.pendentes.get(msg.id);
       if (!p) return;
       this.pendentes.delete(msg.id);
-      if (msg.error) p.rejeitar(new ErroLsp(msg.error.code, msg.error.message));
+      if (msg.error) p.rejeitar(erroDaResposta(msg.error.code, String(msg.error.message)));
       else p.resolver(msg.result ?? null);
     } else if (msg.id !== undefined) {
       void this.responder(msg.id, msg.method, msg.params);
