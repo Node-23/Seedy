@@ -26,4 +26,16 @@ import * as monaco from 'monaco-editor';
   },
 };
 
+/**
+ * Todo diff passa por aqui. Cada editor criado passa a ser a "fábrica" das dicas flutuantes do
+ * Monaco, que é global; o diff é descartado depois, e aí menus como o das ações rápidas abriam
+ * vazios ("InstantiationService has been disposed"). Criar um editor comum em seguida devolve a
+ * fábrica aos serviços que nunca são descartados.
+ */
+export function criarEditorDeDiff(hospedeiro: HTMLElement, opcoes: monaco.editor.IStandaloneDiffEditorConstructionOptions): monaco.editor.IStandaloneDiffEditor {
+  const diff = monaco.editor.createDiffEditor(hospedeiro, opcoes);
+  monaco.editor.create(document.createElement('div'), { model: null }).dispose();
+  return diff;
+}
+
 export { monaco };

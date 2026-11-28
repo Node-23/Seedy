@@ -1,6 +1,6 @@
 import { Component, effect, ElementRef, inject, input, OnDestroy, viewChild } from '@angular/core';
 import { EditorService } from '../editor/editor.service';
-import { monaco } from '../editor/monaco';
+import { criarEditorDeDiff, monaco } from '../editor/monaco';
 import { TemaService } from '../tema/tema';
 
 /** O "antes e depois" lado a lado das telas de histórico, com o editor de diff do Monaco. */
@@ -29,7 +29,7 @@ export class ComparacaoComponent implements OnDestroy {
       const depois = this.depois();
       const linguagem = this.editor.linguagemDe(this.caminho());
       const f = this.tema.tema().fontes.codigo;
-      this.diff ??= monaco.editor.createDiffEditor(this.hospedeiro().nativeElement, {
+      this.diff ??= criarEditorDeDiff(this.hospedeiro().nativeElement, {
         theme: 'seedy',
         readOnly: true,
         automaticLayout: true,

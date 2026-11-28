@@ -1,6 +1,6 @@
 import { Component, effect, ElementRef, inject, viewChild } from '@angular/core';
 import { DiffService } from './diff.service';
-import { monaco } from '../editor/monaco';
+import { criarEditorDeDiff, monaco } from '../editor/monaco';
 import { EditorService } from '../editor/editor.service';
 import { TemaService } from '../tema/tema';
 
@@ -37,15 +37,18 @@ export class DiffComponent {
   private diffEditor: monaco.editor.IStandaloneDiffEditor | null = null;
   private modelos: monaco.editor.ITextModel[] = [];
   private teclaAnterior = '';
+  /** Quem tinha o foco antes de o diff abrir, para devolver ao fechar. */
+  private voltarPara: HTMLElement | null = null;
 
   constructor() {
     effect(() => {
       const pedido = this.servico.atual();
       const host = this.hospedeiro();
       this.limpar();
+      if (pedido) this.voltarPara ??= document.activeElement as HTMLElement | null;
       if (!pedido || !host) return;
       const f = this.tema.tema().fontes.codigo;
-      this.diffEditor = monaco.editor.createDiffEditor(host.nativeElement, {
+      this.diffEditor = criarEditorDeDiff(host.nativeElement, {
         theme: 'seedy',
         readOnly: true,
         automaticLayout: true,
@@ -89,6 +92,9 @@ export class DiffComponent {
 
   private fechar(): void {
     this.servico.fechar();
+    const antes = this.voltarPara;
+    this.voltarPara = null;
+    setTimeout(() => antes?.isConnected && antes.focus());
   }
 
   private limpar(): void {

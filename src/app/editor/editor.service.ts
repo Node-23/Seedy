@@ -266,6 +266,23 @@ export class EditorService {
   private readonly ouvintesDeSalvar: ((b: Buffer) => void)[] = [];
 
   /** Roda antes de gravar (ex.: o Prettier formata o arquivo do projeto web). */
+  private readonly ouvintesDeRefatorar: ((caminho: string, conteudo: string | null) => void)[] = [];
+
+  /** Chamado antes de o Monaco aplicar um renomear (o histórico local guarda o que havia). */
+  antesDeRefatorar(fn: (caminho: string, conteudo: string | null) => void): void {
+    this.ouvintesDeRefatorar.push(fn);
+  }
+
+  /** Os provedores de linguagem avisam quais arquivos o renomear vai tocar. */
+  avisarRefatoracao(recursos: monaco.Uri[]): void {
+    for (const uri of new Map(recursos.filter((r) => r.scheme === 'file').map((r) => [r.toString(), r])).values()) {
+      // Sem buffer aberto, o conteúdo é o do disco.
+      const noDisco = uri.fsPath.replace(/^([a-z]):/, (_, letra: string) => `${letra.toUpperCase()}:`);
+      const buffer = this.bufferDe(noDisco);
+      for (const fn of this.ouvintesDeRefatorar) fn(buffer?.caminho ?? noDisco, buffer?.modelo.getValue() ?? null);
+    }
+  }
+
   antesDeSalvar(fn: (b: Buffer) => Promise<void>): void {
     this.preparadoresDeSalvar.push(fn);
   }

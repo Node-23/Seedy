@@ -56,6 +56,7 @@ export class HistoricoService {
     this.editor.aoRecarregar((b, antes, depois) => {
       void this.guardar(b.caminho, 'antes de mudar por fora', antes).then(() => this.guardar(b.caminho, 'mudou fora do Seedy', depois));
     });
+    this.editor.antesDeRefatorar((caminho, conteudo) => void this.guardar(caminho, 'antes de uma mudança automática', conteudo));
     this.jdtls.antesDeEditar.push((caminho, conteudo) => void this.guardar(caminho, 'antes de uma mudança automática', conteudo));
     this.git.antesDeOperar.push(async (args) => {
       const motivo = ANTES_DO_GIT[args[0]];

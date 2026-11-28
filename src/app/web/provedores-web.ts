@@ -176,7 +176,9 @@ export function registrarProvedoresWeb(web: WebLspService, editor: EditorService
         const s = web.servidorDe(m);
         const r = s ? await s.cliente.pedir('textDocument/rename', { ...pos(m, p), newName: novoNome }, token).catch(() => null) : null;
         if (!r) return { edits: [], rejectReason: 'não dá para renomear aqui' };
-        return edicaoDeWorkspace(r);
+        const edicao = await edicaoDeWorkspace(r);
+        editor.avisarRefatoracao(edicao.edits.map((e) => (e as monaco.languages.IWorkspaceTextEdit).resource));
+        return edicao;
       },
       async resolveRenameLocation(m, p, token) {
         const s = web.servidorDe(m);

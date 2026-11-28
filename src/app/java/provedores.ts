@@ -289,6 +289,7 @@ export function registrarProvedores(
       const r = await c.pedir('textDocument/rename', { ...pos(m, p), newName: novoNome }, cancel);
       const edicao = await edicaoDeWorkspace(r);
       const arquivos = new Set(edicao.edits.map((e) => (e as monaco.languages.IWorkspaceTextEdit).resource.toString())).size;
+      editor.avisarRefatoracao(edicao.edits.map((e) => (e as monaco.languages.IWorkspaceTextEdit).resource));
       if (arquivos > 1) mensagens.mostrar(`renomeado em ${arquivos} arquivos — :wa (ou ctrl+shift+s) grava todos`);
       return edicao;
     },
