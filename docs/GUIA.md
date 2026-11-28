@@ -14,6 +14,9 @@ Para conhecer o projeto e instalar, comece pelo [README](../README.md).
   de um projeto não muda isso.
 - **Editor Monaco com modo vim**: `:w`, `:q`, `:q!`, `:wq`, `:bn`, `:bp`, `:term`, números de linha relativos.
 - **Destaque de sintaxe no estilo Alabaster**: só strings, constantes, comentários e definições ganham cor.
+- **Markdown ao vivo:** um `.md` aparece formatado no próprio editor (títulos, negrito, listas, caixas de
+  tarefa, código, citações, links e tabelas); a linha do cursor mostra os símbolos. `Alt+Shift+R` (ou
+  `ao vivo | fonte` no topo) alterna para o texto puro.
 - **Árvore de arquivos** navegável pelo teclado (`j`/`k`, `l`/`Enter`, `h`). Botão direito (ou a tecla de menu)
   abre **Novo**, copiar, colar, renomear, apagar e abrir no explorador de arquivos. `n` ou `Alt+Insert` criam: classe Java (com o
   `package` da pasta), arquivo com o nome que quiser (`/` cria pastas), pasta, TypeScript, componente React

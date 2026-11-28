@@ -6,6 +6,8 @@ import { MensagensService } from '../nucleo/mensagens.service';
 import { TemaService } from '../tema/tema';
 import { ProjetoService } from '../nucleo/projeto.service';
 
+const CHAVE_MARKDOWN = 'seedy.markdown';
+
 export interface Buffer {
   caminho: string;
   nome: string;
@@ -40,6 +42,8 @@ export class EditorService {
   readonly cursor = signal({ linha: 1, coluna: 1 });
   /** Incrementa a cada edição, para os indicadores de "sujo" atualizarem. */
   readonly edicoes = signal(0);
+  /** Nos .md: formatado no próprio editor ("ao vivo") ou o texto puro ("fonte"). */
+  readonly markdownAoVivo = signal(localStorage.getItem(CHAVE_MARKDOWN) !== 'fonte');
 
   // ---------- divisão do editor (dois painéis lado a lado) ----------
 
@@ -134,6 +138,22 @@ export class EditorService {
         return true;
       },
     });
+  }
+
+  /** Um arquivo Markdown que dá para ver ao vivo. */
+  ehMarkdown(b: Buffer | null): boolean {
+    return !!b && !b.somenteLeitura && /\.(md|markdown)$/i.test(b.caminho);
+  }
+
+  mostrarMarkdown(aoVivo: boolean): void {
+    this.markdownAoVivo.set(aoVivo);
+    localStorage.setItem(CHAVE_MARKDOWN, aoVivo ? 'vivo' : 'fonte');
+    this.instancia?.focus();
+  }
+
+  alternarMarkdown(): void {
+    if (!this.ehMarkdown(this.bufferAtivo())) return this.mensagens.mostrar('abra um arquivo .md para alternar entre ao vivo e fonte');
+    this.mostrarMarkdown(!this.markdownAoVivo());
   }
 
   sujo(b: Buffer): boolean {

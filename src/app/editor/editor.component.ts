@@ -10,6 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { ligarMarkdownVivo } from './markdown-vivo';
 import { monaco } from './monaco';
 import { initVimMode, VimMode } from '../../vendor/monaco-vim';
 import { CompletarService } from '../completar/completar.service';
@@ -68,6 +69,14 @@ let exDefinidos = false;
           @for (parte of migalhas(); track $index; let ultimo = $last) {
             <span [class.atual]="ultimo">{{ parte }}</span>
             @if (!ultimo) { <span class="sep">›</span> }
+          }
+          @if (editor.ehMarkdown(buffer())) {
+            <span class="espaco"></span>
+            <span class="mdv-modos" role="group" aria-label="Como mostrar o Markdown">
+              <button [class.sel]="editor.markdownAoVivo()" [attr.aria-pressed]="editor.markdownAoVivo()" (click)="editor.mostrarMarkdown(true)">ao vivo</button>
+              <button [class.sel]="!editor.markdownAoVivo()" [attr.aria-pressed]="!editor.markdownAoVivo()" (click)="editor.mostrarMarkdown(false)">fonte</button>
+            </span>
+            <kbd>{{ teclaDoMarkdown() }}</kbd>
           }
         </div>
       }
@@ -140,6 +149,14 @@ export class EditorComponent {
       { rotulo: 'menu de atalhos', tecla: 'Ctrl+Shift+Espaço' },
     ].filter((a) => a.tecla);
   });
+
+  protected readonly teclaDoMarkdown = computed(() => {
+    this.config.atual(); // as teclas trocadas vêm do seedy.json
+    return this.atalhos.rotuloDoAtalho('markdown');
+  });
+
+  /** Este painel está mostrando um .md formatado. */
+  private readonly aoVivo = computed(() => this.editor.markdownAoVivo() && this.editor.ehMarkdown(this.buffer()));
 
   protected nomeDoAmbiente(a: string): string {
     return NOME_DO_AMBIENTE[a] ?? a;
@@ -215,6 +232,7 @@ export class EditorComponent {
         const linha = ev.target.position?.lineNumber;
         if (b && linha && !b.somenteLeitura && aceitaBreakpoint(b.caminho)) this.depurador.alternar(b.caminho, linha);
       });
+      this.markdown = ligarMarkdownVivo(instancia, () => this.editor.markdownAoVivo() && this.editor.ehMarkdown(this.editor.bufferDoPainel(painel)));
       this.instancia.set(instancia);
       instancia.setModel(this.buffer()?.modelo ?? null);
 
@@ -273,6 +291,7 @@ export class EditorComponent {
         this.editor.registrarInstancia(painel, null);
         vim.dispose?.();
         dica.dispose();
+        this.markdown?.dispose();
         instancia.dispose();
         barraVim.remove();
       });
@@ -295,9 +314,19 @@ export class EditorComponent {
       const c = this.config.atual().editor;
       const instancia = this.instancia();
       if (!instancia) return;
-      instancia.updateOptions({ wordWrap: c.quebraDeLinha ? 'on' : 'off', lineNumbers: c.numerosRelativos ? 'relative' : 'on', minimap: { enabled: c.minimapa } });
+      // No Markdown ao vivo o texto corrido sempre quebra, medido na tela (as letras variam).
+      const vivo = this.aoVivo();
+      instancia.updateOptions({ wordWrap: c.quebraDeLinha || vivo ? 'on' : 'off', wrappingStrategy: vivo ? 'advanced' : 'simple', occurrencesHighlight: vivo ? 'off' : 'singleFile', selectionHighlight: !vivo, lineNumbers: c.numerosRelativos ? 'relative' : 'on', minimap: { enabled: c.minimapa } });
       const modelo = this.buffer()?.modelo;
       if (modelo && c.tabulacao) modelo.updateOptions({ tabSize: c.tabulacao, indentSize: c.tabulacao, insertSpaces: c.espacos });
+    });
+
+    // Markdown ao vivo: refaz ao trocar de modo, de arquivo ou de fonte.
+    effect(() => {
+      this.aoVivo();
+      this.buffer();
+      this.tema.tema();
+      if (this.instancia()) queueMicrotask(() => this.markdown?.atualizar());
     });
 
     // Fonte do código vem do tema.
@@ -307,6 +336,8 @@ export class EditorComponent {
       monaco.editor.remeasureFonts();
     });
   }
+
+  private markdown: ReturnType<typeof ligarMarkdownVivo> | null = null;
 
   private opcoesDeFonte(t: ReturnType<TemaService['tema']>): monaco.editor.IEditorOptions {
     const f = t.fontes.codigo;

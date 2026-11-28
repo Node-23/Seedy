@@ -11,6 +11,35 @@ export const RAIZ_EXEMPLO = '/exemplo/feirinha-verde';
 const PACOTE = 'src/main/java/br/com/feirinhaverde';
 
 const ARQUIVOS: Record<string, string> = {
+  'README.md': [
+    '# Feirinha Verde',
+    '',
+    'API da feira: **reservas**, **check-in** e a lista de *feirantes*. Veja a [documentação dos endpoints](docs/endpoints.md).',
+    '',
+    '## Como **rodar**',
+    '',
+    '- suba o banco com `docker compose up -d`',
+    '- copie o `.env.example` para `.env`',
+    '',
+    '```bash',
+    './mvnw spring-boot:run',
+    '```',
+    '',
+    '> A primeira subida cria as tabelas sozinha.',
+    '',
+    '## Pendências',
+    '- [x] cancelar reserva',
+    '- [ ] enviar o comprovante por e-mail',
+    '',
+    '| Endpoint | O que faz |',
+    '|---|---|',
+    '| `GET /feiras` | lista as feiras abertas |',
+    '| `POST /reservas` | reserva uma barraca |',
+    '',
+    '---',
+    'nome_de_variavel continua como está; ~~isto saiu~~ e [[outra nota]].',
+    '',
+  ].join('\n'),
   'pom.xml': `<project>
   <modelVersion>4.0.0</modelVersion>
   <groupId>br.com.feirinhaverde</groupId>

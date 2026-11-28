@@ -2227,6 +2227,40 @@ sd-raiz > .seedy > sd-toasts, sd-raiz > .seedy > sd-erro, sd-raiz > .seedy > sd-
 .busca.commit-janela .busca-dicas { flex-wrap: wrap; row-gap: 4px; }
 
 /* Ajustes finos: ícone de pasta, texto do commit, limites da IA na barra de status, apagar conexão. */
+/* ---------- Markdown ao vivo (mockup 43) ---------- */
+
+.mdv-modos { display: inline-flex; border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); overflow: hidden; }
+.mdv-modos button { border: 0; background: transparent; padding: 0 10px; line-height: 18px; font-size: 11px; color: var(--texto-suave); cursor: pointer; }
+.mdv-modos button.sel { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
+.monaco-editor .mdv-oculto { font-size: 0 !important; letter-spacing: 0 !important; }
+.monaco-editor .mdv-simbolo { color: var(--texto-suave) !important; font-weight: 400; }
+.monaco-editor .mdv-titulo { color: var(--destaque) !important; font-weight: 700; }
+.monaco-editor .mdv-h1 { font-size: 1.85em; }
+.monaco-editor .mdv-h2 { font-size: 1.4em; }
+.monaco-editor .mdv-h3 { font-size: 1.2em; }
+.monaco-editor .mdv-h4 { font-size: 1.08em; }
+.monaco-editor .mdv-negrito { font-weight: 700; }
+.monaco-editor .mdv-italico { font-style: italic; }
+.monaco-editor .mdv-riscado { text-decoration: line-through; color: var(--texto-suave) !important; }
+.monaco-editor .mdv-codigo { color: var(--sucesso) !important; background: var(--fundo); border-radius: 4px; }
+.monaco-editor .mdv-link { color: var(--destaque) !important; text-decoration: underline; text-underline-offset: 3px; }
+.monaco-editor .mdv-citacao { color: var(--texto-suave) !important; font-style: italic; }
+.monaco-editor .mdv-barra { width: 3px !important; margin-left: 4px; background: var(--destaque); }
+.monaco-editor .mdv-marcador { color: var(--texto); font-weight: 700; margin-right: 0; }
+.monaco-editor .mdv-tarefa {
+  display: inline-block; width: 13px; height: 13px; line-height: 10px; margin-right: 9px; vertical-align: -2px;
+  border: var(--espessura-borda) solid var(--texto-suave); border-radius: 4px; font-size: 10px; text-align: center; overflow: hidden;
+}
+.monaco-editor .mdv-tarefa-feita { background: var(--destaque); border-color: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
+.monaco-editor .mdv-bloco { background: var(--fundo); }
+.monaco-editor .mdv-bloco-inicio { border-top: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno) var(--raio-pequeno) 0 0; }
+.monaco-editor .mdv-bloco-fim { border-bottom: var(--espessura-borda) solid var(--borda); border-radius: 0 0 var(--raio-pequeno) var(--raio-pequeno); }
+.monaco-editor .mdv-linguagem { color: var(--texto-suave); font-size: 11px; }
+.monaco-editor .mdv-regua { background: linear-gradient(var(--selecao), var(--selecao)) center / 100% 2px no-repeat; }
+.monaco-editor .mdv-grade { color: var(--texto-suave); }
+.monaco-editor .mdv-traco { background: linear-gradient(var(--texto-suave), var(--texto-suave)) center / 100% 1px no-repeat; }
+.monaco-editor .mdv-cabecalho { opacity: 0.6; }
+
 .arvore-item .icone-pasta { flex-shrink: 0; color: var(--destaque); }
 .git-detalhe-mensagem, .git-detalhe-mensagem p, .git-detalhe-mensagem .forte { overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
 .git-detalhe-mensagem p { white-space: pre-wrap; }

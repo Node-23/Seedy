@@ -79,6 +79,7 @@ export const ACORDES_PADRAO: Record<string, string> = {
   notificacoes: 'alt+shift+h',
   completar: 'alt+shift+c',
   'arquivo-na-arvore': 'alt+f1',
+  markdown: 'alt+shift+r',
   config: 'ctrl+,',
 };
 
@@ -233,6 +234,7 @@ export class AtalhosService {
     { id: 'config', tecla: ',', rotulo: 'configurações (atalhos, IA, editor)', disponivel: true, executar: () => this.abrirConfig() },
     { id: 'novo-arquivo', tecla: 'F', rotulo: 'novo arquivo (na pasta selecionada na árvore)', disponivel: true, executar: () => this.arquivos.novoPeloTeclado() },
     { id: 'arquivo-na-arvore', tecla: 'O', rotulo: 'mostrar na árvore o arquivo aberto', disponivel: true, executar: () => this.arquivos.mostrarArquivoAberto() },
+    { id: 'markdown', tecla: 'W', rotulo: 'Markdown: ao vivo ou fonte', disponivel: true, executar: () => this.editor.alternarMarkdown() },
     { id: 'completar', tecla: 'C', rotulo: 'completar código enquanto digita: liga/desliga', disponivel: true, executar: () => void this.completar.alternar() },
     { id: 'notificacoes', tecla: 'z', rotulo: 'notificações: os avisos e erros que passaram', disponivel: true, executar: () => this.mensagens.alternarLista() },
     { id: 'mcp', tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },
