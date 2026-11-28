@@ -26,7 +26,7 @@ pub struct Mudancas {
     pub criados: BTreeSet<String>,
     pub removidos: BTreeSet<String>,
     pub alterados: BTreeSet<String>,
-    /// `.git/HEAD` mudou: trocou de branch.
+    /// `.git/HEAD` ou o índice mudou: outra branch, `git add`, commit.
     pub git: bool,
 }
 
@@ -73,7 +73,7 @@ fn acumular(lote: &mut Mudancas, evento: notify::Result<Event>, raiz: &Path) {
         let Ok(relativo) = caminho.strip_prefix(raiz) else { continue };
         let partes: Vec<String> = relativo.components().map(|c| c.as_os_str().to_string_lossy().into_owned()).collect();
         if partes.first().map(String::as_str) == Some(".git") {
-            if partes.len() == 2 && partes[1] == "HEAD" {
+            if partes.len() == 2 && (partes[1] == "HEAD" || partes[1] == "index") {
                 lote.git = true;
             }
             continue;
@@ -128,7 +128,10 @@ mod testes {
         acumular(&mut lote, evento(EventKind::Modify(ModifyKind::Data(DataChange::Content)), "/p/pom.xml"), &raiz);
         acumular(&mut lote, evento(EventKind::Remove(RemoveKind::File), "/p/src/B.java"), &raiz);
         acumular(&mut lote, evento(EventKind::Create(CreateKind::File), "/p/target/classes/A.class"), &raiz);
+        acumular(&mut lote, evento(EventKind::Modify(ModifyKind::Any), "/p/.git/FETCH_HEAD"), &raiz);
+        assert!(!lote.git);
         acumular(&mut lote, evento(EventKind::Modify(ModifyKind::Any), "/p/.git/index"), &raiz);
+        assert!(lote.git);
         acumular(&mut lote, evento(EventKind::Modify(ModifyKind::Any), "/p/.git/HEAD"), &raiz);
 
         let s = |p: &str| PathBuf::from(p).to_string_lossy().into_owned();

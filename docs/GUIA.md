@@ -18,7 +18,9 @@ Para conhecer o projeto e instalar, comece pelo [README](../README.md).
   abre **Novo**, copiar, colar, renomear, apagar e abrir no explorador de arquivos. `n` ou `Alt+Insert` criam: classe Java (com o
   `package` da pasta), arquivo com o nome que quiser (`/` cria pastas), pasta, TypeScript, componente React
   ou Angular, HTML, CSS, JSON, YAML, XML, SQL e Markdown. `Ctrl+C` / `Ctrl+V` copiam e colam; colando sobre um
-  nome que já existe, o Seedy pede outro, e uma classe Java colada leva o nome e o pacote novos. Nada é sobrescrito. `F2` ou `Shift+F6` renomeiam (numa
+  nome que já existe, o Seedy pede outro, e uma classe Java colada leva o nome e o pacote novos. Nada é sobrescrito.
+  Num repositório Git, o nome ganha cor como no IntelliJ: verde para o que foi adicionado, vermelho para o novo
+  que ainda está fora do Git, azul para o modificado, e apagado para o que o `.gitignore` deixa de fora. `F2` ou `Shift+F6` renomeiam (numa
   classe Java o jdtls atualiza as referências) e `del` manda para a Lixeira, depois de confirmar. O menu também copia o caminho (e o nome completo da classe),
   o `+` no topo do painel cria, `Alt+F1` (ou `◎`) mostra na árvore o arquivo aberto, e pacotes que só têm outro
   pacote aparecem numa linha só (`br/com/mana`).

@@ -84,6 +84,8 @@ export class GitService {
 
   readonly estado = signal<EstadoGit | null>(null);
   readonly alterados = signal<ArquivoAlterado[]>([]);
+  /** O que o .gitignore deixa de fora: arquivos e pastas inteiras (chaves de `chave()`). */
+  private readonly ignorados = signal<ReadonlySet<string>>(new Set());
   /** Muda a cada operação que altera a história (o log se refaz). */
   readonly versao = signal(0);
   /** Operação em andamento (push, pull...), para a interface mostrar. */
@@ -117,6 +119,18 @@ export class GitService {
     return this.porCaminho().get(chave(caminho))?.letra ?? null;
   }
 
+  /** O arquivo ou a pasta está no .gitignore (ele mesmo ou uma pasta acima). */
+  ignorado(caminho: string): boolean {
+    const ignorados = this.ignorados();
+    for (let c = chave(caminho); ignorados.size; ) {
+      if (ignorados.has(c)) return true;
+      const i = c.lastIndexOf('/');
+      if (i <= 0) break;
+      c = c.slice(0, i);
+    }
+    return false;
+  }
+
   // ---------- leitura ----------
 
   private temporizador: ReturnType<typeof setTimeout> | undefined;
@@ -129,21 +143,24 @@ export class GitService {
     if (!raiz) {
       this.estado.set(null);
       this.alterados.set([]);
+      this.ignorados.set(new Set());
       return;
     }
     const topo = await ponte.git(raiz, ['rev-parse', '--show-toplevel', '--git-dir']);
     if (topo.codigo !== 0) {
       this.estado.set(null);
       this.alterados.set([]);
+      this.ignorados.set(new Set());
       return;
     }
     const raizRepo = topo.saida.trim().split(/\r?\n/)[0];
-    const r = await ponte.git(raiz, ['status', '--porcelain=v2', '--branch', '-z', '--untracked-files=all']);
+    const r = await ponte.git(raiz, ['status', '--porcelain=v2', '--branch', '-z', '--untracked-files=all', '--ignored=matching']);
     if (r.codigo !== 0) return;
-    const { estado, alterados } = lerStatus(r.saida, raizRepo);
+    const { estado, alterados, ignorados } = lerStatus(r.saida, raizRepo);
     estado.operacao = await this.operacaoEmAndamento(raizRepo);
     this.estado.set(estado);
     this.alterados.set(alterados);
+    this.ignorados.set(new Set(ignorados.map(chave)));
     this.remoto.set(await this.remotoPrincipal());
   }
 
@@ -437,9 +454,10 @@ function lerRefs(texto: string): RefDoCommit[] {
 }
 
 /** `git status --porcelain=v2 --branch -z` → estado e arquivos alterados. */
-export function lerStatus(saida: string, raiz: string): { estado: EstadoGit; alterados: ArquivoAlterado[] } {
+export function lerStatus(saida: string, raiz: string): { estado: EstadoGit; alterados: ArquivoAlterado[]; ignorados: string[] } {
   const estado: EstadoGit = { raiz, branch: null, upstream: null, aFrente: 0, atras: 0, operacao: null };
   const alterados: ArquivoAlterado[] = [];
+  const ignorados: string[] = [];
   const partes = saida.split('\0');
   const absoluto = (rel: string) => {
     const sep = /^[a-zA-Z]:/.test(raiz) ? '\\' : '/';
@@ -466,9 +484,11 @@ export function lerStatus(saida: string, raiz: string): { estado: EstadoGit; alt
     } else if (p.startsWith('? ')) {
       const rel = p.slice(2);
       alterados.push({ relativo: rel, caminho: absoluto(rel), letra: '?', noIndice: false });
+    } else if (p.startsWith('! ')) {
+      ignorados.push(absoluto(p.slice(2).replace(/\/$/, '')));
     }
   }
-  return { estado, alterados };
+  return { estado, alterados, ignorados };
 }
 
 function letraDoXY(xy: string, renomeado: boolean): LetraGit {

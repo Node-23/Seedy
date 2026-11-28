@@ -55,6 +55,7 @@ interface No {
             [attr.aria-expanded]="no.entrada.pasta ? no.aberto : null"
             [class.selecionado]="i === selecionado()"
             [class.ativo]="no.entrada.caminho === editor.ativo()"
+            [attr.data-git]="corGit(no)"
             [style.padding-left.px]="12 + no.nivel * 14"
             (click)="selecionado.set(i); ativar(no)"
             (contextmenu)="$event.preventDefault(); $event.stopPropagation(); selecionado.set(i); arquivos.abrirMenu($event.clientX, $event.clientY, alvoDe(no))"
@@ -137,6 +138,13 @@ export class ArvoreComponent {
   /** Situação no Git (M alterado, A/U novo, D apagado, R renomeado, C conflito). */
   protected letraGit(caminho: string): LetraGit | null {
     return this.git.letraDe(caminho);
+  }
+
+  /** A cor do nome, como no IntelliJ: a situação do arquivo, ou "ignorado" (arquivo ou pasta). */
+  protected corGit(no: No): LetraGit | 'ignorado' | null {
+    const caminho = no.entrada.caminho;
+    const letra = no.entrada.pasta ? null : this.git.letraDe(caminho);
+    return letra ?? (this.git.ignorado(caminho) ? 'ignorado' : null);
   }
 
   protected tituloDaLetra(l: LetraGit): string {

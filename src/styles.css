@@ -4,7 +4,7 @@
  * As cores, fontes e medidas vêm do tema (tema.json) como variáveis CSS:
  *   --fundo, --painel, --painel-elevado, --selecao, --borda, --sombra,
  *   --texto, --texto-suave, --destaque, --texto-sobre-destaque,
- *   --sucesso, --sucesso-fundo, --aviso, --aviso-fundo, --erro, --erro-fundo, --rosa,
+ *   --sucesso, --sucesso-fundo, --aviso, --aviso-fundo, --erro, --erro-fundo, --rosa, --modificado,
  *   --raio, --raio-pequeno, --espessura-borda, --deslocamento-sombra, --espaco,
  *   --fonte-interface, --fonte-codigo, --tamanho-interface.
  * Para mudar o visual sem mexer no código, edite o tema (␣ c dentro do Seedy).
@@ -243,11 +243,16 @@ sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda, sd-raiz > .se
 .arvore-item .marca-sujo { color: var(--aviso); }
 .arvore-item.ativo { background: var(--destaque); color: var(--texto-sobre-destaque); font-weight: 700; }
 .arvore-item.ativo .seta, .arvore-item.ativo .marca-sujo { color: inherit; }
-.arvore-item .marca-git { font-weight: 700; color: var(--aviso); }
-.arvore-item .marca-git[data-letra="A"], .arvore-item .marca-git[data-letra="?"] { color: var(--sucesso); }
-.arvore-item .marca-git[data-letra="D"], .arvore-item .marca-git[data-letra="C"] { color: var(--erro); }
-.arvore-item .marca-git[data-letra="R"] { color: var(--destaque); }
-.arvore-item.ativo .marca-git { color: inherit; }
+.arvore-item .marca-git { font-weight: 700; color: var(--modificado); }
+.arvore-item .marca-git[data-letra="A"] { color: var(--destaque); }
+.arvore-item .marca-git[data-letra="?"], .arvore-item .marca-git[data-letra="D"], .arvore-item .marca-git[data-letra="C"] { color: var(--erro); }
+/* O nome na cor da situação no Git (como no IntelliJ); o que o .gitignore deixa de fora fica apagado. */
+.arvore-item[data-git="A"] .nome { color: var(--destaque); }
+.arvore-item[data-git="M"] .nome, .arvore-item[data-git="R"] .nome { color: var(--modificado); }
+.arvore-item[data-git="?"] .nome, .arvore-item[data-git="C"] .nome { color: var(--erro); }
+.arvore-item[data-git="ignorado"] :is(.nome, .icone-pasta, .tipo-arquivo) { opacity: 0.45; }
+.arvore-item.ativo .nome, .arvore-item.ativo .marca-git { color: inherit; }
+.arvore-item.ativo :is(.nome, .icone-pasta, .tipo-arquivo) { opacity: 1; }
 .arvore-lista:focus .arvore-item.selecionado:not(.ativo) { background: var(--selecao); outline: 1px solid var(--destaque); }
 .arvore-vazia { padding: 12px; line-height: 2; }
 

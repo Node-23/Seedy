@@ -185,7 +185,7 @@ export interface Mudancas {
   criados: string[];
   removidos: string[];
   alterados: string[];
-  /** .git/HEAD mudou (trocou de branch). */
+  /** .git/HEAD ou o índice mudou (outra branch, git add, commit). */
   git: boolean;
 }
 

@@ -21,7 +21,7 @@ export interface Tema {
   cores: Record<
     | 'fundo' | 'painel' | 'painelElevado' | 'selecao' | 'borda' | 'sombra'
     | 'texto' | 'textoSuave' | 'destaque' | 'textoSobreDestaque'
-    | 'sucesso' | 'sucessoFundo' | 'aviso' | 'avisoFundo' | 'erro' | 'erroFundo' | 'rosa',
+    | 'sucesso' | 'sucessoFundo' | 'aviso' | 'avisoFundo' | 'erro' | 'erroFundo' | 'rosa' | 'modificado',
     string
   >;
   sintaxe: Record<'padrao' | 'definicao' | 'string' | 'constante' | 'comentario', string>;

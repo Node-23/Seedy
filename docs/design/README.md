@@ -84,3 +84,4 @@ estão nos `style` de cada elemento. Abra no navegador para inspecionar.
 | `#E8C979` / `#3A3527` | `--aviso` / `--aviso-fundo` |
 | `#EE8C84` / `#3A2A2B` | `--erro` / `--erro-fundo` |
 | `#E3A9CC` | `--rosa` |
+| `#92A9E1` | `--modificado` (nome de arquivo modificado no Git) |

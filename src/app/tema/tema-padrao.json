@@ -22,7 +22,8 @@
     "avisoFundo": "#3A3527",
     "erro": "#EE8C84",
     "erroFundo": "#3A2A2B",
-    "rosa": "#E3A9CC"
+    "rosa": "#E3A9CC",
+    "modificado": "#92A9E1"
   },
   "sintaxe": {
     "padrao": "#E9E2D3",
