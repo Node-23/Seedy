@@ -137,7 +137,8 @@ export class TerminalComponent {
 
   protected async novo(comando?: string[], titulo?: string): Promise<void> {
     const terminal = new Terminal({
-      cursorBlink: true,
+      // Cursor fixo: piscando, a janela era redesenhada sem parar (13% de um núcleo parado).
+      cursorBlink: false,
       allowProposedApi: false,
       scrollback: 5000,
       ...this.opcoesDeFonte(this.tema.tema()),

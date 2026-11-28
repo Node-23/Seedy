@@ -352,9 +352,11 @@ pub struct Servidores {
 
 /// Pasta de trabalho do jdtls (índices, cache do Maven/Gradle), uma por projeto.
 fn pasta_dados(raiz: &str) -> PathBuf {
+    // A mesma pasta escrita com `/` ou `\` (Windows) ou com barra no fim não pode virar dois índices.
+    let normal: PathBuf = Path::new(raiz).components().collect();
     let mut h = DefaultHasher::new();
-    raiz.hash(&mut h);
-    let nome = Path::new(raiz).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    normal.to_string_lossy().as_ref().hash(&mut h);
+    let nome = normal.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     dirs::cache_dir()
         .unwrap_or_else(std::env::temp_dir)
         .join("seedy")
@@ -396,9 +398,15 @@ pub fn lsp_iniciar(
             // .project/.classpath/.settings no cache do jdtls, não no projeto do usuário.
             // Precisa ser propriedade da JVM: o jdtls lê antes de qualquer configuração.
             "-Djava.import.generatesMetadataFilesAtProjectRoot=false",
-            "-Xms256m",
+            // Memória: com o G1 devolvendo ao sistema o que não usa, o jdtls parado ficou em cerca
+            // de um terço do que ocupava com o ParallelGC (medido num projeto de 300 classes).
+            "-Xms100m",
             "-Xmx2G",
-            "-XX:+UseParallelGC",
+            "-XX:+UseG1GC",
+            "-XX:MinHeapFreeRatio=10",
+            "-XX:MaxHeapFreeRatio=25",
+            "-XX:G1PeriodicGCInterval=30000",
+            "-XX:+UseStringDeduplication",
             "--add-modules=ALL-SYSTEM",
             "--add-opens",
             "java.base/java.util=ALL-UNNAMED",
@@ -587,5 +595,8 @@ mod testes {
     fn pasta_de_dados_e_por_projeto() {
         assert_ne!(pasta_dados("/a/projeto"), pasta_dados("/b/projeto"));
         assert_eq!(pasta_dados("/a/projeto"), pasta_dados("/a/projeto"));
+        assert_eq!(pasta_dados("/a/projeto/"), pasta_dados("/a/projeto"));
+        #[cfg(windows)]
+        assert_eq!(pasta_dados("C:/a/projeto"), pasta_dados(r"C:\a\projeto"));
     }
 }
