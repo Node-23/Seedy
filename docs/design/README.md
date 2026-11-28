@@ -38,6 +38,9 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | **Toasts** no lugar das mensagens do rodapé, e o sino na barra de cima (`fontes/Toasts.dc.html`) | [34-toasts.png](34-toasts.png) | ✅ |
 | **Erro completo** e envio para análise (`fontes/ErroDoSeedy.dc.html`) | [35-erro-do-seedy.png](35-erro-do-seedy.png) | ✅ |
 | Lista de **notificações** (`Alt+Shift+H`) (`fontes/Notificacoes.dc.html`) | [36-notificacoes.png](36-notificacoes.png) | ✅ |
+| **Completar código**: texto fantasma no editor (`fontes/Completar.dc.html`) | [37-completar.png](37-completar.png) | ✅ |
+| Completar código: a pergunta da **primeira abertura** (local, API ou não usar) (`fontes/CompletarLigar.dc.html`) | [38-completar-ligar.png](38-completar-ligar.png) | ✅ |
+| Configurações, aba IA: **completar código** (`fontes/CompletarConfig.dc.html`) | [39-completar-config.png](39-completar-config.png) | ✅ |
 | Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
 

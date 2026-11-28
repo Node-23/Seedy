@@ -6,6 +6,7 @@ import { GithubService } from '../git/github.service';
 import { haQuanto } from '../git/tempo';
 import { nomeBase, noApp, ponte } from '../nucleo/ponte';
 import { CAMINHO_DO_LOGO, VIEWBOX_DO_LOGO } from '../marca/logo';
+import { CompletarService } from '../completar/completar.service';
 import { SinoComponent } from '../notificacoes/sino.component';
 
 const CHAVE_CARTAO = 'seedy.inicio.semPasseio';
@@ -94,6 +95,10 @@ const PASSOS = [
         </ul>
         @if (visiveis().length) { <div class="inicio-dica suave"><kbd>1–9</kbd> abrir direto <kbd>↑↓</kbd> escolher <kbd>⏎</kbd> abrir <kbd>del</kbd> tirar da lista</div> }
 
+        @if (completar.fase() === 'baixando') {
+          <div class="inicio-dica suave">✦ baixando o modelo do completar <span class="completar-barra"><i [style.width.%]="completar.porcento()"></i></span> {{ completar.porcento() }}%</div>
+        }
+
         @if (cartao()) {
           <div class="inicio-cartao">
             <svg class="inicio-fita" width="190" viewBox="0 0 190 100" preserveAspectRatio="none" aria-hidden="true"><path d="M60 100 L190 22 L190 62 L128 100 Z"/><path class="clara" d="M118 0 C122 26 146 46 190 54 L190 0 Z"/></svg>
@@ -120,6 +125,7 @@ const PASSOS = [
   `,
 })
 export class InicioComponent {
+  protected readonly completar = inject(CompletarService);
   private readonly recentes = inject(RecentesService);
   private readonly projeto = inject(ProjetoService);
   private readonly novoProjeto = inject(NovoProjetoService);

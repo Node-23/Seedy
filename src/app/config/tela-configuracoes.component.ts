@@ -1,4 +1,5 @@
 import { Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { CompletarService } from '../completar/completar.service';
 import { ACORDES_NATIVOS, ACORDES_PADRAO, AtalhosService, rotuloDoAcorde } from '../teclado/atalhos.service';
 import { AtualizacaoService } from '../atualizacao/atualizacao.service';
 import { ConfigService } from './config.service';
@@ -76,6 +77,38 @@ const LINHAS_EDITOR: LinhaEditor[] = [
             }
             @case ('ia') {
               <section class="config-aba config-ia">
+                @if (secaoIa() === 'completar') {
+                <div class="config-assistente">
+                  <span class="suave">Assistente (chat): {{ modo() === 'assinatura' ? 'Assinatura do Claude' : 'Chave da API' }} · {{ config.atual().ia.modelo }}</span>
+                  <span class="espaco"></span>
+                  <button class="botao" (click)="verAssistente()">trocar <kbd>c</kbd></button>
+                </div>
+                <div class="rotulo">COMPLETAR CÓDIGO ENQUANTO DIGITA</div>
+                <div class="config-opcao" [class.on]="completar.modo() === 'desligado'" [class.sel]="selCompletar() === 0" (click)="ativarCompletar(0)">
+                  <div class="config-opcao-t"><span class="config-radio"></span><b>Desligado</b><span class="config-tag suave">só o completar do jdtls e dos servidores web</span><span class="espaco"></span><kbd>d</kbd></div>
+                </div>
+                <div class="config-opcao" [class.on]="completar.modo() === 'local'" [class.sel]="selCompletar() === 1" (click)="ativarCompletar(1)">
+                  <div class="config-opcao-t"><span class="config-radio"></span><b>Local, no seu computador</b><span class="config-tag sucesso-texto">grátis · o código não sai daqui</span><span class="espaco"></span><kbd>l</kbd></div>
+                  <div class="suave">
+                    @if (completar.fase() === 'baixando') { baixando o modelo… {{ completar.porcento() }}% }
+                    @else if (completar.instalado()) {
+                      ✓ Qwen2.5-Coder 1.5B · 1 GB no disco · {{ completar.fase() === 'pronto' ? 'ligado' : completar.fase() === 'ligando' ? 'ligando…' : 'parado' }}@if (completar.ultimaMs(); as ms) { · última sugestão em {{ (ms / 1000).toFixed(1).replace('.', ',') }} s }
+                      <br><span class="destaque-texto">r</span> remover o modelo e liberar o espaço
+                    } @else { baixa uma vez ~1 GB (modelo Qwen2.5-Coder 1.5B e llama.cpp) }
+                  </div>
+                </div>
+                <div class="config-opcao" [class.on]="completar.modo() === 'api'" [class.sel]="selCompletar() === 2" (click)="ativarCompletar(2)">
+                  <div class="config-opcao-t"><span class="config-radio"></span><b>API da Anthropic (Haiku)</b><span class="config-tag suave">paga por uso · envia o trecho em volta do cursor</span><span class="espaco"></span><kbd>a</kbd></div>
+                  <div class="suave">usa a chave da API{{ temChave() ? '' : ' (ainda sem chave: c, depois k)' }}; o modo assinatura não serve para isto, porque demora segundos</div>
+                </div>
+                <div class="config-lista config-completar">
+                  <div class="config-linha" [class.sel]="selCompletar() === 3" (click)="ativarCompletar(3)"><span class="acao">Sugerir sozinho, ao parar de digitar</span><span class="espaco suave">desligado: só quando você pedir com Alt+\\</span><kbd class="tecla-lider">{{ completar.sozinho() ? 'ligado' : 'desligado' }}</kbd></div>
+                  <div class="config-linha" [class.sel]="selCompletar() === 4" (click)="ativarCompletar(4)"><span class="acao">Várias linhas</span><span class="espaco suave">blocos curtos, além do resto da linha</span><kbd class="tecla-lider">{{ completar.variasLinhas() ? 'ligado' : 'desligado' }}</kbd></div>
+                  <div class="config-linha"><span class="acao">Ligar e desligar pelo teclado</span><span class="espaco suave">também no menu de atalhos</span><kbd class="tecla-lider">{{ atalhos.rotuloDoAtalho('completar') || '—' }}</kbd></div>
+                </div>
+                <span class="espaco"></span>
+                <div class="config-rodape suave"><span class="destaque-texto">d l a</span> escolher · <span class="destaque-texto">j k</span> andar · <span class="destaque-texto">⏎</span> liga/desliga · <span class="destaque-texto">r</span> remover o modelo · <span class="destaque-texto">c</span> assistente</div>
+                } @else {
                 <div class="rotulo">COMO O SEEDY FALA COM O CLAUDE</div>
                 <div class="config-opcao" [class.on]="modo() === 'assinatura'" (click)="escolherModo('assinatura')">
                   <div class="config-opcao-t"><span class="config-radio"></span><b>Assinatura do Claude (Pro/Max)</b><span class="config-tag sucesso-texto">usa o Claude Code já logado</span><span class="espaco"></span><kbd>1</kbd></div>
@@ -105,7 +138,8 @@ const LINHAS_EDITOR: LinhaEditor[] = [
                   <span class="suave">vale para o chat, o merge e as regras · <kbd>m</kbd> edita</span></div>
                 @if (resultado(); as r) { <div class="config-resultado" [class.erro-texto]="!r.ok">{{ r.ok ? '✓ ' : '✗ ' }}{{ r.texto }}</div> }
                 <span class="espaco"></span>
-                <div class="config-rodape suave"><span class="destaque-texto">1</span> assinatura · <span class="destaque-texto">2</span> chave · <span class="destaque-texto">k</span> colar chave · <span class="destaque-texto">t</span> testar · <span class="destaque-texto">x</span> esquecer · <span class="destaque-texto">m</span> modelo</div>
+                <div class="config-rodape suave"><span class="destaque-texto">1</span> assinatura · <span class="destaque-texto">2</span> chave · <span class="destaque-texto">k</span> colar chave · <span class="destaque-texto">t</span> testar · <span class="destaque-texto">x</span> esquecer · <span class="destaque-texto">m</span> modelo · <span class="destaque-texto">esc</span> voltar</div>
+                }
               </section>
             }
             @case ('editor') {
@@ -151,7 +185,7 @@ export class TelaConfiguracoesComponent {
   protected readonly c = inject(ConfiguracoesService);
   protected readonly config = inject(ConfigService);
   protected readonly atualizacao = inject(AtualizacaoService);
-  private readonly atalhos = inject(AtalhosService);
+  protected readonly atalhos = inject(AtalhosService);
   private readonly mensagens = inject(MensagensService);
   private readonly editor = inject(EditorService);
   private readonly tema = inject(TemaService);
@@ -170,6 +204,7 @@ export class TelaConfiguracoesComponent {
   /** undefined = ainda procurando; null = não instalado. */
   protected readonly claude = signal<string | null | undefined>(undefined);
   protected readonly temChave = signal(false);
+  protected readonly completar = inject(CompletarService);
   protected readonly resultado = signal<{ ok: boolean; texto: string } | null>(null);
   protected readonly modo = computed(() => (this.config.atual().ia.modo === 'assinatura' ? 'assinatura' : 'chave'));
 
@@ -257,7 +292,8 @@ export class TelaConfiguracoesComponent {
     if (this.capturandoId()) return this.aoCapturar(e);
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     const aba = this.c.aba();
-    if (e.key === 'Escape') this.c.fechar();
+    if (e.key === 'Escape' && aba === 'ia' && this.secaoIa() === 'assistente') this.secaoIa.set('completar');
+    else if (e.key === 'Escape') this.c.fechar();
     else if (e.key === 'e') this.abrirArquivo();
     else if (e.key === 'Tab') this.c.aba.set(ABAS[(ABAS.indexOf(aba) + (e.shiftKey ? ABAS.length - 1 : 1)) % ABAS.length]);
     else if (e.key === '3' || e.key === '4' || (e.key === '1' && aba !== 'ia') || (e.key === '2' && aba !== 'ia')) this.c.aba.set(ABAS[Number(e.key) - 1]);
@@ -331,7 +367,43 @@ export class TelaConfiguracoesComponent {
 
   // ---------- IA ----------
 
+  /** Qual parte da aba IA está na tela. */
+  protected readonly secaoIa = signal<'completar' | 'assistente'>('completar');
+  protected readonly selCompletar = signal(1);
+
+  protected verAssistente(): void {
+    this.secaoIa.set('assistente');
+    this.raiz().nativeElement.focus();
+  }
+
+  protected ativarCompletar(i: number): void {
+    this.selCompletar.set(i);
+    if (i === 0) void this.completar.escolher('desligado');
+    else if (i === 1) void this.completar.escolher('local');
+    else if (i === 2) void this.completar.escolher('api');
+    else if (i === 3) void this.completar.definir({ completarSozinho: !this.completar.sozinho() });
+    else void this.completar.definir({ completarLinhas: !this.completar.variasLinhas() });
+  }
+
+  private teclarCompletar(e: KeyboardEvent): void {
+    const andar = (d: number) => this.selCompletar.set((this.selCompletar() + d + 5) % 5);
+    switch (e.key) {
+      case 'd': this.ativarCompletar(0); break;
+      case 'l': this.ativarCompletar(1); break;
+      case 'a': this.ativarCompletar(2); break;
+      case 'j': case 'ArrowDown': andar(1); break;
+      case 'k': case 'ArrowUp': andar(-1); break;
+      case 'Enter': case ' ': this.ativarCompletar(this.selCompletar()); break;
+      case 'r': if (this.completar.instalado()) void this.completar.remover(); break;
+      case 'c': this.verAssistente(); break;
+      default:
+        return;
+    }
+    e.preventDefault();
+  }
+
   private teclarIa(e: KeyboardEvent): void {
+    if (this.secaoIa() === 'completar') return this.teclarCompletar(e);
     switch (e.key) {
       case '1': void this.escolherModo('assinatura'); break;
       case '2': void this.escolherModo('chave'); break;

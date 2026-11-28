@@ -1817,6 +1817,23 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 .config-estado { display: flex; align-items: center; gap: 10px; }
 .config-estado .botao { height: 30px; font-size: 12px; }
 .config-modelo { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+/* Completar código (mockups 37 a 39). */
+.config-assistente { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.config-ia .config-opcao.sel:not(.on) { background: var(--selecao); }
+.config-completar { flex: 0 0 auto; }
+.config-completar .acao { width: 330px; flex-shrink: 0; white-space: nowrap; }
+.completar-dica { display: flex !important; align-items: center; gap: 10px; margin-top: 2px; padding: 0 8px; height: 30px; white-space: nowrap; font-size: 10.5px; font-family: var(--fonte-interface); border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--painel); color: var(--texto); box-shadow: 3px 3px 0 var(--sombra); }
+.completar-pergunta { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 85; width: 720px; max-width: calc(100vw - 32px); max-height: calc(100vh - 24px); outline: none; }
+.completar-corpo { display: flex; flex-direction: column; gap: 10px; padding: 16px 22px 14px; overflow-y: auto; font-size: 11.5px; line-height: 1.7; }
+.completar-corpo .config-opcao { gap: 6px; padding: 12px 16px; cursor: pointer; }
+.completar-titulo { display: flex; flex-direction: column; }
+.completar-acoes { display: flex; align-items: center; gap: 10px; padding: 12px 22px; border-top: var(--espessura-borda) solid var(--borda); font-size: 10.5px; flex-shrink: 0; }
+.completar-status { border-top: 0; border-bottom: 0; border-right: 0; background: transparent; color: var(--destaque); font: inherit; cursor: pointer; }
+.completar-status[data-fase='ligando'], .completar-status[data-fase='baixando'] { color: var(--aviso); }
+.completar-status[data-fase='erro'] { color: var(--erro); }
+.completar-barra { display: inline-block; width: 90px; height: 8px; border: 1px solid var(--borda); border-radius: 4px; background: var(--fundo); overflow: hidden; vertical-align: middle; }
+.completar-barra > i { display: block; height: 100%; background: var(--destaque); }
+.monaco-editor .ghost-text-decoration, .monaco-editor .ghost-text { color: var(--texto-suave) !important; font-style: italic; opacity: 0.75; }
 .config-modelo input { width: 300px; color: var(--texto); font-family: inherit; }
 .config-resultado { font-size: 12px; }
 /* Aba Sobre (mockup 32). */

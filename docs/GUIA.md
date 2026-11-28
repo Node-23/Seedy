@@ -5,6 +5,13 @@ Para conhecer o projeto e instalar, comece pelo [README](../README.md).
 
 ## Funcionalidades
 
+- **Completar enquanto digita** (opcional, pergunta na primeira abertura): texto fantasma no modo de inserção.
+  `Tab` aceita, `Ctrl+→` uma palavra, `esc` descarta (e sai da inserção), `Alt+\` pede na hora,
+  `Alt+Shift+C` liga e desliga. **Local**: o Seedy baixa uma vez o llama.cpp e o Qwen2.5-Coder 1.5B (~1 GB),
+  confere o SHA-256 e roda tudo em `127.0.0.1`; funciona sem internet e sai com `r` em `Ctrl+,` aba IA.
+  **API**: Claude Haiku, paga por uso, com a chave da API. No `seedy.json` global: `ia.completar`
+  (`"desligado"`, `"local"`, `"api"`), `ia.completarSozinho` e `ia.completarLinhas`. O `.seedy/seedy.json`
+  de um projeto não muda isso.
 - **Editor Monaco com modo vim**: `:w`, `:q`, `:q!`, `:wq`, `:bn`, `:bp`, `:term`, números de linha relativos.
 - **Destaque de sintaxe no estilo Alabaster**: só strings, constantes, comentários e definições ganham cor.
 - **Árvore de arquivos** navegável pelo teclado (`j`/`k`, `l`/`Enter`, `h`).

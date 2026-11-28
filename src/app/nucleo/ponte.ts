@@ -495,6 +495,39 @@ export const ponte = {
     return noApp() ? invoke('falha_anterior') : null;
   },
 
+  /** Completar código: o modelo local (llama.cpp) ou a API. */
+  completar: {
+    async estado(): Promise<{ instalado: boolean; rodando: boolean; falta: number }> {
+      return noApp() ? invoke('completar_estado') : { instalado: false, rodando: false, falta: 1_025_395_135 };
+    },
+    async baixar(aoAvancar: (p: { baixado: number; total: number }) => void): Promise<void> {
+      if (noApp()) {
+        const progresso = new Channel<{ baixado: number; total: number }>();
+        progresso.onmessage = aoAvancar;
+        return invoke<void>('completar_baixar', { progresso });
+      }
+      for (let i = 1; i <= 10; i++) {
+        await new Promise((r) => setTimeout(r, 300));
+        aoAvancar({ baixado: i, total: 10 });
+      }
+    },
+    async ligar(): Promise<void> {
+      if (noApp()) await invoke<void>('completar_ligar');
+    },
+    async desligar(): Promise<void> {
+      if (noApp()) await invoke<void>('completar_desligar');
+    },
+    async remover(): Promise<void> {
+      if (noApp()) await invoke<void>('completar_remover');
+    },
+    async pedir(prefixo: string, sufixo: string, variasLinhas: boolean, api: boolean): Promise<string> {
+      if (noApp()) return invoke<string>('completar_pedir', { prefixo, sufixo, variasLinhas, api });
+      // Modo navegador: uma sugestão de exemplo.
+      await new Promise((r) => setTimeout(r, 200));
+      return variasLinhas ? 'return feiraRepository.findById(id)\n            .orElseThrow();' : 'return feiraRepository.findById(id);';
+    },
+  },
+
   async abrirLink(url: string): Promise<void> {
     if (noApp()) return invoke<void>('abrir_link', { url });
     window.open(url, '_blank', 'noopener');

@@ -11,6 +11,7 @@ mod arquitetura;
 mod banco;
 mod busca;
 mod carregamento;
+mod completar;
 mod containers;
 mod depurador;
 mod git;
@@ -44,6 +45,7 @@ pub fn run() {
         .manage(mcp::Mcp::default())
         .manage(web::Tarefas::default())
         .manage(web::JsDebug::default())
+        .manage(completar::Completar::default())
         .setup(|app| {
             // Tudo que o Seedy inicia morre com ele (jdtls, RUN/DEBUG, servidores, scripts, terminais).
             processos::prender_filhos();
@@ -94,6 +96,13 @@ pub fn run() {
             ia::ia_mensagem,
             ia::ia_claude_estado,
             ia::abrir_link,
+            completar::completar_estado,
+            completar::completar_baixar,
+            completar::completar_cancelar,
+            completar::completar_ligar,
+            completar::completar_desligar,
+            completar::completar_remover,
+            completar::completar_pedir,
             janela::janela_inicio,
             falhas::falha_anterior,
             relatorio::relatorio_enviar,
@@ -176,6 +185,7 @@ pub fn run() {
                 app.state::<servidor::Execucoes>().encerrar_todos();
                 app.state::<web::Tarefas>().encerrar_todas();
                 app.state::<web::JsDebug>().encerrar();
+                app.state::<completar::Completar>().desligar();
                 processos::encerrar_descendentes();
                 falhas::saiu_bem();
             }

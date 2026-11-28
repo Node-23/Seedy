@@ -23,7 +23,18 @@ export interface Config {
     /** Espaço (fora de campos de texto e no modo normal do Vim) abre o menu de atalhos. Desligado por padrão. */
     espacoAbreMenu?: boolean;
   };
-  ia: { modelo: string; modo: 'chave' | 'assinatura'; /** Sem confirmar edições e comandos da IA. */ automatico?: boolean };
+  ia: {
+    modelo: string;
+    modo: 'chave' | 'assinatura';
+    /** Sem confirmar edições e comandos da IA. */
+    automatico?: boolean;
+    /** Completar enquanto digita. Ausente = ainda não perguntou. Só vale no seedy.json global. */
+    completar?: 'desligado' | 'local' | 'api';
+    /** false: só sugere quando pedido (Alt+\). */
+    completarSozinho?: boolean;
+    /** false: só o resto da linha. */
+    completarLinhas?: boolean;
+  };
   /** `abrirUltimoProjeto: true` pula a tela de início e reabre o último projeto. Só vale no seedy.json global. */
   inicio?: { abrirUltimoProjeto?: boolean };
   /** Atualização do Seedy: `verificar: false` desliga a procura (ao abrir e a cada 6 horas). */
@@ -57,11 +68,16 @@ export class ConfigService {
   private readonly mensagens = inject(MensagensService);
   private readonly projeto = inject(ProjetoService);
 
+  /** O seedy.json global já foi lido (ou não existe). */
+  readonly carregada = signal(false);
   /** Caminho do seedy.json global (só existe dentro do app). */
   readonly caminho = signal<string | null>(null);
   private readonly global = signal<unknown>({});
   private readonly doProjeto = signal<unknown>({});
   readonly atual = computed<Config>(() => mesclar(mesclar(CONFIG_PADRAO, this.global()), this.doProjeto()));
+
+  /** A parte `ia` sem o que o projeto aberto sobrepõe. */
+  readonly iaGlobal = computed<Config['ia']>(() => mesclar(CONFIG_PADRAO, this.global()).ia);
 
   constructor() {
     effect(() => {
@@ -81,6 +97,7 @@ export class ConfigService {
   async iniciar(): Promise<void> {
     const arquivo = await ponte.configCarregar().catch(() => null);
     if (arquivo) this.receber(arquivo.caminho, arquivo.conteudo, false);
+    this.carregada.set(true);
     await ponte.aoAlterarConfig((a) => this.receber(a.caminho, a.conteudo, true));
   }
 
@@ -105,6 +122,12 @@ export class ConfigService {
       this.doProjeto.set({});
       this.mensagens.erro(`.seedy/seedy.json inválido (${(e as Error).message})`);
     }
+  }
+
+  /** Muda só alguns campos de `ia` no seedy.json global. */
+  async gravarIa(parte: Partial<Config['ia']>): Promise<void> {
+    const atual = ehObjeto(this.global()) ? (this.global() as Objeto) : {};
+    await this.gravar({ ia: { ...(ehObjeto(atual['ia']) ? atual['ia'] : {}), ...parte } });
   }
 
   /**

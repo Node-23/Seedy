@@ -15,7 +15,7 @@ use std::time::Duration;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Emitter};
 
-const VERSAO_DA_API: &str = "2026-10-21";
+pub(crate) const VERSAO_DA_API: &str = "2026-10-21";
 /// Se o modelo recusar por segurança, o próprio servidor tenta outro modelo.
 const BETAS: &str = "server-side-fallback-2026-07-01";
 
@@ -23,7 +23,7 @@ fn arquivo_da_chave() -> PathBuf {
     pasta_config().join("ia.chave")
 }
 
-fn chave() -> Option<String> {
+pub(crate) fn chave() -> Option<String> {
     std::env::var("ANTHROPIC_API_KEY")
         .ok()
         .or_else(|| fs::read_to_string(arquivo_da_chave()).ok())
@@ -31,7 +31,7 @@ fn chave() -> Option<String> {
         .filter(|c| !c.is_empty())
 }
 
-fn endereco_base() -> String {
+pub(crate) fn endereco_base() -> String {
     std::env::var("ANTHROPIC_BASE_URL")
         .ok()
         .filter(|u| !u.trim().is_empty())
@@ -612,7 +612,7 @@ fn dados_do_evento(linha: &str) -> Option<&str> {
 }
 
 /// Mensagem legível de um erro HTTP da API (`{"error": {"type", "message"}}`).
-fn erro_da_api(codigo: u16, corpo: &str) -> String {
+pub(crate) fn erro_da_api(codigo: u16, corpo: &str) -> String {
     let json: serde_json::Value = serde_json::from_str(corpo).unwrap_or_default();
     let msg = json["error"]["message"].as_str().unwrap_or("erro");
     match codigo {

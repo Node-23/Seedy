@@ -68,6 +68,8 @@ cobre.
 - **Depurador** Java e web, com breakpoints condicionais, variáveis e console.
 - **Containers**: os containers do projeto, o mapa de quem fala com quem, logs e terminal.
 - **Endpoints do Spring**: a lista lida do código, com chamada na aplicação local.
+- **Completar enquanto digita (opcional)**: sugestões em texto fantasma, com um modelo que roda no seu
+  computador (grátis, o código não sai dele) ou pela API da Anthropic. O Seedy pergunta na primeira abertura.
 - **IA (opcional)**: o Claude dentro da IDE, ou o Claude Code ligado a ela. Mudanças de código chegam
   como diff para você aceitar ou recusar.
 - **Terminal integrado**, TODO e bookmarks por projeto, variáveis do `.env`, novo projeto
@@ -120,7 +122,8 @@ Na primeira vez num projeto Java, o Seedy baixa o jdtls sozinho.
 
 O Seedy não tem telemetria. Ele usa a rede para procurar atualização no GitHub, baixar as ferramentas
 que precisa e para o que você pedir (GitHub, bancos, IA). Com a IA, o que você envia na conversa e o
-que ela lê do projeto vai para a Anthropic.
+que ela lê do projeto vai para a Anthropic. O completar local não envia nada; o completar pela API envia o
+trecho em volta do cursor (nunca de arquivos como `.env` e chaves).
 
 Se o próprio Seedy falhar, você pode enviar o relatório para análise: ele só sai quando você aperta o
 botão, dá para ver o texto antes, e senhas e o nome do seu usuário são mascarados.

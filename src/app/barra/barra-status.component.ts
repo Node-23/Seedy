@@ -8,6 +8,8 @@ import { LimitesUsoComponent } from '../ia/limites-uso.component';
 import { AtualizacaoComponent } from '../atualizacao/atualizacao.component';
 import { VimAjudaService } from '../vim/vim-ajuda.component';
 import { JdtlsService } from '../java/jdtls.service';
+import { CompletarService } from '../completar/completar.service';
+import { ConfiguracoesService } from '../config/configuracoes.service';
 import { GitService } from '../git/git.service';
 import { LayoutService } from '../layout/layout.service';
 import { MergeService } from '../git/merge.service';
@@ -118,6 +120,13 @@ const NOMES_MODO: Record<string, string> = {
       @if (jdtls.estado().fase !== 'inativo') {
         <span class="segmento com-divisa-esq jdtls" [attr.data-fase]="jdtls.estado().fase" [title]="tituloJdtls()">{{ textoJdtls() }}</span>
       }
+      @if (completar.modo() !== 'desligado' || completar.fase() === 'baixando') {
+        <button class="segmento com-divisa-esq completar-status" [attr.data-fase]="completar.fase()" title="completar código (Alt+Shift+C liga e desliga)" (click)="aoCompletar()">
+          @if (completar.fase() === 'baixando') {
+            ✦ baixando o modelo <span class="completar-barra"><i [style.width.%]="completar.porcento()"></i></span> {{ completar.porcento() }}%
+          } @else { {{ textoDoCompletar() }} }
+        </button>
+      }
       @if (docker.visivel() && docker.versao()) {
         <span class="segmento com-divisa-esq servidor-status" data-fase="rodando">● docker {{ docker.rodando().length }}</span>
       }
@@ -154,6 +163,22 @@ const NOMES_MODO: Record<string, string> = {
   `,
 })
 export class BarraStatusComponent {
+  protected readonly completar = inject(CompletarService);
+  private readonly configuracoes = inject(ConfiguracoesService);
+
+  protected textoDoCompletar(): string {
+    if (this.completar.modo() === 'api') return '✦ completar: API';
+    const fase = this.completar.fase();
+    if (fase === 'ligando') return '✦ completar: ligando…';
+    if (fase === 'erro') return '✦ completar: erro';
+    return this.completar.instalado() ? '✦ completar: local' : '✦ completar: falta baixar';
+  }
+
+  protected aoCompletar(): void {
+    if (this.completar.modo() === 'local' && !this.completar.instalado()) this.completar.perguntar();
+    else this.configuracoes.abrir('ia');
+  }
+
   protected readonly editor = inject(EditorService);
   protected readonly projeto = inject(ProjetoService);
   protected readonly busca = inject(BuscaService);

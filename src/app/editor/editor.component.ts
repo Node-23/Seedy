@@ -12,6 +12,8 @@ import {
 } from '@angular/core';
 import { monaco } from './monaco';
 import { initVimMode, VimMode } from '../../vendor/monaco-vim';
+import { CompletarService } from '../completar/completar.service';
+import { ligarDicaDoCompletar } from '../completar/dica';
 import { EditorService, ModoVim } from './editor.service';
 import { VimAjudaService } from '../vim/vim-ajuda.component';
 import { BookmarksService } from './bookmarks.service';
@@ -104,6 +106,7 @@ export class EditorComponent {
   private readonly tema = inject(TemaService);
   private readonly atalhos = inject(AtalhosService);
   private readonly vimAjuda = inject(VimAjudaService);
+  private readonly completar = inject(CompletarService);
   private readonly bookmarks = inject(BookmarksService);
   private readonly menuGutter = inject(MenuGutterService);
   private readonly layout = inject(LayoutService);
@@ -179,6 +182,8 @@ export class EditorComponent {
         guides: { indentation: false },
         padding: { top: 10, bottom: 10 },
         stickyScroll: { enabled: false },
+        // O texto fantasma do completar; a dica é a nossa (mockup 37).
+        inlineSuggest: { enabled: true, showToolbar: 'never' },
         // Alabaster: pouca cor. Parênteses coloridos brigam com essa ideia.
         bracketPairColorization: { enabled: false },
         matchBrackets: 'near',
@@ -220,6 +225,8 @@ export class EditorComponent {
       const vim = initVimMode(instancia, barraVim);
       vim.on('vim-mode-change', (e: { mode: ModoVim }) => {
         if (this.focado()) this.editor.modo.set(e.mode);
+        // Saiu da inserção (esc): a sugestão vai junto.
+        if (e.mode !== 'insert') instancia.trigger('completar', 'editor.action.inlineSuggest.hide', null);
       });
       this.definirComandosEx();
 
@@ -252,6 +259,11 @@ export class EditorComponent {
       );
 
       this.atalhosDeCodigo(instancia);
+      this.atalhosDoCompletar(instancia);
+      const dica = ligarDicaDoCompletar(instancia, () => {
+        const ms = this.completar.ultimaMs();
+        return `${ms === null ? '' : (ms / 1000).toFixed(1).replace('.', ',') + ' s · '}${this.completar.modo() === 'api' ? 'API' : 'local'}`;
+      });
 
       instancia.onDidChangeCursorPosition((e) => {
         if (this.focado()) this.editor.cursor.set({ linha: e.position.lineNumber, coluna: e.position.column });
@@ -260,6 +272,7 @@ export class EditorComponent {
       destruir.onDestroy(() => {
         this.editor.registrarInstancia(painel, null);
         vim.dispose?.();
+        dica.dispose();
         instancia.dispose();
         barraVim.remove();
       });
@@ -364,6 +377,16 @@ export class EditorComponent {
     mapear('gr', 'seedyusos', 'editor.action.referenceSearch.trigger');
     mapear('gi', 'seedyimplementacao', 'editor.action.goToImplementation');
     mapear('K', 'seedyhover', 'editor.action.showHover');
+  }
+
+  /** Texto fantasma: Tab e esc são do Monaco; aqui, uma palavra e pedir na hora. */
+  private atalhosDoCompletar(instancia: monaco.editor.IStandaloneCodeEditor): void {
+    const { KeyMod: M, KeyCode: K } = monaco;
+    instancia.addCommand(M.CtrlCmd | K.RightArrow, () => instancia.trigger('teclado', 'editor.action.inlineSuggest.acceptNextWord', null), 'inlineSuggestionVisible');
+    // Nos teclados ABNT2 a barra invertida é a tecla IntlBackslash.
+    for (const barra of [K.Backslash, K.IntlBackslash]) {
+      instancia.addCommand(M.Alt | barra, () => instancia.trigger('teclado', 'editor.action.inlineSuggest.trigger', null));
+    }
   }
 
   /**

@@ -60,6 +60,8 @@ import { MenuRegraComponent } from './testes/menu-regra.component';
 import { ToastsComponent } from './nucleo/toasts.component';
 import { ErroComponent } from './notificacoes/erro.component';
 import { ListaDeNotificacoesComponent } from './notificacoes/lista.component';
+import { CompletarService } from './completar/completar.service';
+import { PerguntaDoCompletarComponent } from './completar/pergunta.component';
 import { resumoDoPanico } from './notificacoes/relatorio';
 import { ponte } from './nucleo/ponte';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
@@ -77,7 +79,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
 @Component({
   selector: 'sd-raiz',
-  imports: [
+  imports: [PerguntaDoCompletarComponent, 
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
@@ -173,6 +175,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
       @if (!semProjeto()) { <sd-barra-status /> }
       <!-- Avisos: fora da região principal, para valerem por cima de qualquer janela aberta. -->
+      <sd-completar-pergunta />
       <sd-notificacoes />
       <sd-erro />
       <sd-toasts />
@@ -240,6 +243,7 @@ export class App {
       // O novo projeto não cabe no cartão: enquanto está aberto, a janela volta ao tamanho de trabalho.
       void ponte.janela.inicio(this.semProjeto() && !this.novoProjeto.aberta());
     });
+    inject(CompletarService).iniciar(); // texto fantasma enquanto digita
     inject(AberturaService).acompanhar();
   }
 

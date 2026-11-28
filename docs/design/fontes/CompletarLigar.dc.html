@@ -1,0 +1,88 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Completar código, primeira vez — Seedy</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #19191B; }
+  .tela { width: 1440px; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px; }
+  .janela { border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .faixa { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0; }
+  .rotulo { font-size: 11px; letter-spacing: .14em; color: #A29D93; }
+  .suave { color: #A29D93; } .dest { color: #9CD7BA; } .e { flex: 1; }
+  kbd { font-family: inherit; font-size: 10.5px; padding: 1px 6px; border-radius: 5px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C; white-space: nowrap; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .topo { display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0; }
+  .quad { width: 40px; height: 40px; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #A29D93; }
+  .quad.on { background: #333337; color: #9CD7BA; }
+  .chip { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; font-size: 13px; }
+  .meio { flex: 1; min-height: 0; display: flex; gap: 12px; }
+  .icones { display: flex; flex-direction: column; gap: 10px; }
+  .arv div { height: 26px; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .status { height: 30px; flex-shrink: 0; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; display: flex; align-items: stretch; overflow: hidden; white-space: nowrap; }
+  .status span { display: flex; align-items: center; padding: 0 12px; gap: 6px; border-right: 2px solid #0B0B0C; }
+  .status .modo { background: #9CD7BA; color: #16171C; font-weight: 700; letter-spacing: .08em; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; box-shadow: 2px 2px 0 #0B0B0C; font-size: 11px; white-space: nowrap; }
+  
+
+  .tela { position: relative; }
+  .codigo { flex: 1; min-height: 0; padding: 10px 0; background: #222225; font-size: 13px; line-height: 20px; white-space: pre; overflow: hidden; }
+  .l { display: flex; height: 20px; }
+  .l .n { width: 52px; flex-shrink: 0; text-align: right; padding-right: 22px; color: #A29D93; }
+  .l.atual { background: #333337; }
+  .l.atual .n { color: #9CD7BA; text-align: left; padding-left: 20px; width: 30px; }
+  .s { color: #B7D39C; } .c { color: #E8C979; } .k { color: #E3A9CC; } .d { color: #9CD7BA; }
+  .fantasma { color: #A29D93; font-style: italic; opacity: .72; }
+  .cursor { display: inline-block; width: 2px; height: 17px; margin-bottom: -3px; background: #9CD7BA; }
+  .dica { position: absolute; display: flex; align-items: center; gap: 14px; height: 30px; padding: 0 12px; border: 2px solid #0B0B0C; border-radius: 9px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; font-size: 11px; white-space: nowrap; }
+  .status .ia-local { color: #9CD7BA; }
+  .barrinha { width: 90px; height: 8px; border-radius: 4px; background: #19191B; border: 1px solid #0B0B0C; overflow: hidden; }
+  .barrinha i { display: block; height: 100%; background: #9CD7BA; }
+  .veu { position: absolute; inset: 0; background: rgba(11,11,12,.55); }
+  .pop { position: absolute; left: 370px; top: 130px; width: 700px; }
+  .pop .corpo { padding: 18px 22px; line-height: 1.75; font-size: 11.5px; }
+  .item { display: flex; gap: 12px; padding: 9px 0; border-top: 1px solid #333337; }
+  .item b { display: block; } .item small { display: block; font-size: 10.5px; color: #A29D93; }
+  .item .tam { margin-left: auto; color: #A29D93; white-space: nowrap; }
+  .pop .acoes { display: flex; gap: 10px; padding: 12px 22px; border-top: 2px solid #0B0B0C; align-items: center; }
+  .btn.p { background: #9CD7BA; color: #16171C; font-weight: 700; }
+  .nav { width: 240px; border-right: 2px solid #0B0B0C; padding: 10px 0; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .nav div { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .nav div.on { background: #333337; box-shadow: inset 3px 0 0 #9CD7BA; }
+  .nav p { margin: 0; padding: 0 14px; font-size: 11px; line-height: 18px; }
+  .aba { flex: 1; min-width: 0; padding: 20px 28px 0; display: flex; flex-direction: column; gap: 12px; }
+  .grupo { font-size: 11px; letter-spacing: .14em; color: #A29D93; margin-top: 2px; }
+  .op { border: 2px solid #0B0B0C; border-radius: 12px; background: #222225; padding: 12px 16px; font-size: 12px; line-height: 1.7; }
+  .op.on { border-color: #9CD7BA; }
+  .op .t { display: flex; align-items: center; gap: 10px; }
+  .radio { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #A29D93; flex-shrink: 0; }
+  .on .radio { border-color: #9CD7BA; background: radial-gradient(#9CD7BA 0 3px, transparent 4px); }
+  .tag { font-size: 10.5px; color: #A29D93; }
+  .op .estado { font-size: 11px; color: #A29D93; margin: 4px 0 0 22px; }
+  .linha { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-top: 1px solid #333337; font-size: 12px; }
+  .chave { margin-left: auto; padding: 2px 10px; border-radius: 6px; border: 1px solid #0B0B0C; background: #19191B; color: #9CD7BA; }
+  .rodape { margin: auto -28px 0; border-top: 2px solid #0B0B0C; padding: 10px 16px; font-size: 11px; color: #A29D93; }
+
+  .inicio-j { position: relative; width: 980px; height: 760px; box-sizing: border-box; border: 2px solid #0B0B0C; background: #2A2A2D; color: #E9E2D3; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px; overflow: hidden; }
+  .marca-i { display: flex; align-items: center; gap: 16px; padding: 28px 34px 0 28px; }
+  .marca-i img { width: 72px; height: 72px; border-radius: 14px; }
+  .marca-i b { display: block; font-size: 28px; letter-spacing: -0.04em; }
+  .acoes-i { display: flex; gap: 14px; padding: 44px 36px; }
+  .acoes-i div { flex: 1; height: 96px; border: 2px solid #0B0B0C; border-radius: 14px; background: #222225; box-shadow: 3px 3px 0 #0B0B0C; }
+  .pop2 { position: absolute; left: 130px; top: 74px; width: 720px; }
+  .pop2 .corpo { padding: 16px 22px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .pop2 .acoes { display: flex; gap: 10px; padding: 12px 22px; border-top: 2px solid #0B0B0C; align-items: center; font-size: 10.5px; }
+</style></head><body>
+<div class="inicio-j">
+  <div class="marca-i"><img src="../marca/icone-1024.png" alt=""><div><b>Seedy</b><span class="suave">versão 0.5.11</span></div></div>
+  <div class="acoes-i"><div></div><div></div><div></div></div>
+  <div class="veu"></div>
+  <div class="janela pop2">
+    <div class="faixa"><span class="rotulo">COMPLETAR CÓDIGO</span><span class="suave">uma pergunta só, na primeira abertura</span><span class="e"></span><kbd>esc</kbd></div>
+    <div class="corpo">
+      <div style="line-height:1.7"><b>Quer sugestões de código enquanto digita?</b><br><span class="suave">O completar do jdtls continua funcionando em qualquer escolha.</span></div>
+      <div class="op on"><div class="t"><span class="radio"></span><b>Local, no seu computador</b><span class="tag d">grátis · o código não sai daqui</span><span class="e"></span><kbd>l</kbd></div><div class="estado">baixa uma vez ~1 GB (modelo Qwen2.5-Coder 1.5B e llama.cpp) · usa ~1,5 GB de memória enquanto ligado<br>sugere bem linhas e blocos curtos</div></div>
+      <div class="op"><div class="t"><span class="radio"></span><b>API da Anthropic (Haiku)</b><span class="tag">paga por uso · precisa de uma chave da API</span><span class="e"></span><kbd>a</kbd></div><div class="estado">nada para baixar · envia o trecho em volta do cursor · cerca de US$ 4 por mês em uso diário (estimativa)<br>a assinatura Pro/Max do Claude não vale aqui</div></div>
+      <div class="op"><div class="t"><span class="radio"></span><b>Não usar</b><span class="tag">nada é baixado nem enviado</span><span class="e"></span><kbd>n</kbd></div><div class="estado">dá para ligar depois quando quiser</div></div>
+    </div>
+    <div class="acoes"><span class="suave">muda depois em Ctrl+, ou Alt+Shift+C<br>o download segue em segundo plano</span><span class="e"></span><span class="btn">não usar <kbd>esc</kbd></span><span class="btn p">baixar e ligar <kbd>⏎</kbd></span></div>
+  </div>
+</div>
+</body></html>
