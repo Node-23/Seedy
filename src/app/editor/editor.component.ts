@@ -11,6 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ligarMarkdownVivo } from './markdown-vivo';
+import { ligarCursoresNoVim } from './cursores';
 import { RodarMargemService } from './rodar-margem.service';
 import { HistoricoService } from '../historico/historico.service';
 import { monaco } from './monaco';
@@ -194,6 +195,7 @@ export class EditorComponent {
         lineNumbers: 'relative',
         // Margem dos breakpoints (clique ou ctrl+F8).
         glyphMargin: true,
+        multiCursorModifier: 'alt',
         renderLineHighlight: 'line',
         scrollBeyondLastLine: false,
         overviewRulerLanes: 0,
@@ -259,6 +261,7 @@ export class EditorComponent {
         if (e.mode !== 'insert') instancia.trigger('completar', 'editor.action.inlineSuggest.hide', null);
       });
       this.definirComandosEx();
+      const cursores = ligarCursoresNoVim(instancia, this.hospedeiro().nativeElement, vim);
 
       // Clicar (ou focar) num painel faz dele o painel ativo.
       instancia.onDidFocusEditorText(() => this.editor.focarPainel(painel));
@@ -301,6 +304,7 @@ export class EditorComponent {
 
       destruir.onDestroy(() => {
         this.editor.registrarInstancia(painel, null);
+        cursores.dispose();
         vim.dispose?.();
         dica.dispose();
         this.markdown?.dispose();
@@ -459,6 +463,12 @@ export class EditorComponent {
     ligar(M.CtrlCmd | M.Alt | K.KeyL, 'editor.action.formatDocument');
     ligar(M.CtrlCmd | M.Alt | K.KeyO, 'editor.action.organizeImports');
     ligar(M.CtrlCmd | K.F12, 'editor.action.quickOutline');
+    // Vários cursores: alt+↑/↓ cria um acima/abaixo; alt+clique cria (ou tira, em cima de
+    // um que já existe) e esc volta a um só. Mover a linha passa para alt+shift+↑/↓, como no IntelliJ.
+    ligar(M.Alt | K.UpArrow, 'editor.action.insertCursorAbove');
+    ligar(M.Alt | K.DownArrow, 'editor.action.insertCursorBelow');
+    ligar(M.Alt | M.Shift | K.UpArrow, 'editor.action.moveLinesUpAction');
+    ligar(M.Alt | M.Shift | K.DownArrow, 'editor.action.moveLinesDownAction');
     // Bookmark na linha do cursor (Ctrl+F2); Alt+2 lista as marcas.
     instancia.addCommand(M.CtrlCmd | K.F2, () => void this.bookmarks.alternar());
     // Históricos, também no botão direito (o do Git vale para o trecho selecionado).

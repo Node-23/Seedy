@@ -90,6 +90,9 @@ Toda ação tem atalho, e o menu (`Ctrl+Shift+Espaço`) lista todas. Os atalhos 
 | `Alt+Shift+D` | banco de dados |
 | `Alt+Shift+T` | testes |
 | `Alt+A` | painel de IA |
+| `Alt+↑` / `Alt+↓` | mais um cursor acima / abaixo |
+| `Alt+clique` | criar ou tirar um cursor (`Esc` volta a um) |
+| `Alt+Shift+↑` / `Alt+Shift+↓` | mover a linha |
 | `Ctrl+,` | configurações |
 
 O tema (cores, fontes e formas) é um arquivo JSON que você edita e vê mudar na hora.

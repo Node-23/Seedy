@@ -312,7 +312,7 @@ export class GitService {
       for (const fn of this.antesDeOperar) await fn(args).catch(() => undefined);
       const r = await ponte.git(raiz, args);
       if (r.codigo !== 0) {
-        this.mensagens.erro(`${rotulo}: ${resumoDoErro(r.erro || r.saida)}`);
+        this.mensagens.erro(`${rotulo}: ${resumoDoErro(`${r.erro}\n${r.saida}`)}`);
         return false;
       }
       if (sucesso) this.mensagens.mostrar(sucesso);
@@ -430,7 +430,7 @@ export class GitService {
   async rodar(args: string[]): Promise<string> {
     const raiz = this.raizRepo() ?? this.projeto.raiz();
     const r = await ponte.git(raiz, args);
-    if (r.codigo !== 0) throw new Error(resumoDoErro(r.erro || r.saida));
+    if (r.codigo !== 0) throw new Error(resumoDoErro(`${r.erro}\n${r.saida}`));
     return r.saida;
   }
 }
@@ -441,9 +441,15 @@ export function chave(caminho: string): string {
   return /^[a-zA-Z]:/.test(c) ? c.toLowerCase() : c;
 }
 
+/**
+ * O motivo da falha numa linha. O git escreve o andamento antes dele ("From …",
+ * "To …"), então começa pelo erro, pelo conflito ou pela branch recusada.
+ */
 function resumoDoErro(texto: string): string {
-  const linhas = texto.split(/\r?\n/).map((l) => l.replace(/^(error|fatal|hint): /, '').trim()).filter(Boolean);
-  return linhas.filter((l) => !/^\(use "git/.test(l)).slice(0, 2).join(' — ') || 'falhou';
+  const linhas = texto.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !/^\(use "git|^hint:/.test(l));
+  const inicio = linhas.findIndex((l) => /^(error|fatal|CONFLICT)\b|^! \[/.test(l));
+  const motivo = linhas.slice(Math.max(inicio, 0)).map((l) => l.replace(/^(error|fatal): /, ''));
+  return motivo.slice(0, 2).join(motivo[0]?.endsWith(':') ? ' ' : ' — ') || 'falhou';
 }
 
 function lerRefs(texto: string): RefDoCommit[] {
