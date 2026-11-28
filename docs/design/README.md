@@ -41,6 +41,9 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | **Completar código**: texto fantasma no editor (`fontes/Completar.dc.html`) | [37-completar.png](37-completar.png) | ✅ |
 | Completar código: a pergunta da **primeira abertura** (local, API ou não usar) (`fontes/CompletarLigar.dc.html`) | [38-completar-ligar.png](38-completar-ligar.png) | ✅ |
 | Configurações, aba IA: **completar código** (`fontes/CompletarConfig.dc.html`) | [39-completar-config.png](39-completar-config.png) | ✅ |
+| Árvore: botão direito → **Novo** e os tipos (`fontes/NovoArquivo.dc.html`) | [40-novo-arquivo.png](40-novo-arquivo.png) | ✅ |
+| Nova **classe Java** (nome e tipo) (`fontes/NovoJava.dc.html`) | [41-novo-java.png](41-novo-java.png) | ✅ |
+| Novo **arquivo em branco** (nome e extensão) (`fontes/NovoEmBranco.dc.html`) | [42-novo-em-branco.png](42-novo-em-branco.png) | ✅ |
 | Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
 

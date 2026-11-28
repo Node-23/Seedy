@@ -528,6 +528,37 @@ export const ponte = {
     },
   },
 
+  /** Criar, copiar e mostrar arquivos (o menu da árvore). */
+  arquivos: {
+    async criar(caminho: string, conteudo: string): Promise<void> {
+      if (noApp()) return invoke<void>('criar_arquivo', { caminho, conteudo });
+      console.info('criar (modo navegador, nada é gravado)', caminho, conteudo);
+    },
+    async criarPasta(caminho: string): Promise<void> {
+      if (noApp()) return invoke<void>('criar_pasta', { caminho });
+      console.info('criar pasta (modo navegador)', caminho);
+    },
+    async existe(caminho: string): Promise<boolean> {
+      return noApp() ? invoke<boolean>('caminho_existe', { caminho }) : false;
+    },
+    async copiar(origem: string, destino: string): Promise<void> {
+      if (noApp()) return invoke<void>('copiar_caminho', { origem, destino });
+      console.info('copiar (modo navegador)', origem, destino);
+    },
+    async renomear(origem: string, destino: string): Promise<void> {
+      if (noApp()) return invoke<void>('renomear_caminho', { origem, destino });
+      console.info('renomear (modo navegador)', origem, destino);
+    },
+    async apagar(caminho: string): Promise<void> {
+      if (noApp()) return invoke<void>('apagar_para_lixeira', { caminho });
+      console.info('apagar (modo navegador)', caminho);
+    },
+    async mostrarNoExplorador(caminho: string): Promise<void> {
+      if (noApp()) return invoke<void>('abrir_no_explorador', { caminho });
+      console.info('explorador (modo navegador)', caminho);
+    },
+  },
+
   async abrirLink(url: string): Promise<void> {
     if (noApp()) return invoke<void>('abrir_link', { url });
     window.open(url, '_blank', 'noopener');

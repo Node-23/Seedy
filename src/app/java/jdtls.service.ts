@@ -607,6 +607,8 @@ function parametrosDeInicio(raiz: string, pid: number, preferencias: string, run
         workspaceEdit: { documentChanges: true },
         configuration: true,
         workspaceFolders: true,
+        // Renomear uma classe pela árvore: o jdtls devolve as edições das referências.
+        fileOperations: { willRename: true },
         didChangeConfiguration: { dynamicRegistration: false },
         didChangeWatchedFiles: { dynamicRegistration: false },
         symbol: { dynamicRegistration: false },

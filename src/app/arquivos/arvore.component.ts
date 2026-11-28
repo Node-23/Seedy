@@ -5,6 +5,8 @@ import { EditorService } from '../editor/editor.service';
 import { LayoutService } from '../layout/layout.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { GitService, LetraGit } from '../git/git.service';
+import { Alvo, ArquivosService } from './arquivos.service';
+import { pacoteDe } from './modelos';
 
 interface No {
   entrada: Entrada;
@@ -15,7 +17,9 @@ interface No {
 
 /**
  * Árvore de arquivos do projeto.
- * Teclado: j/k ou ↑/↓ navegam, l/→/Enter abrem, h/← fecham a pasta.
+ * Teclado: j/k ou ↑/↓ navegam, l/→/Enter abrem, h/← fecham a pasta, n ou Alt+Insert criam,
+ * ctrl+c / ctrl+v copiam e colam, F2 ou Shift+F6 renomeiam, del apaga (para a Lixeira),
+ * a tecla de menu abre o menu do botão direito.
  */
 @Component({
   selector: 'sd-arvore',
@@ -24,6 +28,8 @@ interface No {
       <div class="painel-faixa">
         <span class="rotulo">ARQUIVOS</span>
         <span class="faixa-acoes">
+          <button class="botao-icone" aria-label="Novo arquivo" title="Novo arquivo (n)" [disabled]="!projeto.raiz()" (click)="novoPeloBotao($event)">+</button>
+          <button class="botao-icone" aria-label="Mostrar o arquivo aberto" title="Mostrar o arquivo aberto (Alt+F1)" [disabled]="!editor.ativo()" (click)="arquivos.mostrarArquivoAberto()">◎</button>
           <button class="botao-icone" aria-label="Recarregar" title="Recarregar" (click)="projeto.recarregar()">↻</button>
           <kbd>Alt+1</kbd>
         </span>
@@ -35,6 +41,7 @@ interface No {
         tabindex="0"
         [attr.aria-activedescendant]="selecionado() ? 'no-' + selecionado() : null"
         (keydown)="teclar($event)"
+        (contextmenu)="menuNaRaiz($event)"
       >
         @if (!projeto.raiz()) {
           <p class="suave arvore-vazia">Nenhum projeto aberto.<br />
@@ -50,6 +57,7 @@ interface No {
             [class.ativo]="no.entrada.caminho === editor.ativo()"
             [style.padding-left.px]="12 + no.nivel * 14"
             (click)="selecionado.set(i); ativar(no)"
+            (contextmenu)="$event.preventDefault(); $event.stopPropagation(); selecionado.set(i); arquivos.abrirMenu($event.clientX, $event.clientY, alvoDe(no))"
           >
             @if (no.entrada.pasta) {
               <span class="seta">{{ no.aberto ? '▾' : '▸' }}</span>
@@ -83,6 +91,7 @@ export class ArvoreComponent {
   private readonly layout = inject(LayoutService);
   private readonly mensagens = inject(MensagensService);
   private readonly git = inject(GitService);
+  protected readonly arquivos = inject(ArquivosService);
   private readonly lista = viewChild.required<ElementRef<HTMLDivElement>>('lista');
 
   private readonly raizes = signal<No[]>([]);
@@ -108,7 +117,16 @@ export class ArvoreComponent {
       this.projeto.versao();
       const raiz = this.projeto.raiz();
       // untracked: o carregamento lê outros sinais que não devem disparar este efeito.
-      untracked(() => (raiz ? void this.carregarRaiz(raiz) : this.raizes.set([])));
+      untracked(() => void this.naFila(async () => (raiz ? this.carregarRaiz(raiz) : this.raizes.set([]))));
+    });
+    this.arquivos.selecionado = () => {
+      const no = this.visiveis()[this.selecionado()];
+      return no ? this.alvoDe(no) : null;
+    };
+    // Acabou de criar ou colar: abre as pastas até lá e seleciona.
+    effect(() => {
+      const pedido = this.arquivos.revelar();
+      if (pedido) untracked(() => void this.naFila(() => this.revelarCaminho(pedido.caminho)));
     });
     effect(() => {
       const pedido = this.layout.pedidoDeFoco();
@@ -135,9 +153,79 @@ export class ArvoreComponent {
     else await this.editor.abrir(no.entrada.caminho);
   }
 
+  /** Recarregar e revelar mexem na mesma árvore: um de cada vez, senão um desfaz o outro. */
+  private fila: Promise<unknown> = Promise.resolve();
+
+  private naFila(fazer: () => Promise<void>): Promise<unknown> {
+    return (this.fila = this.fila.then(fazer).catch((e) => this.mensagens.erro(String(e))));
+  }
+
+  protected alvoDe(no: No): Alvo {
+    return { caminho: no.entrada.caminho, pasta: no.entrada.pasta };
+  }
+
+  /** O "+" do topo: os tipos, na pasta do item selecionado (ou na raiz). */
+  protected novoPeloBotao(e: MouseEvent): void {
+    const raiz = this.projeto.raiz();
+    if (!raiz) return;
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    this.arquivos.abrirMenu(r.left, r.bottom + 6, this.arquivos.selecionado() ?? { caminho: raiz, pasta: true }, true);
+  }
+
+  /** Botão direito no vazio: age na raiz do projeto. */
+  protected menuNaRaiz(e: MouseEvent): void {
+    const raiz = this.projeto.raiz();
+    if (!raiz) return;
+    e.preventDefault();
+    this.arquivos.abrirMenu(e.clientX, e.clientY, { caminho: raiz, pasta: true });
+  }
+
+  private async revelarCaminho(caminho: string): Promise<void> {
+    const raiz = this.projeto.raiz();
+    if (!raiz) return;
+    await this.carregarRaiz(raiz);
+    const dentro = (pasta: string) => caminho.startsWith(pasta) && /^[\\/]/.test(caminho.slice(pasta.length));
+    let nos = this.raizes();
+    for (;;) {
+      const pasta = nos.find((n) => n.entrada.pasta && dentro(n.entrada.caminho));
+      if (!pasta) break;
+      pasta.filhos = await this.carregar(pasta.entrada.caminho, pasta.nivel + 1);
+      pasta.aberto = true;
+      nos = pasta.filhos;
+    }
+    this.mudancas.update((n) => n + 1);
+    const i = this.visiveis().findIndex((n) => n.entrada.caminho === caminho);
+    if (i < 0) return;
+    this.selecionado.set(i);
+    setTimeout(() => this.lista().nativeElement.querySelector(`#no-${i}`)?.scrollIntoView({ block: 'nearest' }));
+  }
+
   protected teclar(e: KeyboardEvent): void {
     const nos = this.visiveis();
     const atual = nos[this.selecionado()];
+    const raiz = this.projeto.raiz();
+    const alvo = atual ? this.alvoDe(atual) : raiz ? { caminho: raiz, pasta: true } : null;
+    const tecla = e.key.toLowerCase();
+    if (alvo && (e.key === 'F2' || (e.key === 'F6' && e.shiftKey) || e.key === 'Delete')) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Delete') return this.arquivos.pedirApagar(alvo);
+      this.arquivos.abrirMenu(0, 0, alvo);
+      return this.arquivos.pedirRenomear(alvo);
+    }
+    // Novo, copiar, colar e o menu: com o teclado, na linha selecionada.
+    const novo = (e.key === 'n' && !e.ctrlKey && !e.altKey) || (e.key === 'Insert' && e.altKey);
+    const deMenu = e.key === 'ContextMenu';
+    const ctrl = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
+    if (alvo && (novo || deMenu || (ctrl && (tecla === 'c' || tecla === 'v')))) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (ctrl && tecla === 'c') return this.arquivos.copiar(alvo);
+      if (ctrl) return void this.arquivos.colar(alvo);
+      const linha = this.lista().nativeElement.querySelector(`#no-${this.selecionado()}`) ?? this.lista().nativeElement;
+      const r = linha.getBoundingClientRect();
+      return this.arquivos.abrirMenu(r.left + 90, r.top + 20, alvo, novo);
+    }
     const mover = (d: number) => {
       this.selecionado.set(Math.max(0, Math.min(nos.length - 1, this.selecionado() + d)));
       this.lista().nativeElement.querySelector(`#no-${this.selecionado()}`)?.scrollIntoView({ block: 'nearest' });
@@ -198,11 +286,29 @@ export class ArvoreComponent {
   private async carregar(caminho: string, nivel: number): Promise<No[]> {
     try {
       const entradas = await ponte.lerPasta(caminho);
-      return entradas.map((entrada) => ({ entrada, nivel, aberto: false, filhos: null }));
+      const juntas = await Promise.all(entradas.map((e) => this.juntarPacotes(e)));
+      return juntas.map((entrada) => ({ entrada, nivel, aberto: false, filhos: null }));
     } catch (e) {
       this.mensagens.erro(String(e));
       return [];
     }
+  }
+
+  /**
+   * Dentro das fontes Java, um pacote que só tem outro pacote vira uma linha só (br/com/mana),
+   * como no IntelliJ. A linha vale pela pasta mais funda.
+   */
+  private async juntarPacotes(entrada: Entrada): Promise<Entrada> {
+    if (!entrada.pasta || !pacoteDe(entrada.caminho)) return entrada;
+    let atual = entrada;
+    const nomes = [entrada.nome];
+    for (let n = 0; n < 20; n++) {
+      const filhos = await ponte.lerPasta(atual.caminho).catch(() => [] as Entrada[]);
+      if (filhos.length !== 1 || !filhos[0].pasta) break;
+      atual = filhos[0];
+      nomes.push(atual.nome);
+    }
+    return { nome: nomes.join('/'), caminho: atual.caminho, pasta: true };
   }
 
   /** Ícone do tipo do arquivo: xícara (java) ou marca curta (TS, JS, <>, #, {}, XML...). */

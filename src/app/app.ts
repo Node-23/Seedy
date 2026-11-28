@@ -62,6 +62,8 @@ import { ErroComponent } from './notificacoes/erro.component';
 import { ListaDeNotificacoesComponent } from './notificacoes/lista.component';
 import { CompletarService } from './completar/completar.service';
 import { PerguntaDoCompletarComponent } from './completar/pergunta.component';
+import { MenuArvoreComponent } from './arquivos/menu-arvore.component';
+import { NovoArquivoComponent } from './arquivos/novo-arquivo.component';
 import { resumoDoPanico } from './notificacoes/relatorio';
 import { ponte } from './nucleo/ponte';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
@@ -79,7 +81,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
 @Component({
   selector: 'sd-raiz',
-  imports: [PerguntaDoCompletarComponent, 
+  imports: [MenuArvoreComponent, NovoArquivoComponent, PerguntaDoCompletarComponent, 
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
@@ -175,6 +177,8 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
       @if (!semProjeto()) { <sd-barra-status /> }
       <!-- Avisos: fora da região principal, para valerem por cima de qualquer janela aberta. -->
+      <sd-menu-arvore />
+      <sd-novo-arquivo />
       <sd-completar-pergunta />
       <sd-notificacoes />
       <sd-erro />

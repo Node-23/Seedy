@@ -4,6 +4,7 @@ import { EditorService } from '../editor/editor.service';
 import { LayoutService, NOME_DA_REGIAO, NOME_PADRAO, PAINEIS, Regiao } from '../layout/layout.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { TemaService } from '../tema/tema';
+import { ArquivosService } from '../arquivos/arquivos.service';
 import { CompletarService } from '../completar/completar.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { BuscaService } from '../busca/busca.service';
@@ -77,6 +78,7 @@ export const ACORDES_PADRAO: Record<string, string> = {
   layout: 'alt+shift+l',
   notificacoes: 'alt+shift+h',
   completar: 'alt+shift+c',
+  'arquivo-na-arvore': 'alt+f1',
   config: 'ctrl+,',
 };
 
@@ -147,6 +149,7 @@ export class AtalhosService {
   private readonly tema = inject(TemaService);
   private readonly mensagens = inject(MensagensService);
   private readonly completar = inject(CompletarService);
+  private readonly arquivos = inject(ArquivosService);
   private readonly configuracoes = inject(ConfiguracoesService);
   private readonly bookmarks = inject(BookmarksService);
   private readonly testes = inject(TestesService);
@@ -228,6 +231,8 @@ export class AtalhosService {
     { id: 'revisar-ia', tecla: 'y', rotulo: 'revisar alterações da IA', disponivel: true, executar: () => this.revisao.aberta.set(true) },
     { id: 'layout', tecla: 'L', rotulo: 'layout: mover painel, disposições', disponivel: true, executar: () => void this.menuLayout() },
     { id: 'config', tecla: ',', rotulo: 'configurações (atalhos, IA, editor)', disponivel: true, executar: () => this.abrirConfig() },
+    { id: 'novo-arquivo', tecla: 'F', rotulo: 'novo arquivo (na pasta selecionada na árvore)', disponivel: true, executar: () => this.arquivos.novoPeloTeclado() },
+    { id: 'arquivo-na-arvore', tecla: 'O', rotulo: 'mostrar na árvore o arquivo aberto', disponivel: true, executar: () => this.arquivos.mostrarArquivoAberto() },
     { id: 'completar', tecla: 'C', rotulo: 'completar código enquanto digita: liga/desliga', disponivel: true, executar: () => void this.completar.alternar() },
     { id: 'notificacoes', tecla: 'z', rotulo: 'notificações: os avisos e erros que passaram', disponivel: true, executar: () => this.mensagens.alternarLista() },
     { id: 'mcp', tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },
@@ -320,7 +325,7 @@ export class AtalhosService {
     const soCtrl = ctrl && !e.shiftKey && !e.altKey;
     // Dentro de uma busca, Ctrl+P/Ctrl+N navegam; no terminal, Ctrl+P/Ctrl+F são do shell.
     // A janela do Vim só mostra texto: os atalhos diretos continuam valendo com ela aberta.
-    const modalAberto = this.completar.perguntando() || !!this.mensagens.aberta() || !!this.loginEndpoints.pedido() || this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
+    const modalAberto = this.arquivos.aberto() || this.completar.perguntando() || !!this.mensagens.aberta() || !!this.loginEndpoints.pedido() || this.busca.aberta() || this.buscaProjeto.aberta() || !!this.escolha.pedido() || this.commit.aberta() || this.githubForm.aberta() || !!this.banco.editando() || !!this.servidor.editando() || this.revisao.aberta() || this.novoProjeto.aberta() || !!this.execucao.editandoOpcoes();
     const janelaAberta = modalAberto || this.vimAjuda.aberta();
     const livre = !janelaAberta && !this.noTerminal(e.target);
 

@@ -14,7 +14,14 @@ Para conhecer o projeto e instalar, comece pelo [README](../README.md).
   de um projeto não muda isso.
 - **Editor Monaco com modo vim**: `:w`, `:q`, `:q!`, `:wq`, `:bn`, `:bp`, `:term`, números de linha relativos.
 - **Destaque de sintaxe no estilo Alabaster**: só strings, constantes, comentários e definições ganham cor.
-- **Árvore de arquivos** navegável pelo teclado (`j`/`k`, `l`/`Enter`, `h`).
+- **Árvore de arquivos** navegável pelo teclado (`j`/`k`, `l`/`Enter`, `h`). Botão direito (ou a tecla de menu)
+  abre **Novo**, copiar, colar, renomear, apagar e abrir no explorador de arquivos. `n` ou `Alt+Insert` criam: classe Java (com o
+  `package` da pasta), arquivo com o nome que quiser (`/` cria pastas), pasta, TypeScript, componente React
+  ou Angular, HTML, CSS, JSON, YAML, XML, SQL e Markdown. `Ctrl+C` / `Ctrl+V` copiam e colam; colando sobre um
+  nome que já existe, o Seedy pede outro, e uma classe Java colada leva o nome e o pacote novos. Nada é sobrescrito. `F2` ou `Shift+F6` renomeiam (numa
+  classe Java o jdtls atualiza as referências) e `del` manda para a Lixeira, depois de confirmar. O menu também copia o caminho (e o nome completo da classe),
+  o `+` no topo do painel cria, `Alt+F1` (ou `◎`) mostra na árvore o arquivo aberto, e pacotes que só têm outro
+  pacote aparecem numa linha só (`br/com/mana`).
 - **Terminal integrado** com abas: shell de verdade (PowerShell no Windows, seu `$SHELL` no Linux).
 - **Tema editável** (cores, fontes e forma), aplicado na hora em que você salva o arquivo.
 - **Atalhos diretos**, um acorde só como no IntelliJ (`Alt+9` Git, `Alt+5` debug, `Alt+Shift+T` testes...), trocáveis em `Ctrl+,` ou no `seedy.json`; o menu de atalhos (`Ctrl+Shift+Espaço` ou o botão da logo) lista todos.

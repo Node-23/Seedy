@@ -57,7 +57,7 @@ sd-raiz > .seedy {
   padding: 14px;
 }
 /* Só mostram janelas flutuantes: não podem ocupar lugar (nem espaçamento) na coluna. */
-sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda { display: contents; }
+sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda, sd-raiz > .seedy > sd-menu-arvore, sd-raiz > .seedy > sd-novo-arquivo, sd-raiz > .seedy > sd-completar-pergunta { display: contents; }
 
 .area-principal { position: relative; flex: 1; min-height: 0; min-width: 0; display: flex; }
 .regiao-principal { position: relative; flex: 1; min-height: 0; display: flex; }
@@ -157,6 +157,7 @@ sd-raiz > .seedy > sd-menu-lider, sd-raiz > .seedy > sd-vim-ajuda { display: con
   cursor: pointer;
 }
 .botao-icone:hover { background: var(--selecao); color: var(--texto); }
+.botao-icone:disabled { opacity: 0.4; cursor: default; background: transparent; }
 
 /* ---------- barra de cima ---------- */
 
@@ -1964,6 +1965,19 @@ body.arrastando-painel, body.arrastando-painel * { cursor: grabbing !important; 
 /* Regras com cobertura de testes. */
 .entender-regra.falhando { border-color: var(--erro); }
 .entender-cenarios { display: flex; gap: 10px; flex-wrap: wrap; }
+/* Menu da árvore e o nome do que é criado (mockups 40 a 42). */
+.menu-arvore-fundo { position: fixed; inset: 0; z-index: 85; }
+.menu-arvore { position: fixed; z-index: 86; display: flex; align-items: flex-start; gap: 2px; outline: none; }
+.menu-arvore .menu-arvore-caixa { position: static; display: flex; flex-direction: column; min-width: 200px; max-height: calc(100vh - 16px); overflow-y: auto; }
+.menu-arvore .menu-arvore-tipos { min-width: 290px; }
+.menu-arvore-marca { width: 24px; flex-shrink: 0; text-align: center; font-size: 10px; }
+.novo-arquivo { position: fixed; left: 50%; top: 14vh; transform: translateX(-50%); z-index: 85; width: 640px; max-width: calc(100vw - 32px); max-height: 80vh; }
+.novo-arquivo-corpo { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; overflow-y: auto; }
+.novo-arquivo-nome { height: 40px; flex-shrink: 0; padding: 0 14px; border: var(--espessura-borda) solid var(--destaque); border-radius: var(--raio-pequeno); background: var(--fundo); color: var(--texto); font: inherit; font-size: 13px; outline: none; }
+.novo-arquivo-tipos { display: flex; flex-direction: column; padding: 4px; border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--painel-elevado); }
+.novo-arquivo-previa { margin: 0; padding: 10px 14px; border: var(--espessura-borda) solid var(--borda); border-radius: var(--raio-pequeno); background: var(--fundo); font-family: var(--fonte-codigo); font-size: 11.5px; line-height: 1.7; overflow-x: auto; }
+.novo-arquivo-caminho { font-size: 11px; line-height: 1.7; word-break: break-all; }
+.novo-arquivo-caminho b { color: var(--texto); font-weight: 400; }
 .menu-regra { min-width: 340px; }
 .menu-regra-separador { border-top: var(--espessura-borda) solid var(--borda); margin: 4px 0; }
 .menu-regra-dica { font-size: 11px; }
