@@ -24,6 +24,13 @@ Para conhecer o projeto e instalar, comece pelo [README](../README.md).
   passando e saindo). Os da web aparecem para os arquivos já abertos.
 - **Rodar pela margem:** `▶` em cada teste e `main` de um arquivo Java (`▶▶` na classe de teste, vermelho se
   falhou no último run). `Ctrl+Shift+F10` roda e `Ctrl+Shift+F9` depura o que está sob o cursor.
+- **Histórico local** (`Alt+Shift+Z`, ou o botão direito): o Seedy guarda cópias ao salvar e antes do que pode
+  fazer perder trabalho (mudança por fora, pull, checkout, commit, descartar, proposta da IA, refatoração, apagar).
+  Dá para voltar o arquivo todo (`⏎`) ou só um trecho (`t`), e ver o projeto todo (`p`), inclusive arquivos
+  apagados. Fica 7 dias, até 200 MB por projeto, na pasta de dados do usuário (`seedy/historico`), fora do projeto
+  e do Git. Arquivos como o `.env` também entram; binários, arquivos acima de 1 MB e pastas de saída, não.
+- **Histórico no Git** (`Alt+Shift+F`): os commits que mexeram no arquivo, ou só nas linhas selecionadas.
+  `⏎` abre o commit na tela do Git, `d` compara com o atual, `y` copia o hash, `/` filtra.
 - **Árvore de arquivos** navegável pelo teclado (`j`/`k`, `l`/`Enter`, `h`). Botão direito (ou a tecla de menu)
   abre **Novo**, copiar, colar, renomear, apagar e abrir no explorador de arquivos. `n` ou `Alt+Insert` criam: classe Java (com o
   `package` da pasta), arquivo com o nome que quiser (`/` cria pastas), pasta, TypeScript, componente React

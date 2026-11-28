@@ -205,11 +205,15 @@ export class JdtlsService {
   }
 
   /** Aplica uma WorkspaceEdit: abre (em segundo plano) os arquivos tocados e edita os modelos. */
+  /** Avisa antes de uma mudança automática (renomear, gerar, ações rápidas). */
+  readonly antesDeEditar: ((caminho: string, conteudo: string) => void)[] = [];
+
   async aplicarEdicao(edicao: EdicaoDeWorkspaceLsp): Promise<{ applied: boolean; arquivos: number }> {
     const porArquivo = edicoesPorArquivo(edicao);
     for (const [uri, edits] of porArquivo) {
       const buffer = await this.editor.abrir(caminhoDaUri(uriMonaco(uri)), undefined, undefined, false);
       if (!buffer) return { applied: false, arquivos: 0 };
+      for (const fn of this.antesDeEditar) fn(buffer.caminho, buffer.modelo.getValue());
       buffer.modelo.pushEditOperations([], edits.map(paraEdicao).map((e) => ({ range: e.range, text: e.text })), () => null);
     }
     return { applied: true, arquivos: porArquivo.size };

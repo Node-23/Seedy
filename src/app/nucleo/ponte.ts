@@ -181,6 +181,19 @@ export interface RepositorioGithub {
   atualizado: string;
 }
 
+/** Uma cópia guardada pelo histórico local. */
+export interface VersaoLocal {
+  /** Relativo ao projeto, com "/". */
+  caminho: string;
+  /** Milissegundos desde 1970. */
+  quando: number;
+  motivo: string;
+  hash: string;
+  tamanho: number;
+  mais: number;
+  menos: number;
+}
+
 export interface Mudancas {
   criados: string[];
   removidos: string[];
@@ -581,6 +594,16 @@ export const ponte = {
       await invoke('gravar_arquivo', { caminho, conteudo });
       void ignorarArquivoSeedy(caminho);
     } else exemplo.gravarArquivo(caminho, conteudo);
+  },
+
+  /** Histórico local (mockup 47): cópias dos arquivos, fora do projeto. No navegador, dados de exemplo. */
+  historico: {
+    guardar: async (raiz: string, caminho: string, motivo: string, conteudo: string | null = null): Promise<void> => {
+      if (noApp()) await invoke<void>('historico_guardar', { raiz, caminho, motivo, conteudo });
+    },
+    listar: async (raiz: string, caminho: string | null): Promise<VersaoLocal[]> =>
+      noApp() ? invoke<VersaoLocal[]>('historico_listar', { raiz, caminho }) : [],
+    ler: async (raiz: string, hash: string): Promise<string> => (noApp() ? invoke<string>('historico_ler', { raiz, hash }) : ''),
   },
 
   async branchAtual(raiz: string): Promise<string | null> {

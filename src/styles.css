@@ -2416,3 +2416,31 @@ sd-inicio { flex: 1; min-width: 0; min-height: 0; display: flex; }
 .monaco-editor .rodar-glifo.classe::before { content: '▶▶'; font-size: 8px; letter-spacing: -1px; }
 .monaco-editor .rodar-glifo.falhou::before { color: var(--erro); }
 .menu-rodar { min-width: 380px; }
+
+/* ---------- Históricos (mockups 47 e 48) ---------- */
+
+.painel.historico { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.historico-corpo { flex: 1; min-height: 0; display: flex; }
+.historico-lado { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; border-right: var(--espessura-borda) solid var(--borda); }
+.historico-lista { flex: 1; min-height: 0; overflow: auto; outline: none; }
+.historico-filtro.novo-arquivo-nome { margin: 10px 14px 6px; border-color: var(--borda); }
+.historico-filtro.novo-arquivo-nome:focus { border-color: var(--destaque); }
+.historico-dia { padding: 10px 14px 4px; }
+.historico-item { display: flex; align-items: baseline; gap: 10px; padding: 6px 14px; cursor: pointer; }
+.historico-item .quando { width: 44px; flex-shrink: 0; font-size: 11px; }
+.historico-item .texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.historico-item small { display: block; font-size: 10.5px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+.historico-item .contas { font-size: 11px; white-space: nowrap; }
+.historico-item:hover, .historico-lista:not(:focus) .historico-item.sel { background: var(--selecao); }
+.historico-item.sel { background: var(--selecao); }
+.historico-lista:focus .historico-item.sel { box-shadow: inset 3px 0 0 var(--destaque); }
+.historico-ref { font-size: 10px; padding: 0 5px; margin-right: 6px; border-radius: 4px; border: 1px solid var(--destaque); color: var(--destaque); }
+.historico-nota { padding: 8px 14px; border-top: var(--espessura-borda) solid var(--borda); font-size: 11px; line-height: 1.6; }
+.historico-diff { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--painel-elevado); }
+.historico-lados { display: flex; border-bottom: var(--espessura-borda) solid var(--borda); font-size: 11px; }
+.historico-lados > span { flex: 1; padding: 6px 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.historico-diff sd-comparacao { flex: 1; min-height: 0; display: flex; }
+.comparacao-monaco { flex: 1; min-width: 0; }
+.historico-vazio { flex: 1; padding: 10px 14px; margin: 0; }
+.historico-pe { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: 10px 14px; border-top: var(--espessura-borda) solid var(--borda); font-size: 11px; margin-top: auto; }
+.historico-pe .espaco { flex: 1; }

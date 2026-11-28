@@ -48,6 +48,8 @@ Referência visual de todas as telas. **Toda tela nova deve seguir estes mockups
 | **Arquivos recentes** (`Ctrl+E`) (`fontes/Recentes.dc.html`) | [44-recentes.png](44-recentes.png) | ✅ |
 | **Problemas do projeto**: painel, contador na barra de status e próximo erro (`fontes/Problemas.dc.html`) | [45-problemas.png](45-problemas.png) | ✅ |
 | **Rodar e depurar pela margem** (teste e `main`) (`fontes/RodarMargem.dc.html`) | [46-rodar-margem.png](46-rodar-margem.png) | ✅ |
+| **Histórico local**: versões do arquivo sem commit, com restaurar (`fontes/HistoricoLocal.dc.html`) | [47-historico-local.png](47-historico-local.png) | ✅ |
+| **Histórico no Git** de um arquivo ou trecho (`fontes/HistoricoGit.dc.html`) | [48-historico-git.png](48-historico-git.png) | ✅ |
 | Variáveis do `.env` nas opções de execução e a pergunta de qual arquivo usar (`fontes/Env.dc.html`) | [26-env.png](26-env.png) | ✅ |
 | Mandar itens para o chat da IA (chips removíveis, ⌃⇧A e menu do botão direito) (`fontes/IaAnexos.dc.html`) | [25-ia-anexos.png](25-ia-anexos.png) | ✅ |
 

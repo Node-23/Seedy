@@ -67,6 +67,9 @@ import { NovoArquivoComponent } from './arquivos/novo-arquivo.component';
 import { RecentesComponent } from './arquivos/recentes.component';
 import { ProblemasComponent } from './problemas/problemas.component';
 import { MenuRodarComponent } from './editor/menu-rodar.component';
+import { HistoricoLocalComponent } from './historico/historico-local.component';
+import { HistoricoGitComponent } from './historico/historico-git.component';
+import { HistoricoService } from './historico/historico.service';
 import { resumoDoPanico } from './notificacoes/relatorio';
 import { ponte } from './nucleo/ponte';
 import { MenuGutterComponent } from './editor/menu-gutter.component';
@@ -84,7 +87,7 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
 
 @Component({
   selector: 'sd-raiz',
-  imports: [RecentesComponent, ProblemasComponent, MenuRodarComponent, MenuArvoreComponent, NovoArquivoComponent, PerguntaDoCompletarComponent, 
+  imports: [HistoricoLocalComponent, HistoricoGitComponent, RecentesComponent, ProblemasComponent, MenuRodarComponent, MenuArvoreComponent, NovoArquivoComponent, PerguntaDoCompletarComponent, 
     NgTemplateOutlet, BarraTopoComponent, BarraStatusComponent, MenuLiderComponent, VimAjudaComponent, ArvoreComponent, EditorComponent, TerminalComponent,
     BuscaComponent, BuscaProjetoComponent, EscolhaComponent, GitComponent, DiffComponent, CommitComponent,
     GithubFormComponent, MergeComponent, ConexoesComponent, ResultadoSqlComponent, PerfilBancoComponent,
@@ -155,6 +158,8 @@ import { OpcoesExecucaoComponent } from './execucao/opcoes-execucao.component';
       @if (layout.tela() === 'entender') { <sd-tela-entender class="tela-cheia" /> }
       @if (layout.tela() === 'config') { <sd-tela-configuracoes class="tela-cheia" /> }
       @if (layout.tela() === 'testes') { <sd-tela-testes class="tela-cheia" /> }
+      @if (layout.tela() === 'historico') { <sd-historico-local class="tela-cheia" /> }
+      @if (layout.tela() === 'historico-git') { <sd-historico-git class="tela-cheia" /> }
       @if (layout.tela() === 'endpoints') { <sd-tela-endpoints class="tela-cheia" /> }
       @if (layout.tela() !== 'editor' && layout.tela() !== 'merge' && layout.disposicao().visiveis.ia) {
         <!-- A IA acompanha todas as telas cheias, do lado direito. -->
@@ -219,6 +224,7 @@ export class App {
 
   constructor() {
     inject(AtalhosService).iniciar();
+    inject(HistoricoService).iniciar(); // cópias dos arquivos para recuperar o que não foi commitado
     inject(JdtlsService); // liga o jdtls quando o projeto é de Java
     inject(GitService); // acompanha o repositório do projeto
     inject(MargemGitService); // marcas de alteração na margem do editor

@@ -7,6 +7,7 @@ import { RecentesService } from '../inicio/recentes.service';
 import { MensagensService } from '../nucleo/mensagens.service';
 import { ProjetoService } from '../nucleo/projeto.service';
 import { nomeBase, ponte } from '../nucleo/ponte';
+import { HistoricoService } from '../historico/historico.service';
 import { LayoutService } from '../layout/layout.service';
 import { ajustarClasseColada, nomeDaClasse, ordenar, outroNome, pacoteDe, TipoNovo } from './modelos';
 
@@ -50,6 +51,7 @@ export class ArquivosService {
   private readonly recentes = inject(RecentesService);
   private readonly mensagens = inject(MensagensService);
   private readonly jdtls = inject(JdtlsService);
+  private readonly historico = inject(HistoricoService);
   private readonly layout = inject(LayoutService);
 
   readonly menu = signal<MenuAberto | null>(null);
@@ -247,6 +249,7 @@ export class ArquivosService {
 
   async apagar(alvo: Alvo): Promise<string | null> {
     try {
+      await this.historico.guardar(alvo.caminho, 'antes de apagar');
       await ponte.arquivos.apagar(alvo.caminho);
     } catch (e) {
       return String(e);

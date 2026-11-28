@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { ligarMarkdownVivo } from './markdown-vivo';
 import { RodarMargemService } from './rodar-margem.service';
+import { HistoricoService } from '../historico/historico.service';
 import { monaco } from './monaco';
 import { initVimMode, VimMode } from '../../vendor/monaco-vim';
 import { CompletarService } from '../completar/completar.service';
@@ -358,6 +359,7 @@ export class EditorComponent {
 
   private markdown: ReturnType<typeof ligarMarkdownVivo> | null = null;
   private readonly margem = inject(RodarMargemService);
+  private readonly historico = inject(HistoricoService);
   private executaveis: ReturnType<RodarMargemService['ligar']> | null = null;
 
   private opcoesDeFonte(t: ReturnType<TemaService['tema']>): monaco.editor.IEditorOptions {
@@ -459,6 +461,9 @@ export class EditorComponent {
     ligar(M.CtrlCmd | K.F12, 'editor.action.quickOutline');
     // Bookmark na linha do cursor (Ctrl+F2); Alt+2 lista as marcas.
     instancia.addCommand(M.CtrlCmd | K.F2, () => void this.bookmarks.alternar());
+    // Históricos, também no botão direito (o do Git vale para o trecho selecionado).
+    instancia.addAction({ id: 'seedy.historico-local', label: 'Histórico local', contextMenuGroupId: '2_historico', contextMenuOrder: 0, run: () => this.historico.abrirLocal() });
+    instancia.addAction({ id: 'seedy.historico-git', label: 'Histórico no Git', contextMenuGroupId: '2_historico', contextMenuOrder: 1, run: () => this.historico.abrirNoGit() });
     // Gerar... (getters/setters, construtor, toString, equals/hashCode, sobrescrever).
     ligar(M.Alt | K.Insert, 'editor.action.sourceAction');
     // O mesmo no botão direito, numa classe Java (o "Generate..." do IntelliJ).

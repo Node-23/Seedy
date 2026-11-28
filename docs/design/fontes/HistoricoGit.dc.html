@@ -1,0 +1,136 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Histórico do arquivo no Git — Seedy</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #19191B; }
+  .tela { width: 1440px; height: 900px; box-sizing: border-box; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #19191B; color: #E9E2D3; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px; }
+  .janela { border: 2px solid #0B0B0C; border-radius: 14px; background: #2A2A2D; box-shadow: 4px 4px 0 #0B0B0C; overflow: hidden; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .faixa { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-bottom: 2px solid #0B0B0C; flex-shrink: 0; }
+  .rotulo { font-size: 11px; letter-spacing: .14em; color: #A29D93; }
+  .suave { color: #A29D93; } .dest { color: #9CD7BA; } .e { flex: 1; }
+  kbd { font-family: inherit; font-size: 10.5px; padding: 1px 6px; border-radius: 5px; background: #19191B; color: #A29D93; border: 1px solid #0B0B0C; white-space: nowrap; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .topo { display: flex; align-items: center; gap: 10px; height: 40px; flex-shrink: 0; }
+  .quad { width: 40px; height: 40px; box-sizing: border-box; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #A29D93; }
+  .quad.on { background: #333337; color: #9CD7BA; }
+  .chip { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; font-size: 13px; }
+  .meio { flex: 1; min-height: 0; display: flex; gap: 12px; }
+  .icones { display: flex; flex-direction: column; gap: 10px; }
+  .arv div { height: 26px; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .status { height: 30px; flex-shrink: 0; border: 2px solid #0B0B0C; border-radius: 10px; background: #2A2A2D; display: flex; align-items: stretch; overflow: hidden; white-space: nowrap; }
+  .status span { display: flex; align-items: center; padding: 0 12px; gap: 6px; border-right: 2px solid #0B0B0C; }
+  .status .modo { background: #9CD7BA; color: #16171C; font-weight: 700; letter-spacing: .08em; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 9px; border: 2px solid #0B0B0C; background: #2A2A2D; box-shadow: 2px 2px 0 #0B0B0C; font-size: 11px; white-space: nowrap; }
+  
+
+  .tela { position: relative; }
+  .codigo { flex: 1; min-height: 0; padding: 10px 0; background: #222225; font-size: 13px; line-height: 20px; white-space: pre; overflow: hidden; }
+  .l { display: flex; height: 20px; }
+  .l .n { width: 52px; flex-shrink: 0; text-align: right; padding-right: 22px; color: #A29D93; }
+  .l.atual { background: #333337; }
+  .l.atual .n { color: #9CD7BA; text-align: left; padding-left: 20px; width: 30px; }
+  .s { color: #B7D39C; } .c { color: #E8C979; } .k { color: #E3A9CC; } .d { color: #9CD7BA; }
+  .fantasma { color: #A29D93; font-style: italic; opacity: .72; }
+  .cursor { display: inline-block; width: 2px; height: 17px; margin-bottom: -3px; background: #9CD7BA; }
+  .dica { position: absolute; display: flex; align-items: center; gap: 14px; height: 30px; padding: 0 12px; border: 2px solid #0B0B0C; border-radius: 9px; background: #2A2A2D; box-shadow: 3px 3px 0 #0B0B0C; font-size: 11px; white-space: nowrap; }
+  .status .ia-local { color: #9CD7BA; }
+  .barrinha { width: 90px; height: 8px; border-radius: 4px; background: #19191B; border: 1px solid #0B0B0C; overflow: hidden; }
+  .barrinha i { display: block; height: 100%; background: #9CD7BA; }
+  .veu { position: absolute; inset: 0; background: rgba(11,11,12,.55); }
+  .pop { position: absolute; left: 370px; top: 130px; width: 700px; }
+  .pop .corpo { padding: 18px 22px; line-height: 1.75; font-size: 11.5px; }
+  .item { display: flex; gap: 12px; padding: 9px 0; border-top: 1px solid #333337; }
+  .item b { display: block; } .item small { display: block; font-size: 10.5px; color: #A29D93; }
+  .item .tam { margin-left: auto; color: #A29D93; white-space: nowrap; }
+  .pop .acoes { display: flex; gap: 10px; padding: 12px 22px; border-top: 2px solid #0B0B0C; align-items: center; }
+  .btn.p { background: #9CD7BA; color: #16171C; font-weight: 700; }
+  .nav { width: 240px; border-right: 2px solid #0B0B0C; padding: 10px 0; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .nav div { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .nav div.on { background: #333337; box-shadow: inset 3px 0 0 #9CD7BA; }
+  .nav p { margin: 0; padding: 0 14px; font-size: 11px; line-height: 18px; }
+  .aba { flex: 1; min-width: 0; padding: 20px 28px 0; display: flex; flex-direction: column; gap: 12px; }
+  .grupo { font-size: 11px; letter-spacing: .14em; color: #A29D93; margin-top: 2px; }
+  .op { border: 2px solid #0B0B0C; border-radius: 12px; background: #222225; padding: 12px 16px; font-size: 12px; line-height: 1.7; }
+  .op.on { border-color: #9CD7BA; }
+  .op .t { display: flex; align-items: center; gap: 10px; }
+  .radio { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #A29D93; flex-shrink: 0; }
+  .on .radio { border-color: #9CD7BA; background: radial-gradient(#9CD7BA 0 3px, transparent 4px); }
+  .tag { font-size: 10.5px; color: #A29D93; }
+  .op .estado { font-size: 11px; color: #A29D93; margin: 4px 0 0 22px; }
+  .linha { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-top: 1px solid #333337; font-size: 12px; }
+  .chave { margin-left: auto; padding: 2px 10px; border-radius: 6px; border: 1px solid #0B0B0C; background: #19191B; color: #9CD7BA; }
+  .rodape { margin: auto -28px 0; border-top: 2px solid #0B0B0C; padding: 10px 16px; font-size: 11px; color: #A29D93; }
+
+  .ctx { position: absolute; z-index: 5; border: 2px solid #0B0B0C; border-radius: 12px; background: #333337; box-shadow: 4px 4px 0 #0B0B0C; padding: 6px; font-size: 12px; }
+  .ctx .tit { padding: 4px 8px 6px; font-size: 11px; letter-spacing: .1em; color: #A29D93; white-space: nowrap; }
+  .it { display: flex; align-items: center; gap: 10px; height: 28px; padding: 0 8px; border-radius: 7px; white-space: nowrap; }
+  .it.on { background: #2A2A2D; box-shadow: inset 3px 0 0 #9CD7BA; }
+  .it .m { width: 26px; text-align: center; font-size: 10px; color: #A29D93; }
+  .it kbd { margin-left: auto; }
+  .sep { height: 2px; margin: 4px 0; background: #0B0B0C; }
+  .veu { position: absolute; inset: 0; background: rgba(11,11,12,.55); }
+  .pop { position: absolute; left: 400px; top: 160px; width: 640px; }
+  .pop .corpo { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; font-size: 12px; }
+  .campo { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border: 2px solid #9CD7BA; border-radius: 10px; background: #19191B; font-size: 13px; }
+  .campo .cursor { width: 2px; height: 18px; background: #9CD7BA; }
+  .tipos { border: 2px solid #0B0B0C; border-radius: 10px; background: #222225; padding: 4px; }
+  .caminho { font-size: 11px; color: #A29D93; line-height: 1.7; }
+  .caminho b { color: #E9E2D3; font-weight: 400; }
+  .previa { border: 2px solid #0B0B0C; border-radius: 10px; background: #19191B; padding: 10px 14px; font-size: 11.5px; line-height: 1.7; white-space: pre; }
+  .pop .acoes { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-top: 2px solid #0B0B0C; font-size: 10.5px; }
+  .btn.p { background: #9CD7BA; color: #16171C; font-weight: 700; }
+  .k { color: #E3A9CC; } .d { color: #9CD7BA; }
+
+  .hist { flex: 1; min-height: 0; display: flex; }
+  .versoes { width: 380px; flex-shrink: 0; border-right: 2px solid #0B0B0C; display: flex; flex-direction: column; min-height: 0; }
+  .versoes .dia { padding: 10px 14px 4px; font-size: 10.5px; letter-spacing: .14em; color: #A29D93; }
+  .v { display: flex; align-items: baseline; gap: 10px; padding: 6px 14px; font-size: 12px; white-space: nowrap; }
+  .v .h { width: 44px; flex-shrink: 0; color: #A29D93; font-size: 11px; }
+  .v .t { flex: 1; min-width: 0; overflow: hidden; }
+  .v small { display: block; font-size: 10.5px; color: #A29D93; margin-top: 2px; }
+  .v .n { font-size: 11px; white-space: nowrap; }
+  .v.on { background: #333337; box-shadow: inset 3px 0 0 #9CD7BA; }
+  .mais { color: #B7D39C; } .menos { color: #EE8C84; } .azul { color: #92A9E1; }
+  .diff { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #222225; }
+  .lados { display: flex; border-bottom: 2px solid #0B0B0C; font-size: 11px; color: #A29D93; }
+  .lados span { flex: 1; padding: 6px 14px; white-space: nowrap; }
+  .lados span + span { border-left: 2px solid #0B0B0C; }
+  .colunas { flex: 1; min-height: 0; display: flex; font-size: 12px; line-height: 20px; white-space: pre; overflow: hidden; }
+  .col { flex: 1; min-width: 0; padding: 8px 0; overflow: hidden; }
+  .col + .col { border-left: 2px solid #0B0B0C; }
+  .dl { display: flex; height: 20px; }
+  .dl .num { width: 40px; flex-shrink: 0; text-align: right; padding-right: 12px; color: #A29D93; }
+  .dl.sai { background: #3A2A2B; } .dl.entra { background: #2E3A2B; } .dl.vazia { background: repeating-linear-gradient(-45deg, #222225 0 6px, #2A2A2D 6px 8px); }
+  .pe { display: flex; align-items: center; gap: 16px; padding: 10px 14px; border-top: 2px solid #0B0B0C; font-size: 11px; color: #A29D93; white-space: nowrap; }
+  .modos { display: flex; border: 2px solid #0B0B0C; border-radius: 8px; overflow: hidden; font-size: 11px; }
+  .modos span { padding: 2px 10px; color: #A29D93; }
+  .modos span.on { background: #9CD7BA; color: #16171C; font-weight: 700; }
+  .campo2 { margin: 10px 14px 2px; height: 30px; display: flex; align-items: center; padding: 0 10px; border: 2px solid #0B0B0C; border-radius: 8px; background: #19191B; font-size: 11.5px; color: #A29D93; }
+  .ref { font-size: 10px; padding: 0 5px; border-radius: 4px; border: 1px solid #9CD7BA; color: #9CD7BA; margin-right: 6px; }
+</style></head><body>
+<div class="tela">
+  <div class="topo"><span class="quad"><svg width="28" height="28" viewBox="1011 150 614 614"><path fill="#9CD7BA" fill-rule="evenodd" d="M1011 326C1055 322 1105 322 1145 335C1215 358 1262 420 1283 486C1289 430 1310 375 1340 322C1385 245 1460 200 1625 188C1620 262 1596 345 1546 400C1503 448 1455 465 1400 478C1355 492 1322 515 1313 552C1311 595 1315 640 1315 678C1305 700 1286 712 1263 726C1270 690 1274 640 1272 590C1258 540 1228 528 1178 520C1130 512 1095 490 1060 440C1030 398 1017 362 1011 326ZM1488 311C1425 335 1375 375 1345 425C1320 468 1311 505 1313 550C1320 520 1330 490 1345 465C1378 405 1425 355 1488 311ZM1137 405C1190 425 1235 460 1257 505C1268 527 1272 553 1272 580C1262 545 1250 525 1232 503C1205 465 1175 430 1137 405Z"/></svg></span><span class="chip"><b>Feirinha-Backend</b><span class="suave">master</span></span><span class="e"></span><span class="suave" style="display:flex;gap:22px;font-size:13px;padding-right:6px"><span>–</span><span>□</span><span>×</span></span></div>
+  <div class="meio">
+    <div class="icones"><span class="quad"><svg class="i" viewBox="0 0 24 24"><path d="M3 18V6a1 1 0 0 1 1-1h5l2 2.5h9a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="11" rx="4"/><path d="M12 8V5M8 12H4M20 12h-4M8 17l-3 2M16 17l3 2"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><circle cx="7" cy="6" r="2.2"/><circle cx="7" cy="18" r="2.2"/><circle cx="17" cy="8" r="2.2"/><path d="M7 8.2v7.6M17 10.2c0 3.6-5 3.2-10 5.6"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg></span><span style="height:2px;margin:0 8px;background:#333337"></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><path d="M5 8l4 4-4 4M12 17h6"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="6" rx="2"/><rect x="4" y="13" width="16" height="6" rx="2"/></svg></span><span class="quad"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.5 3 2.8 7 2.8s7-1.3 7-2.8V6M5 12c0 1.5 3 2.8 7 2.8s7-1.3 7-2.8"/></svg></span></div>
+<div class="janela e">
+  <div class="faixa"><span class="rotulo">HISTÓRICO NO GIT</span><span style="color:#E9E2D3">FairService.java</span><span class="suave">linhas 7 a 9</span><span class="e"></span><span class="modos"><span>arquivo todo</span><span class="on">trecho selecionado</span></span><kbd>Alt+Shift+F</kbd><kbd>esc</kbd></div>
+  <div class="hist">
+    <div class="versoes">
+      <div class="campo2">filtrar por mensagem ou autor…</div>
+      <div class="v on"><span class="h">27/11</span><span class="t"><span class="ref">master</span>ordena as feiras por data<small>a1f93c2 · você</small></span><span class="n"><span class="mais">+1</span> <span class="menos">−1</span></span></div>
+      <div class="v "><span class="h">20/11</span><span class="t">lista só as feiras abertas<small>9be02d7 · Ana</small></span><span class="n"><span class="mais">+1</span> <span class="menos">−1</span></span></div>
+      <div class="v "><span class="h">04/11</span><span class="t">troca o repositório por Spring Data<small>5c17a90 · você</small></span><span class="n"><span class="mais">+2</span> <span class="menos">−6</span></span></div>
+      <div class="v "><span class="h">18/10</span><span class="t">primeira versão da listagem<small>0d4e8b1 · Ana</small></span><span class="n"><span class="mais">+3</span> <span class="menos">−0</span></span></div>
+      <span class="e"></span>
+      <div class="pe">4 commits mexeram neste trecho</div>
+    </div>
+    <div class="diff">
+      <div class="lados"><span><span class="menos">−</span> antes de a1f93c2</span><span><span class="mais">+</span> a1f93c2</span></div>
+      <div class="colunas"><div class="col"><div class="dl "><span class="num">7</span><span>    <span class="k">public</span> List&lt;Fair&gt; <span class="d">abertas</span>() {</span></div><div class="dl sai"><span class="num">8</span><span>        <span class="k">return</span> feiras.findByStatus(OPEN);</span></div><div class="dl "><span class="num">9</span><span>    }</span></div></div><div class="col"><div class="dl "><span class="num">7</span><span>    <span class="k">public</span> List&lt;Fair&gt; <span class="d">abertas</span>() {</span></div><div class="dl entra"><span class="num">8</span><span>        <span class="k">return</span> feiras.findByStatusOrderByData(OPEN);</span></div><div class="dl "><span class="num">9</span><span>    }</span></div></div></div>
+      <div class="pe"><span><span class="dest">j k</span> commits</span><span><span class="dest">/</span> filtrar</span><span class="e" style="flex:1"></span><span class="btn">copiar o hash <kbd>y</kbd></span><span class="btn">comparar com o atual <kbd>d</kbd></span><span class="btn p">ver o commit <kbd>⏎</kbd></span></div>
+    </div>
+  </div>
+</div>
+  </div>
+  <div class="status"><span class="modo">NORMAL</span><span>master</span><b class="e"></b><span style="border-left:2px solid #0B0B0C">jdtls ✓</span><span style="border:0">UTF-8 · LF · java</span></div>
+</div>
+</body></html>

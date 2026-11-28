@@ -295,6 +295,11 @@ export class GitService {
   // ---------- operações ----------
 
   /** Roda uma operação que muda o repositório, com aviso de ocupado e de erro. */
+  /** Roda antes de cada operação (o histórico local guarda o que ainda não foi commitado). */
+  readonly antesDeOperar: ((args: string[]) => Promise<void>)[] = [];
+  /** Pedido para a tela do Git selecionar um commit. */
+  readonly irParaCommit = signal<string | null>(null);
+
   async operar(rotulo: string, args: string[], sucesso?: string): Promise<boolean> {
     if (this.ocupado()) {
       this.mensagens.erro(`espere terminar: ${this.ocupado()}`);
@@ -304,6 +309,7 @@ export class GitService {
     this.mensagens.mostrar(`${rotulo}…`);
     try {
       const raiz = this.raizRepo();
+      for (const fn of this.antesDeOperar) await fn(args).catch(() => undefined);
       const r = await ponte.git(raiz, args);
       if (r.codigo !== 0) {
         this.mensagens.erro(`${rotulo}: ${resumoDoErro(r.erro || r.saida)}`);

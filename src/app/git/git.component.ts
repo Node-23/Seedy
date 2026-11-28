@@ -309,6 +309,21 @@ export class GitComponent {
       untracked(() => void this.carregar(todas));
     });
 
+    // "Ver o commit", vindo do histórico de um arquivo.
+    effect(() => {
+      const hash = this.git.irParaCommit();
+      const lista = this.visiveis();
+      if (!hash || !lista.length) return;
+      untracked(() => {
+        const i = lista.findIndex((c) => c.commit.hash === hash);
+        this.git.irParaCommit.set(null);
+        if (i < 0) return;
+        this.selecionado.set(i);
+        this.foco.set('log');
+        setTimeout(() => document.getElementById('git-commit-' + i)?.scrollIntoView({ block: 'center' }), 50);
+      });
+    });
+
     // Detalhe do commit selecionado.
     effect((aoLimpar) => {
       const c = this.visiveis()[this.selecionado()]?.commit;

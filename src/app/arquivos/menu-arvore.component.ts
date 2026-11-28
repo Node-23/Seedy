@@ -1,6 +1,7 @@
 import { Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { nomeBase } from '../nucleo/ponte';
 import { ArquivosService } from './arquivos.service';
+import { HistoricoService } from '../historico/historico.service';
 import { ItemNovo, nomeDaClasse } from './modelos';
 
 /**
@@ -44,6 +45,7 @@ import { ItemNovo, nomeDaClasse } from './modelos';
 })
 export class MenuArvoreComponent {
   protected readonly a = inject(ArquivosService);
+  private readonly historico = inject(HistoricoService);
   private readonly caixa = viewChild<ElementRef<HTMLElement>>('caixa');
 
   private readonly todos = [
@@ -52,6 +54,8 @@ export class MenuArvoreComponent {
     { id: 'colar', marca: '▣', rotulo: 'Colar', atalho: 'v', separar: false },
     { id: 'caminho', marca: '⌘', rotulo: 'Copiar caminho', atalho: 'p', separar: false },
     { id: 'classe', marca: 'C', rotulo: 'Copiar nome completo da classe', atalho: 'q', separar: false },
+    { id: 'historico', marca: '↺', rotulo: 'Histórico local', atalho: 'h', separar: false },
+    { id: 'historico-git', marca: '⎇', rotulo: 'Histórico no Git', atalho: 'g', separar: false },
     { id: 'renomear', marca: '✎', rotulo: 'Renomear', atalho: 'r', separar: true },
     { id: 'apagar', marca: '✕', rotulo: 'Apagar', atalho: 'd', separar: false },
     { id: 'explorador', marca: '↗', rotulo: 'Abrir no explorador de arquivos', atalho: 'e', separar: true },
@@ -60,7 +64,10 @@ export class MenuArvoreComponent {
   /** O nome da classe só aparece para um .java numa pasta de fontes. */
   protected readonly principais = computed(() => {
     const alvo = this.a.menu()?.alvo;
-    return this.todos.filter((i) => i.id !== 'classe' || (!!alvo && !alvo.pasta && !!nomeDaClasse(alvo.caminho)));
+    return this.todos.filter((i) => {
+      if (i.id === 'classe') return !!alvo && !alvo.pasta && !!nomeDaClasse(alvo.caminho);
+      return !i.id.startsWith('historico') || (!!alvo && !alvo.pasta);
+    });
   });
 
   protected readonly indice = signal(0);
@@ -129,6 +136,13 @@ export class MenuArvoreComponent {
     else if (id === 'colar') void this.a.colar(alvo);
     else if (id === 'caminho') void this.a.copiarCaminho(alvo);
     else if (id === 'classe') void this.a.copiarNomeDaClasse(alvo);
+    else if (id === 'historico') {
+      this.a.fechar();
+      this.historico.abrirLocal(alvo.caminho);
+    } else if (id === 'historico-git') {
+      this.a.fechar();
+      this.historico.abrirNoGit(alvo.caminho);
+    }
     else if (id === 'renomear') this.a.pedirRenomear(alvo);
     else if (id === 'apagar') this.a.pedirApagar(alvo);
     else void this.a.explorador(alvo);

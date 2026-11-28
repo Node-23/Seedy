@@ -1,3 +1,4 @@
+import { HistoricoService } from '../historico/historico.service';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { nomeBase, ponte } from '../nucleo/ponte';
 import { EditorService } from '../editor/editor.service';
@@ -39,6 +40,7 @@ const JANELA_DA_IA_MS = 10 * 60 * 1000;
 @Injectable({ providedIn: 'root' })
 export class RevisaoService {
   private readonly editor = inject(EditorService);
+  private readonly historico = inject(HistoricoService);
   private readonly mensagens = inject(MensagensService);
   private readonly diff = inject(DiffService);
   private readonly automatico = inject(AutomaticoService);
@@ -102,6 +104,7 @@ export class RevisaoService {
     if (!a) return;
     if (a.estado === 'pendente') {
       try {
+        await this.historico.guardar(a.caminho, 'antes da proposta da IA');
         await this.gravar(a.caminho, a.depois);
       } catch (e) {
         this.mensagens.erro(`não consegui gravar ${nomeBase(a.caminho)}: ${e}`);
@@ -130,6 +133,7 @@ export class RevisaoService {
           this.mensagens.mostrar('o arquivo era novo: apague-o pela árvore se não quiser mantê-lo');
           return;
         }
+        await this.historico.guardar(a.caminho, 'antes de desfazer a IA');
         await this.gravar(a.caminho, a.antes);
         this.mudar(id, 'desfeita');
         this.mensagens.mostrar(`${nomeBase(a.caminho)}: alteração desfeita`);

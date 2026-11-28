@@ -11,7 +11,7 @@ import { ConfigService } from '../config/config.service';
  */
 export type IdPainel = 'arquivos' | 'conexoes' | 'terminal' | 'servidor' | 'scripts' | 'containers' | 'problemas' | 'ia';
 /** Tela que ocupa a área principal: o editor (com os painéis) ou uma tela cheia. */
-export type Tela = 'editor' | 'git' | 'merge' | 'debug' | 'containers' | 'entender' | 'config' | 'testes' | 'endpoints';
+export type Tela = 'editor' | 'git' | 'merge' | 'debug' | 'containers' | 'entender' | 'config' | 'testes' | 'endpoints' | 'historico' | 'historico-git';
 export type Regiao = 'esquerda' | 'inferior' | 'direita';
 
 export interface Painel {

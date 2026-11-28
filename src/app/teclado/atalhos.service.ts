@@ -1,4 +1,5 @@
 import { RecentesDeArquivosService } from '../arquivos/recentes-arquivos.service';
+import { HistoricoService } from '../historico/historico.service';
 import { ProblemasService } from '../problemas/problemas.service';
 import { RodarMargemService } from '../editor/rodar-margem.service';
 import { AnexosService } from '../ia/anexos.service';
@@ -84,6 +85,8 @@ export const ACORDES_PADRAO: Record<string, string> = {
   'arquivo-na-arvore': 'alt+f1',
   markdown: 'alt+shift+r',
   problemas: 'alt+3',
+  'historico-local': 'alt+shift+z',
+  'historico-git': 'alt+shift+f',
   config: 'ctrl+,',
 };
 
@@ -192,6 +195,7 @@ export class AtalhosService {
   private readonly recentes = inject(RecentesDeArquivosService);
   private readonly problemas = inject(ProblemasService);
   private readonly margem = inject(RodarMargemService);
+  private readonly historico = inject(HistoricoService);
 
   readonly liderAberto = signal(false);
   /** acorde → ação (atalhos diretos). */
@@ -251,6 +255,8 @@ export class AtalhosService {
     { id: 'proximo-problema', tecla: 'K', rotulo: 'ir para o próximo erro', disponivel: true, executar: () => void this.problemas.proximo(1) },
     { id: 'rodar-no-cursor', tecla: 'Z', rotulo: 'rodar o teste ou a main do cursor', disponivel: true, executar: () => void this.margem.noCursor(false) },
     { id: 'depurar-no-cursor', tecla: 'J', rotulo: 'depurar o teste ou a main do cursor', disponivel: true, executar: () => void this.margem.noCursor(true) },
+    { id: 'historico-local', tecla: '.', rotulo: 'histórico local: versões sem commit, com restaurar', disponivel: true, executar: () => this.historico.abrirLocal() },
+    { id: 'historico-git', tecla: ';', rotulo: 'histórico no Git do arquivo ou do trecho selecionado', disponivel: true, executar: () => this.historico.abrirNoGit() },
     { id: 'completar', tecla: 'C', rotulo: 'completar código enquanto digita: liga/desliga', disponivel: true, executar: () => void this.completar.alternar() },
     { id: 'notificacoes', tecla: 'z', rotulo: 'notificações: os avisos e erros que passaram', disponivel: true, executar: () => this.mensagens.alternarLista() },
     { id: 'mcp', tecla: 'i', rotulo: 'ligar o Claude Code ao Seedy (MCP)', disponivel: true, executar: () => void this.mcp.copiarComandoDoClaudeCode() },

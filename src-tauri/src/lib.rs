@@ -15,6 +15,7 @@ mod completar;
 mod containers;
 mod depurador;
 mod git;
+mod historico;
 mod ia;
 mod java;
 mod mcp;
@@ -72,6 +73,9 @@ pub fn run() {
             arquivos::ler_pasta,
             arquivos::ler_arquivo,
             arquivos::gravar_arquivo,
+            historico::historico_guardar,
+            historico::historico_listar,
+            historico::historico_ler,
             arquivos::criar_arquivo,
             arquivos::criar_pasta,
             arquivos::caminho_existe,
